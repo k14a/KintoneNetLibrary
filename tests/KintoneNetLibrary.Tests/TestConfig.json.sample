@@ -1,0 +1,5 @@
+{
+  "Domain"    : "your-subdomain.cybozu.com",
+  "ApiToken"  : "YOUR_API_TOKEN",
+  "AppId"     : 123
+}
