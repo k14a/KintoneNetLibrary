@@ -7,10 +7,10 @@ namespace KintoneNetLibrary;
 public class KintoneField
 {
     [JsonPropertyName("type")]
-    public string Type { get; set; }
+    public string Type { get; set; } = string.Empty;
 
     [JsonPropertyName("value")]
-    public object Value { get; set; }
+    public object Value { get; set; } = string.Empty;
 
     public KintoneField() { }
 

@@ -46,7 +46,7 @@ namespace KintoneNetLibrary.Types;
 /// </summary>
 public static class KintoneQueryOperators
 {
-    public const string Equals = "=";
+    public new const string Equals = "=";
     public const string NotEquals = "!=";
     public const string GreaterThan = ">";
     public const string LessThan = "<";

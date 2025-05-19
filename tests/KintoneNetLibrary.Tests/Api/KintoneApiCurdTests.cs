@@ -5,24 +5,19 @@ using KintoneNetLibrary.Model;
 
 namespace KintoneNetLibrary.Tests.Api;
 
-public class KintoneApiCrudTests
-{
-    private KintoneApi CreateApi()
-    {
+public class KintoneApiCrudTests {
+    private KintoneApi CreateApi() {
         var cfg = TestEnv.Settings;
-        var cli = new HttpClient
-        {
+        var cli = new HttpClient {
             BaseAddress = new Uri($"https://{cfg.Domain}/k/v1/")
         };
-        return new KintoneApi(cli, cfg.ApiToken);
+        return new KintoneApi(cli, cfg.ApiToken, cfg.AppID);
     }
 
     [Fact]
-    public async Task Create_Find_Delete_Flow()
-    {
+    public async Task Create_Find_Delete_Flow() {
         var api = this.CreateApi();
-        var book = new BookModel
-        {
+        var book = new BookModel {
             Title = "xUnit Guide",
             Price = 3000
         };

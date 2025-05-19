@@ -7,11 +7,20 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>KintoneNetLibrary</AssemblyName>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
+
   <ItemGroup>
     <Compile Remove="AbskintoneModel.cs" />
   </ItemGroup>
+
   <ItemGroup>
     <Folder Include="tests\" />
   </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit" Version="2.9.2" />
+  </ItemGroup>
+
 </Project>

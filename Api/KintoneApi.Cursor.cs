@@ -34,7 +34,7 @@ public partial class KintoneApi
         };
 
         using var request = new HttpRequestMessage(HttpMethod.Post, "records/cursor.json");
-        request.Headers.Add("X-Cybozu-API-Token", this._apiToken);
+        request.Headers.Add("X-Cybozu-API-Token", this.ApiToken);
         request.Content = JsonContent.Create(body, options: _jsonOptions);
 
         using var resp = await this._httpClient.SendAsync(request);
@@ -52,7 +52,7 @@ public partial class KintoneApi
     /* ---------- 1ページ取得 ---------- */
     public async Task<CursorFetch<T>> FetchCursorAsync<T>(string cursorId) {
         using var request = new HttpRequestMessage(HttpMethod.Get, $"records/cursor.json?id={cursorId}");
-        request.Headers.Add("X-Cybozu-API-Token", this._apiToken);
+        request.Headers.Add("X-Cybozu-API-Token", this.ApiToken);
 
         using var resp = await this._httpClient.SendAsync(request);
         var json = await resp.Content.ReadAsStringAsync();
@@ -72,7 +72,7 @@ public partial class KintoneApi
         using var request = new HttpRequestMessage(HttpMethod.Delete, "records/cursor.json") {
             Content = JsonContent.Create(body, options: _jsonOptions)
         };
-        request.Headers.Add("X-Cybozu-API-Token", this._apiToken);
+        request.Headers.Add("X-Cybozu-API-Token", this.ApiToken);
 
         using var resp = await this._httpClient.SendAsync(request);
         var json = await resp.Content.ReadAsStringAsync();

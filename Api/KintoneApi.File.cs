@@ -21,7 +21,7 @@ public partial class KintoneApi
         content.Add(fileCnt, "\"file\"", $"\"{Path.GetFileName(fileName)}\"");
 
         using var request = new HttpRequestMessage(HttpMethod.Post, "file.json");
-        request.Headers.Add("X-Cybozu-API-Token", this._apiToken);
+        request.Headers.Add("X-Cybozu-API-Token", this.ApiToken);
         request.Content = content;
 
         using var resp = await this._httpClient.SendAsync(request);
@@ -47,7 +47,7 @@ public partial class KintoneApi
         var url = $"file.json?fileKey={Uri.EscapeDataString(fileKey)}";
 
         using var request = new HttpRequestMessage(HttpMethod.Get, url);
-        request.Headers.Add("X-Cybozu-API-Token", this._apiToken);
+        request.Headers.Add("X-Cybozu-API-Token", this.ApiToken);
 
         using var resp = await this._httpClient.SendAsync(request);
         if (!resp.IsSuccessStatusCode) {
@@ -65,7 +65,7 @@ public partial class KintoneApi
         var url = $"file.json?fileKey={Uri.EscapeDataString(fileKey)}";
 
         using var request = new HttpRequestMessage(HttpMethod.Get, url);
-        request.Headers.Add("X-Cybozu-API-Token", this._apiToken);
+        request.Headers.Add("X-Cybozu-API-Token", this.ApiToken);
 
         var resp = await this._httpClient.SendAsync(request,
             HttpCompletionOption.ResponseHeadersRead);

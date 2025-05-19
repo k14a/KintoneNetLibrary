@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace KintoneNetLibrary.Types;
 
@@ -10,10 +11,12 @@ public class KintoneIndexes
     /// <summary>
     /// レコード ID リスト
     /// </summary>
-    public IList<string> IDs { get; set; } = new List<string>();
+    [JsonPropertyName("ids")]
+    public IList<string> IDs { get; set; } = [];
 
     /// <summary>
     /// 各レコードのリビジョン番号リスト
     /// </summary>
-    public IList<int> Revisions { get; set; } = new List<int>();
+    [JsonPropertyName("revisions")]
+    public IList<int> Revisions { get; set; } = [];
 }

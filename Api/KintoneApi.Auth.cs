@@ -16,9 +16,9 @@ public partial class KintoneApi
     }
 
     public void SetApiToken(string apiToken) {
-        this._apiToken = apiToken;
+        this.ApiToken = apiToken;
         ClearAuthorization();
-        this._httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _apiToken);
+        this._httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", ApiToken);
     }
 
     public void SetBasicAuth(string username, string password) {
