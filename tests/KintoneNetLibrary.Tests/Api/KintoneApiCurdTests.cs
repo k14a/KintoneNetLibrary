@@ -23,7 +23,7 @@ public class KintoneApiCrudTests {
         };
 
         /* ---- Create ---- */
-        var idx = await api.CreateAsync(new List<KintoneModelBase> { book });
+        var idx = await api.CreateAsync([book]);
         Assert.NotEmpty(idx.IDs);
         var id = idx.IDs[0];
 
@@ -32,7 +32,7 @@ public class KintoneApiCrudTests {
         Assert.Equal("xUnit Guide", stored?.Title);
 
         /* ---- Delete ---- */
-        var ok = await api.DeleteAsync<BookModel>(new List<string> { id });
+        var ok = await api.DeleteAsync<BookModel>([id]);
         Assert.True(ok);
     }
 }
