@@ -12,15 +12,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="AbskintoneModel.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="tests\" />
-  </ItemGroup>
-
-  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.5" />
     <PackageReference Include="xunit" Version="2.9.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="tests\**\*.cs" />
+  </ItemGroup>
 </Project>

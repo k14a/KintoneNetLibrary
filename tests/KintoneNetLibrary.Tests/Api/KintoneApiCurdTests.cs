@@ -11,7 +11,7 @@ public class KintoneApiCrudTests {
         var cli = new HttpClient {
             BaseAddress = new Uri($"https://{cfg.Domain}/k/v1/")
         };
-        return new KintoneApi(cli, cfg.ApiToken, cfg.AppID);
+        return new KintoneApi(cli, cfg.ApiToken, cfg.AppID, cfg.Domain);
     }
 
     [Fact]
@@ -34,5 +34,12 @@ public class KintoneApiCrudTests {
         /* ---- Delete ---- */
         var ok = await api.DeleteAsync<BookModel>([id]);
         Assert.True(ok);
+    }
+    [Fact]
+    public async Task FindTest() {
+        var api = this.CreateApi();
+        var id = "13";
+        var actual = await api.FindByIDAsync<BookModel>(id);
+        Assert.Equal("xUnit Guidl", actual?.Title);
     }
 }

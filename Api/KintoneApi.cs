@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 
 namespace KintoneNetLibrary.Api;
 
@@ -15,6 +16,7 @@ public partial class KintoneApi {
         // 必要に応じて他のオプションを追加
     };
     private const int KintoneLimit = 500;          // kintone 1 回取得上限
+    private readonly ILogger<KintoneApi>? _logger;
     #endregion
 
     #region <<Properties>>
@@ -40,15 +42,20 @@ public partial class KintoneApi {
     /// <summary>
     /// Constructor
     /// </summary>
-    public KintoneApi() { this.InitHttpClient(); }
+    public KintoneApi(ILogger<KintoneApi>? logger = null) {
+        this.InitHttpClient();
+        this._logger = logger;
+    }
     /// <summary>
     /// Constructor
     /// </summary>
     /// <param name="domain">Kintoneドメイン</param>
     /// <param name="appID">Kintoneアプリケーション番号</param>
-    public KintoneApi(string domain, int appID) {
+    /// <param name="logger"></param>
+    public KintoneApi(string domain, int appID, ILogger<KintoneApi>? logger = null) {
         this.Domain = domain;
         this.AppID = appID;
+        this._logger = logger;
         this.InitHttpClient();
     }
     /// <summary>
@@ -58,11 +65,13 @@ public partial class KintoneApi {
     /// <param name="apiToken">APIトークン</param>
     /// <param name="appID">Kintoneアプリケーション番号</param>
     /// <param name="domain">Kintoneドメイン</param>
+    /// <param name="logger"></param>
     /// <exception cref="ArgumentNullException">httpClient is null / apiToken is null</exception>
-    public KintoneApi(HttpClient httpClient, string apiToken, int appID, string domain = "") {
+    public KintoneApi(HttpClient httpClient, string apiToken, int appID, string domain = "", ILogger<KintoneApi>? logger = null) {
         this._httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         this.ApiToken = apiToken ?? throw new ArgumentNullException(nameof(apiToken));
         this.AppID = appID;
+        this._logger = logger;
         this.Domain = domain;
         if (!string.IsNullOrWhiteSpace(domain)) {
             this._httpClient.BaseAddress = string.IsNullOrWhiteSpace(this.Domain) ? null : new Uri($"https://{this.Domain.TrimEnd('/')}/k/v1/");
@@ -74,9 +83,11 @@ public partial class KintoneApi {
     /// </summary>
     /// <param name="httpClient">HttpClient</param>
     /// <param name="domain">Kintoneドメイン</param>
+    /// <param name="logger"></param>
     /// <exception cref="ArgumentNullException">httpClient is null</exception>
-    public KintoneApi(HttpClient httpClient, string domain = "") {
+    public KintoneApi(HttpClient httpClient, string domain = "", ILogger<KintoneApi>? logger = null) {
         this._httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+        this._logger = logger;
         this.Domain = domain;
         if (!string.IsNullOrWhiteSpace(domain)) {
             this._httpClient.BaseAddress = string.IsNullOrWhiteSpace(this.Domain) ? null : new Uri($"https://{this.Domain.TrimEnd('/')}/k/v1/");

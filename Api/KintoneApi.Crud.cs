@@ -1,22 +1,24 @@
 ﻿using System.Net.Http.Json;
+using System.Reflection;
 using System.Text.Json;
 using KintoneNetLibrary.Extensions;
 using KintoneNetLibrary.Model;
 using KintoneNetLibrary.Types;
+using Microsoft.Extensions.Logging;
 
 namespace KintoneNetLibrary.Api;
 
-public partial class KintoneApi
-{
+public partial class KintoneApi {
     //private static readonly JsonSerializerOptions _jsonOpt = KintoneJson.Options;
 
     /*==========================================================
       Create – 複数レコード一括登録
       ==========================================================*/
     public async Task<KintoneIndexes> CreateAsync<T>(IList<T> objs) where T : KintoneModelBase {
+        var records = objs.Select(x => x.ToKintoneRecord()).ToList();
         var body = new {
             app = objs[0].AppID,
-            records = objs
+            records,
         };
 
         var response = await _httpClient.PostAsJsonAsync("records.json", body, _jsonOptions);
@@ -31,15 +33,67 @@ public partial class KintoneApi
       Update – 複数レコード一括更新
       ==========================================================*/
     public async Task<KintoneIndexes> UpdateAsync<T>(IList<T> objs) where T : KintoneModelBase {
+        if (objs == null || objs.Count == 0) {
+            throw new ArgumentException("更新対象が空です", nameof(objs));
+        }
+
+        var records = new List<object>();
+
+        foreach (var obj in objs) {
+            var record = new Dictionary<string, object>();
+            string? updateKeyField = null;
+            object? updateKeyValue = null;
+
+            foreach (var prop in typeof(T).GetProperties()) {
+                var attr = prop.GetCustomAttribute<KintoneItemAttribute>();
+                if (attr == null || !attr.IsUpload) {
+                    continue;
+                }
+
+                var fieldCode = string.IsNullOrEmpty(attr.Name) ? prop.Name : attr.Name;
+                var value = prop.GetValue(obj);
+
+                if (attr.IsKey) {
+                    updateKeyField = fieldCode;
+                    updateKeyValue = value;
+                    continue;
+                }
+
+                record[fieldCode] = new { value };
+            }
+
+            object recordObject;
+
+            if (updateKeyField != null) {
+                recordObject = new {
+                    updateKey = new {
+                        field = updateKeyField,
+                        value = updateKeyValue
+                    },
+                    record
+                };
+            } else {
+                recordObject = new {
+                    id = obj.RecordID,
+                    record
+                };
+            }
+
+            records.Add(recordObject);
+        }
+
         var body = new {
             app = objs[0].AppID,
-            records = objs
+            records
         };
 
         var response = await _httpClient.PutAsJsonAsync("records.json", body, _jsonOptions);
         var json = await response.Content.ReadAsStringAsync();
+        this._logger?.LogDebug("Received response: {Response}", json);
 
-        if (!response.IsSuccessStatusCode) { throw new KintoneException(KintoneErrorConverter.Parse(json)); }
+        if (!response.IsSuccessStatusCode) {
+            throw new KintoneException(KintoneErrorConverter.Parse(json));
+        }
 
         return JsonSerializer.Deserialize<KintoneIndexes>(json, _jsonOptions) ?? new KintoneIndexes();
     }

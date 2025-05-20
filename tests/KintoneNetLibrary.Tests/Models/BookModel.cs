@@ -7,6 +7,8 @@ public class BookModel : KintoneModelBase
 {
     public override int AppID => TestEnv.Settings.AppID;
 
+    [KintoneItem(name: "Title")]
     public string Title { get; set; } = string.Empty;
+    [KintoneItem(name: "Price")]
     public int    Price { get; set; }
 }

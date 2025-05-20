@@ -31,12 +31,12 @@ public abstract partial class KintoneModelBase
     }
 
     public async Task<bool> DeleteAsync() {
-        if (string.IsNullOrEmpty(RecordID)) {
+        if (string.IsNullOrEmpty(this.RecordID)) {
             // レコード ID が無い場合はキー検索で取得してみる
             await RefreshIdFromKeyAsync();
         }
 
-        if (string.IsNullOrEmpty(RecordID)) {
+        if (string.IsNullOrEmpty(this.RecordID)) {
             return true; // 既に削除済み
         }
 
@@ -72,7 +72,7 @@ public abstract partial class KintoneModelBase
     private KintoneIndex ApplyIndex(KintoneIndexes indexes, int index = 0) {
         if (indexes.IDs.Count > index && indexes.Revisions.Count > index) {
             this.RecordID = indexes.IDs[index];
-            this.Revision = indexes.Revisions[index];
+            this.Revision = Convert.ToInt32(indexes.Revisions[index]);
 
             return new KintoneIndex {
                 ID = RecordID,

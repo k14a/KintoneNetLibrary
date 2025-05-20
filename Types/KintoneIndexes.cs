@@ -12,11 +12,11 @@ public class KintoneIndexes
     /// レコード ID リスト
     /// </summary>
     [JsonPropertyName("ids")]
-    public IList<string> IDs { get; set; } = [];
+    public IList<string?> IDs { get; set; } = [];
 
     /// <summary>
     /// 各レコードのリビジョン番号リスト
     /// </summary>
     [JsonPropertyName("revisions")]
-    public IList<int> Revisions { get; set; } = [];
+    public IList<string?> Revisions { get; set; } = [];
 }

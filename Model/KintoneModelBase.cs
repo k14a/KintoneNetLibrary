@@ -1,15 +1,16 @@
 ﻿using KintoneNetLibrary.Types;
 using Microsoft.VisualBasic.FileIO;
 using System.Collections.Generic;
+using System.Reflection;
+using System.Text.Json.Serialization;
 
 namespace KintoneNetLibrary.Model;
 
 /// <summary>
-/// Kintone アプリのレコードに対応する抽象基底モデル。  
+/// Kintone アプリのレコードに対応する抽象基底モデル。
 /// 継承して具体モデル（例: BookModel）を作成してください。
 /// </summary>
-public abstract partial class KintoneModelBase
-{
+public abstract partial class KintoneModelBase {
     /* ----------  派生クラスが必ず実装するアプリ ID  ---------- */
 
     /// <summary>このモデルが属する kintone アプリ ID</summary>
@@ -18,7 +19,12 @@ public abstract partial class KintoneModelBase
     /* ----------  共通フィールド  ---------- */
 
     /// <summary>レコード番号</summary>
-    public virtual string RecordID { get; set; } = string.Empty;
+    public virtual string? RecordID { get; set; }
+    [JsonIgnore()]
+    public string? ID {
+        get => this.RecordID;
+        set => this.RecordID = value;
+    }
 
     /// <summary>登録日時</summary>
     [KintoneItem(FieldType = KintoneDateTime.DateTimeType.DateTime, IsUpload = false)]
@@ -71,7 +77,7 @@ public abstract partial class KintoneModelBase
     ];
 
     /// <summary>
-    /// デフォルトの変換辞書を取得・設定。  
+    /// デフォルトの変換辞書を取得・設定。
     /// アプリ側で項目名を変更している場合は派生クラスで上書きしてください。
     /// </summary>
     protected virtual IList<NameConvertor> ConvertDictionary {
@@ -100,5 +106,33 @@ public abstract partial class KintoneModelBase
         return direction == NameConvertor.Direction.Read
             ? converts.ToDictionary(c => c.ItemName, c => c.PropertyName)
             : converts.ToDictionary(c => c.PropertyName, c => c.ItemName);
+    }
+
+    public virtual IDictionary<string, object> ToKintoneRecord() {
+        var dict = new Dictionary<string, object>();
+        var props = this.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+        foreach (var prop in props) {
+            if (!prop.CanRead || prop.GetMethod == null) {
+                continue;
+            }
+
+            var attr = prop.GetCustomAttribute<KintoneItemAttribute>();
+
+            // アップロード対象でなければスキップ
+            if (attr != null && !attr.IsUpload) {
+                continue;
+            }
+
+            var fieldCode = attr?.Name;
+            if (string.IsNullOrEmpty(fieldCode)) {
+                fieldCode = prop.Name;
+            }
+
+            var value = prop.GetValue(this);
+            dict[fieldCode] = new { value };
+        }
+
+        return dict;
     }
 }
