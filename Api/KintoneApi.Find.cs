@@ -60,7 +60,7 @@ public partial class KintoneApi {
 
         } else {
             var query = new KintoneQuery<T>().WhereIdIn(ids);
-            return await FindBaseAsync(query);
+            return await FindBaseAsync(query, skipThresholdCheck: true);
         }
     }
 
@@ -83,26 +83,28 @@ public partial class KintoneApi {
     }
 
     // 内部的な共通検索処理
-    private async Task<IList<T>> FindBaseAsync<T>(KintoneQuery<T> query) where T : KintoneModelBase, new() {
-        // 1) まず件数だけ取得 -------------------------------------------
-        var countUri = KintoneRequestBuilder.BuildRequestUri(this.GetBaseUri(), KintoneApiEndpoints.GetRecords, this.AppID, $"{query.Build(false)}&totalCount=true&limit=1");
+    private async Task<IList<T>> FindBaseAsync<T>(KintoneQuery<T> query, bool skipThresholdCheck = false) where T : KintoneModelBase, new() {
+        if (!skipThresholdCheck) {
+            // 1) まず件数だけ取得 -------------------------------------------
+            var countUri = KintoneRequestBuilder.BuildRequestUri(this.GetBaseUri(), KintoneApiEndpoints.GetRecords, this.AppID, $"{query.Build(false)}&totalCount=true&limit=1");
 
-        using var countReq = new HttpRequestMessage(HttpMethod.Get, countUri);
-        this.SetHeaders(countReq);
+            using var countReq = new HttpRequestMessage(HttpMethod.Get, countUri);
+            this.SetHeaders(countReq);
 
-        using var countResp = await this._httpClient.SendAsync(countReq);
-        var countJson = await countResp.Content.ReadAsStringAsync();
+            using var countResp = await this._httpClient.SendAsync(countReq);
+            var countJson = await countResp.Content.ReadAsStringAsync();
 
-        if (!countResp.IsSuccessStatusCode) {
-            throw new KintoneException(KintoneErrorConverter.Parse(countJson));
-        }
+            if (!countResp.IsSuccessStatusCode) {
+                throw new KintoneException(KintoneErrorConverter.Parse(countJson));
+            }
 
-        var countResult = JsonSerializer.Deserialize<RecordCountResponse>(countJson, _jsonOptions) ?? new RecordCountResponse();
+            var countResult = JsonSerializer.Deserialize<RecordCountResponse>(countJson, _jsonOptions) ?? new RecordCountResponse();
 
-        // 2) しきい値判定 --------------------------------------------------
-        if (countResult.TotalCount > KintoneLimit) {
-            // カーソル API に切替
-            return await this.CursorFetchAllAsync<T>(query.Build(false));
+            // 2) しきい値判定 --------------------------------------------------
+            if (countResult.TotalCount > KintoneLimit) {
+                // カーソル API に切替
+                return await this.CursorFetchAllAsync<T>(query.Build(false));
+            }
         }
 
         // 3) 従来の単発取得 ------------------------------------------------

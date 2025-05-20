@@ -32,8 +32,9 @@ public class KintoneApiCrudTests {
         Assert.Equal("xUnit Guide", stored?.Title);
 
         /* ---- Delete ---- */
-        var ok = await api.DeleteAsync<BookModel>([id]);
-        Assert.True(ok);
+        var actual = await api.DeleteAsync<BookModel>([id]);
+        Assert.Single(actual);
+        // Assert.True(ok);
     }
     [Fact]
     public async Task FindTest() {

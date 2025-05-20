@@ -101,34 +101,83 @@ public partial class KintoneApi {
     /*==========================================================
       Delete – ID リストで一括削除
       ==========================================================*/
-    public async Task<bool> DeleteAsync<T>(IList<string> ids) where T : KintoneModelBase, new() {
-        var sample = new T();
-        var body = new { app = sample.AppID, ids };
+    /*     public async Task<IList<string>> DeleteAsync<T>(IList<string> ids) where T : KintoneModelBase, new() {
+            if (ids == null || ids.Count == 0) {
+                return [];
+            }
 
-        var request = new HttpRequestMessage(HttpMethod.Delete, "records.json") {
-            Content = JsonContent.Create(body, options: _jsonOptions)
-        };
-        var response = await _httpClient.SendAsync(request);
-        var json = await response.Content.ReadAsStringAsync();
+            var sample = new T();
+            var successfulIds = new List<string>();
 
-        if (!response.IsSuccessStatusCode) { throw new KintoneException(KintoneErrorConverter.Parse(json)); }
+            foreach (var chunk in ids.Chunk(KintoneDeleteLimit)) {
+                var body = new { app = sample.AppID, ids = chunk };
+                var request = new HttpRequestMessage(HttpMethod.Delete, "records.json") {
+                    Content = JsonContent.Create(body, options: _jsonOptions)
+                };
 
-        return true;
-    }
-    public async Task<bool> DeleteAsync(int appId, IList<string> ids) {
-        var body = new { app = appId, ids };
-        var request = new HttpRequestMessage(HttpMethod.Delete, "records.json") {
-            Content = JsonContent.Create(body, options: _jsonOptions)
-        };
+                var response = await _httpClient.SendAsync(request);
+                var json = await response.Content.ReadAsStringAsync();
 
-        var response = await this._httpClient.SendAsync(request);
-        var json = await response.Content.ReadAsStringAsync();
+                if (!response.IsSuccessStatusCode) {
+                    throw new KintoneException(KintoneErrorConverter.Parse(json));
+                }
 
-        if (!response.IsSuccessStatusCode) {
-            throw new KintoneException(KintoneErrorConverter.Parse(json));
+                successfulIds.AddRange(chunk);
+            }
+
+            return successfulIds;
         }
 
-        return true;
+         public async Task<IList<string>> DeleteAsync(int appId, IList<string> ids) {
+            if (ids == null || ids.Count == 0) {
+                return [];
+            }
+
+            var successfulIds = new List<string>();
+
+            foreach (var chunk in ids.Chunk(KintoneDeleteLimit)) {
+                var body = new { app = appId, ids = chunk };
+                var request = new HttpRequestMessage(HttpMethod.Delete, "records.json") {
+                    Content = JsonContent.Create(body, options: _jsonOptions)
+                };
+
+                var response = await _httpClient.SendAsync(request);
+                var json = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode) {
+                    throw new KintoneException(KintoneErrorConverter.Parse(json));
+                }
+
+                successfulIds.AddRange(chunk);
+            }
+
+            return successfulIds;
+        }
+     */
+    public async Task<IList<string>> DeleteAsync<T>(IList<string> ids) where T : KintoneModelBase, new() {
+        var t = new T();
+        return await this.DeleteAsync(t.AppID, ids);
+    }
+    public async Task<IList<string>> DeleteAsync(int appId, IList<string> ids) {
+        var deletedIDs = new List<string>();
+
+        foreach (var chunk in ids.Chunk(KintoneDeleteLimit)) {
+            var body = new { app = appId, ids = chunk };
+            var request = new HttpRequestMessage(HttpMethod.Delete, "records.json") {
+                Content = JsonContent.Create(body, options: _jsonOptions)
+            };
+
+            var response = await this._httpClient.SendAsync(request);
+            var json = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode) {
+                throw new KintoneException(KintoneErrorConverter.Parse(json));
+            }
+
+            deletedIDs.AddRange(chunk);
+        }
+
+        return deletedIDs;
     }
 
     /*==========================================================

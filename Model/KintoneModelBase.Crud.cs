@@ -30,24 +30,24 @@ public abstract partial class KintoneModelBase
         return ApplyIndex(indexes, 0);
     }
 
-    public async Task<bool> DeleteAsync() {
+    public async Task<IList<string>> DeleteAsync() {
         if (string.IsNullOrEmpty(this.RecordID)) {
             // レコード ID が無い場合はキー検索で取得してみる
             await RefreshIdFromKeyAsync();
         }
 
         if (string.IsNullOrEmpty(this.RecordID)) {
-            return true; // 既に削除済み
+            return []; // 既に削除済み
         }
 
         var api = BuildApi();
-        var ok = await api.DeleteAsync(this.AppID, [this.RecordID]);
+        var result = await api.DeleteAsync(this.AppID, [this.RecordID]);
 
-        if (ok) {
+    /*     if (ok) {
             this.RecordID = string.Empty;
             this.Revision = -1;
         }
-        return ok;
+  */       return result;
     }
 
     /* ---------- 内部ユーティリティ ---------- */

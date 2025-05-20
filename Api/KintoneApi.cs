@@ -15,7 +15,14 @@ public partial class KintoneApi {
         PropertyNameCaseInsensitive = true,
         // 必要に応じて他のオプションを追加
     };
-    private const int KintoneLimit = 500;          // kintone 1 回取得上限
+    /// <summary>
+    /// Kintoneデータ取得上限
+    /// </summary>
+    private const int KintoneLimit = 500;
+    /// <summary>
+    /// Kintoneデータ削除上限
+    /// </summary>
+    private const int KintoneDeleteLimit = 100;
     private readonly ILogger<KintoneApi>? _logger;
     #endregion
 
