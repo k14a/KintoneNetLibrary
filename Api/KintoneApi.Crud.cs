@@ -50,7 +50,7 @@ public partial class KintoneApi {
                     continue;
                 }
 
-                var fieldCode = string.IsNullOrEmpty(attr.Name) ? prop.Name : attr.Name;
+                var fieldCode = string.IsNullOrEmpty(attr.FieldCode) ? prop.Name : attr.FieldCode;
                 var value = prop.GetValue(obj);
 
                 if (attr.IsKey) {
@@ -94,8 +94,14 @@ public partial class KintoneApi {
         if (!response.IsSuccessStatusCode) {
             throw new KintoneException(KintoneErrorConverter.Parse(json));
         }
+        var tmp = JsonSerializer.Deserialize<KintoneRecordIndexesResponse>(json, _jsonOptions) ?? new KintoneRecordIndexesResponse();
+        var result = new KintoneIndexes {
+            IDs = tmp.Records.Select(x => x.ID).ToList(),
+            Revisions = tmp.Records.Select(x => x.RevisionString).ToList(),
+        };
 
-        return JsonSerializer.Deserialize<KintoneIndexes>(json, _jsonOptions) ?? new KintoneIndexes();
+        // return JsonSerializer.Deserialize<KintoneIndexes>(json, _jsonOptions) ?? new KintoneIndexes();
+        return result;
     }
 
     /*==========================================================

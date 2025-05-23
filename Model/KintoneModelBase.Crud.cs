@@ -6,8 +6,7 @@ using KintoneNetLibrary.Extensions;
 
 namespace KintoneNetLibrary.Model;
 
-public abstract partial class KintoneModelBase
-{
+public abstract partial class KintoneModelBase {
     /* =========================================================
        CRUD（非同期）
        ========================================================= */
@@ -43,11 +42,12 @@ public abstract partial class KintoneModelBase
         var api = BuildApi();
         var result = await api.DeleteAsync(this.AppID, [this.RecordID]);
 
-    /*     if (ok) {
-            this.RecordID = string.Empty;
-            this.Revision = -1;
-        }
-  */       return result;
+        /*     if (ok) {
+                this.RecordID = string.Empty;
+                this.Revision = -1;
+            }
+      */
+        return result;
     }
 
     /* ---------- 内部ユーティリティ ---------- */
@@ -72,11 +72,12 @@ public abstract partial class KintoneModelBase
     private KintoneIndex ApplyIndex(KintoneIndexes indexes, int index = 0) {
         if (indexes.IDs.Count > index && indexes.Revisions.Count > index) {
             this.RecordID = indexes.IDs[index];
+            // this.Revision = Convert.ToInt32(indexes.Revisions[index]);
             this.Revision = Convert.ToInt32(indexes.Revisions[index]);
 
             return new KintoneIndex {
                 ID = RecordID,
-                Revision = this.Revision
+                Revision = this.Revision,
             };
         }
         return new KintoneIndex();

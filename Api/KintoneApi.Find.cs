@@ -39,11 +39,9 @@ public partial class KintoneApi {
         }
 
         if (ids.Count <= KintoneLimit) {
-            // クエリ文字列を直接生成
-            // var idConditions = string.Join(" or ", ids.Select(x => $"$id=\"{x}\""));
-            var query = new KintoneQuery<T>().WhereIdIn(ids);
+            var query = new KintoneQuery<T>().WhereIdsEquals(ids);
             var appID = new T().AppID;
-            var requestUri = this.BuildRequestUri(KintoneApiEndpoints.GetRecords, $"app={appID}&{query}");
+            var requestUri = this.BuildRequestUri(KintoneApiEndpoints.GetRecords, $"app={appID}&query={query}");
 
             using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
             this.SetHeaders(request);

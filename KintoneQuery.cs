@@ -6,8 +6,7 @@ using System.Text;
 
 namespace KintoneNetLibrary;
 
-public class KintoneQuery<T>
-{
+public class KintoneQuery<T> {
     private readonly List<string> _conditions = [];
     private string? _orderBy;
     private int? _limit;
@@ -39,19 +38,24 @@ public class KintoneQuery<T>
         return this;
     }
 
-    public KintoneQuery<T> WhereIdEquals(string id)
-    {
+    public KintoneQuery<T> WhereIdEquals(string id) {
         if (string.IsNullOrWhiteSpace(id)) { return this; }
 
         this._conditions.Add($"$id = \"{id}\"");
         return this;
     }
 
+    public KintoneQuery<T> WhereIdsEquals(IEnumerable<string> ids) {
+        if (ids == null || !ids.Any()) { return this; }
+
+        this._conditions.Add(string.Join(" or ", ids.Select(x => $"$id=\"{x}\"")));
+        return this;
+    }
+
     /// <summary>
     /// IDフィールドが指定したIDリストのどれかに一致する条件を追加します。
     /// </summary>
-    public KintoneQuery<T> WhereIdIn(IList<string> ids)
-    {
+    public KintoneQuery<T> WhereIdIn(IList<string> ids) {
         if (ids == null || ids.Count == 0) return this;
 
         var quotedIds = ids.Select(id => $"\"{id}\"");
@@ -62,8 +66,7 @@ public class KintoneQuery<T>
     /// <summary>
     /// 指定したフィールドが指定した値に等しい条件を追加します。
     /// </summary>
-    public KintoneQuery<T> WhereEquals(string field, string value)
-    {
+    public KintoneQuery<T> WhereEquals(string field, string value) {
         if (string.IsNullOrEmpty(field)) return this;
 
         this._conditions.Add($"{field} = \"{value}\"");
@@ -73,11 +76,9 @@ public class KintoneQuery<T>
     /// <summary>
     /// 任意のクエリ文字列を直接設定します。既存条件はクリアされます。
     /// </summary>
-    public KintoneQuery<T> SetQuery(string query)
-    {
+    public KintoneQuery<T> SetQuery(string query) {
         this._conditions.Clear();
-        if (!string.IsNullOrEmpty(query))
-        {
+        if (!string.IsNullOrEmpty(query)) {
             this._conditions.Add(query);
         }
         return this;
@@ -87,14 +88,11 @@ public class KintoneQuery<T>
     /// 条件を "and" でつなげたクエリ文字列を返します。
     /// </summary>
     /// <param name="urlEncode">URLエンコードするかどうか</param>
-    public string Build(bool urlEncode = false)
-    {
+    public string Build(bool urlEncode = false) {
         var queryStr = string.Join(" and ", _conditions);
-        if (urlEncode)
-        {
+        if (urlEncode) {
             return Uri.EscapeDataString(queryStr);
-        } else
-        {
+        } else {
             return queryStr;
         }
     }
@@ -122,8 +120,7 @@ public class KintoneQuery<T>
     }
 }
 
-internal static class KintoneQueryExpressionParser
-{
+internal static class KintoneQueryExpressionParser {
     public static string Parse<T>(Expression<Func<T, bool>> expression) {
         // このメソッドは、Expression を解析して kintone のクエリ文字列を生成するロジックを実装します。
         // 実装は省略していますが、必要に応じて追加してください。

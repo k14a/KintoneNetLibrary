@@ -6,8 +6,7 @@ namespace KintoneNetLibrary.Types;
 /// <summary>
 /// 一括登録・更新などで複数レコード分の結果を返す DTO.
 /// </summary>
-public class KintoneIndexes
-{
+public class KintoneIndexes {
     /// <summary>
     /// レコード ID リスト
     /// </summary>
@@ -19,4 +18,8 @@ public class KintoneIndexes
     /// </summary>
     [JsonPropertyName("revisions")]
     public IList<string?> Revisions { get; set; } = [];
+}
+internal class KintoneRecordIndexesResponse {
+    [JsonPropertyName("records")]
+    public List<KintoneIndex> Records { get; set; } = [];
 }

@@ -124,7 +124,7 @@ public abstract partial class KintoneModelBase {
                 continue;
             }
 
-            var fieldCode = attr?.Name;
+            var fieldCode = attr?.FieldCode;
             if (string.IsNullOrEmpty(fieldCode)) {
                 fieldCode = prop.Name;
             }

@@ -4,6 +4,8 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
+using KintoneNetLibrary.Internal;
+using System.Linq.Expressions;
 
 namespace KintoneNetLibrary.Api;
 
@@ -13,6 +15,9 @@ public partial class KintoneApi {
     // JsonSerializerOptions は再利用推奨のためstaticで保持
     private static readonly JsonSerializerOptions _jsonOptions = new() {
         PropertyNameCaseInsensitive = true,
+        Converters = {
+            new KintoneRecordConverterFactory(),
+        },
         // 必要に応じて他のオプションを追加
     };
     /// <summary>

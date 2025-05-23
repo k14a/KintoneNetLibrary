@@ -4,12 +4,11 @@ using System;
 namespace KintoneNetLibrary;
 
 [AttributeUsage(AttributeTargets.Property, Inherited = true, AllowMultiple = false)]
-public class KintoneItemAttribute : Attribute
-{
+public class KintoneItemAttribute : Attribute {
     /// <summary>
     /// Kintoneフィールドコード
     /// </summary>
-    public string Name { get; set; }
+    public string FieldCode { get; set; }
     /// <summary>
     /// 日付型
     /// </summary>
@@ -30,13 +29,13 @@ public class KintoneItemAttribute : Attribute
     /// <summary>
     /// Constructor
     /// </summary>
-    /// <param name="name"></param>
+    /// <param name="fieldCode"></param>
     /// <param name="fieldType"></param>
     /// <param name="initialValue"></param>
     /// <param name="isUpload"></param>
     /// <param name="isKey"></param>
-    public KintoneItemAttribute(string name = "", KintoneDateTime.DateTimeType fieldType = KintoneDateTime.DateTimeType.DateTime, object? initialValue = null, bool isUpload = true, bool isKey = false) {
-        Name = name;
+    public KintoneItemAttribute(string fieldCode = "", KintoneDateTime.DateTimeType fieldType = KintoneDateTime.DateTimeType.DateTime, object? initialValue = null, bool isUpload = true, bool isKey = false) {
+        FieldCode = fieldCode;
         this.FieldType = fieldType;
         this.InitialValue = initialValue;
         this.IsUpload = isUpload;
