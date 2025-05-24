@@ -1,89 +1,65 @@
 ﻿using System.Reflection;
 using System.Text.Json.Serialization;
-using KintoneNetLibrary.Domain.Entities;
+using KintoneNetLibrary.Infrastructure.Converters;
 
-namespace KintoneNetLibrary.Model;
+namespace KintoneNetLibrary.Domain.Entities;
 
 /// <summary>
 /// Kintone アプリのレコードに対応する抽象基底モデル。
 /// 継承して具体モデル（例: BookModel）を作成してください。
 /// </summary>
-public abstract partial class KintoneModelBase {
+public abstract class KintoneModelBase : KintoneModelHookBase {
     /* ----------  派生クラスが必ず実装するアプリ ID  ---------- */
-    /// <summary>
-    /// このモデルが属する kintone アプリ ID
-    /// </summary>
+
+    /// <summary>このモデルが属する kintone アプリ ID</summary>
     public abstract int AppID { get; }
 
     /* ----------  共通フィールド  ---------- */
-    /// <summary>
-    /// レコード番号
-    /// </summary>
+
+    /// <summary>レコード番号</summary>
     public virtual string? RecordID { get; set; }
     [JsonIgnore()]
     public string? ID {
         get => this.RecordID;
         set => this.RecordID = value;
     }
-    /// <summary>
-    /// 登録日時
-    /// </summary>
+
+    /// <summary>登録日時</summary>
     [KintoneItem(FieldType = KintoneDateTime.DateTimeType.DateTime, IsUpload = false)]
     public virtual DateTime CreatedTime { get; set; } = DateTime.MinValue;
-    /// <summary>
-    /// 更新日時
-    /// </summary>
+
+    /// <summary>更新日時</summary>
     [KintoneItem(FieldType = KintoneDateTime.DateTimeType.DateTime, IsUpload = false)]
     public virtual DateTime UpdatedTime { get; set; } = DateTime.MinValue;
-    /// <summary>
-    /// 作成者
-    /// </summary>
+
+    /// <summary>作成者</summary>
     public virtual KintoneUser CreatedBy { get; set; } = new();
-    /// <summary>
-    /// 更新者
-    /// </summary>
+
+    /// <summary>更新者</summary>
     public virtual KintoneUser UpdatedBy { get; set; } = new();
-    /// <summary>
-    /// ステータス
-    /// </summary>
+
+    /// <summary>ステータス</summary>
     public virtual string Status { get; set; } = string.Empty;
-    /// <summary>
-    /// 作業者
-    /// </summary>
+
+    /// <summary>作業者</summary>
     public virtual KintoneUser Assignee { get; set; } = new();
-    /// <summary>
-    /// リビジョン番号（初期 -1 : 無視）
-    /// </summary>
+
+    /// <summary>リビジョン番号（初期 -1 : 無視）</summary>
     public virtual int Revision { get; set; } = -1;
 
     /* ----------  接続オプション（任意） ---------- */
-    /// <summary>
-    /// Kintoneドメイン
-    /// </summary>
+
     public virtual string Domain { get; set; } = string.Empty;
-    /// <summary>
-    /// APIトークン
-    /// </summary>
     public virtual string ApiToken { get; set; } = string.Empty;
-    /// <summary>
-    /// Proxyサーバ
-    /// </summary>
     public virtual string Proxy { get; set; } = string.Empty;
-    /// <summary>
-    /// Proxyユーザ
-    /// </summary>
     public virtual string ProxyUser { get; set; } = string.Empty;
-    /// <summary>
-    /// Proxyパスワード
-    /// </summary>
     public virtual string ProxyPassword { get; set; } = string.Empty;
 
-    /// <summary>
-    /// 更新時にリビジョンを無視するか (default: false)
-    /// </summary>
+    /// <summary>更新時にリビジョンを無視するか (default: false)</summary>
     public bool IgnoreRevision { get; set; }
 
     /* ----------  日本語項目名 ↔ プロパティ名 変換ルール ---------- */
+
     // 既定の変換リスト（必要に応じて派生クラスで Override 可能）
     private IList<NameConvertor> _convertDictionary =
     [
@@ -108,9 +84,7 @@ public abstract partial class KintoneModelBase {
     }
 
     /* ----------  コンストラクタ ---------- */
-    /// <summary>
-    /// コンストラクタ
-    /// </summary>
+
     protected KintoneModelBase() { }
 
     /* ----------  変換用ディクショナリ取得ヘルパー ---------- */
@@ -158,5 +132,39 @@ public abstract partial class KintoneModelBase {
         }
 
         return dict;
+    }
+
+    public virtual async Task RunBeforeCreateHookAsync() => await OnBeforeCreateAsync();
+    public virtual async Task RunAfterCreateHookAsync() => await OnAfterCreateAsync();
+    public virtual async Task RunBeforeUpdateHookAsync() => await OnBeforeUpdateAsync();
+    public virtual async Task RunAfterUpdateHookAsync() => await OnAfterUpdateAsync();
+    public virtual async Task RunBeforeDeleteHookAsync() => await OnBeforeDeleteAsync();
+    public virtual async Task RunAfterDeleteHookAsync() => await OnAfterDeleteAsync();
+
+    /// <summary>
+    /// キー項目から再検索して RecordID を取得（必要に応じて派生クラスで実装）。
+    /// </summary>
+    protected virtual Task RefreshIdFromKeyAsync() {
+        // ここではデフォルト実装を空にしておき、
+        // 派生クラスがキー情報を持つ場合は override で ID を埋める。
+        return Task.CompletedTask;
+    }
+
+    /* ---------- 内部ユーティリティ ---------- */
+    /// <summary>
+    /// Save / Create / Update の結果 (KintoneIndexes) をモデルへ反映し、単一結果を返す。
+    /// </summary>
+    private KintoneIndex ApplyIndex(KintoneIndexes indexes, int index = 0) {
+        if (indexes.IDs.Count > index && indexes.Revisions.Count > index) {
+            this.RecordID = indexes.IDs[index];
+            // this.Revision = Convert.ToInt32(indexes.Revisions[index]);
+            this.Revision = Convert.ToInt32(indexes.Revisions[index]);
+
+            return new KintoneIndex {
+                ID = RecordID,
+                Revision = this.Revision,
+            };
+        }
+        return new KintoneIndex();
     }
 }

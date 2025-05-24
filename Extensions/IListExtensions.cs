@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace KintoneNetLibrary.Extensions;
+﻿namespace KintoneNetLibrary.Extensions;
 
 /// <summary>
 /// IList&lt;T&gt; 用のユーティリティ拡張メソッド。

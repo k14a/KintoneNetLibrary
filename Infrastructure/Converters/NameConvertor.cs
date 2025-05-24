@@ -1,4 +1,4 @@
-﻿namespace KintoneNetLibrary.Model;
+﻿namespace KintoneNetLibrary.Infrastructure.Converters;
 
 /// <summary>
 /// Kintone の項目名と C# 側のプロパティ名の変換ルール。
@@ -26,44 +26,20 @@ public class NameConvertor
     /// </summary>
     public enum Direction
     {
-        /// <summary>
-        /// 双方向
-        /// </summary>
         Both,
-        /// <summary>
-        /// 読み込み
-        /// </summary>
         Read,
-        /// <summary>
-        /// 送信
-        /// </summary>
         Send
     }
 
-    /// <summary>
-    /// コンストラクタ
-    /// </summary>
     public NameConvertor() { }
 
-    /// <summary>
-    /// コンストラクタ
-    /// </summary>
-    /// <param name="itemName"></param>
-    /// <param name="propertyName"></param>
-    /// <param name="direction"></param>
     public NameConvertor(string itemName, string propertyName, Direction direction = Direction.Both)
     {
         this.ItemName = itemName;
         this.PropertyName = propertyName;
         this.ConvertDirection = direction;
     }
-    /// <summary>
-    /// 変換情報登録
-    /// </summary>
-    /// <param name="itemName"></param>
-    /// <param name="propertyName"></param>
-    /// <param name="direction"></param>
-    /// <returns></returns>
+
     public static NameConvertor Create(string itemName, string propertyName, Direction direction = Direction.Both)
     {
         return new NameConvertor(itemName, propertyName, direction);

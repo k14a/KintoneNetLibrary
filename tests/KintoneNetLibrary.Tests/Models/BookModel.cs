@@ -1,5 +1,4 @@
-using KintoneNetLibrary.Internal;
-using KintoneNetLibrary.Model;
+using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.Tests.Models;
 
