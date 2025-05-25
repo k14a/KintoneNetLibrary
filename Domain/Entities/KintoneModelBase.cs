@@ -167,4 +167,64 @@ public abstract class KintoneModelBase : KintoneModelHookBase {
         }
         return new KintoneIndex();
     }
+
+    public virtual bool HasUpdateKeyOrID() {
+        // 1. 明示的な ID がある場合
+        if (!string.IsNullOrEmpty(this.ID)) {
+            return true;
+        }
+
+        // 2. IsKey 属性のあるプロパティが1つ以上セットされている場合
+        var keyProps = this.GetType()
+            .GetProperties()
+            .Where(p => Attribute.IsDefined(p, typeof(KintoneItemAttribute)) &&
+                        ((KintoneItemAttribute)Attribute.GetCustomAttribute(p, typeof(KintoneItemAttribute))!)!.IsKey);
+
+        foreach (var prop in keyProps) {
+            var value = prop.GetValue(this);
+            if (value is string str && !string.IsNullOrEmpty(str)) {
+                return true;
+            }
+
+            if (value != null) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+    public virtual Dictionary<string, object> ToKintoneUpdateRecord() {
+        var record = ToKintoneRecord();
+
+        if (!string.IsNullOrEmpty(ID)) {
+            record["id"] = ID;
+        } else {
+            var keyField = GetUpdateKeyField(out var keyValue);
+            if (keyField != null && keyValue != null) {
+                record["updateKey"] = new Dictionary<string, object?> {
+                    ["field"] = keyField,
+                    ["value"] = keyValue
+                };
+            }
+        }
+
+        if (!string.IsNullOrEmpty(Revision)) {
+            record["revision"] = Revision;
+        }
+
+        return record;
+    }
+    private (string? fieldCode, object? value) GetUpdateKeyField(out object? keyValue) {
+        var keyProp = this.GetType().GetProperties()
+            .FirstOrDefault(p => p.GetCustomAttribute<KintoneItemAttribute>()?.IsKey == true);
+
+        if (keyProp != null) {
+            var attr = keyProp.GetCustomAttribute<KintoneItemAttribute>();
+            keyValue = keyProp.GetValue(this);
+            return (attr?.FieldCode, keyValue);
+        }
+
+        keyValue = null;
+        return (null, null);
+    }
 }

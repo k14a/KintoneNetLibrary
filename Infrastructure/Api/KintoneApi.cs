@@ -3,8 +3,11 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using KintoneNetLibrary.Domain.Common;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Infrastructure.Converters;
+using static KintoneNetLibrary.Domain.Common.KintoneConstants;
 
 namespace KintoneNetLibrary.Infrastructure.Api;
 
@@ -19,14 +22,14 @@ public partial class KintoneApi {
         },
         // 必要に応じて他のオプションを追加
     };
-    /// <summary>
-    /// Kintoneデータ取得上限
-    /// </summary>
-    private const int KintoneLimit = 500;
-    /// <summary>
-    /// Kintoneデータ削除上限
-    /// </summary>
-    private const int KintoneDeleteLimit = 100;
+    // /// <summary>
+    // /// Kintoneデータ取得上限
+    // /// </summary>
+    // private const int KintoneLimit = 500;
+    // /// <summary>
+    // /// Kintoneデータ削除上限
+    // /// </summary>
+    // private const int KintoneDeleteLimit = 100;
     private readonly ILogger<KintoneApi>? _logger;
     #endregion
 
@@ -104,6 +107,26 @@ public partial class KintoneApi {
             this._httpClient.BaseAddress = string.IsNullOrWhiteSpace(this.Domain) ? null : new Uri($"https://{this.Domain.TrimEnd('/')}/k/v1/");
         }
         this.EnsureDefaultHeaders();
+    }
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="options"></param>
+    /// <param name="logger"></param>
+    /// <exception cref="ArgumentNullException"></exception>
+    public KintoneApi(IOptions<KintoneApiOptions> options, ILogger<KintoneApi>? logger = null) {
+        if (options?.Value == null) {
+            throw new ArgumentNullException(nameof(options));
+        }
+
+        var value = options.Value;
+
+        this.Domain = value.Domain;
+        this.AppID = value.AppID;
+        this.ApiToken = value.ApiToken;
+        this._logger = logger;
+
+        this.InitHttpClient();
     }
     #endregion
 

@@ -5,6 +5,7 @@ using KintoneNetLibrary.Application.UseCases;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Infrastructure.Converters;
 using KintoneNetLibrary.Infrastructure.Internal;
+using static KintoneNetLibrary.Domain.Common.KintoneConstants;
 
 namespace KintoneNetLibrary.Infrastructure.Api;
 
@@ -94,8 +95,8 @@ public partial class KintoneApi {
             var countResult = JsonSerializer.Deserialize<RecordCountResponse>(countJson, _jsonOptions) ?? new RecordCountResponse();
 
             if (countResult.TotalCount > KintoneLimit) {
-                // カーソル API に切替（この部分は CursorFetchAllAsync<T>() 側も JSON 対応要検討）
-                throw new NotSupportedException("CursorFetchAllAsync<T>() は現在 JSON 未対応です。");
+                // カーソル API に切替
+                return await this.CursorFetchAllJsonAsync<T>(query.Build(false));
             }
         }
 

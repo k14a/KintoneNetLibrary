@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using System.Net.Http.Json;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Infrastructure.Converters;
+using static KintoneNetLibrary.Domain.Common.KintoneConstants;
 
 namespace KintoneNetLibrary.Infrastructure.Api;
 
@@ -15,10 +16,10 @@ public partial class KintoneApi {
        DELETE /records/cursor.json   … DeleteCursorAsync
        ========================================================= */
 
-    private const int CursorDefaultSize = 500;
+    // private const int CursorDefaultSize = 500;
 
     /* ---------- カーソル作成 ---------- */
-    public async Task<string> CreateCursorAsync<T>(string query, IEnumerable<string>? fields = null, int size = CursorDefaultSize) where T : KintoneModelBase, new() {
+    public async Task<string> CreateCursorAsync<T>(string query, IEnumerable<string>? fields = null, int size = CursorFetchLimit) where T : KintoneModelBase, new() {
         var model = new T();
 
         var body = new {
@@ -97,7 +98,7 @@ public partial class KintoneApi {
     public async IAsyncEnumerable<T> StreamCursorAsync<T>(
         string query,
         IEnumerable<string>? fields = null,
-        int size = CursorDefaultSize
+        int size = CursorFetchLimit
     ) where T : KintoneModelBase, new() {
         var cursorId = await this.CreateCursorAsync<T>(query, fields, size);
 
@@ -116,7 +117,7 @@ public partial class KintoneApi {
             await this.DeleteCursorAsync(cursorId);
         }
     }
-    public async IAsyncEnumerable<string> StreamCursorJsonAsync<T>(string query, IEnumerable<string>? fields = null, int size = CursorDefaultSize) where T : KintoneModelBase, new() {
+    public async IAsyncEnumerable<string> StreamCursorJsonAsync<T>(string query, IEnumerable<string>? fields = null, int size = CursorFetchLimit) where T : KintoneModelBase, new() {
         var cursorId = await this.CreateCursorAsync<T>(query, fields, size);
 
         try {

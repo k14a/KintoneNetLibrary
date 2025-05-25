@@ -4,6 +4,7 @@ using System.Text.Json;
 using KintoneNetLibrary.Extensions;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Infrastructure.Converters;
+using static KintoneNetLibrary.Domain.Common.KintoneConstants;
 using Microsoft.Extensions.Logging;
 
 namespace KintoneNetLibrary.Infrastructure.Api;
