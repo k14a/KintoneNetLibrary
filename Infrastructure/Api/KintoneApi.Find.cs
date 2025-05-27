@@ -116,10 +116,9 @@ public partial class KintoneApi {
         return json;
     }
 
-
     /* ---------- カーソル API を使って最後まで取得 ---------- */
     private async Task<string> CursorFetchAllJsonAsync<T>(string query) where T : KintoneModelBase, new() {
-        var cursor = await this.CreateCursorAsync<T>(query);
+        var cursor = await this.CreateCursorJsonAsync(query);
         var resultJsonList = new List<string>();
 
         await foreach (var json in this.StreamCursorJsonAsync<T>(cursor)) {

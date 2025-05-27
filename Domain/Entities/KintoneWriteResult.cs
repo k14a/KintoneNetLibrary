@@ -5,8 +5,8 @@ namespace KintoneNetLibrary.Domain.Entities;
 
 public class KintoneWriteResult<T> where T : KintoneModelBase
 {
-    public IList<T> Succeeded { get; init; } = new List<T>();
-    public IList<KintoneWriteFailure<T>> Failed { get; init; } = new List<KintoneWriteFailure<T>>();
+    public IList<T> Succeeded { get; init; } = [];
+    public IList<KintoneWriteFailure<T>> Failed { get; init; } = [];
 
     public bool HasFailures => Failed.Count > 0;
 

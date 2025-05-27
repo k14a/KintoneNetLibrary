@@ -8,6 +8,7 @@ using static KintoneNetLibrary.Domain.Common.KintoneConstants;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using KintoneNetLibrary.Infrastructure.Factories;
+using KintoneNetLibrary.Domain.Common;
 
 namespace KintoneNetLibrary.Application.UseCases.Services;
 
@@ -16,6 +17,7 @@ public class KintoneModelCrudService {
     private readonly ILogger<KintoneModelCrudService>? _logger;
     private readonly IKintoneApiFactory _apiFactory;
     private readonly KintoneAccount _account;
+    private static readonly JsonSerializerOptions _jsonOptions = KintoneJsonOptions.Default;
 
     public KintoneModelCrudService(IKintoneRepository repository, IKintoneApiFactory apiFactory, IOptions<KintoneAccount> accountOptions, ILogger<KintoneModelCrudService> logger) {
         this._repository = repository ?? throw new ArgumentNullException(nameof(repository));
@@ -243,6 +245,53 @@ public class KintoneModelCrudService {
         return result;
     }
 
+    public async Task<KintoneWriteResult<T>> SaveWithRetryAsync<T>( IEnumerable<T> records, bool enableSingleRetryOnError = false, bool enableCreateToUpdateRetry = true) where T : KintoneModelBase, new() {
+        var result = new KintoneWriteResult<T>();
+
+        var createTargets = new List<T>();
+        var updateTargets = new List<T>();
+
+        foreach (var record in records) {
+            if (record.HasUpdateKeyOrID()) {
+                updateTargets.Add(record);
+            } else {
+                createTargets.Add(record);
+            }
+        }
+
+        // create 処理
+        if (createTargets.Count > 0) {
+            var createResult = await CreateAsync(createTargets, enableSingleRetryOnError);
+
+            result.Succeeded.AddRange(createResult.Succeeded);
+            result.Failed.AddRange(createResult.Failed);
+
+            // 🔁 create に失敗したレコードを update として再試行
+            if (enableCreateToUpdateRetry) {
+                var retryCandidates = createResult.Failed
+                    .Where(f => f.Record.HasUpdateKeyOrID()) // update できる条件を満たす
+                    .Select(f => f.Record)
+                    .ToList();
+
+                if (retryCandidates.Count != 0) {
+                    var updateResult = await UpdateAsync(retryCandidates, enableSingleRetryOnError);
+                    result.Succeeded.AddRange(updateResult.Succeeded);
+                    result.Failed.RemoveAll(f => retryCandidates.Contains(f.Record)); // 一度失敗したが成功に変わったものを除外
+                    result.Failed.AddRange(updateResult.Failed); // 再試行の失敗分を追加
+                }
+            }
+        }
+
+        // update 処理
+        if (updateTargets.Count > 0) {
+            var updateResult = await UpdateAsync(updateTargets, enableSingleRetryOnError);
+            result.Succeeded.AddRange(updateResult.Succeeded);
+            result.Failed.AddRange(updateResult.Failed);
+        }
+
+        return result;
+    }
+
     private string BuildCreateJson<T>(IEnumerable<T> records) where T : KintoneModelBase {
         var list = records.ToList();
         var appID = list.First().AppID;
@@ -260,23 +309,6 @@ public class KintoneModelCrudService {
         };
 
         return JsonSerializer.Serialize(jsonObj);
-    }
-    public virtual Dictionary<string, object> ToKintoneRecord() {
-        var dict = new Dictionary<string, object>();
-
-        foreach (var prop in this.GetType().GetProperties()) {
-            var attr = prop.GetCustomAttribute<KintoneItemAttribute>();
-            if (attr == null) {
-                continue;
-            }
-
-            var fieldCode = attr.FieldCode;
-            var value = prop.GetValue(this);
-
-            dict[fieldCode] = new { value };
-        }
-
-        return dict;
     }
     private IList<T> ParseCreatedRecords<T>(IEnumerable<T> originalRecords, string responseJson)
         where T : KintoneModelBase, new() {

@@ -1,34 +1,18 @@
-﻿using System.Text.Json;
+﻿using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Net.Http.Json;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Infrastructure.Converters;
+using Microsoft.Extensions.Logging;
 using static KintoneNetLibrary.Domain.Common.KintoneConstants;
 
 namespace KintoneNetLibrary.Infrastructure.Api;
 
 public partial class KintoneApi {
-    /* =========================================================
-       Cursor API
-       ---------------------------------------------------------
-       POST   /records/cursor.json   … CreateCursorAsync
-       GET    /records/cursor.json   … FetchCursorAsync
-       DELETE /records/cursor.json   … DeleteCursorAsync
-       ========================================================= */
-
-    // private const int CursorDefaultSize = 500;
 
     /* ---------- カーソル作成 ---------- */
-    public async Task<string> CreateCursorAsync<T>(string query, IEnumerable<string>? fields = null, int size = CursorFetchLimit) where T : KintoneModelBase, new() {
-        var model = new T();
-
-        var body = new {
-            app = model.AppID,
-            query = query,
-            size = size,
-            fields = fields ?? new List<string>()  // null→全フィールド
-        };
-
+    public async Task<string> CreateCursorJsonAsync(string body) {
         using var request = new HttpRequestMessage(HttpMethod.Post, "records/cursor.json");
         request.Headers.Add("X-Cybozu-API-Token", this.ApiToken);
         request.Content = JsonContent.Create(body, options: _jsonOptions);
@@ -41,33 +25,18 @@ public partial class KintoneApi {
         }
 
         var created = JsonSerializer.Deserialize<CursorCreated>(json, _jsonOptions);
-        return created?.Id
-            ?? throw new KintoneException("Cursor ID が取得できませんでした。");
+        return created?.Id ?? throw new KintoneException("Cursor ID が取得できませんでした。");
     }
 
     /* ---------- 1ページ取得 ---------- */
-    public async Task<CursorFetch<T>> FetchCursorAsync<T>(string cursorId) {
+    public async Task<string> FetchCursorJsonAsync(string cursorId) {
         using var request = new HttpRequestMessage(HttpMethod.Get, $"records/cursor.json?id={cursorId}");
         request.Headers.Add("X-Cybozu-API-Token", this.ApiToken);
 
-        using var resp = await this._httpClient.SendAsync(request);
-        var json = await resp.Content.ReadAsStringAsync();
-
-        if (!resp.IsSuccessStatusCode) {
-            throw new KintoneException(KintoneErrorConverter.Parse(json));
-        }
-
-        return JsonSerializer.Deserialize<CursorFetch<T>>(json, _jsonOptions)
-               ?? new CursorFetch<T>();
-    }
-    private async Task<string> FetchCursorRawJsonAsync(string cursorId) {
-        var requestUri = $"{this.GetBaseUri()}/k/v1/records/cursor.json?id={cursorId}";
-
-        using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
-        this.SetHeaders(request);
-
-        using var response = await this._httpClient.SendAsync(request);
+        using var response = await _httpClient.SendAsync(request);
         var json = await response.Content.ReadAsStringAsync();
+
+        _logger?.LogDebug("FetchCursorJson received: {Json}", json);
 
         if (!response.IsSuccessStatusCode) {
             throw new KintoneException(KintoneErrorConverter.Parse(json));
@@ -76,65 +45,133 @@ public partial class KintoneApi {
         return json;
     }
 
+    private async Task<string> FetchCursorRawJsonAsync(string cursorId) {
+        var endpoint = $"records/cursor.json?id={cursorId}";
+        var requestUri = $"{GetBaseUri()}/k/v1/{endpoint}";
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+        SetHeaders(request);
+
+        var response = await _httpClient.SendAsync(request);
+        var json = await response.Content.ReadAsStringAsync();
+
+        _logger?.LogDebug("FetchCursorRawJson received: {Json}", json);
+
+        if (!response.IsSuccessStatusCode) {
+            var error = KintoneErrorConverter.Parse(json);
+            _logger?.LogError("FetchCursorRawJson failed: {Message}", error.Message);
+            throw new KintoneException(error);
+        }
+
+        return json;
+    }
+
+    public async Task<IList<string>> CursorFetchAllJsonAsync(string cursorId) {
+        var allPages = new List<string>();
+
+        while (true) {
+            var json = await FetchCursorRawJsonAsync(cursorId);
+            allPages.Add(json);
+
+            var parsed = JsonSerializer.Deserialize<JsonDocument>(json, _jsonOptions) ?? throw new KintoneException("FetchCursorAll: JSONのパースに失敗しました。");
+            var next = parsed.RootElement.GetProperty("next").GetBoolean();
+            if (!next) {
+                break;
+            }
+        }
+
+        return allPages;
+    }
 
     /* ---------- カーソル削除 ---------- */
-    public async Task DeleteCursorAsync(string cursorId) {
-        var body = new { id = cursorId };
-
-        using var request = new HttpRequestMessage(HttpMethod.Delete, "records/cursor.json") {
-            Content = JsonContent.Create(body, options: _jsonOptions)
+    public async Task<string> DeleteCursorJsonAsync(string json) {
+        var request = new HttpRequestMessage(HttpMethod.Delete, $"{GetBaseUri()}/k/v1/records/cursor.json") {
+            Content = new StringContent(json, Encoding.UTF8, "application/json")
         };
-        request.Headers.Add("X-Cybozu-API-Token", this.ApiToken);
 
-        using var resp = await this._httpClient.SendAsync(request);
-        var json = await resp.Content.ReadAsStringAsync();
+        SetHeaders(request);
 
-        if (!resp.IsSuccessStatusCode) {
-            throw new KintoneException(KintoneErrorConverter.Parse(json));
+        var response = await _httpClient.SendAsync(request);
+        var responseJson = await response.Content.ReadAsStringAsync();
+
+        if (!response.IsSuccessStatusCode) {
+            throw new KintoneException(KintoneErrorConverter.Parse(responseJson));
         }
+
+        return responseJson;
     }
 
     /* ---------- 逐次ストリーム取得 ---------- */
-    public async IAsyncEnumerable<T> StreamCursorAsync<T>(
-        string query,
-        IEnumerable<string>? fields = null,
-        int size = CursorFetchLimit
-    ) where T : KintoneModelBase, new() {
-        var cursorId = await this.CreateCursorAsync<T>(query, fields, size);
+    public async IAsyncEnumerable<T> StreamCursorAsync<T>(string query, IEnumerable<string>? fields = null, int size = CursorFetchLimit) where T : KintoneModelBase, new() {
+        // カーソル作成用 JSON の構築
+        var createRequest = new {
+            app = new T().AppID,
+            query,
+            size,
+            fields = fields ?? new List<string>()  // nullなら全フィールド
+        };
+        var createJson = JsonSerializer.Serialize(createRequest, _jsonOptions);
+        var createResponseJson = await CreateCursorJsonAsync(createJson);
+
+        var createdCursor = JsonSerializer.Deserialize<CursorCreated>(createResponseJson, _jsonOptions) ?? throw new KintoneException("カーソル作成レスポンスの解析に失敗しました。");
+        var cursorId = createdCursor.Id;
 
         try {
             while (true) {
-                var page = await this.FetchCursorAsync<T>(cursorId);
-                foreach (var record in page.Records) {
+                var fetchRequestJson = $"{{\"id\":\"{cursorId}\"}}";
+                var fetchResponseJson = await FetchCursorJsonAsync(fetchRequestJson);
+
+                var fetched = JsonSerializer.Deserialize<CursorFetch<T>>(fetchResponseJson, _jsonOptions) ?? new CursorFetch<T>();
+
+                foreach (var record in fetched.Records) {
                     yield return record;
                 }
 
-                if (page.Done) {
+                if (fetched.Done) {
                     break;
                 }
             }
         } finally {
-            await this.DeleteCursorAsync(cursorId);
+            var deleteRequestJson = JsonSerializer.Serialize(new { id = cursorId }, _jsonOptions);
+            await DeleteCursorJsonAsync(deleteRequestJson);
         }
     }
-    public async IAsyncEnumerable<string> StreamCursorJsonAsync<T>(string query, IEnumerable<string>? fields = null, int size = CursorFetchLimit) where T : KintoneModelBase, new() {
-        var cursorId = await this.CreateCursorAsync<T>(query, fields, size);
+
+    public async IAsyncEnumerable<string> StreamCursorJsonAsync<T>( string query, IEnumerable<string>? fields = null, int size = CursorFetchLimit) where T : KintoneModelBase, new() {
+        // カーソル作成リクエスト用オブジェクト
+        var createRequest = new {
+            app = new T().AppID,
+            query,
+            size,
+            fields = fields ?? new List<string>()  // null → 全フィールド
+        };
+
+        // JSONに変換して送信
+        var createJson = JsonSerializer.Serialize(createRequest, _jsonOptions);
+        var createResponse = await CreateCursorJsonAsync(createJson);
+
+        // カーソルID取得
+        var cursor = JsonSerializer.Deserialize<CursorCreated>(createResponse, _jsonOptions) ?? throw new KintoneException("カーソル作成に失敗しました。");
+        var cursorId = cursor.Id;
 
         try {
             while (true) {
-                var page = await this.FetchCursorRawJsonAsync(cursorId); // JSON 文字列としてページを取得
-                yield return page;
+                // カーソル取得（JSON 文字列）
+                var fetchRequestJson = $"{{\"id\":\"{cursorId}\"}}";
+                var pageJson = await FetchCursorRawJsonAsync(fetchRequestJson);
 
-                using var doc = JsonDocument.Parse(page);
+                yield return pageJson;
+
+                using var doc = JsonDocument.Parse(pageJson);
                 if (doc.RootElement.TryGetProperty("done", out var doneProp) && doneProp.GetBoolean()) {
                     break;
                 }
             }
         } finally {
-            await this.DeleteCursorAsync(cursorId);
+            var deleteRequestJson = JsonSerializer.Serialize(new { id = cursorId }, _jsonOptions);
+            await DeleteCursorJsonAsync(deleteRequestJson);
         }
     }
-
 
     /* =========================================================
        内部 DTO

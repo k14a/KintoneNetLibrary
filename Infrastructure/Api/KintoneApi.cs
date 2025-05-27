@@ -15,13 +15,14 @@ public partial class KintoneApi {
     #region <<Private values>>
     private HttpClient _httpClient;
     // JsonSerializerOptions は再利用推奨のためstaticで保持
-    private static readonly JsonSerializerOptions _jsonOptions = new() {
-        PropertyNameCaseInsensitive = true,
-        Converters = {
-            new KintoneRecordConverterFactory(),
-        },
-        // 必要に応じて他のオプションを追加
-    };
+    private static readonly JsonSerializerOptions _jsonOptions = KintoneJsonOptions.Default;
+    // private static readonly JsonSerializerOptions _jsonOptions = new() {
+    //     PropertyNameCaseInsensitive = true,
+    //     Converters = {
+    //         new KintoneRecordConverterFactory(),
+    //     },
+    //     // 必要に応じて他のオプションを追加
+    // };
     // /// <summary>
     // /// Kintoneデータ取得上限
     // /// </summary>
