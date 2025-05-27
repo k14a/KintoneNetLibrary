@@ -7,38 +7,36 @@ using KintoneNetLibrary.Infrastructure.Api.DTO;
 using static KintoneNetLibrary.Domain.Common.KintoneConstants;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using KintoneNetLibrary.Infrastructure.Factories;
 
 namespace KintoneNetLibrary.Application.UseCases.Services;
 
 public class KintoneModelCrudService {
     private readonly IKintoneRepository _repository;
     private readonly ILogger<KintoneModelCrudService>? _logger;
-    private readonly KintoneApi _api;
+    private readonly IKintoneApiFactory _apiFactory;
+    private readonly KintoneAccount _account;
 
-    public KintoneModelCrudService(IKintoneRepository repository) {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-    }
-    public KintoneModelCrudService(IKintoneRepository repository, ILogger<KintoneModelCrudService> logger) {
+    public KintoneModelCrudService(IKintoneRepository repository, IKintoneApiFactory apiFactory, IOptions<KintoneAccount> accountOptions, ILogger<KintoneModelCrudService> logger) {
         this._repository = repository ?? throw new ArgumentNullException(nameof(repository));
-        this._logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        var apiOptions = new KintoneApiOptions { Domain = repository.Domain, AppID = repository.AppCode, ApiToken = repository.ApiToken };
-        this._api = new KintoneApi(apiOptions, this.Logger);
+        this._apiFactory = apiFactory ?? throw new ArgumentNullException(nameof(apiFactory));
+        this._account = accountOptions.Value ?? throw new ArgumentNullException(nameof(accountOptions));
+        this._logger = logger;
     }
 
     public async Task<KintoneWriteResult<T>> CreateAsync<T>(IEnumerable<T> records, bool enableSingleRetryOnError = false) where T : KintoneModelBase, new() {
-
         var result = new KintoneWriteResult<T>();
 
         foreach (var chunk in records.Chunk(KintoneLimit)) {
             try {
                 var json = BuildCreateJson(chunk);
-                var response = await this._api.PostAsync(json);
-                var parsed = ParseCreatedRecords<T>(chunk, response);
-                foreach (var item in parsed) {
-                    result.Succeeded.Add(item);
-                }
+                var responseJson = await _repository.CreateRecordsAsync<T>(json);
+                var parsed = ParseCreatedRecords(chunk, responseJson);
+
+                result.Succeeded.AddRange(parsed);
+
             } catch (KintoneException ex) {
-                this._logger?.LogWarning("Bulk insert failed: {Summary}", ex.Message);
+                _logger?.LogWarning("Bulk insert failed: {Summary}", ex.Message);
 
                 if (!enableSingleRetryOnError) {
                     foreach (var record in chunk) {
@@ -48,19 +46,19 @@ public class KintoneModelCrudService {
                             Error = ex.Error
                         });
                     }
-
                     continue;
                 }
 
-                // 単件リトライ
+                // 単件ずつ再実行
                 foreach (var record in chunk) {
                     try {
-                        var singleJson = BuildCreateJson(new List<T> { record });
-                        var singleResp = await this._api.PostAsync(singleJson);
-                        var parsed = ParseCreatedRecords<T>([record], singleResp);
+                        var singleJson = BuildCreateJson([record]);
+                        var singleRespJson = await this._repository.CreateRecordsAsync<T>(singleJson);
+                        var parsed = ParseCreatedRecords<T>([record], singleRespJson);
                         result.Succeeded.AddRange(parsed);
+
                     } catch (KintoneException singleEx) {
-                        this._logger?.LogError("Single insert failed: {Summary} - Record: {Record}", singleEx.Message, record);
+                        _logger?.LogError("Single insert failed: {Summary} - Record: {Record}", singleEx.Message, record);
                         result.Failed.Add(new KintoneWriteFailure<T> {
                             Record = record,
                             ErrorMessage = singleEx.Message,
@@ -134,13 +132,14 @@ public class KintoneModelCrudService {
         foreach (var chunk in records.Chunk(KintoneLimit)) {
             try {
                 var json = BuildUpdateJson(chunk);
-                var response = await this._api.PutAsync(json);
-                var parsed = ParseUpdatedRecords(chunk, response);
+                var responseJson = await _repository.UpdateAsync<T>(json);
+                var parsed = ParseUpdatedRecords(chunk, responseJson);
+
                 foreach (var item in parsed) {
                     result.Succeeded.Add(item);
                 }
             } catch (KintoneException ex) {
-                this._logger?.LogWarning("Bulk update failed: {Summary}", ex.Message);
+                _logger?.LogWarning("Bulk update failed: {Summary}", ex.Message);
 
                 if (!enableSingleRetryOnError) {
                     foreach (var record in chunk) {
@@ -158,11 +157,11 @@ public class KintoneModelCrudService {
                 foreach (var record in chunk) {
                     try {
                         var singleJson = BuildUpdateJson([record]);
-                        var singleResp = await this._api.PutAsync(singleJson);
-                        var parsed = ParseUpdatedRecords([record], singleResp);
+                        var singleRespJson = await _repository.UpdateAsync<T>(singleJson);
+                        var parsed = ParseUpdatedRecords([record], singleRespJson);
                         result.Succeeded.AddRange(parsed);
                     } catch (KintoneException singleEx) {
-                        logger?.LogError("Single update failed: {Summary} - Record: {Record}", singleEx.Message, record);
+                        _logger?.LogError("Single update failed: {Summary} - Record: {Record}", singleEx.Message, record);
                         result.Failed.Add(new KintoneWriteFailure<T> {
                             Record = record,
                             ErrorMessage = singleEx.Message,
@@ -178,13 +177,44 @@ public class KintoneModelCrudService {
 
     public async Task<KintoneDeleteResult> DeleteAsync<T>(IEnumerable<T> models) where T : KintoneModelBase {
         var modelList = models.ToList();
+
+        if (modelList.Count == 0) {
+            return new KintoneDeleteResult();
+        }
+
         foreach (var model in modelList) {
             await model.RunBeforeDeleteHookAsync();
         }
 
-        var deleteResult = await _repository.DeleteAsync(modelList);
+        var appId = modelList.First().AppID;
+        var idList = modelList.Select(m => m.RecordID).Where(id => !string.IsNullOrWhiteSpace(id)).ToList();
 
-        // var deleteResult = KintoneDeleteResult.Parse(result, modelList.Select(m => m.RecordID));
+        var deleteBody = new {
+            app = appId,
+            ids = idList
+        };
+
+        string json = JsonSerializer.Serialize(deleteBody, _jsonOptions);
+        string responseJson;
+
+        try {
+            responseJson = await _repository.DeleteAsync<T>(json);
+        } catch (KintoneException ex) {
+            // 失敗したIDをすべて失敗扱いで返す
+            var result = new KintoneDeleteResult();
+            foreach (var id in idList) {
+                result.FailedIDs.Add(new KintoneDeleteFailure {
+                    ID = id,
+                    ErrorMessage = ex.Message
+                });
+            }
+            return result;
+        }
+
+        // 成功した場合は、削除IDをすべて成功扱いに
+        var deleteResult = new KintoneDeleteResult {
+            DeletedIDs = idList
+        };
 
         foreach (var model in modelList.Where(m => deleteResult.DeletedIDs.Contains(m.RecordID))) {
             await model.RunAfterDeleteHookAsync();
@@ -196,16 +226,7 @@ public class KintoneModelCrudService {
     public async Task<KintoneWriteResult<T>> SaveAsync<T>(IEnumerable<T> records, bool enableSingleRetryOnError = false) where T : KintoneModelBase, new() {
         var result = new KintoneWriteResult<T>();
 
-        var createTargets = new List<T>();
-        var updateTargets = new List<T>();
-
-        foreach (var record in records) {
-            if (record.HasUpdateKeyOrID()) {
-                updateTargets.Add(record);
-            } else {
-                createTargets.Add(record);
-            }
-        }
+        var (createTargets, updateTargets) = SplitRecords(records);
 
         if (createTargets.Count > 0) {
             var createResult = await CreateAsync(createTargets, enableSingleRetryOnError);
@@ -222,12 +243,16 @@ public class KintoneModelCrudService {
         return result;
     }
 
-    private string BuildCreateJson<T>(IEnumerable<T> records) where T : KintoneModelBase, new() {
-        var jsonObj = new Dictionary<string, object> {
-            ["records"] = records.Select(r => r.ToKintoneRecord())
+    private string BuildCreateJson<T>(IEnumerable<T> records) where T : KintoneModelBase {
+        var list = records.ToList();
+        var appID = list.First().AppID;
+
+        var body = new {
+            app = appID,
+            records = list.Select(r => r.ToKintoneRecord())
         };
 
-        return JsonSerializer.Serialize(jsonObj);
+        return JsonSerializer.Serialize(body, _jsonOptions);
     }
     private string BuildUpdateJson<T>(IEnumerable<T> records) where T : KintoneModelBase, new() {
         var jsonObj = new Dictionary<string, object> {
@@ -252,5 +277,53 @@ public class KintoneModelCrudService {
         }
 
         return dict;
+    }
+    private IList<T> ParseCreatedRecords<T>(IEnumerable<T> originalRecords, string responseJson)
+        where T : KintoneModelBase, new() {
+        var indexes = KintoneRecordIndexesResponse.Parse(responseJson).ToIndexes();
+
+        var originals = originalRecords.ToList();
+        if (indexes.IDs.Count != originals.Count) {
+            throw new KintoneException("Mismatch between the number of request and response records.");
+        }
+
+        for (int i = 0; i < originals.Count; i++) {
+            originals[i].ID = indexes.IDs[i] ?? string.Empty;
+            if (int.TryParse(indexes.Revisions[i], out var rev)) {
+                originals[i].Revision = rev;
+            }
+        }
+
+        return originals;
+    }
+    private IList<T> ParseUpdatedRecords<T>(IEnumerable<T> records, string responseJson) where T : KintoneModelBase, new() {
+        var indexResponse = KintoneRecordIndexesResponse.Parse(responseJson);
+        var indexes = indexResponse.ToIndexes();
+
+        var recordList = records.ToList();
+        var result = new List<T>();
+
+        for (int i = 0; i < Math.Min(recordList.Count, indexes.IDs.Count); i++) {
+            var model = recordList[i];
+            model.RecordID = indexes.IDs[i] ?? string.Empty;
+            model.Revision = int.TryParse(indexes.Revisions[i], out var revision) ? revision : -1;
+            result.Add(model);
+        }
+
+        return result;
+    }
+    private static (List<T> createTargets, List<T> updateTargets) SplitRecords<T>(IEnumerable<T> records) where T : KintoneModelBase {
+        var createTargets = new List<T>();
+        var updateTargets = new List<T>();
+
+        foreach (var record in records) {
+            if (record.HasUpdateKeyOrID()) {
+                updateTargets.Add(record);
+            } else {
+                createTargets.Add(record);
+            }
+        }
+
+        return (createTargets, updateTargets);
     }
 }

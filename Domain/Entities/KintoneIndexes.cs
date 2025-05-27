@@ -80,5 +80,4 @@ internal class KintoneRecordIndexesResponse {
             Revisions = Records.Select(r => r.RevisionString).ToList()
         };
     }
-
 }

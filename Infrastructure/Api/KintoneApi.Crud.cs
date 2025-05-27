@@ -1,5 +1,6 @@
 ﻿using System.Net.Http.Json;
 using System.Reflection;
+using System.Text;
 using System.Text.Json;
 using KintoneNetLibrary.Extensions;
 using KintoneNetLibrary.Domain.Entities;
@@ -13,142 +14,66 @@ public partial class KintoneApi {
     /*==========================================================
       Create – 複数レコード一括登録
       ==========================================================*/
-    public async Task<KintoneIndexes> CreateAsync<T>(IEnumerable<T> objs) where T : KintoneModelBase {
-        if (objs == null || !objs.Any()) {
-            throw new ArgumentException("登録対象が空です", nameof(objs));
+    public async Task<string> CreateRecordsAsync(string json) {
+        if (string.IsNullOrWhiteSpace(json)) {
+            throw new ArgumentException("JSONデータが空です", nameof(json));
         }
 
-        var records = objs.Select(x => x.ToKintoneRecord()).ToList();
-        var body = new {
-            app = objs.First().AppID,
-            records,
-        };
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        var response = await _httpClient.PostAsJsonAsync("records.json", body, _jsonOptions);
-        var json = await response.Content.ReadAsStringAsync();
-        _logger?.LogDebug("Received response: {Response}", json);
+        var response = await _httpClient.PostAsync("records.json", content);
+        var responseJson = await response.Content.ReadAsStringAsync();
+
+        _logger?.LogDebug("Received response from Kintone: {Response}", responseJson);
 
         if (!response.IsSuccessStatusCode) {
-            throw new KintoneException(KintoneErrorConverter.Parse(json));
+            throw new KintoneException(KintoneErrorConverter.Parse(responseJson));
         }
 
-        var tmp = JsonSerializer.Deserialize<KintoneRecordIndexesResponse>(json, _jsonOptions)
-                  ?? new KintoneRecordIndexesResponse();
-
-        return new KintoneIndexes {
-            IDs = tmp.Records.Select(x => x.ID).ToList(),
-            Revisions = tmp.Records.Select(x => x.RevisionString).ToList(),
-        };
+        return responseJson;
     }
+
 
     /*==========================================================
       Update – 複数レコード一括更新
       ==========================================================*/
-    public async Task<KintoneIndexes> UpdateAsync<T>(IEnumerable<T> objs) where T : KintoneModelBase {
-        if (objs == null || !objs.Any()) {
-            throw new ArgumentException("更新対象が空です", nameof(objs));
+    public async Task<string> UpdateAsync<T>(string json) where T : KintoneModelBase {
+        if (string.IsNullOrWhiteSpace(json)) {
+            throw new ArgumentException("更新対象JSONが空です", nameof(json));
         }
 
-        var records = new List<object>();
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        foreach (var obj in objs) {
-            var record = new Dictionary<string, object>();
-            string? updateKeyField = null;
-            object? updateKeyValue = null;
+        var response = await _httpClient.PutAsync("records.json", content);
+        var responseJson = await response.Content.ReadAsStringAsync();
 
-            foreach (var prop in typeof(T).GetProperties()) {
-                var attr = prop.GetCustomAttribute<KintoneItemAttribute>();
-                if (attr == null || !attr.IsUpload) {
-                    continue;
-                }
-
-                var fieldCode = string.IsNullOrEmpty(attr.FieldCode) ? prop.Name : attr.FieldCode;
-                var value = prop.GetValue(obj);
-
-                if (attr.IsKey) {
-                    updateKeyField = fieldCode;
-                    updateKeyValue = value;
-                    continue;
-                }
-
-                record[fieldCode] = new { value };
-            }
-
-            object recordObject;
-
-            if (updateKeyField != null) {
-                recordObject = new {
-                    updateKey = new {
-                        field = updateKeyField,
-                        value = updateKeyValue
-                    },
-                    record
-                };
-            } else {
-                recordObject = new {
-                    id = obj.RecordID,
-                    record
-                };
-            }
-
-            records.Add(recordObject);
-        }
-
-        var body = new {
-            app = objs.First().AppID,
-            records
-        };
-
-        var response = await _httpClient.PutAsJsonAsync("records.json", body, _jsonOptions);
-        var json = await response.Content.ReadAsStringAsync();
-        _logger?.LogDebug("Received response: {Response}", json);
+        _logger?.LogDebug("Received response: {Response}", responseJson);
 
         if (!response.IsSuccessStatusCode) {
-            throw new KintoneException(KintoneErrorConverter.Parse(json));
+            throw new KintoneException(KintoneErrorConverter.Parse(responseJson));
         }
 
-        var tmp = JsonSerializer.Deserialize<KintoneRecordIndexesResponse>(json, _jsonOptions)
-                  ?? new KintoneRecordIndexesResponse();
-
-        return new KintoneIndexes {
-            IDs = tmp.Records.Select(x => x.ID).ToList(),
-            Revisions = tmp.Records.Select(x => x.RevisionString).ToList(),
-        };
+        return responseJson;
     }
 
     /*==========================================================
       Delete – ID リストで一括削除
       ==========================================================*/
-    public async Task<KintoneDeleteResult> DeleteAsync<T>(IList<string> ids) where T : KintoneModelBase, new() {
-        var t = new T();
-        return await this.DeleteAsync(t.AppID, ids);
-    }
+    public async Task<string> DeleteAsyncJsonAsync(string json) {
+        var request = new HttpRequestMessage(HttpMethod.Delete, "records.json") {
+            Content = new StringContent(json, Encoding.UTF8, "application/json")
+        };
 
-    public async Task<KintoneDeleteResult> DeleteAsync(int appId, IList<string> ids) {
-        var result = new KintoneDeleteResult();
+        var response = await _httpClient.SendAsync(request);
+        var responseJson = await response.Content.ReadAsStringAsync();
 
-        foreach (var chunk in ids.Chunk(KintoneDeleteLimit)) {
-            var body = new { app = appId, ids = chunk };
-            var request = new HttpRequestMessage(HttpMethod.Delete, "records.json") {
-                Content = JsonContent.Create(body, options: _jsonOptions)
-            };
+        _logger?.LogDebug("Delete response: {Response}", responseJson);
 
-            var response = await this._httpClient.SendAsync(request);
-            var json = await response.Content.ReadAsStringAsync();
-
-            if (response.IsSuccessStatusCode) {
-                result.DeletedIDs.AddRange(chunk);
-            } else {
-                var error = KintoneErrorConverter.Parse(json);
-                foreach (var id in chunk) {
-                    result.FailedIDs.Add(new KintoneDeleteFailure {
-                        ID = id,
-                        ErrorMessage = error.Message
-                    });
-                }
-            }
+        if (!response.IsSuccessStatusCode) {
+            throw new KintoneException(KintoneErrorConverter.Parse(responseJson));
         }
 
-        return result;
+        return responseJson;
     }
+
 }

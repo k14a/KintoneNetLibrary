@@ -89,13 +89,9 @@ public abstract class KintoneModelBase : KintoneModelHookBase {
 
     /* ----------  変換用ディクショナリ取得ヘルパー ---------- */
 
-    public IDictionary<string, string> GetToPropertyDic() {
-        return GetNameConvertDic(NameConvertor.Direction.Read);
-    }
+    public IDictionary<string, string> GetToPropertyDic() => GetNameConvertDic(NameConvertor.Direction.Read);
 
-    public IDictionary<string, string> GetToItemNameDic() {
-        return GetNameConvertDic(NameConvertor.Direction.Send);
-    }
+    public IDictionary<string, string> GetToItemNameDic() => GetNameConvertDic(NameConvertor.Direction.Send);
 
     private IDictionary<string, string> GetNameConvertDic(NameConvertor.Direction direction) {
         var converts = ConvertDictionary

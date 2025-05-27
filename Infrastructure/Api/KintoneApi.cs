@@ -50,83 +50,59 @@ public partial class KintoneApi {
     /// ApiToken
     /// </summary>
     public string ApiToken { get; set; } = string.Empty;
+    /// <summary>
+    /// Kintoneログイン名
+    /// </summary>
+    public string LoginName { get; set; } = string.Empty;
+    /// <summary>
+    /// Kintoneログインパスワード
+    /// </summary>
+    public string Password { get; set; } = string.Empty;
+    /// <summary>
+    /// Basic認証ユーザ名
+    /// </summary>
+    public string BasicAuthUser { get; set; } = string.Empty;
+    /// <summary>
+    /// Basic認証パスワード
+    /// </summary>
+    public string BasicAuthPassword { get; set; } = string.Empty;
     #endregion
 
-    #region <<Constructors>>
+    #region <<Constructor(s)>>
     /// <summary>
-    /// Constructor
+    /// コンストラクタ
     /// </summary>
-    public KintoneApi(ILogger<KintoneApi>? logger = null) {
-        this.InitHttpClient();
-        this._logger = logger;
-    }
-    /// <summary>
-    /// Constructor
-    /// </summary>
-    /// <param name="domain">Kintoneドメイン</param>
-    /// <param name="appID">Kintoneアプリケーション番号</param>
-    /// <param name="logger"></param>
-    public KintoneApi(string domain, int appID, ILogger<KintoneApi>? logger = null) {
-        this.Domain = domain;
-        this.AppID = appID;
-        this._logger = logger;
-        this.InitHttpClient();
-    }
-    /// <summary>
-    /// Constructor
-    /// </summary>
-    /// <param name="httpClient">HttpClient</param>
-    /// <param name="apiToken">APIトークン</param>
-    /// <param name="appID">Kintoneアプリケーション番号</param>
-    /// <param name="domain">Kintoneドメイン</param>
-    /// <param name="logger"></param>
-    /// <exception cref="ArgumentNullException">httpClient is null / apiToken is null</exception>
-    public KintoneApi(HttpClient httpClient, string apiToken, int appID, string domain = "", ILogger<KintoneApi>? logger = null) {
-        this._httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-        this.ApiToken = apiToken ?? throw new ArgumentNullException(nameof(apiToken));
-        this.AppID = appID;
-        this._logger = logger;
-        this.Domain = domain;
-        if (!string.IsNullOrWhiteSpace(domain)) {
-            this._httpClient.BaseAddress = string.IsNullOrWhiteSpace(this.Domain) ? null : new Uri($"https://{this.Domain.TrimEnd('/')}/k/v1/");
-        }
-        this.EnsureDefaultHeaders();
-    }
-    /// <summary>
-    /// Constructor
-    /// </summary>
-    /// <param name="httpClient">HttpClient</param>
-    /// <param name="domain">Kintoneドメイン</param>
-    /// <param name="logger"></param>
-    /// <exception cref="ArgumentNullException">httpClient is null</exception>
-    public KintoneApi(HttpClient httpClient, string domain = "", ILogger<KintoneApi>? logger = null) {
-        this._httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-        this._logger = logger;
-        this.Domain = domain;
-        if (!string.IsNullOrWhiteSpace(domain)) {
-            this._httpClient.BaseAddress = string.IsNullOrWhiteSpace(this.Domain) ? null : new Uri($"https://{this.Domain.TrimEnd('/')}/k/v1/");
-        }
-        this.EnsureDefaultHeaders();
-    }
-    /// <summary>
-    /// Constructor
-    /// </summary>
-    /// <param name="options"></param>
+    /// <param name="account">KintoneAccount</param>
+    /// <param name="appID">KintoneアプリケーションID</param>
+    /// <param name="httpClient"></param>
     /// <param name="logger"></param>
     /// <exception cref="ArgumentNullException"></exception>
-    public KintoneApi(IOptions<KintoneApiOptions> options, ILogger<KintoneApi>? logger = null) {
-        if (options?.Value == null) {
-            throw new ArgumentNullException(nameof(options));
+    public KintoneApi(KintoneAccount account, int appID, HttpClient? httpClient = null, ILogger<KintoneApi>? logger = null) {
+        ArgumentNullException.ThrowIfNull(account);
+
+        this.Domain = account.Domain;
+        this.AppID = appID;
+        this._logger = logger;
+        this._httpClient = httpClient ?? new HttpClient();
+
+        if (!string.IsNullOrWhiteSpace(this.Domain)) {
+            this._httpClient.BaseAddress = new Uri($"https://{this.Domain.TrimEnd('/')}/k/v1/");
         }
 
-        var value = options.Value;
+        // 優先順位：APIトークン → ログイン名/パスワード → BasicAuth
+        if (!string.IsNullOrWhiteSpace(account.ApiToken)) {
+            this.ApiToken = account.ApiToken;
+        } else if (!string.IsNullOrWhiteSpace(account.LoginName) && !string.IsNullOrWhiteSpace(account.Password)) {
+            this.LoginName = account.LoginName;
+            this.Password = account.Password;
+        }
 
-        this.Domain = value.Domain;
-        this.AppID = value.AppID;
-        this.ApiToken = value.ApiToken;
-        this._logger = logger;
+        if (!string.IsNullOrWhiteSpace(account.BasicAuthUser) && !string.IsNullOrWhiteSpace(account.BasicAuthPassword)) {
+            this.BasicAuthUser = account.BasicAuthUser;
+            this.BasicAuthPassword = account.BasicAuthPassword;
+        }
 
-        this.InitHttpClient();
+        this.EnsureDefaultHeaders();
     }
     #endregion
 

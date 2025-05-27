@@ -3,8 +3,8 @@ using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.Infrastructure.Factories;
 
-public interface IKintoneApiFactory
-{
-    KintoneApi CreateFromModel(KintoneModelBase model);
-    KintoneApi Create(string domain, string apiToken);
+public interface IKintoneApiFactory {
+    // KintoneApi CreateFromModel(KintoneModelBase model);
+    // KintoneApi Create(string domain, string apiToken);
+    KintoneApi Create(KintoneAccount account, int AppID);
 }
