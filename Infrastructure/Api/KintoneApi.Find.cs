@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using KintoneNetLibrary.Application.UseCases;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Infrastructure.Converters;
+using KintoneNetLibrary.Infrastructure.Helpers;
 using KintoneNetLibrary.Infrastructure.Internal;
 using static KintoneNetLibrary.Domain.Common.KintoneConstants;
 
@@ -101,7 +102,7 @@ public partial class KintoneApi {
         }
 
         // 2) 通常取得
-        var requestUri = KintoneRequestBuilder.BuildRequestUri(this.GetBaseUri(), KintoneApiEndpoints.GetRecords, this.AppID, $"{query.Build(false)}");
+        var requestUri = KintoneRequestBuilder.BuildRequestUri(this.GetBaseUri(), KintoneApiEndpoints.GetRecords, this.AppID, $"{query.Build(true)}");
 
         using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
         this.SetHeaders(request);

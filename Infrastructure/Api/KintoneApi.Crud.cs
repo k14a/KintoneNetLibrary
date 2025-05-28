@@ -59,7 +59,7 @@ public partial class KintoneApi {
     /*==========================================================
       Delete – ID リストで一括削除
       ==========================================================*/
-    public async Task<string> DeleteAsyncJsonAsync(string json) {
+    public async Task<string> DeleteJsonAsync(string json) {
         var request = new HttpRequestMessage(HttpMethod.Delete, "records.json") {
             Content = new StringContent(json, Encoding.UTF8, "application/json")
         };

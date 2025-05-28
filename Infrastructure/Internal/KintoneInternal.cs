@@ -2,20 +2,20 @@ using System.Runtime.CompilerServices;
 
 namespace KintoneNetLibrary.Infrastructure.Internal;
 
-[CompilerGenerated] // 明示的にツール生成 or 非推奨用途と示す
-internal static class KintoneRequestBuilder {
-    internal static Uri BuildRequestUri(Uri baseUri, string path, int appID, string? query = null) {
-        var builder = new UriBuilder(new Uri(baseUri, path));
-        var parameters = new List<string> { $"app={appID}" };
+// [CompilerGenerated] // 明示的にツール生成 or 非推奨用途と示す
+// internal static class KintoneRequestBuilder {
+//     internal static Uri BuildRequestUri(Uri baseUri, string path, int appID, string? query = null) {
+//         var builder = new UriBuilder(new Uri(baseUri, path));
+//         var parameters = new List<string> { $"app={appID}" };
 
-        if (!string.IsNullOrEmpty(query)) {
-            parameters.Add(query);
-        }
+//         if (!string.IsNullOrEmpty(query)) {
+//             parameters.Add(query);
+//         }
 
-        builder.Query = string.Join("&", parameters);
-        return builder.Uri;
-    }
-}
+//         builder.Query = string.Join("&", parameters);
+//         return builder.Uri;
+//     }
+// }
 internal static class KintoneApiEndpoints {
     public const string GetSingleRecord = "record.json";
     public const string GetRecords = "records.json";

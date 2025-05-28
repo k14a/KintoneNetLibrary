@@ -53,31 +53,24 @@ public class KintoneIndexes {
 
 }
 internal class KintoneRecordIndexesResponse {
-    [JsonPropertyName("records")]
-    public List<KintoneIndex> Records { get; set; } = [];
+    [JsonPropertyName("ids")]
+    public List<string?> IDs { get; set; } = [];
 
-    /// <summary>
-    /// JSON文字列から KintoneRecordIndexesResponse を生成する
-    /// </summary>
-    /// <param name="json">JSON文字列</param>
-    /// <returns>KintoneRecordIndexesResponse インスタンス</returns>
+    [JsonPropertyName("revisions")]
+    public List<string?> Revisions { get; set; } = [];
+
     public static KintoneRecordIndexesResponse Parse(string json) {
         if (string.IsNullOrWhiteSpace(json)) {
             throw new ArgumentException("JSON string is null or empty", nameof(json));
         }
 
-        return JsonSerializer.Deserialize<KintoneRecordIndexesResponse>(json)
-            ?? new KintoneRecordIndexesResponse();
+        return JsonSerializer.Deserialize<KintoneRecordIndexesResponse>(json) ?? new KintoneRecordIndexesResponse();
     }
 
-    /// <summary>
-    /// KintoneRecordIndexesResponse を KintoneIndexes に変換する
-    /// </summary>
-    /// <returns>KintoneIndexes</returns>
     public KintoneIndexes ToIndexes() {
         return new KintoneIndexes {
-            IDs = Records.Select(r => r.ID).ToList(),
-            Revisions = Records.Select(r => r.RevisionString).ToList()
+            IDs = this.IDs,
+            Revisions = this.Revisions
         };
     }
 }

@@ -4,6 +4,7 @@ using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Domain.Interfaces;
 using KintoneNetLibrary.Infrastructure.Api;
 using KintoneNetLibrary.Infrastructure.Api.DTO;
+using KintoneNetLibrary.Infrastructure.Helpers;
 using static KintoneNetLibrary.Domain.Common.KintoneConstants;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -31,9 +32,10 @@ public class KintoneModelCrudService {
 
         foreach (var chunk in records.Chunk(KintoneLimit)) {
             try {
-                var json = BuildCreateJson(chunk);
+                // var json = BuildCreateJson(chunk);
+                var json = KintoneRequestBuilder.BuildCreateJson(chunk);
                 var responseJson = await _repository.CreateRecordsAsync<T>(json);
-                var parsed = ParseCreatedRecords(chunk, responseJson);
+                var parsed = KintoneResponseParser.ParseCreatedRecords(chunk, responseJson);
 
                 result.Succeeded.AddRange(parsed);
 
@@ -133,7 +135,7 @@ public class KintoneModelCrudService {
 
         foreach (var chunk in records.Chunk(KintoneLimit)) {
             try {
-                var json = BuildUpdateJson(chunk);
+                var json = KintoneRequestBuilder.BuildUpdateJson(chunk);
                 var responseJson = await _repository.UpdateAsync<T>(json);
                 var parsed = ParseUpdatedRecords(chunk, responseJson);
 
@@ -188,21 +190,12 @@ public class KintoneModelCrudService {
             await model.RunBeforeDeleteHookAsync();
         }
 
-        var appId = modelList.First().AppID;
-        var idList = modelList.Select(m => m.RecordID).Where(id => !string.IsNullOrWhiteSpace(id)).ToList();
-
-        var deleteBody = new {
-            app = appId,
-            ids = idList
-        };
-
-        string json = JsonSerializer.Serialize(deleteBody, _jsonOptions);
-        string responseJson;
+        string json = KintoneRequestBuilder.BuildDeleteJson(modelList);
+        List<string> idList = modelList.Select(m => m.RecordID).Where(id => !string.IsNullOrWhiteSpace(id)).ToList();
 
         try {
-            responseJson = await _repository.DeleteAsync<T>(json);
+            await _repository.DeleteAsync<T>(json);
         } catch (KintoneException ex) {
-            // 失敗したIDをすべて失敗扱いで返す
             var result = new KintoneDeleteResult();
             foreach (var id in idList) {
                 result.FailedIDs.Add(new KintoneDeleteFailure {
@@ -213,12 +206,11 @@ public class KintoneModelCrudService {
             return result;
         }
 
-        // 成功した場合は、削除IDをすべて成功扱いに
         var deleteResult = new KintoneDeleteResult {
             DeletedIDs = idList
         };
 
-        foreach (var model in modelList.Where(m => deleteResult.DeletedIDs.Contains(m.RecordID))) {
+        foreach (var model in modelList.Where(m => idList.Contains(m.RecordID))) {
             await model.RunAfterDeleteHookAsync();
         }
 
@@ -245,7 +237,7 @@ public class KintoneModelCrudService {
         return result;
     }
 
-    public async Task<KintoneWriteResult<T>> SaveWithRetryAsync<T>( IEnumerable<T> records, bool enableSingleRetryOnError = false, bool enableCreateToUpdateRetry = true) where T : KintoneModelBase, new() {
+    public async Task<KintoneWriteResult<T>> SaveWithRetryAsync<T>(IEnumerable<T> records, bool enableSingleRetryOnError = false, bool enableCreateToUpdateRetry = true) where T : KintoneModelBase, new() {
         var result = new KintoneWriteResult<T>();
 
         var createTargets = new List<T>();
@@ -292,6 +284,7 @@ public class KintoneModelCrudService {
         return result;
     }
 
+    [Obsolete()]
     private string BuildCreateJson<T>(IEnumerable<T> records) where T : KintoneModelBase {
         var list = records.ToList();
         var appID = list.First().AppID;
@@ -303,6 +296,7 @@ public class KintoneModelCrudService {
 
         return JsonSerializer.Serialize(body, _jsonOptions);
     }
+    [Obsolete()]
     private string BuildUpdateJson<T>(IEnumerable<T> records) where T : KintoneModelBase, new() {
         var jsonObj = new Dictionary<string, object> {
             ["records"] = records.Select(r => r.ToKintoneUpdateRecord())
@@ -310,6 +304,7 @@ public class KintoneModelCrudService {
 
         return JsonSerializer.Serialize(jsonObj);
     }
+    [Obsolete()]
     private IList<T> ParseCreatedRecords<T>(IEnumerable<T> originalRecords, string responseJson)
         where T : KintoneModelBase, new() {
         var indexes = KintoneRecordIndexesResponse.Parse(responseJson).ToIndexes();

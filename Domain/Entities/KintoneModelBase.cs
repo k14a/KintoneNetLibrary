@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using KintoneNetLibrary.Infrastructure.Converters;
 
@@ -79,28 +80,26 @@ public abstract class KintoneModelBase : KintoneModelHookBase {
     }
 
     // ----- レコード生成処理 -----
-
     public virtual IDictionary<string, object> ToKintoneRecord() {
-        var dict = new Dictionary<string, object>();
-        var props = GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        var record = new Dictionary<string, object>();
 
-        foreach (var prop in props) {
-            if (!prop.CanRead || prop.GetMethod is null) {
-                continue;
+        var properties = this.GetType().GetProperties();
+
+        foreach (var prop in properties) {
+            var attr = prop.GetCustomAttributes(typeof(KintoneItemAttribute), true)
+                           .FirstOrDefault() as KintoneItemAttribute;
+
+            if (attr == null || !attr.IsUpload || string.IsNullOrWhiteSpace(attr.FieldCode)) {
+                continue; // Upload 対象ではない、または無効なFieldCode → スキップ
             }
 
-            var attr = prop.GetCustomAttribute<KintoneItemAttribute>();
-            if (attr is not null && !attr.IsUpload) {
-                continue;
-            }
-
-            var fieldCode = string.IsNullOrEmpty(attr?.FieldCode) ? prop.Name : attr.FieldCode;
             var value = prop.GetValue(this);
-            dict[fieldCode] = new { value };
+            record[attr.FieldCode] = new { value };
         }
 
-        return dict;
+        return record;
     }
+
 
     public virtual IDictionary<string, object> ToKintoneUpdateRecord() {
         var record = ToKintoneRecord();
@@ -174,4 +173,43 @@ public abstract class KintoneModelBase : KintoneModelHookBase {
 
         return new KintoneIndex();
     }
+    public void LoadFromJsonDictionary(Dictionary<string, JsonElement> fieldMap) {
+        var props = this.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        foreach (var prop in props) {
+            var attr = prop.GetCustomAttribute<KintoneItemAttribute>();
+            if (attr == null) { continue; }
+
+            var fieldCode = attr.FieldCode;
+            if (fieldMap.TryGetValue(fieldCode, out var valueElement)) {
+                object? value = null;
+
+                if (prop.PropertyType == typeof(string)) {
+                    value = valueElement.GetString();
+                } else if (prop.PropertyType == typeof(int)) {
+                    if (valueElement.ValueKind == JsonValueKind.String && int.TryParse(valueElement.GetString(), out var i)) {
+                        value = i;
+                    } else if (valueElement.ValueKind == JsonValueKind.Number) {
+                        value = valueElement.GetInt32();
+                    }
+                }
+                // 他の型（bool, DateTimeなど）も必要に応じて追加
+
+                if (value != null) {
+                    prop.SetValue(this, value);
+                }
+            }
+        }
+
+        // ID / Revision などの標準項目
+        if (fieldMap.TryGetValue("$id", out var idElement)) {
+            this.ID = idElement.GetString() ?? string.Empty;
+        }
+
+        if (fieldMap.TryGetValue("$revision", out var revElement)) {
+            if (int.TryParse(revElement.GetString(), out var rev)) {
+                this.Revision = rev;
+            }
+        }
+    }
+
 }

@@ -2,6 +2,11 @@ using Xunit;
 using KintoneNetLibrary.Tests.Models;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Infrastructure.Api;
+using KintoneNetLibrary.Infrastructure.Api.DTO;
+using KintoneNetLibrary.Infrastructure.Helpers;
+using System.Text.Json;
+using System.Reflection;
+using System.IO.Compression;
 
 namespace KintoneNetLibrary.Tests.Api;
 
@@ -11,147 +16,139 @@ public class KintoneApiCrudTests {
         var cli = new HttpClient {
             BaseAddress = new Uri($"https://{cfg.Domain}/k/v1/")
         };
-        return new KintoneApi(cli, cfg.ApiToken, cfg.AppID, cfg.Domain);
+        var account = new KintoneAccount { ApiToken = cfg.ApiToken, Domain = cfg.Domain };
+        return new KintoneApi(account, cfg.AppID, cli);
     }
 
-/*     [Fact]
-    public async Task Create_Find_Delete_Flow() {
+    [Fact]
+    public async Task Can_Create_Read_Delete_Record() {
         var api = this.CreateApi();
-        var book = new BookModel {
-            Title = "xUnit Guide",
-            Price = 3000
-        };
+        // 準備：BookModelのインスタンス
+        var book = new BookModel { Title = "Test Book", Price = 1000 };
 
-        var idx = await api.CreateAsync([book]);
-        Assert.NotEmpty(idx.IDs);
-        var id = idx.IDs[0];
+        // Create
+        var json = KintoneRequestBuilder.BuildCreateJson([book]);
+        var createResult = await api.CreateRecordsAsync(json);
+        var createParsed = KintoneResponseParser.ParseCreatedRecords([book], createResult);
+        Assert.Single(createParsed);
 
-        var stored = await api.FindByIDAsync<BookModel>(id);
-        Assert.Equal("xUnit Guide", stored?.Title);
+        // Read（検索条件は ID）
+        var recordId = createParsed.First().ID;
+        var found = await api.FindByIDAsync<BookModel>(recordId);
+        var record = KintoneResponseParser.ParseRecord<BookModel>(found);
+        Assert.NotNull(record);
+        Assert.Equal("Test Book", record!.Title);
+        Assert.Equal(1000, record.Price);
 
-        var actual = await api.DeleteAsync<BookModel>([id]);
-        Assert.Single(actual);
+        // Delete
+        var deleteJson = KintoneRequestBuilder.BuildDeleteJson([record]);
+        var deleteResult = await api.DeleteJsonAsync(deleteJson);
+        Assert.NotNull(deleteResult);
     }
     [Fact]
-    public async Task FindTest() {
-        var api = this.CreateApi();
-        var id = "13";
-        var actual = await api.FindByIDAsync<BookModel>(id);
-        Assert.Equal("xUnit Guide", actual?.Title);
-    }
-    [Fact]
-    public async Task CreateMultiple_Find_Delete_Flow() {
+    public async Task Can_Create_Read_Delete_Multiple_Records() {
         var api = this.CreateApi();
 
+        // 準備：複数の BookModel インスタンス
         var books = new List<BookModel> {
-            new() { Title = "xUnit Guide", Price = 3000 },
-            new() { Title = "Clean Code", Price = 4500 },
-            new() { Title = "Domain-Driven Design", Price = 6000 },
+            new() { Title = "Book A", Price = 100 },
+            new() { Title = "Book B", Price = 200 },
+            new() { Title = "Book C", Price = 300 },
         };
 
-        var idx = await api.CreateAsync(books);
-        Assert.Equal(3, idx.IDs.Count);
+        // Create
+        var createJson = KintoneRequestBuilder.BuildCreateJson(books);
+        var createResult = await api.CreateRecordsAsync(createJson);
+        var createdBooks = KintoneResponseParser.ParseCreatedRecords(books, createResult);
+        Assert.Equal(3, createdBooks.Count);
 
-        var storedBooks = new List<BookModel>();
-        foreach (var id in idx.IDs) {
-            var book = await api.FindByIDAsync<BookModel>(id);
-            Assert.NotNull(book);
-            storedBooks.Add(book!);
-        }
+        // Read（ID指定）
+        var idList = createdBooks.Select(b => b.ID).ToList();
+        var foundJson = await api.FindByIDsAsync<BookModel>(idList);
+        var foundRecords = KintoneResponseParser.ParseRecords<BookModel>(foundJson);
 
-        var expectedTitles = books.Select(b => b.Title).ToHashSet();
-        var actualTitles = storedBooks.Select(b => b.Title).ToHashSet();
-        Assert.Equal(expectedTitles, actualTitles);
+        Assert.Equal(3, foundRecords.Count);
+        Assert.Contains(foundRecords, b => b.Title == "Book A" && b.Price == 100);
+        Assert.Contains(foundRecords, b => b.Title == "Book B" && b.Price == 200);
+        Assert.Contains(foundRecords, b => b.Title == "Book C" && b.Price == 300);
 
-        var deletedIDs = await api.DeleteAsync<BookModel>(idx.IDs);
-        Assert.Equal(3, deletedIDs.Count);
+        // Delete
+        var deleteJson = KintoneRequestBuilder.BuildDeleteJson(foundRecords);
+        var deleteResult = await api.DeleteJsonAsync(deleteJson);
+        Assert.NotNull(deleteResult);
     }
     [Fact]
-    public async Task CreateMultiple_FindByIDs_Delete_Flow() {
+    public async Task Can_Create_Update_Find_Delete_Record() {
         var api = this.CreateApi();
-        var books = new List<BookModel> {
-            new() { Title = "C# in Depth", Price = 4500 },
-            new() { Title = "Effective C#", Price = 4000 },
-            new() { Title = "Pro .NET 9", Price = 5000 },
-        };
 
-        var idx = await api.CreateAsync(books);
-        Assert.Equal(3, idx.IDs.Count);
-        var ids = idx.IDs;
+        // Step 1: Create
+        var book = new BookModel { Title = "Initial Title", Price = 1000 };
+        var createJson = KintoneRequestBuilder.BuildCreateJson([book]);
+        var createResult = await api.CreateRecordsAsync(createJson);
+        var createdRecords = KintoneResponseParser.ParseCreatedRecords([book], createResult);
+        var created = createdRecords.First();
+        Assert.NotNull(created.ID);
 
-        var stored = await api.FindByIDsAsync<BookModel>(ids);
-        Assert.Equal(3, stored.Count);
+        // Step 2: Update
+        created.Title = "Updated Title";
+        created.Price = 1500;
 
-        var titles = stored.Select(b => b.Title).ToHashSet();
-        Assert.Contains("C# in Depth", titles);
-        Assert.Contains("Effective C#", titles);
-        Assert.Contains("Pro .NET 9", titles);
+        var updateJson = KintoneRequestBuilder.BuildUpdateJson([created]);
+        var updateResult = await api.UpdateAsync<BookModel>(updateJson);
+        Assert.False(string.IsNullOrWhiteSpace(updateResult));
 
-        var deleted = await api.DeleteAsync<BookModel>(ids);
-        Assert.Equal(3, deleted.Count);
+        // Step 3: Find
+        var findJson = await api.FindByIDAsync<BookModel>(created.ID);
+        var foundRecord = KintoneResponseParser.ParseRecord<BookModel>(findJson);
+        Assert.NotNull(foundRecord);
+        Assert.Equal("Updated Title", foundRecord!.Title);
+        Assert.Equal(1500, foundRecord.Price);
+
+        // Step 4: Delete
+        var deleteJson = KintoneRequestBuilder.BuildDeleteJson([foundRecord]);
+        var deleteResult = await api.DeleteJsonAsync(deleteJson);
+        Assert.NotNull(deleteResult);
     }
     [Fact]
-    public async Task UpdateSingleRecord_ShouldModifyRecordCorrectly() {
+    public async Task Can_Update_ByKey() {
         var api = this.CreateApi();
+
+        // UUID を生成
+        var uuid = Guid.NewGuid().ToString();
+
+        // ① レコード作成（UUID を含む）
         var book = new BookModel {
-            Title = "Before Update",
-            Price = 1000
+            Title = "Original Title",
+            Price = 1000,
+            Uuid = uuid
         };
 
-        var created = await api.CreateAsync([book]);
+        var createJson = KintoneRequestBuilder.BuildCreateJson([book]);
+        var createResult = await api.CreateRecordsAsync(createJson);
+        var createdRecords = KintoneResponseParser.ParseCreatedRecords([book], createResult);
+        var created = createdRecords.First();
+        Assert.False(string.IsNullOrWhiteSpace(created.ID), "Record ID is null or empty after creation.");
 
-        try {
-            book.RecordID = created.IDs.First();
-            book.Title = "After Update";
-            book.Price = 2000;
+        // ② updateKey（UUID）で更新
+        created.Title = "Updated Title by UUID";
+        created.Price = 2000;
 
-            await api.UpdateAsync([book]);
+        var updateJson = KintoneRequestBuilder.BuildUpdateJson([created]);
+        var updateResult = await api.UpdateAsync<BookModel>(updateJson);
+        Assert.False(string.IsNullOrWhiteSpace(updateResult));
 
-            var updated = await api.FindByIDAsync<BookModel>(book.RecordID);
+        // ③ updateKey（UUID）で再取得
+        var found = await api.FindByFieldAsync<BookModel>("UUID", uuid);
+        var foundRecords = KintoneResponseParser.ParseRecords<BookModel>(found);
+        Assert.Single(foundRecords);
 
-            Assert.NotNull(updated);
-            Assert.Equal("After Update", updated.Title);
-            Assert.Equal(2000, updated.Price);
-        } finally {
-            if (!string.IsNullOrEmpty(book.RecordID)) {
-                await api.DeleteAsync<BookModel>([book.RecordID]);
-            }
-        }
+        var fetched = foundRecords[0];
+        Assert.Equal("Updated Title by UUID", fetched.Title);
+        Assert.Equal(2000, fetched.Price);
+
+        // ④ 削除（IDを使う必要があるので fetched を使う）
+        var deleteJson = KintoneRequestBuilder.BuildDeleteJson([fetched]);
+        var deleteResult = await api.DeleteJsonAsync(deleteJson);
+        Assert.NotNull(deleteResult);
     }
-    [Fact]
-    public async Task UpdateMultipleRecords_ShouldUpdateSuccessfully() {
-        var api = CreateApi();
-        var books = new List<BookModel>
-        {
-            new() { Title = "Batch Book 1", Price = 1000 },
-            new() { Title = "Batch Book 2", Price = 2000 },
-            new() { Title = "Batch Book 3", Price = 3000 }
-        };
-
-        var createdIndexes = await api.CreateAsync(books);
-        var ids = createdIndexes.IDs;
-
-        for (int i = 0; i < books.Count; i++) {
-            books[i].RecordID = ids[i];
-            books[i].Title += " (Updated)";
-            books[i].Price += 500;
-        }
-
-        try {
-            var updateResult = await api.UpdateAsync(books);
-            Assert.Equal(books.Count, updateResult.IDs.Count);
-
-            var updatedBooks = await api.FindByIDsAsync<BookModel>(ids);
-
-            Assert.Equal(books.Count, updatedBooks.Count);
-            for (int i = 0; i < books.Count; i++) {
-                Assert.Equal(books[i].RecordID, updatedBooks[i].RecordID);
-                Assert.Equal(books[i].Title, updatedBooks[i].Title);
-                Assert.Equal(books[i].Price, updatedBooks[i].Price);
-            }
-        } finally {
-            await api.DeleteAsync<BookModel>(ids);
-        }
-    }
- */
 }

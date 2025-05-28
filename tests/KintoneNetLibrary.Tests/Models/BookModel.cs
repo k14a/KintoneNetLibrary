@@ -6,8 +6,10 @@ namespace KintoneNetLibrary.Tests.Models;
 public class BookModel : KintoneModelBase {
     public override int AppID => TestEnv.Settings.AppID;
 
-    [KintoneItem(fieldCode: "Title")]
+    [KintoneItem(fieldCode: "Title", isUpload: true)]
     public string Title { get; set; } = string.Empty;
-    [KintoneItem(fieldCode: "Price")]
+    [KintoneItem(fieldCode: "Price", isUpload: true)]
     public int Price { get; set; }
+    [KintoneItem(fieldCode: "UUID", isUpload: true, isKey: true)]
+    public string Uuid { get; set; } = string.Empty;
 }
