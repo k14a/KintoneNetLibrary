@@ -151,4 +151,75 @@ public class KintoneApiCrudTests {
         var deleteResult = await api.DeleteJsonAsync(deleteJson);
         Assert.NotNull(deleteResult);
     }
+    [Fact]
+    public async Task FindByQueryAsync_ShouldReturnFilteredRecords() {
+        var api = this.CreateApi();
+        // Arrange
+        var books = new List<BookModel> {
+            new() { Title = "Book A", Price = 1000, Uuid = Guid.NewGuid().ToString() },
+            new() { Title = "Book B", Price = 1500, Uuid = Guid.NewGuid().ToString() },
+            new() { Title = "Book C", Price = 2000, Uuid = Guid.NewGuid().ToString() },
+        };
+
+        // 1. レコード登録
+        var createJson = KintoneRequestBuilder.BuildCreateJson(books);
+        var createResult = await api.CreateRecordsAsync(createJson);
+        var createdRecords = KintoneResponseParser.ParseCreatedRecords(books, createResult);
+        Assert.All(createdRecords, r => Assert.NotNull(r.ID));
+
+        // 2. クエリで検索（Price >= 1500）
+        string query = "Price >= 1500 order by Price asc";
+        var found = await api.FindByQueryAsync<BookModel>(query);
+        var foundRecords = KintoneResponseParser.ParseRecords<BookModel>(found);
+
+        // 3. 検証
+        Assert.NotNull(foundRecords);
+        var prices = foundRecords.Select(r => r.Price).ToList();
+        Assert.Contains(1500, prices);
+        Assert.Contains(2000, prices);
+        Assert.DoesNotContain(1000, prices);
+
+        // 4. 後始末：登録したレコード削除
+        var deleteJson = KintoneRequestBuilder.BuildDeleteJson(createdRecords);
+        var deleteResult = await api.DeleteJsonAsync(deleteJson);
+        Assert.NotNull(deleteResult);
+    }
+    [Fact]
+    public async Task FindAllAsync_CursorPaging_WorksCorrectly() {
+        // Arrange
+        var api = this.CreateApi();
+        api.CursorPageSize = 2;
+
+        var books = new List<BookModel> {
+            new() { Title = "CursorTest01", Price = 1000, Uuid=Guid.NewGuid().ToString() },
+            new() { Title = "CursorTest02", Price = 1100, Uuid=Guid.NewGuid().ToString() },
+            new() { Title = "CursorTest03", Price = 1200, Uuid=Guid.NewGuid().ToString() },
+            new() { Title = "CursorTest04", Price = 1300, Uuid=Guid.NewGuid().ToString() },
+            new() { Title = "CursorTest05", Price = 1400, Uuid=Guid.NewGuid().ToString() },
+        };
+
+        // Act - 登録
+        var createJson = KintoneRequestBuilder.BuildCreateJson(books);
+        var createResult = await api.CreateRecordsAsync(createJson);
+        var createdRecords = KintoneResponseParser.ParseCreatedRecords(books, createResult);
+
+        // Assert - 登録確認
+        Assert.Equal(5, createdRecords.Count);
+        Assert.All(createdRecords, item => Assert.NotNull(item.ID));
+
+        // Act - 全件取得（カーソルAPIが使用されることを期待）
+        var found = await api.FindAllAsync<BookModel>();
+        var foundRecords = KintoneResponseParser.ParseRecords<BookModel>(found);
+
+        // Assert - カーソルで5件取得できているか
+        Assert.NotNull(foundRecords);
+        var matched = foundRecords!.Where(f => f.Title.StartsWith("CursorTest")).ToList();
+        Assert.Equal(5, matched.Count);
+
+        // Cleanup - 削除
+        var deleteJson = KintoneRequestBuilder.BuildDeleteJson(createdRecords);
+        var deleteResult = await api.DeleteJsonAsync(deleteJson);
+        Assert.NotNull(deleteResult);
+    }
+
 }

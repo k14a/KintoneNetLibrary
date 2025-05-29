@@ -81,7 +81,16 @@ public partial class KintoneApi {
     private async Task<string> FindBaseJsonAsync<T>(KintoneQuery<T> query, bool skipThresholdCheck = false) where T : KintoneModelBase, new() {
         if (!skipThresholdCheck) {
             // 1) 件数取得
-            var countUri = KintoneRequestBuilder.BuildRequestUri(this.GetBaseUri(), KintoneApiEndpoints.GetRecords, this.AppID, $"{query.Build(false)}&totalCount=true&limit=1");
+            var queryText = query.Build();
+            var countUri = KintoneRequestBuilder.BuildRequestUri(
+                this.GetBaseUri(),
+                KintoneApiEndpoints.GetRecords,
+                this.AppID,
+                queryText,
+                new Dictionary<string, string>{
+                    { "totalCount", "true" },
+                    { "limit", "1" },
+                });
 
             using var countReq = new HttpRequestMessage(HttpMethod.Get, countUri);
             this.SetHeaders(countReq);
@@ -95,14 +104,14 @@ public partial class KintoneApi {
 
             var countResult = JsonSerializer.Deserialize<RecordCountResponse>(countJson, _jsonOptions) ?? new RecordCountResponse();
 
-            if (countResult.TotalCount > KintoneLimit) {
+            if (countResult.TotalCount > this.CursorPageSize) {
                 // カーソル API に切替
-                return await this.CursorFetchAllJsonAsync<T>(query.Build(false));
+                return await this.CursorFetchAllJsonAsync<T>(query.Build());
             }
         }
 
         // 2) 通常取得
-        var requestUri = KintoneRequestBuilder.BuildRequestUri(this.GetBaseUri(), KintoneApiEndpoints.GetRecords, this.AppID, $"{query.Build(true)}");
+        var requestUri = KintoneRequestBuilder.BuildRequestUri(this.GetBaseUri(), KintoneApiEndpoints.GetRecords, this.AppID, $"{query.Build()}");
 
         using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
         this.SetHeaders(request);
@@ -119,10 +128,19 @@ public partial class KintoneApi {
 
     /* ---------- カーソル API を使って最後まで取得 ---------- */
     private async Task<string> CursorFetchAllJsonAsync<T>(string query) where T : KintoneModelBase, new() {
-        var cursor = await this.CreateCursorJsonAsync(query);
+        var cursorRequest = new Dictionary<string, object> {
+            ["app"] = this.AppID,
+            ["fields"] = typeof(T).GetKintoneFieldCodes(),
+            ["size"] = this.CursorPageSize,
+        };
+        if (!string.IsNullOrEmpty(query)) {
+            cursorRequest["query"] = query;
+        }
+
+        var cursor = await this.CreateCursorAsync(cursorRequest);
         var resultJsonList = new List<string>();
 
-        await foreach (var json in this.StreamCursorJsonAsync<T>(cursor)) {
+        await foreach (var json in this.StreamCursorAsync(cursor)) {
             resultJsonList.Add(json);
         }
 

@@ -67,6 +67,10 @@ public partial class KintoneApi {
     /// Basic認証パスワード
     /// </summary>
     public string BasicAuthPassword { get; set; } = string.Empty;
+    /// <summary>
+    /// カーソルAPIで一度に取得する件数(省略時はKintoneの最大値である500)
+    /// </summary>
+    public int CursorPageSize = CursorFetchLimit;
     #endregion
 
     #region <<Constructor(s)>>

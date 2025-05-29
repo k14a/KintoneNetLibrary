@@ -85,19 +85,12 @@ public class KintoneQuery<T> {
     /// 条件を "and" でつなげたクエリ文字列を返します。
     /// </summary>
     /// <param name="urlEncode">URLエンコードするかどうか</param>
-    public string Build(bool urlEncode = false) {
-        var queryStr = string.Join(" and ", _conditions);
-        if (urlEncode) {
-            return Uri.EscapeDataString(queryStr);
-        } else {
-            return queryStr;
-        }
-    }
+    public string Build() => string.Join(" and ", _conditions);
 
     public override string ToString() {
         var query = new StringBuilder();
 
-        if (this._conditions.Any()) {
+        if (this._conditions.Count != 0) {
             query.Append(string.Join(" and ", this._conditions));
         }
 
