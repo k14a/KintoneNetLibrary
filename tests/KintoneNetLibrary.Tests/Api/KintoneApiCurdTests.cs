@@ -191,11 +191,11 @@ public class KintoneApiCrudTests {
         api.CursorPageSize = 2;
 
         var books = new List<BookModel> {
-            new() { Title = "CursorTest01", Price = 1000, Uuid=Guid.NewGuid().ToString() },
-            new() { Title = "CursorTest02", Price = 1100, Uuid=Guid.NewGuid().ToString() },
-            new() { Title = "CursorTest03", Price = 1200, Uuid=Guid.NewGuid().ToString() },
-            new() { Title = "CursorTest04", Price = 1300, Uuid=Guid.NewGuid().ToString() },
-            new() { Title = "CursorTest05", Price = 1400, Uuid=Guid.NewGuid().ToString() },
+            new() { Title = "CursorTest01", Price = 1000, Uuid = Guid.NewGuid().ToString() },
+            new() { Title = "CursorTest02", Price = 1100, Uuid = Guid.NewGuid().ToString() },
+            new() { Title = "CursorTest03", Price = 1200, Uuid = Guid.NewGuid().ToString() },
+            new() { Title = "CursorTest04", Price = 1300, Uuid = Guid.NewGuid().ToString() },
+            new() { Title = "CursorTest05", Price = 1400, Uuid = Guid.NewGuid().ToString() },
         };
 
         // Act - 登録
@@ -221,5 +221,313 @@ public class KintoneApiCrudTests {
         var deleteResult = await api.DeleteJsonAsync(deleteJson);
         Assert.NotNull(deleteResult);
     }
+    [Fact]
+    public async Task FindAsync_QueryExceedsPageSize_WorksCorrectly() {
+        // Arrange
+        var api = this.CreateApi();
+        api.CursorPageSize = 2;
+
+        var books = new List<BookModel> {
+            new() { Title = "QueryTest01", Price = 1000, Uuid = Guid.NewGuid().ToString() },
+            new() { Title = "QueryTest02", Price = 1100, Uuid = Guid.NewGuid().ToString() },
+            new() { Title = "QueryTest03", Price = 1200, Uuid = Guid.NewGuid().ToString() },
+            new() { Title = "QueryTest04", Price = 1300, Uuid = Guid.NewGuid().ToString() },
+            new() { Title = "QueryTest05", Price = 1400, Uuid = Guid.NewGuid().ToString() },
+        };
+
+        // Act - 登録
+        var createJson = KintoneRequestBuilder.BuildCreateJson(books);
+        var createResult = await api.CreateRecordsAsync(createJson);
+        var createdRecords = KintoneResponseParser.ParseCreatedRecords(books, createResult);
+
+        // Assert - 登録確認
+        Assert.Equal(5, createdRecords.Count);
+
+        // Act - クエリ指定で取得（複数ページにまたがる）
+        var found = await api.FindByQueryAsync<BookModel>("Price > 0");
+        var foundRecords = KintoneResponseParser.ParseRecords<BookModel>(found);
+
+        // Assert - 検索結果に5件すべて含まれているか
+        Assert.NotNull(foundRecords);
+        var matched = foundRecords!.Where(f => f.Title.StartsWith("QueryTest")).ToList();
+        Assert.Equal(5, matched.Count);
+
+        // Cleanup
+        var deleteJson = KintoneRequestBuilder.BuildDeleteJson(createdRecords);
+        var deleteResult = await api.DeleteJsonAsync(deleteJson);
+        Assert.NotNull(deleteResult);
+    }
+    [Theory]
+    [InlineData(5, 2)] // カーソル使用
+    [InlineData(2, 5)] // カーソル不使用
+    public async Task FindAsync_QueryWithOrderBy_WorksCorrectly(int recordCount, int pageSize) {
+        // Arrange
+        var api = this.CreateApi();
+        api.CursorPageSize = pageSize;
+
+        var books = new List<BookModel>();
+        for (int i = 0; i < recordCount; i++) {
+            books.Add(new BookModel {
+                Title = $"OrderTest{(char)('A' + recordCount - i)}", // Z, Y, X, ...
+                Price = 1000 + i * 100,
+                Uuid = Guid.NewGuid().ToString()
+            });
+        }
+
+        // Act - 登録
+        var createJson = KintoneRequestBuilder.BuildCreateJson(books);
+        var createResult = await api.CreateRecordsAsync(createJson);
+        var createdRecords = KintoneResponseParser.ParseCreatedRecords(books, createResult);
+        Assert.Equal(recordCount, createdRecords.Count);
+
+        // Act - クエリで取得（昇順指定）
+        var found = await api.FindByQueryAsync<BookModel>("Price > 0 order by Title asc");
+        var foundRecords = KintoneResponseParser.ParseRecords<BookModel>(found);
+
+        // Assert - 昇順で並んでいるか
+        var matched = foundRecords!.Where(f => f.Title.StartsWith("OrderTest")).ToList();
+        Assert.Equal(recordCount, matched.Count);
+
+        var ordered = matched.OrderBy(b => b.Title, StringComparer.Ordinal).ToList();
+        Assert.True(matched.SequenceEqual(ordered), "取得順が昇順でありません");
+
+        // Cleanup
+        var deleteJson = KintoneRequestBuilder.BuildDeleteJson(createdRecords);
+        var deleteResult = await api.DeleteJsonAsync(deleteJson);
+        Assert.NotNull(deleteResult);
+    }
+    [Theory]
+    [InlineData(5, 2)] // カーソル使用（pageSize < recordCount）
+    [InlineData(5, 10)] // カーソル不使用（pageSize >= recordCount）
+    public async Task FindAsync_QueryWithComplexCondition_WorksCorrectly(int recordCount, int pageSize) {
+        // Arrange
+        var api = this.CreateApi();
+        api.CursorPageSize = pageSize;
+
+        var books = Enumerable.Range(1, recordCount).Select(i =>
+            new BookModel {
+                Title = $"ブック{i:00}",
+                Price = 1000 + i * 100,
+                Uuid = Guid.NewGuid().ToString()
+            }
+        ).ToList();
+        books.Add(new BookModel { Title = "ぶっく", Price = 1000, Uuid = Guid.NewGuid().ToString() });
+
+        var createJson = KintoneRequestBuilder.BuildCreateJson(books);
+        var createResult = await api.CreateRecordsAsync(createJson);
+        var createdRecords = KintoneResponseParser.ParseCreatedRecords(books, createResult);
+
+        // Act
+        string query = "Title like \"ブック\" and Price < 1300";
+        var foundJson = await api.FindByQueryAsync<BookModel>(query);
+        var foundRecords = KintoneResponseParser.ParseRecords<BookModel>(foundJson);
+
+        // Assert
+        Assert.NotNull(foundRecords);
+
+        var matched = foundRecords!
+            .Where(r => r.Title.StartsWith("ブック") && r.Price < 5000)
+            .ToList();
+
+        Assert.Equal(2, matched.Count);
+
+        // Cleanup
+        var deleteJson = KintoneRequestBuilder.BuildDeleteJson(createdRecords);
+        var deleteResult = await api.DeleteJsonAsync(deleteJson);
+        Assert.NotNull(deleteResult);
+    }
+    [Theory]
+    [InlineData(5, 2)]   // カーソル使用（pageSize < recordCount）
+    [InlineData(5, 10)]  // カーソル不使用（pageSize >= recordCount）
+    public async Task FindAsync_QueryWithNoHit_WorksCorrectly(int recordCount, int pageSize) {
+        // Arrange
+        var api = this.CreateApi();
+        api.CursorPageSize = pageSize;
+
+        var books = Enumerable.Range(1, recordCount).Select(i =>
+            new BookModel {
+                Title = $"NoHitBook{i:00}",
+                Price = 1000 + i * 100,
+                Uuid = Guid.NewGuid().ToString()
+            }
+        ).ToList();
+
+        var createJson = KintoneRequestBuilder.BuildCreateJson(books);
+        var createResult = await api.CreateRecordsAsync(createJson);
+        var createdRecords = KintoneResponseParser.ParseCreatedRecords(books, createResult);
+
+        // Act
+        string query = "Price > 999999";
+        var foundJson = await api.FindByQueryAsync<BookModel>(query);
+        var foundRecords = KintoneResponseParser.ParseRecords<BookModel>(foundJson);
+
+        // Assert
+        Assert.NotNull(foundRecords);
+        Assert.Empty(foundRecords!);
+
+        // Cleanup
+        var deleteJson = KintoneRequestBuilder.BuildDeleteJson(createdRecords);
+        var deleteResult = await api.DeleteJsonAsync(deleteJson);
+        Assert.NotNull(deleteResult);
+    }
+    [Theory]
+    [InlineData(5, 2)]   // カーソル使用（pageSize < recordCount）
+    [InlineData(5, 10)]  // カーソル不使用（pageSize >= recordCount）
+    public async Task FindAsync_WithInvalidQuery_ThrowsException(int recordCount, int pageSize) {
+        // Arrange
+        var api = this.CreateApi();
+        api.CursorPageSize = pageSize;
+
+        var books = Enumerable.Range(1, recordCount).Select(i =>
+            new BookModel {
+                Title = $"InvalidQueryBook{i:00}",
+                Price = 1000 + i * 100,
+                Uuid = Guid.NewGuid().ToString()
+            }).ToList();
+
+        var createJson = KintoneRequestBuilder.BuildCreateJson(books);
+        var createResult = await api.CreateRecordsAsync(createJson);
+        var createdRecords = KintoneResponseParser.ParseCreatedRecords(books, createResult);
+
+        try {
+            // Act
+            string invalidQuery = "INVALID_FIELD > 0";
+            var _ = await api.FindByQueryAsync<BookModel>(invalidQuery);
+
+            // Assert - 到達してはいけない
+            Assert.Fail("例外が発生するはずの不正なクエリで成功しました。");
+
+        } catch (KintoneException ex) {
+            // Assert - 例外が正しく発生しているか
+            Assert.Contains("INVALID_FIELD", ex.Detail, StringComparison.OrdinalIgnoreCase);
+        }
+
+        // Cleanup
+        var deleteJson = KintoneRequestBuilder.BuildDeleteJson(createdRecords);
+        var deleteResult = await api.DeleteJsonAsync(deleteJson);
+        Assert.NotNull(deleteResult);
+    }
+    [Theory]
+    [InlineData(5, 2)]   // カーソル使用（pageSize < recordCount）
+    [InlineData(5, 10)]  // カーソル不使用（pageSize >= recordCount）
+    public async Task FindAsync_RepeatedQuery_ReturnsSameResults(int recordCount, int pageSize) {
+        // Arrange
+        var api = this.CreateApi();
+        api.CursorPageSize = pageSize;
+
+        var books = Enumerable.Range(1, recordCount).Select(i =>
+            new BookModel {
+                Title = $"RepeatedQueryBook{i:00}",
+                Price = 1000 + i * 100,
+                Uuid = Guid.NewGuid().ToString()
+            }).ToList();
+
+        var createJson = KintoneRequestBuilder.BuildCreateJson(books);
+        var createResult = await api.CreateRecordsAsync(createJson);
+        var createdRecords = KintoneResponseParser.ParseCreatedRecords(books, createResult);
+
+        string query = "Price >= 100";
+
+        // Act - クエリを2回実行
+        var foundJson1 = await api.FindByQueryAsync<BookModel>(query);
+        var foundRecords1 = KintoneResponseParser.ParseRecords<BookModel>(foundJson1);
+
+        var foundJson2 = await api.FindByQueryAsync<BookModel>(query);
+        var foundRecords2 = KintoneResponseParser.ParseRecords<BookModel>(foundJson2);
+
+        // Assert - レコード数およびUUID一致で再現性を確認
+        Assert.NotNull(foundRecords1);
+        Assert.NotNull(foundRecords2);
+        Assert.Equal(foundRecords1!.Count, foundRecords2!.Count);
+
+        var uuids1 = foundRecords1.Select(r => r.Uuid).OrderBy(u => u).ToList();
+        var uuids2 = foundRecords2.Select(r => r.Uuid).OrderBy(u => u).ToList();
+        Assert.Equal(uuids1, uuids2);
+
+        // Cleanup
+        var deleteJson = KintoneRequestBuilder.BuildDeleteJson(createdRecords);
+        var deleteResult = await api.DeleteJsonAsync(deleteJson);
+        Assert.NotNull(deleteResult);
+    }
+    [Theory]
+    [InlineData(5, 2)]  // カーソル使用（pageSize < recordCount）
+    [InlineData(5, 10)] // カーソル不使用（pageSize >= recordCount）
+    public async Task FindAsync_EmptyQuery_ReturnsAllRecords(int recordCount, int pageSize) {
+        // Arrange
+        var api = this.CreateApi();
+        api.CursorPageSize = pageSize;
+
+        var books = Enumerable.Range(1, recordCount).Select(i =>
+            new BookModel {
+                Title = $"ブック{i:00}",
+                Price = 1000 + i * 100,
+                Uuid = Guid.NewGuid().ToString()
+            }).ToList();
+
+        var createJson = KintoneRequestBuilder.BuildCreateJson(books);
+        var createResult = await api.CreateRecordsAsync(createJson);
+        var createdRecords = KintoneResponseParser.ParseCreatedRecords(books, createResult);
+
+        // Act
+        string query = ""; // クエリなしで全件取得
+        var foundJson = await api.FindByQueryAsync<BookModel>(query);
+        var foundRecords = KintoneResponseParser.ParseRecords<BookModel>(foundJson);
+
+        // Assert
+        Assert.NotNull(foundRecords);
+
+        var matched = foundRecords!.Where(r => books.Any(b => b.Uuid == r.Uuid)).ToList();
+
+        Assert.Equal(recordCount, matched.Count);
+
+        // Cleanup
+        var deleteJson = KintoneRequestBuilder.BuildDeleteJson(createdRecords);
+        var deleteResult = await api.DeleteJsonAsync(deleteJson);
+        Assert.NotNull(deleteResult);
+    }
+    [Theory]
+    [InlineData(600, 100)]  // カーソル使用（pageSize < recordCount）
+    [InlineData(500, 600)]  // カーソル不使用（pageSize >= recordCount）
+    public async Task FindAsync_OverMaxLimit_WorksCorrectly(int recordCount, int pageSize) {
+        // Arrange
+        var api = this.CreateApi();
+        api.CursorPageSize = pageSize;
+
+        var books = Enumerable.Range(1, recordCount).Select(i =>
+            new BookModel {
+                Title = $"大容量ブック{i:000}",
+                Price = 1000 + i,
+                Uuid = Guid.NewGuid().ToString()
+            }).ToList();
+
+        // Chunk して順次登録
+        var createdRecords = new List<BookModel>();
+        foreach (var chunk in books.Chunk(100))  // Kintoneは最大100件/リクエスト
+        {
+            var createJson = KintoneRequestBuilder.BuildCreateJson(chunk);
+            var createResult = await api.CreateRecordsAsync(createJson);
+            var parsed = KintoneResponseParser.ParseCreatedRecords(chunk.ToList(), createResult);
+            createdRecords.AddRange(parsed);
+        }
+
+        // Act
+        var query = "Price >= 1000"; // 全件ヒットするクエリ
+        var foundJson = await api.FindByQueryAsync<BookModel>(query);
+        var foundRecords = KintoneResponseParser.ParseRecords<BookModel>(foundJson);
+
+        // Assert
+        Assert.NotNull(foundRecords);
+
+        var matched = foundRecords!.Where(r => books.Any(b => b.Uuid == r.Uuid)).ToList();
+        Assert.Equal(recordCount, matched.Count);
+
+        // Cleanup
+        foreach (var deleteChunk in createdRecords.Chunk(100)) {
+            var deleteJson = KintoneRequestBuilder.BuildDeleteJson(deleteChunk);
+            var deleteResult = await api.DeleteJsonAsync(deleteJson);
+            Assert.NotNull(deleteResult);
+        }
+    }
+
 
 }

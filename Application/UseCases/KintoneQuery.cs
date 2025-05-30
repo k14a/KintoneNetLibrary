@@ -1,5 +1,6 @@
 ﻿using System.Linq.Expressions;
 using System.Text;
+using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.Application.UseCases;
 
@@ -25,9 +26,11 @@ public class KintoneQuery<T> {
         return this;
     }
 
+    [Obsolete("'offset' は使用できません。カーソルAPIを利用してください。")]
     public KintoneQuery<T> Limit(int limit) {
-        this._limit = limit;
-        return this;
+        throw new KintoneException("'offset' は使用できません。カーソルAPIを利用してください。");
+        // this._limit = limit;
+        // return this;
     }
 
     public KintoneQuery<T> Offset(int offset) {
@@ -85,7 +88,13 @@ public class KintoneQuery<T> {
     /// 条件を "and" でつなげたクエリ文字列を返します。
     /// </summary>
     /// <param name="urlEncode">URLエンコードするかどうか</param>
-    public string Build() => string.Join(" and ", _conditions);
+    public string Build() {
+        var query = string.Join(" and ", _conditions);
+        if (query.Contains("offset", StringComparison.OrdinalIgnoreCase)) {
+            throw new KintoneException("'offset' は使用できません。カーソルAPIを利用してください。");
+        }
+        return query;
+    }
 
     public override string ToString() {
         var query = new StringBuilder();

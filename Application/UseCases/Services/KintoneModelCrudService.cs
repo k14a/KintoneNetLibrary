@@ -32,7 +32,6 @@ public class KintoneModelCrudService {
 
         foreach (var chunk in records.Chunk(KintoneLimit)) {
             try {
-                // var json = BuildCreateJson(chunk);
                 var json = KintoneRequestBuilder.BuildCreateJson(chunk);
                 var responseJson = await _repository.CreateRecordsAsync<T>(json);
                 var parsed = KintoneResponseParser.ParseCreatedRecords(chunk, responseJson);

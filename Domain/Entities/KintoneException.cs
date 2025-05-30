@@ -1,9 +1,13 @@
-﻿namespace KintoneNetLibrary.Domain.Entities;
+﻿using System.Text.Json.Serialization;
 
-public class KintoneException : Exception
-{
+namespace KintoneNetLibrary.Domain.Entities;
+
+public class KintoneException : Exception {
+    [JsonPropertyName("error")]
     public KintoneError? Error { get; set; }
+    [JsonPropertyName("message")]
     public override string Message => Error?.Summary ?? base.Message;
+    [JsonPropertyName("detail")]
     public string Detail => Error?.ToString() ?? base.Message;
 
     public KintoneException() { }

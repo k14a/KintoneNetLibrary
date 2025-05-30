@@ -111,6 +111,8 @@ public partial class KintoneApi {
         var responseJson = await response.Content.ReadAsStringAsync();
 
         if (!response.IsSuccessStatusCode) {
+            // var error = KintoneErrorConverter.Parse(responseJson);
+            // throw new KintoneException(error);
             throw new KintoneException(KintoneErrorConverter.Parse(responseJson));
         }
 
@@ -201,11 +203,16 @@ public partial class KintoneApi {
                 yield return pageJson;
 
                 if (!hasNext) { break; }
-
             }
+
         } finally {
             var deleteRequestJson = JsonSerializer.Serialize(new { id = cursorId }, _jsonOptions);
-            await DeleteCursorJsonAsync(deleteRequestJson);
+            try {
+                await DeleteCursorJsonAsync(deleteRequestJson);
+            } catch (KintoneException ex) when (ex.Detail.Contains("GAIA_CN01")) {
+                // カーソルが自動終了されたため、エラーを握りつぶす
+                _logger?.LogWarning(ex.ToString());
+            }
         }
     }
 

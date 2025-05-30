@@ -73,6 +73,7 @@ public partial class KintoneApi {
 
     // 任意のkintoneクエリ文字列で検索
     public async Task<string> FindByQueryAsync<T>(string queryStr) where T : KintoneModelBase, new() {
+        KintoneQueryValidator.ValidateLikeClause(queryStr, msg => _logger?.LogWarning(msg));
         var query = new KintoneQuery<T>().SetQuery(queryStr);
         return await FindBaseJsonAsync(query);
     }
@@ -138,14 +139,18 @@ public partial class KintoneApi {
         }
 
         var cursor = await this.CreateCursorAsync(cursorRequest);
-        var resultJsonList = new List<string>();
+        var allRecords = new List<JsonElement>();
 
         await foreach (var json in this.StreamCursorAsync(cursor)) {
-            resultJsonList.Add(json);
+            using var doc = JsonDocument.Parse(json);
+            if (doc.RootElement.TryGetProperty("records", out var recordsElement)) {
+                foreach (var record in recordsElement.EnumerateArray()) {
+                    allRecords.Add(record.Clone());
+                }
+            }
         }
 
-        // すべての JSON オブジェクトを配列形式でまとめる（必要に応じて調整可能）
-        return $"[{string.Join(",", resultJsonList)}]";
+        return JsonSerializer.Serialize(new { records = allRecords }, _jsonOptions);
     }
 
     /* ---------- 件数取得用 DTO ---------- */
