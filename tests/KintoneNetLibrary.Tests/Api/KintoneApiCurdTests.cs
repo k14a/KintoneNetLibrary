@@ -730,21 +730,21 @@ public class KintoneApiCrudTests {
                 Title = "ブックA",
                 Price = 1000,
                 Classification = "技術書",
-                ReleaseDate = new DateTime(2023, 12, 31, 23, 59, 59, DateTimeKind.Utc) // 条件外
+                ReleaseDate = new KintoneDateTime(new DateTime(2023, 12, 31, 23, 59, 59, DateTimeKind.Utc)) // 条件外
             },
             new() {
                 Uuid = Guid.NewGuid().ToString(),
                 Title = "ブックB",
                 Price = 1500,
                 Classification = "雑誌",
-                ReleaseDate = new DateTime(2024, 01, 02, 10, 00, 00, DateTimeKind.Utc) // 条件内
+                ReleaseDate = new KintoneDateTime(new DateTime(2024, 01, 02, 10, 00, 00, DateTimeKind.Utc)) // 条件内
             },
             new() {
                 Uuid = Guid.NewGuid().ToString(),
                 Title = "ブックC",
                 Price = 2000,
                 Classification = "SF",
-                ReleaseDate = new DateTime(2025, 01, 01, 00, 00, 00, DateTimeKind.Utc) // 条件内
+                ReleaseDate = new KintoneDateTime(new DateTime(2025, 01, 01, 00, 00, 00, DateTimeKind.Utc)) // 条件内
             }
         };
 
@@ -784,7 +784,7 @@ public class KintoneApiCrudTests {
             Price = 1800,
             Uuid = Guid.NewGuid().ToString(),
             Classification = "SF",
-            ReleaseDate = DateTime.Today,
+            ReleaseDate = new KintoneDateTime(DateTime.Today),
             Recommendation = recommendation
         };
 
@@ -815,7 +815,7 @@ public class KintoneApiCrudTests {
             Price = 2000,
             Uuid = Guid.NewGuid().ToString(),
             Classification = "技術書",
-            ReleaseDate = DateTime.Today,
+            ReleaseDate = new KintoneDateTime(DateTime.Today),
             CheckBoxes = selections
         };
 
@@ -847,7 +847,7 @@ public class KintoneApiCrudTests {
             Price = 3000,
             Uuid = Guid.NewGuid().ToString(),
             Classification = "技術書",
-            ReleaseDate = DateTime.Today,
+            ReleaseDate = new KintoneDateTime(DateTime.Today),
             WebAddress = webAddress,
             Telephone = telephone,
             Email = email

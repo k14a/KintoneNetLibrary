@@ -38,25 +38,6 @@ public enum KintoneFieldType {
     Lookup
 }
 
-public enum KintoneDateTimeType {
-    /// <summary>
-    /// 未使用
-    /// </summary>
-    Unknown,
-    /// <summary>
-    /// 日時
-    /// </summary>
-    DateTime,
-    /// <summary>
-    /// 日付
-    /// </summary>
-    DateOnly,
-    /// <summary>
-    /// 時刻
-    /// </summary>
-    TimeOnly,
-}
-
 /// <summary>
 /// クエリ演算子定義
 /// </summary>

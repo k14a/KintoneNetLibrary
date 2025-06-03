@@ -29,8 +29,8 @@ public class BookModel : KintoneModelBase {
     /// <summary>
     /// 発売日
     /// </summary>
-    [KintoneItem(fieldCode: "ReleaseDate", dateType: KintoneDateTimeType.DateTime)]
-    public DateTime? ReleaseDate { get; set; }
+    [KintoneItem(fieldCode: "ReleaseDate", fieldType: KintoneFieldType.DateTime)]
+    public KintoneDateTime? ReleaseDate { get; set; }
     /// <summary>
     /// レビュー
     /// </summary>

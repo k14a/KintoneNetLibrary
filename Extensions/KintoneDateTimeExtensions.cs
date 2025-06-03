@@ -13,10 +13,10 @@ public static class KintoneDateTimeExtensions {
     /// <summary>
     /// 指定のフォーマットで文字列化
     /// </summary>
-    public static string ToKintoneString(this KintoneDateTime kdt, KintoneDateTimeType type) {
+    public static string ToKintoneString(this KintoneDateTime kdt, KintoneFieldType type) {
         return type switch {
-            KintoneDateTimeType.DateOnly => kdt.Value.ToString("yyyy-MM-dd"),
-            KintoneDateTimeType.DateTime => kdt.Value.ToString("yyyy-MM-ddTHH:mm"),
+            KintoneFieldType.Date => kdt.Value.ToString("yyyy-MM-dd"),
+            KintoneFieldType.DateTime => kdt.Value.ToString("yyyy-MM-ddTHH:mm"),
             _ => throw new NotSupportedException($"Unsupported DateTimeType: {type}")
         };
     }

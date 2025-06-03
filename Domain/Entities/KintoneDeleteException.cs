@@ -5,8 +5,7 @@ namespace KintoneNetLibrary.Domain.Entities;
 public class KintoneDeleteException : Exception {
     public IList<KintoneDeleteFailure> Failures { get; }
 
-    public KintoneDeleteException(IList<KintoneDeleteFailure> failures)
-        : base(BuildMessage(failures)) {
+    public KintoneDeleteException(IList<KintoneDeleteFailure> failures) : base(BuildMessage(failures)) {
         this.Failures = failures;
     }
 

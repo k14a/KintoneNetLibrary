@@ -5,61 +5,57 @@ using KintoneNetLibrary.Domain.Entities;
 namespace KintoneNetLibrary.Infrastructure.Converters;
 
 internal static class KintoneValueConverter {
-    public static object? ConvertToCSharp(JsonElement valueElement, KintoneDateTimeType dateTimeType, Type targetType) {
+    public static object? ConvertToCSharp(JsonElement valueElement, KintoneFieldType fieldType, Type targetType) {
         if (valueElement.ValueKind == JsonValueKind.Null) {
             return null;
         }
 
-        bool IsStringEnum(Type t) => t == typeof(IEnumerable<string>) || t == typeof(List<string>);
+        static bool IsStringListType(Type t) => t == typeof(IEnumerable<string>) || t == typeof(List<string>);
 
-        // --- 日付・時間型の優先処理 ---
-        if (dateTimeType != KintoneDateTimeType.Unknown) {
-            var str = valueElement.GetString();
-            return (targetType, dateTimeType) switch {
-                (Type t, KintoneDateTimeType.DateTime) when t == typeof(DateTime) => DateTime.TryParse(str, out var dt) ? dt : DateTime.MinValue,
-                (Type t, KintoneDateTimeType.DateTime) when t == typeof(DateTime?) => DateTime.TryParse(str, out var dt) ? dt : null,
-                (Type t, KintoneDateTimeType.TimeOnly) when t == typeof(TimeOnly) => TimeOnly.TryParse(str, out var to) ? to : TimeOnly.MinValue,
-                (Type t, KintoneDateTimeType.TimeOnly) when t == typeof(TimeOnly?) => TimeOnly.TryParse(str, out var to) ? to : null,
-                (Type t, KintoneDateTimeType.DateOnly) when t == typeof(DateOnly) => DateOnly.TryParse(str, out var d) ? d : DateOnly.MinValue,
-                (Type t, KintoneDateTimeType.DateOnly) when t == typeof(DateOnly?) => DateOnly.TryParse(str, out var d) ? d : null,
-                _ => throw new NotSupportedException($"Unsupported KintoneDateTimeType '{dateTimeType}' to {targetType.Name}")
+        string? str = valueElement.ValueKind == JsonValueKind.String ? valueElement.GetString() : null;
+
+        // --- 日付型（DateTime / DateOnly / TimeOnly） ---
+        if (fieldType is KintoneFieldType.DateTime or KintoneFieldType.Date or KintoneFieldType.Time) {
+            return (targetType, fieldType) switch {
+                // --- KintoneDateTime 型への変換 ---
+                (Type t, KintoneFieldType.DateTime) when t == typeof(KintoneDateTime) => new KintoneDateTime(str, KintoneFieldType.DateTime),
+
+                // --- DateTime 型（従来互換） ---
+                (Type t, KintoneFieldType.DateTime) when t == typeof(DateTime) => DateTime.TryParse(str, out var dt) ? dt : DateTime.MinValue,
+                (Type t, KintoneFieldType.DateTime) when t == typeof(DateTime?) => DateTime.TryParse(str, out var dt) ? dt : null,
+
+                // --- DateOnly 型 ---
+                (Type t, KintoneFieldType.Date) when t == typeof(DateOnly) => DateOnly.TryParse(str, out var d) ? d : DateOnly.MinValue,
+                (Type t, KintoneFieldType.Date) when t == typeof(DateOnly?) => DateOnly.TryParse(str, out var d) ? d : null,
+
+                // --- TimeOnly 型 ---
+                (Type t, KintoneFieldType.Time) when t == typeof(TimeOnly) => TimeOnly.TryParse(str, out var to) ? to : TimeOnly.MinValue,
+                (Type t, KintoneFieldType.Time) when t == typeof(TimeOnly?) => TimeOnly.TryParse(str, out var to) ? to : null,
+                _ => throw new NotSupportedException($"Unsupported date/time conversion from {fieldType} to {targetType.Name}")
             };
         }
 
-        // --- 通常のKintoneタイプ判定（string） ---
-        var kintoneType = valueElement.ValueKind switch {
-            JsonValueKind.String => "STRING",
-            JsonValueKind.Number => "NUMBER",
-            JsonValueKind.Array => "ARRAY",
-            JsonValueKind.Object => "OBJECT",
-            _ => "UNKNOWN"
-        };
-
-        // 下記は従来の string ベースでの判定（現状のまま維持）
-        return (targetType, kintoneType) switch {
-            (Type t, "STRING") when t == typeof(string) => valueElement.GetString(),
-            (Type t, "NUMBER") when t == typeof(int) => ParseNullableInt(valueElement) ?? 0,
-            (Type t, "NUMBER") when t == typeof(int?) => ParseNullableInt(valueElement),
-            (Type t, "OBJECT") when t == typeof(KintoneUser) => JsonSerializer.Deserialize<KintoneUser>(valueElement.GetRawText()),
-            (Type t, "STRING") when t == typeof(string) => valueElement.GetString(),
-            (Type t, "STRING") when t == typeof(int) => int.TryParse(valueElement.GetString(), out var i) ? i : 0,
-            (Type t, "STRING") when t == typeof(int?) => int.TryParse(valueElement.GetString(), out var i) ? i : null,
-            (Type t, "ARRAY") when IsStringEnum(t) => valueElement.EnumerateArray().Select(e => e.GetString()!).ToList(),
-            (Type t, "ARRAY") when t == typeof(List<KintoneFile>)
-                => valueElement.EnumerateArray()
+        // --- 通常型 ---
+        return (targetType, valueElement.ValueKind) switch {
+            (Type t, JsonValueKind.String) when t == typeof(string) => str,
+            (Type t, JsonValueKind.String) when t == typeof(int) => int.TryParse(str, out var i) ? i : 0,
+            (Type t, JsonValueKind.String) when t == typeof(int?) => int.TryParse(str, out var i) ? i : null,
+            (Type t, JsonValueKind.Number) when t == typeof(int) => valueElement.TryGetInt32(out var i) ? i : 0,
+            (Type t, JsonValueKind.Number) when t == typeof(int?) => valueElement.TryGetInt32(out var i) ? i : null,
+            (Type t, JsonValueKind.Object) when t == typeof(KintoneUser) => JsonSerializer.Deserialize<KintoneUser>(valueElement.GetRawText()),
+            (Type t, JsonValueKind.Array) when IsStringListType(t) => valueElement.EnumerateArray().Select(e => e.GetString()!).ToList(),
+            (Type t, JsonValueKind.Array) when t == typeof(List<KintoneFile>) =>
+                valueElement.EnumerateArray()
                     .Select(f => new KintoneFile {
                         ContentType = f.GetProperty("contentType").GetString() ?? "",
                         FileKey = f.GetProperty("fileKey").GetString() ?? "",
                         Name = f.GetProperty("name").GetString() ?? "",
                         Size = long.TryParse(f.GetProperty("size").GetString(), out var size) ? size : 0
                     }).ToList(),
-            (Type t, "ARRAY") when t == typeof(List<Dictionary<string, JsonElement>>)
-                => valueElement.EnumerateArray()
-                    .Select(row => row.GetProperty("value")
-                        .EnumerateObject()
-                        .ToDictionary(p => p.Name, p => p.Value))
+            (Type t, JsonValueKind.Array) when t == typeof(List<Dictionary<string, JsonElement>>) =>
+                valueElement.EnumerateArray()
+                    .Select(row => row.GetProperty("value").EnumerateObject().ToDictionary(p => p.Name, p => p.Value))
                     .ToList(),
-
             _ => throw new NotSupportedException($"Unsupported value conversion to {targetType.Name} from kind: {valueElement.ValueKind}")
         };
     }

@@ -14,10 +14,6 @@ public static class KintoneConstants {
     /// </summary>
     public const int KintoneDeleteLimit = 100;
     /// <summary>
-    /// Kintoneでよく使う日時フォーマットの例
-    /// </summary>
-    public const string DateTimeFormat = "yyyy-MM-ddTHH:mm:ssZ";
-    /// <summary>
     /// Kintoneのフィールドコード最大文字数
     /// </summary>
     public const int KintoneFieldCodeMaxLength = 128;

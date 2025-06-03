@@ -28,11 +28,11 @@ public abstract class KintoneModelBase : KintoneModelHookBase {
         set => RecordID = value;
     }
 
-    [KintoneItem(dateType: KintoneDateTimeType.DateTime, isUpload: false)]
-    public virtual DateTime CreatedTime { get; set; } = DateTime.MinValue;
+    [KintoneItem(fieldType: KintoneFieldType.DateTime, isUpload: false)]
+    public virtual KintoneDateTime CreatedTime { get; set; } = new();
 
-    [KintoneItem(dateType: KintoneDateTimeType.DateTime, isUpload: false)]
-    public virtual DateTime UpdatedTime { get; set; } = DateTime.MinValue;
+    [KintoneItem(fieldType: KintoneFieldType.DateTime, isUpload: false)]
+    public virtual KintoneDateTime UpdatedTime { get; set; } = new();
 
     public virtual KintoneUser CreatedBy { get; set; } = new();
     public virtual KintoneUser UpdatedBy { get; set; } = new();
@@ -87,10 +87,7 @@ public abstract class KintoneModelBase : KintoneModelHookBase {
         var properties = this.GetType().GetProperties();
 
         foreach (var prop in properties) {
-            var attr = prop.GetCustomAttributes(typeof(KintoneItemAttribute), true)
-                           .FirstOrDefault() as KintoneItemAttribute;
-
-            if (attr == null || !attr.IsUpload || string.IsNullOrWhiteSpace(attr.FieldCode)) {
+            if (prop.GetCustomAttributes(typeof(KintoneItemAttribute), true).FirstOrDefault() is not KintoneItemAttribute attr || !attr.IsUpload || string.IsNullOrWhiteSpace(attr.FieldCode)) {
                 continue; // Upload 対象ではない、または無効なFieldCode → スキップ
             }
 
@@ -122,8 +119,7 @@ public abstract class KintoneModelBase : KintoneModelHookBase {
         return record;
     }
     private (string? fieldCode, object? value) GetUpdateKeyField(out object? keyValue) {
-        var keyProp = GetType().GetProperties()
-            .FirstOrDefault(p => p.GetCustomAttribute<KintoneItemAttribute>()?.IsKey == true);
+        var keyProp = GetType().GetProperties().FirstOrDefault(p => p.GetCustomAttribute<KintoneItemAttribute>()?.IsKey == true);
 
         if (keyProp is not null) {
             var attr = keyProp.GetCustomAttribute<KintoneItemAttribute>();
@@ -185,14 +181,10 @@ public abstract class KintoneModelBase : KintoneModelHookBase {
 
             // 利用するKintoneFieldTypeとKintoneDateTimeTypeを決定
             var fieldType = attr.FieldType;
-            var dateType = attr.DateType;
 
             // KintoneFieldTypeが指定されていない場合、生データのtypeから推定可能にする予定ならここで処理を追加可能
 
-            var value = KintoneValueConverter.ConvertToCSharp(
-                valueElement,
-                dateType,          // KintoneDateTimeType?（Date, Time, DateTimeなど）
-                prop.PropertyType);
+            var value = KintoneValueConverter.ConvertToCSharp(valueElement, fieldType, prop.PropertyType);
 
             if (value != null) {
                 prop.SetValue(this, value);

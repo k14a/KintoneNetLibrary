@@ -1,25 +1,12 @@
 ﻿namespace KintoneNetLibrary.Domain.Entities;
 
 public class KintoneDateTime {
-    // public enum DateTimeType {
-    //     /// <summary>
-    //     /// 日時型
-    //     /// </summary>
-    //     DateTime,
-    //     /// <summary>
-    //     /// 時刻型
-    //     /// </summary>
-    //     Time,
-    //     /// <summary>
-    //     /// 日付型
-    //     /// </summary>
-    //     Ymd,
-    // }
-
     /// <summary>
     /// 日付データ
     /// </summary>
     public DateTime Value { get; set; }
+    public KintoneFieldType Type { get; set; } = KintoneFieldType.Unknown;
+    public string? RawValue { get; set; } = string.Empty;
 
     /// <summary>
     /// コンストラクタ
@@ -36,13 +23,20 @@ public class KintoneDateTime {
         this.Value = value;
     }
 
-    public override string ToString() {
-        return this.ToString(KintoneDateTimeType.DateTime);
+    public KintoneDateTime(string? kintoneStringValue, KintoneFieldType type) {
+        this.Type = type;
+        this.RawValue = kintoneStringValue;
+        this.Value = DateTime.TryParse(kintoneStringValue, out var dt) ? dt : DateTime.MinValue;
     }
-    public string ToString(KintoneDateTimeType type) {
+
+
+    public override string? ToString() {
+        return this.ToString(KintoneFieldType.DateTime);
+    }
+    public string? ToString(KintoneFieldType type) {
         return type switch {
-            KintoneDateTimeType.DateOnly => this.Value.ToString("yyyy-MM-dd"),
-            KintoneDateTimeType.DateTime => this.Value.ToString("yyyy-MM-ddTHH:mm"),
+            KintoneFieldType.Date => this.Value.ToString("yyyy-MM-dd"),
+            KintoneFieldType.DateTime => this.Value.ToString("yyyy-MM-ddTHH:mm"),
             _ => this.Value.ToString("yyyy-MM-ddTHH:mm"),
         };
     }

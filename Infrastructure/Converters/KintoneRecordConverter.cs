@@ -35,7 +35,7 @@ public class KintoneRecordConverter<T> : JsonConverter<T> where T : KintoneModel
             }
 
             try {
-                var value = KintoneValueConverter.ConvertToCSharp(valueElement, attr.DateType, prop.PropertyType);
+                var value = KintoneValueConverter.ConvertToCSharp(valueElement, attr.FieldType, prop.PropertyType);
                 prop.SetValue(model, value);
             } catch (Exception ex) {
                 throw new JsonException($"プロパティ '{prop.Name}' (FieldCode='{fieldCode}') の変換に失敗しました。KintoneType='{kintoneType}', TargetType='{prop.PropertyType.Name}'", ex);
