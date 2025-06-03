@@ -15,23 +15,9 @@ public partial class KintoneApi {
     #region <<Private values>>
     private HttpClient _httpClient;
     // JsonSerializerOptions は再利用推奨のためstaticで保持
-    private static readonly JsonSerializerOptions _jsonOptions = KintoneJsonOptions.Default;
-    // private static readonly JsonSerializerOptions _jsonOptions = new() {
-    //     PropertyNameCaseInsensitive = true,
-    //     Converters = {
-    //         new KintoneRecordConverterFactory(),
-    //     },
-    //     // 必要に応じて他のオプションを追加
-    // };
-    // /// <summary>
-    // /// Kintoneデータ取得上限
-    // /// </summary>
-    // private const int KintoneLimit = 500;
-    // /// <summary>
-    // /// Kintoneデータ削除上限
-    // /// </summary>
-    // private const int KintoneDeleteLimit = 100;
+    private readonly JsonSerializerOptions _jsonOptions;
     private readonly ILogger<KintoneApi>? _logger;
+    private int _cursorPageSize = CursorFetchLimit;
     #endregion
 
     #region <<Properties>>
@@ -67,6 +53,18 @@ public partial class KintoneApi {
     /// Basic認証パスワード
     /// </summary>
     public string BasicAuthPassword { get; set; } = string.Empty;
+    /// <summary>
+    /// カーソルAPIで一度に取得する件数(省略時はKintoneの最大値である500)
+    /// </summary>
+    public int CursorPageSize {
+        get => this._cursorPageSize;
+        set {
+            if (value <= 0 || value > CursorFetchLimit) {
+                throw new ArgumentOutOfRangeException(nameof(this.CursorPageSize), value, $"CursorPageSizeは1以上{CursorFetchLimit}以下でなければなりません。");
+            }
+            this._cursorPageSize = value;
+        }
+    }
     #endregion
 
     #region <<Constructor(s)>>
@@ -77,14 +75,16 @@ public partial class KintoneApi {
     /// <param name="appID">KintoneアプリケーションID</param>
     /// <param name="httpClient"></param>
     /// <param name="logger"></param>
+    /// <param name="jsonOptions"></param>
     /// <exception cref="ArgumentNullException"></exception>
-    public KintoneApi(KintoneAccount account, int appID, HttpClient? httpClient = null, ILogger<KintoneApi>? logger = null) {
+    public KintoneApi(KintoneAccount account, int appID, HttpClient? httpClient = null, ILogger<KintoneApi>? logger = null, JsonSerializerOptions? jsonOptions = null) {
         ArgumentNullException.ThrowIfNull(account);
 
         this.Domain = account.Domain;
         this.AppID = appID;
         this._logger = logger;
         this._httpClient = httpClient ?? new HttpClient();
+        this._jsonOptions = jsonOptions ?? DefaultJsonOptions.Default;
 
         if (!string.IsNullOrWhiteSpace(this.Domain)) {
             this._httpClient.BaseAddress = new Uri($"https://{this.Domain.TrimEnd('/')}/k/v1/");

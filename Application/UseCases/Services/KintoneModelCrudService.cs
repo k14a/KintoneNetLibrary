@@ -18,13 +18,14 @@ public class KintoneModelCrudService {
     private readonly ILogger<KintoneModelCrudService>? _logger;
     private readonly IKintoneApiFactory _apiFactory;
     private readonly KintoneAccount _account;
-    private static readonly JsonSerializerOptions _jsonOptions = KintoneJsonOptions.Default;
+    private readonly JsonSerializerOptions _jsonOptions;
 
-    public KintoneModelCrudService(IKintoneRepository repository, IKintoneApiFactory apiFactory, IOptions<KintoneAccount> accountOptions, ILogger<KintoneModelCrudService> logger) {
+    public KintoneModelCrudService(IKintoneRepository repository, IKintoneApiFactory apiFactory, IOptions<KintoneAccount> accountOptions, ILogger<KintoneModelCrudService> logger, JsonSerializerOptions? jsonOptions = null) {
         this._repository = repository ?? throw new ArgumentNullException(nameof(repository));
         this._apiFactory = apiFactory ?? throw new ArgumentNullException(nameof(apiFactory));
         this._account = accountOptions.Value ?? throw new ArgumentNullException(nameof(accountOptions));
         this._logger = logger;
+        this._jsonOptions = jsonOptions ?? DefaultJsonOptions.Default;
     }
 
     public async Task<KintoneWriteResult<T>> CreateAsync<T>(IEnumerable<T> records, bool enableSingleRetryOnError = false) where T : KintoneModelBase, new() {
@@ -32,7 +33,6 @@ public class KintoneModelCrudService {
 
         foreach (var chunk in records.Chunk(KintoneLimit)) {
             try {
-                // var json = BuildCreateJson(chunk);
                 var json = KintoneRequestBuilder.BuildCreateJson(chunk);
                 var responseJson = await _repository.CreateRecordsAsync<T>(json);
                 var parsed = KintoneResponseParser.ParseCreatedRecords(chunk, responseJson);

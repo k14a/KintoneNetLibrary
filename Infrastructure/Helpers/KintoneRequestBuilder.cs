@@ -6,7 +6,7 @@ using KintoneNetLibrary.Domain.Entities;
 namespace KintoneNetLibrary.Infrastructure.Helpers;
 
 public static class KintoneRequestBuilder {
-    private static readonly JsonSerializerOptions _jsonOptions = KintoneJsonOptions.Default;
+    private static readonly JsonSerializerOptions _jsonOptions = DefaultJsonOptions.Default;
 
     /// <summary>
     /// Kintone レコード登録（複数）の JSON を構築
@@ -110,16 +110,21 @@ public static class KintoneRequestBuilder {
 
         return JsonSerializer.Serialize(deleteBody, _jsonOptions);
     }
-    public static Uri BuildRequestUri(Uri baseUri, string path, int appID, string? rawQuery = null) {
-        var builder = new UriBuilder(new Uri(baseUri, path));
-        var parameters = new List<string> { $"app={appID}" };
+    internal static Uri BuildRequestUri(Uri baseUri, string path, int appID, string? query = null, IDictionary<string, string>? additionalParams = null) {
 
-        if (!string.IsNullOrEmpty(rawQuery)) {
-            // クエリが既に query=... 形式で渡されていたらそのまま使う
-            if (!rawQuery.TrimStart().StartsWith("query=")) {
-                rawQuery = $"query={Uri.EscapeDataString(rawQuery)}";
+        var builder = new UriBuilder(new Uri(baseUri, path));
+        var parameters = new List<string> {
+            $"app={appID}"
+        };
+
+        if (!string.IsNullOrWhiteSpace(query)) {
+            parameters.Add($"query={Uri.EscapeDataString(query)}");
+        }
+
+        if (additionalParams != null) {
+            foreach (var kvp in additionalParams) {
+                parameters.Add($"{kvp.Key}={Uri.EscapeDataString(kvp.Value)}");
             }
-            parameters.Add(rawQuery);
         }
 
         builder.Query = string.Join("&", parameters);

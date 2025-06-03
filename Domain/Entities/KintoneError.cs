@@ -2,8 +2,7 @@
 
 namespace KintoneNetLibrary.Domain.Entities;
 
-public class KintoneError
-{
+public class KintoneError {
     [JsonPropertyName("message")]
     public string Message { get; set; } = string.Empty;
     [JsonPropertyName("code")]
@@ -22,8 +21,7 @@ public class KintoneError
     public KintoneError() { }
     public KintoneError(string message) { this.Message = message; }
 
-    public override string ToString()
-    {
+    public override string ToString() {
         var builder = new System.Text.StringBuilder();
         builder.AppendLine($"[KintoneError] Code: {Code}, Message: {Message}");
         if (!string.IsNullOrEmpty(Summary)) {
@@ -46,15 +44,13 @@ public class KintoneError
     }
 }
 
-public class KintoneErrorDetail
-{
+public class KintoneErrorDetail {
     [JsonPropertyName("index")]
     public int Index { get; set; }
     [JsonPropertyName("messages")]
     public IList<string> Messages { get; set; } = [];
 
-    public override string ToString()
-    {
+    public override string ToString() {
         return $"Index {Index}: {string.Join(", ", Messages)}";
     }
 }

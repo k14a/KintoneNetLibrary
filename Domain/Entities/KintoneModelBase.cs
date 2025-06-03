@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Infrastructure.Converters;
 
 namespace KintoneNetLibrary.Domain.Entities;
@@ -18,6 +19,7 @@ public abstract class KintoneModelBase : KintoneModelHookBase {
     // ----- 共通フィールド -----
 
     /// <summary>レコード番号（$id）</summary>
+    [KintoneItem(fieldCode: "レコード番号", isUpload: false)]
     public virtual string? RecordID { get; set; }
 
     [JsonIgnore]
@@ -26,10 +28,10 @@ public abstract class KintoneModelBase : KintoneModelHookBase {
         set => RecordID = value;
     }
 
-    [KintoneItem(FieldType = KintoneDateTime.DateTimeType.DateTime, IsUpload = false)]
+    [KintoneItem(dateType: KintoneDateTimeType.DateTime, isUpload: false)]
     public virtual DateTime CreatedTime { get; set; } = DateTime.MinValue;
 
-    [KintoneItem(FieldType = KintoneDateTime.DateTimeType.DateTime, IsUpload = false)]
+    [KintoneItem(dateType: KintoneDateTimeType.DateTime, isUpload: false)]
     public virtual DateTime UpdatedTime { get; set; } = DateTime.MinValue;
 
     public virtual KintoneUser CreatedBy { get; set; } = new();
@@ -49,8 +51,8 @@ public abstract class KintoneModelBase : KintoneModelHookBase {
 
     // ----- 項目名変換 -----
 
-    private IList<NameConvertor> _convertDictionary = new List<NameConvertor>
-    {
+    private IList<NameConvertor> _convertDictionary =
+    [
         NameConvertor.Create("$id", nameof(RecordID), NameConvertor.Direction.Read),
         NameConvertor.Create("レコード番号", nameof(RecordID), NameConvertor.Direction.Send),
         NameConvertor.Create("$revision", nameof(Revision), NameConvertor.Direction.Read),
@@ -60,7 +62,7 @@ public abstract class KintoneModelBase : KintoneModelHookBase {
         NameConvertor.Create("更新者", nameof(UpdatedBy)),
         NameConvertor.Create("ステータス", nameof(Status)),
         NameConvertor.Create("作業者", nameof(Assignee))
-    };
+    ];
 
     protected virtual IList<NameConvertor> ConvertDictionary {
         get => _convertDictionary;
@@ -69,7 +71,6 @@ public abstract class KintoneModelBase : KintoneModelHookBase {
 
     public IDictionary<string, string> GetToPropertyDic() => GetNameConvertDic(NameConvertor.Direction.Read);
     public IDictionary<string, string> GetToItemNameDic() => GetNameConvertDic(NameConvertor.Direction.Send);
-
     private IDictionary<string, string> GetNameConvertDic(NameConvertor.Direction direction) {
         return ConvertDictionary
             .Where(c => c.ConvertDirection == direction || c.ConvertDirection == NameConvertor.Direction.Both)
@@ -99,8 +100,6 @@ public abstract class KintoneModelBase : KintoneModelHookBase {
 
         return record;
     }
-
-
     public virtual IDictionary<string, object> ToKintoneUpdateRecord() {
         var record = ToKintoneRecord();
 
@@ -122,7 +121,6 @@ public abstract class KintoneModelBase : KintoneModelHookBase {
 
         return record;
     }
-
     private (string? fieldCode, object? value) GetUpdateKeyField(out object? keyValue) {
         var keyProp = GetType().GetProperties()
             .FirstOrDefault(p => p.GetCustomAttribute<KintoneItemAttribute>()?.IsKey == true);
@@ -138,16 +136,18 @@ public abstract class KintoneModelBase : KintoneModelHookBase {
     }
 
     // ----- Hook -----
-
     public virtual async Task RunBeforeCreateHookAsync() => await OnBeforeCreateAsync();
     public virtual async Task RunAfterCreateHookAsync() => await OnAfterCreateAsync();
     public virtual async Task RunBeforeUpdateHookAsync() => await OnBeforeUpdateAsync();
     public virtual async Task RunAfterUpdateHookAsync() => await OnAfterUpdateAsync();
     public virtual async Task RunBeforeDeleteHookAsync() => await OnBeforeDeleteAsync();
     public virtual async Task RunAfterDeleteHookAsync() => await OnAfterDeleteAsync();
+    /// <summary>
+    /// 登録・更新前に呼び出されるカスタムバリデーション
+    /// </summary>
+    public virtual void ValidateBeforeSave() { }
 
     // ----- 判定・ユーティリティ -----
-
     public virtual bool HasUpdateKeyOrID() {
         if (!string.IsNullOrEmpty(ID)) {
             return true;
@@ -157,9 +157,7 @@ public abstract class KintoneModelBase : KintoneModelHookBase {
             .Where(p => p.GetCustomAttribute<KintoneItemAttribute>()?.IsKey == true)
             .Any(p => p.GetValue(this) is string s ? !string.IsNullOrEmpty(s) : p.GetValue(this) is not null);
     }
-
     protected virtual Task RefreshIdFromKeyAsync() => Task.CompletedTask;
-
     private KintoneIndex ApplyIndex(KintoneIndexes indexes, int index = 0) {
         if (indexes.IDs.Count > index && indexes.Revisions.Count > index) {
             this.RecordID = indexes.IDs[index];
@@ -174,40 +172,30 @@ public abstract class KintoneModelBase : KintoneModelHookBase {
         return new KintoneIndex();
     }
     public void LoadFromJsonDictionary(Dictionary<string, JsonElement> fieldMap) {
-        var props = this.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
-        foreach (var prop in props) {
+        foreach (var prop in GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)) {
             var attr = prop.GetCustomAttribute<KintoneItemAttribute>();
-            if (attr == null) { continue; }
-
-            var fieldCode = attr.FieldCode;
-            if (fieldMap.TryGetValue(fieldCode, out var valueElement)) {
-                object? value = null;
-
-                if (prop.PropertyType == typeof(string)) {
-                    value = valueElement.GetString();
-                } else if (prop.PropertyType == typeof(int)) {
-                    if (valueElement.ValueKind == JsonValueKind.String && int.TryParse(valueElement.GetString(), out var i)) {
-                        value = i;
-                    } else if (valueElement.ValueKind == JsonValueKind.Number) {
-                        value = valueElement.GetInt32();
-                    }
-                }
-                // 他の型（bool, DateTimeなど）も必要に応じて追加
-
-                if (value != null) {
-                    prop.SetValue(this, value);
-                }
+            if (attr == null) {
+                continue;
             }
-        }
 
-        // ID / Revision などの標準項目
-        if (fieldMap.TryGetValue("$id", out var idElement)) {
-            this.ID = idElement.GetString() ?? string.Empty;
-        }
+            if (!fieldMap.TryGetValue(attr.FieldCode, out var fieldElement) ||
+                !fieldElement.TryGetProperty("value", out var valueElement)) {
+                continue;
+            }
 
-        if (fieldMap.TryGetValue("$revision", out var revElement)) {
-            if (int.TryParse(revElement.GetString(), out var rev)) {
-                this.Revision = rev;
+            // 利用するKintoneFieldTypeとKintoneDateTimeTypeを決定
+            var fieldType = attr.FieldType;
+            var dateType = attr.DateType;
+
+            // KintoneFieldTypeが指定されていない場合、生データのtypeから推定可能にする予定ならここで処理を追加可能
+
+            var value = KintoneValueConverter.ConvertToCSharp(
+                valueElement,
+                dateType,          // KintoneDateTimeType?（Date, Time, DateTimeなど）
+                prop.PropertyType);
+
+            if (value != null) {
+                prop.SetValue(this, value);
             }
         }
     }
