@@ -51,12 +51,12 @@ public class BookModel : KintoneModelBase {
     /// <summary>
     /// Webアドレス
     /// </summary>
-    [KintoneItem(fieldCode: "WebAddress", fieldType: KintoneFieldType.Link)]
+    [KintoneItem(fieldCode: "WebAddress", fieldType: KintoneFieldType.LinkUrl)]
     public string WebAddress { get; set; } = string.Empty;
     /// <summary>
     /// 電話番号
     /// </summary>
-    [KintoneItem(fieldCode: "Telephone", fieldType: KintoneFieldType.Link)]
+    [KintoneItem(fieldCode: "Telephone", fieldType: KintoneFieldType.LinkTelephone)]
     public string Telephone { get; set; } = string.Empty;
     /// <summary>
     /// メールアドレス
