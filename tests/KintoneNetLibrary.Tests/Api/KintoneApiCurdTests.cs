@@ -7,6 +7,7 @@ using KintoneNetLibrary.Infrastructure.Helpers;
 using System.Text.Json;
 using System.Reflection;
 using System.IO.Compression;
+using KintoneNetLibrary.Tests.Helpers;
 
 namespace KintoneNetLibrary.Tests.Api;
 
@@ -24,7 +25,7 @@ public class KintoneApiCrudTests {
     public async Task Can_Create_Read_Delete_Record() {
         var api = this.CreateApi();
         // 準備：BookModelのインスタンス
-        var book = new BookModel { Title = "Test Book", Price = 1000 };
+        var book = new BookModel { Title = "Test Book", Price = 1000, Uuid = Guid.NewGuid().ToString() };
 
         // Create
         var json = KintoneRequestBuilder.BuildCreateJson([book]);
@@ -51,9 +52,9 @@ public class KintoneApiCrudTests {
 
         // 準備：複数の BookModel インスタンス
         var books = new List<BookModel> {
-            new() { Title = "Book A", Price = 100 },
-            new() { Title = "Book B", Price = 200 },
-            new() { Title = "Book C", Price = 300 },
+            new() { Title = "Book A", Price = 100, Uuid = Guid.NewGuid().ToString() },
+            new() { Title = "Book B", Price = 200, Uuid = Guid.NewGuid().ToString() },
+            new() { Title = "Book C", Price = 300, Uuid = Guid.NewGuid().ToString() },
         };
 
         // Create
@@ -82,7 +83,7 @@ public class KintoneApiCrudTests {
         var api = this.CreateApi();
 
         // Step 1: Create
-        var book = new BookModel { Title = "Initial Title", Price = 1000 };
+        var book = new BookModel { Title = "Initial Title", Price = 1000, Uuid = Guid.NewGuid().ToString() };
         var createJson = KintoneRequestBuilder.BuildCreateJson([book]);
         var createResult = await api.CreateRecordsAsync(createJson);
         var createdRecords = KintoneResponseParser.ParseCreatedRecords([book], createResult);
@@ -319,17 +320,11 @@ public class KintoneApiCrudTests {
 
         // Act
         string query = "Title like \"ブック\" and Price < 1300";
-        var foundJson = await api.FindByQueryAsync<BookModel>(query);
-        var foundRecords = KintoneResponseParser.ParseRecords<BookModel>(foundJson);
+        var foundRecords = await KintoneTestHelper.WaitForExpectedRecordCountAsync<BookModel>(api, query, 2);
 
         // Assert
         Assert.NotNull(foundRecords);
-
-        var matched = foundRecords!
-            .Where(r => r.Title.StartsWith("ブック") && r.Price < 5000)
-            .ToList();
-
-        Assert.Equal(2, matched.Count);
+        Assert.Equal(2, foundRecords.Count);
 
         // Cleanup
         var deleteJson = KintoneRequestBuilder.BuildDeleteJson(createdRecords);
@@ -486,8 +481,8 @@ public class KintoneApiCrudTests {
         Assert.NotNull(deleteResult);
     }
     [Theory]
-    [InlineData(600, 100)]  // カーソル使用（pageSize < recordCount）
-    [InlineData(500, 600)]  // カーソル不使用（pageSize >= recordCount）
+    [InlineData(500, 100)]  // カーソル使用（pageSize < recordCount）
+    [InlineData(499, 500)]  // カーソル不使用（pageSize >= recordCount）
     public async Task FindAsync_OverMaxLimit_WorksCorrectly(int recordCount, int pageSize) {
         // Arrange
         var api = this.CreateApi();
@@ -528,6 +523,367 @@ public class KintoneApiCrudTests {
             Assert.NotNull(deleteResult);
         }
     }
+    [Theory]
+    [InlineData(5, 2)]  // カーソル使用：recordCount = 4, pageSize = 2 → カーソル使用される
+    [InlineData(5, 10)] // カーソル不使用：recordCount = 4, pageSize = 10 → 1ページで済むためカーソル不要
+    public async Task FindAsync_TitleInCondition_WorksCorrectly(int cursorPageSize, int dummyPageSize) {
+        // Arrange
+        var api = this.CreateApi();
+        api.CursorPageSize = cursorPageSize;
 
+        var books = new List<BookModel>
+        {
+            new() { Uuid = Guid.NewGuid().ToString(), Title = "ブック01", Price = 1000, Classification = "技術書" },
+            new() { Uuid = Guid.NewGuid().ToString(), Title = "ブック02", Price = 1500, Classification = "雑誌" },
+            new() { Uuid = Guid.NewGuid().ToString(), Title = "ブック03", Price = 2000, Classification = "SF" },
+            new() { Uuid = Guid.NewGuid().ToString(), Title = "ブック04", Price = 2500, Classification = "雑誌" },
+        };
 
+        var createJson = KintoneRequestBuilder.BuildCreateJson(books);
+        var createResult = await api.CreateRecordsAsync(createJson);
+        var createdRecords = KintoneResponseParser.ParseCreatedRecords(books, createResult);
+
+        try {
+            // Act
+            var condition = "Title in (\"ブック01\", \"ブック03\")";
+            var foundJson = await api.FindByQueryAsync<BookModel>(condition);
+            var foundRecords = KintoneResponseParser.ParseRecords<BookModel>(foundJson);
+
+            // Assert
+            var titles = foundRecords.Select(r => r.Title).ToList();
+            Assert.Contains("ブック01", titles);
+            Assert.Contains("ブック03", titles);
+            Assert.DoesNotContain("ブック02", titles);
+            Assert.DoesNotContain("ブック04", titles);
+            Assert.Equal(2, foundRecords.Count);
+        } finally {
+            // Clean up
+            var deleteJson = KintoneRequestBuilder.BuildDeleteJson(createdRecords);
+            var deleteResult = await api.DeleteJsonAsync(deleteJson);
+            Assert.NotNull(deleteResult);
+        }
+    }
+    [Theory]
+    [InlineData(5, 2)]  // カーソル使用：レコード数 > pageSize
+    [InlineData(5, 10)] // カーソル不使用：pageSize >= レコード数
+    public async Task FindAsync_ClassificationInCondition_WorksCorrectly(int cursorPageSize, int dummyPageSize) {
+        // Arrange
+        var api = this.CreateApi();
+        api.CursorPageSize = cursorPageSize;
+
+        var books = new List<BookModel>
+        {
+            new() { Uuid = Guid.NewGuid().ToString(), Title = "雑誌A", Price = 1000, Classification = "雑誌" },
+            new() { Uuid = Guid.NewGuid().ToString(), Title = "技術書B", Price = 1500, Classification = "技術書" },
+            new() { Uuid = Guid.NewGuid().ToString(), Title = "SF C", Price = 2000, Classification = "SF" },
+            new() { Uuid = Guid.NewGuid().ToString(), Title = "技術書D", Price = 2500, Classification = "技術書" },
+        };
+
+        var createJson = KintoneRequestBuilder.BuildCreateJson(books);
+        var createResult = await api.CreateRecordsAsync(createJson);
+        var createdRecords = KintoneResponseParser.ParseCreatedRecords(books, createResult);
+
+        try {
+            // Act
+            var condition = "Classification in (\"雑誌\", \"SF\")";
+            var foundJson = await api.FindByQueryAsync<BookModel>(condition);
+            var foundRecords = KintoneResponseParser.ParseRecords<BookModel>(foundJson);
+
+            // Assert
+            var classifications = foundRecords.Select(r => r.Classification).ToList();
+            Assert.Contains("雑誌", classifications);
+            Assert.Contains("SF", classifications);
+            Assert.DoesNotContain("技術書", classifications);
+            Assert.Equal(2, foundRecords.Count);
+        } finally {
+            // Clean up
+            var deleteJson = KintoneRequestBuilder.BuildDeleteJson(createdRecords);
+            var deleteResult = await api.DeleteJsonAsync(deleteJson);
+            Assert.NotNull(deleteResult);
+        }
+    }
+    [Theory]
+    [InlineData(5, 2)]  // カーソル使用：レコード数 > pageSize
+    [InlineData(5, 10)] // カーソル不使用：pageSize >= レコード数
+    public async Task FindAsync_PriceNotEqualCondition_WorksCorrectly(int cursorPageSize, int dummyPageSize) {
+        // Arrange
+        var api = this.CreateApi();
+        api.CursorPageSize = cursorPageSize;
+
+        var books = new List<BookModel>
+        {
+            new() { Uuid = Guid.NewGuid().ToString(), Title = "ブックA", Price = 1200, Classification = "雑誌" },
+            new() { Uuid = Guid.NewGuid().ToString(), Title = "ブックB", Price = 1000, Classification = "技術書" },
+            new() { Uuid = Guid.NewGuid().ToString(), Title = "ブックC", Price = 1500, Classification = "SF" },
+            new() { Uuid = Guid.NewGuid().ToString(), Title = "ブックD", Price = 1200, Classification = "雑誌" },
+        };
+
+        var createJson = KintoneRequestBuilder.BuildCreateJson(books);
+        var createResult = await api.CreateRecordsAsync(createJson);
+        var createdRecords = KintoneResponseParser.ParseCreatedRecords(books, createResult);
+
+        try {
+            // Act
+            var condition = "Price != 1200";
+            var foundJson = await api.FindByQueryAsync<BookModel>(condition);
+            var foundRecords = KintoneResponseParser.ParseRecords<BookModel>(foundJson);
+
+            // Assert
+            Assert.All(foundRecords, r => Assert.NotEqual(1200, r.Price));
+            var prices = foundRecords.Select(r => r.Price).ToList();
+            Assert.Contains(1000, prices);
+            Assert.Contains(1500, prices);
+            Assert.DoesNotContain(1200, prices);
+            Assert.Equal(2, foundRecords.Count);
+        } finally {
+            // Clean up
+            var deleteJson = KintoneRequestBuilder.BuildDeleteJson(createdRecords);
+            var deleteResult = await api.DeleteJsonAsync(deleteJson);
+            Assert.NotNull(deleteResult);
+        }
+    }
+    [Theory]
+    [InlineData(5, 2)]  // カーソル使用（pageSize < recordCount）
+    [InlineData(5, 10)] // カーソル不使用（pageSize >= recordCount）
+    public async Task FindAsync_TitleNotEmptyCondition_WorksCorrectly(int cursorPageSize, int dummyPageSize) {
+        // Arrange
+        var api = this.CreateApi();
+        api.CursorPageSize = cursorPageSize;
+
+        var books = new List<BookModel>
+        {
+            new() { Uuid = Guid.NewGuid().ToString(), Title = "ブック01", Price = 1000, Classification = "技術書" },
+            new() { Uuid = Guid.NewGuid().ToString(), Title = "",         Price = 1500, Classification = "雑誌" },
+            new() { Uuid = Guid.NewGuid().ToString(), Title = "ブック03", Price = 2000, Classification = "SF" },
+            new() { Uuid = Guid.NewGuid().ToString(), Title = "",         Price = 2500, Classification = "雑誌" },
+        };
+
+        var createJson = KintoneRequestBuilder.BuildCreateJson(books);
+        var createResult = await api.CreateRecordsAsync(createJson);
+        var createdRecords = KintoneResponseParser.ParseCreatedRecords(books, createResult);
+
+        try {
+            // Act
+            var condition = "Title != \"\"";
+            var foundJson = await api.FindByQueryAsync<BookModel>(condition);
+            var foundRecords = KintoneResponseParser.ParseRecords<BookModel>(foundJson);
+
+            // Assert
+            Assert.All(foundRecords, r => Assert.False(string.IsNullOrEmpty(r.Title)));
+            var titles = foundRecords.Select(r => r.Title).ToList();
+            Assert.Contains("ブック01", titles);
+            Assert.Contains("ブック03", titles);
+            Assert.DoesNotContain("", titles);
+            Assert.Equal(2, foundRecords.Count);
+        } finally {
+            // Clean up
+            var deleteJson = KintoneRequestBuilder.BuildDeleteJson(createdRecords);
+            var deleteResult = await api.DeleteJsonAsync(deleteJson);
+            Assert.NotNull(deleteResult);
+        }
+    }
+    [Theory]
+    [InlineData(5, 2)]  // カーソル使用（pageSize < recordCount）
+    [InlineData(5, 10)] // カーソル不使用（pageSize >= recordCount）
+    public async Task FindAsync_PriceGreaterThanOrEqualZero_WithNulls_ReturnsEmptyList(int cursorPageSize, int dummyPageSize) {
+        // Arrange
+        var api = this.CreateApi();
+        api.CursorPageSize = cursorPageSize;
+
+        var books = new List<BookModel>
+        {
+            new() { Uuid = Guid.NewGuid().ToString(), Title = "価格未設定01", Price = null, Classification = "技術書" },
+            new() { Uuid = Guid.NewGuid().ToString(), Title = "価格未設定02", Price = null, Classification = "雑誌" },
+        };
+
+        var createJson = KintoneRequestBuilder.BuildCreateJson(books);
+        var createResult = await api.CreateRecordsAsync(createJson);
+        var createdRecords = KintoneResponseParser.ParseCreatedRecords(books, createResult);
+
+        try {
+            // Act
+            var condition = "Price >= 0";
+            var foundJson = await api.FindByQueryAsync<BookModel>(condition);
+            var foundRecords = KintoneResponseParser.ParseRecords<BookModel>(foundJson);
+
+            // Assert
+            Assert.NotNull(foundRecords);
+            Assert.Empty(foundRecords); // 検索結果は空のはず
+        } finally {
+            // Clean up
+            var deleteJson = KintoneRequestBuilder.BuildDeleteJson(createdRecords);
+            var deleteResult = await api.DeleteJsonAsync(deleteJson);
+            Assert.NotNull(deleteResult);
+        }
+    }
+    [Theory]
+    [InlineData(5, 2)]  // カーソル使用（pageSize < recordCount）
+    [InlineData(5, 10)] // カーソル不使用（pageSize >= recordCount）
+    public async Task FindAsync_ReleaseDateCondition_WorksCorrectly(int pageSize, int recordCount) {
+        // Arrange
+        var api = this.CreateApi();
+        api.CursorPageSize = pageSize;
+
+        var books = new List<BookModel> {
+            new() {
+                Uuid = Guid.NewGuid().ToString(),
+                Title = "ブックA",
+                Price = 1000,
+                Classification = "技術書",
+                ReleaseDate = new DateTime(2023, 12, 31, 23, 59, 59, DateTimeKind.Utc) // 条件外
+            },
+            new() {
+                Uuid = Guid.NewGuid().ToString(),
+                Title = "ブックB",
+                Price = 1500,
+                Classification = "雑誌",
+                ReleaseDate = new DateTime(2024, 01, 02, 10, 00, 00, DateTimeKind.Utc) // 条件内
+            },
+            new() {
+                Uuid = Guid.NewGuid().ToString(),
+                Title = "ブックC",
+                Price = 2000,
+                Classification = "SF",
+                ReleaseDate = new DateTime(2025, 01, 01, 00, 00, 00, DateTimeKind.Utc) // 条件内
+            }
+        };
+
+        var createJson = KintoneRequestBuilder.BuildCreateJson(books);
+        var createResult = await api.CreateRecordsAsync(createJson);
+        var createdRecords = KintoneResponseParser.ParseCreatedRecords(books, createResult);
+
+        try {
+            // Act
+            var condition = "ReleaseDate > \"2024-01-01T00:00:00Z\"";
+            var foundJson = await api.FindByQueryAsync<BookModel>(condition);
+            var foundRecords = KintoneResponseParser.ParseRecords<BookModel>(foundJson);
+
+            // Assert
+            var titles = foundRecords.Select(r => r.Title).ToList();
+            Assert.Contains("ブックB", titles);
+            Assert.Contains("ブックC", titles);
+            Assert.DoesNotContain("ブックA", titles);
+            Assert.Equal(2, foundRecords.Count);
+
+        } finally {
+            // Clean up
+            var deleteJson = KintoneRequestBuilder.BuildDeleteJson(createdRecords);
+            var deleteResult = await api.DeleteJsonAsync(deleteJson);
+            Assert.NotNull(deleteResult);
+        }
+    }
+    [Theory]
+    [InlineData("5")] // 強く勧めたい
+    [InlineData("3")] // どちらでもない
+    [InlineData("1")] // まったく勧めない
+    public async Task CreateAndFind_RadioButtonField_WorksCorrectly(string recommendation) {
+        // Arrange
+        var api = this.CreateApi();
+        var model = new BookModel {
+            Title = $"おすすめ度テスト_{recommendation}",
+            Price = 1800,
+            Uuid = Guid.NewGuid().ToString(),
+            Classification = "SF",
+            ReleaseDate = DateTime.Today,
+            Recommendation = recommendation
+        };
+
+        var created = await KintoneTestHelper.CreateRecordsInChunksAsync(api, [model]);
+
+        try {
+            // Act
+            var query = $"UUID = \"{model.Uuid}\"";
+            var json = await api.FindByQueryAsync<BookModel>(query);
+            var results = KintoneResponseParser.ParseRecords<BookModel>(json);
+
+            // Assert
+            Assert.NotEmpty(results);
+            var found = results.Single();
+            Assert.Equal(model.Recommendation, found.Recommendation);
+        } finally {
+            // Cleanup
+            await KintoneTestHelper.DeleteRecordsInChunksAsync(api, created);
+        }
+    }
+    [Theory]
+    [MemberData(nameof(CheckBoxTestData))]
+    public async Task CreateAndFind_CheckBoxField_WorksCorrectly(string[] selections) {
+        // Arrange
+        var api = this.CreateApi();
+        var model = new BookModel {
+            Title = "チェックボックステスト",
+            Price = 2000,
+            Uuid = Guid.NewGuid().ToString(),
+            Classification = "技術書",
+            ReleaseDate = DateTime.Today,
+            CheckBoxes = selections
+        };
+
+        var created = await KintoneTestHelper.CreateRecordsInChunksAsync(api, [model]);
+
+        try {
+            // Act
+            var query = $"UUID = \"{model.Uuid}\"";
+            var json = await api.FindByQueryAsync<BookModel>(query);
+            var results = KintoneResponseParser.ParseRecords<BookModel>(json);
+
+            // Assert
+            Assert.Single(results);
+            var found = results[0];
+
+            Assert.Equal(model.CheckBoxes.OrderBy(x => x), found.CheckBoxes.OrderBy(x => x));
+        } finally {
+            // Cleanup
+            await KintoneTestHelper.DeleteRecordsInChunksAsync(api, created);
+        }
+    }
+    [Theory]
+    [MemberData(nameof(LinkFieldTestData))]
+    public async Task CreateAndFind_LinkFields_WorksCorrectly(string webAddress, string telephone, string email) {
+        // Arrange
+        var api = this.CreateApi();
+        var model = new BookModel {
+            Title = "リンク型フィールドテスト",
+            Price = 3000,
+            Uuid = Guid.NewGuid().ToString(),
+            Classification = "技術書",
+            ReleaseDate = DateTime.Today,
+            WebAddress = webAddress,
+            Telephone = telephone,
+            Email = email
+        };
+
+        var created = await KintoneTestHelper.CreateRecordsInChunksAsync(api, [model]);
+
+        try {
+            // Act
+            var query = $"UUID = \"{model.Uuid}\"";
+            var json = await api.FindByQueryAsync<BookModel>(query);
+            var results = KintoneResponseParser.ParseRecords<BookModel>(json);
+
+            // Assert
+            Assert.Single(results);
+            var found = results[0];
+
+            Assert.Equal(model.WebAddress, found.WebAddress);
+            Assert.Equal(model.Telephone, found.Telephone);
+            Assert.Equal(model.Email, found.Email);
+        } finally {
+            // Cleanup
+            await KintoneTestHelper.DeleteRecordsInChunksAsync(api, created);
+        }
+    }
+
+    #region <<Protected method>>
+    public static IEnumerable<object[]> CheckBoxTestData => new List<object[]> {
+        new object[] { new[] { "チェック1", "チェック3" } },
+        new object[] { new[] { "チェック2" } },
+        new object[] { Array.Empty<string>() },
+    };
+    public static IEnumerable<object[]> LinkFieldTestData => new List<object[]> {
+        new object[] { "https://example.com/", "+81-90-1234-5678", "test@example.com" },
+        new object[] { "http://openai.com/", "03-1234-5678", "contact@openai.com" },
+        new object[] { string.Empty, string.Empty, string.Empty } // 空も許容
+    };
+    #endregion
 }

@@ -1,6 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using KintoneNetLibrary.Domain.Common;
 using KintoneNetLibrary.Domain.Entities;
+using KintoneNetLibrary.Infrastructure.Converters;
 
 namespace KintoneNetLibrary.Infrastructure.Helpers;
 
@@ -38,17 +40,9 @@ public static class KintoneResponseParser {
             throw new InvalidOperationException("Missing 'record' property in JSON.");
         }
 
-        var model = new T();
-        var dict = new Dictionary<string, JsonElement>();
+        var modelJson = recordElement.GetRawText();
+        return JsonSerializer.Deserialize<T>(modelJson, KintoneJsonOptions.Default)!;
 
-        foreach (var prop in recordElement.EnumerateObject()) {
-            if (prop.Value.TryGetProperty("value", out var valueElement)) {
-                dict[prop.Name] = valueElement;
-            }
-        }
-
-        model.LoadFromJsonDictionary(dict);
-        return model;
     }
     public static IList<T> ParseRecords<T>(string json) where T : KintoneModelBase, new() {
         using var doc = JsonDocument.Parse(json);
@@ -64,9 +58,10 @@ public static class KintoneResponseParser {
             var dict = new Dictionary<string, JsonElement>();
 
             foreach (var prop in recordElement.EnumerateObject()) {
-                if (prop.Value.TryGetProperty("value", out var valueElement)) {
-                    dict[prop.Name] = valueElement;
-                }
+                // if (prop.Value.TryGetProperty("value", out var valueElement)) {
+                //     dict[prop.Name] = valueElement;
+                // }
+                dict[prop.Name] = prop.Value;
             }
 
             var model = new T();

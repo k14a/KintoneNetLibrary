@@ -6,7 +6,7 @@ using KintoneNetLibrary.Domain.Entities;
 namespace KintoneNetLibrary.Infrastructure.Helpers;
 
 public static class KintoneRequestBuilder {
-    private static readonly JsonSerializerOptions _jsonOptions = KintoneJsonOptions.Default;
+    private static readonly JsonSerializerOptions _jsonOptions = DefaultJsonOptions.Default;
 
     /// <summary>
     /// Kintone レコード登録（複数）の JSON を構築

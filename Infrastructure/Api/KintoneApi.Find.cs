@@ -7,6 +7,7 @@ using KintoneNetLibrary.Infrastructure.Converters;
 using KintoneNetLibrary.Infrastructure.Helpers;
 using KintoneNetLibrary.Infrastructure.Internal;
 using static KintoneNetLibrary.Domain.Common.KintoneConstants;
+using KintoneNetLibrary.Domain.Common;
 
 namespace KintoneNetLibrary.Infrastructure.Api;
 
@@ -81,14 +82,14 @@ public partial class KintoneApi {
     // 内部的な共通検索処理
     private async Task<string> FindBaseJsonAsync<T>(KintoneQuery<T> query, bool skipThresholdCheck = false) where T : KintoneModelBase, new() {
         if (!skipThresholdCheck) {
-            // 1) 件数取得
+            // 1) 件数取得（limit=1 で totalCount を得る）
             var queryText = query.Build();
             var countUri = KintoneRequestBuilder.BuildRequestUri(
                 this.GetBaseUri(),
                 KintoneApiEndpoints.GetRecords,
                 this.AppID,
                 queryText,
-                new Dictionary<string, string>{
+                new Dictionary<string, string> {
                     { "totalCount", "true" },
                     { "limit", "1" },
                 });
@@ -105,14 +106,18 @@ public partial class KintoneApi {
 
             var countResult = JsonSerializer.Deserialize<RecordCountResponse>(countJson, _jsonOptions) ?? new RecordCountResponse();
 
-            if (countResult.TotalCount > this.CursorPageSize) {
-                // カーソル API に切替
+            // 実データ件数がKintoneの制限（通常100件）を超える場合はカーソル API に切り替える
+            if (countResult.TotalCount > KintoneLimit) {
                 return await this.CursorFetchAllJsonAsync<T>(query.Build());
             }
         }
 
-        // 2) 通常取得
-        var requestUri = KintoneRequestBuilder.BuildRequestUri(this.GetBaseUri(), KintoneApiEndpoints.GetRecords, this.AppID, $"{query.Build()}");
+        // 2) 通常取得（最大100件まで）
+        var requestUri = KintoneRequestBuilder.BuildRequestUri(
+            this.GetBaseUri(),
+            KintoneApiEndpoints.GetRecords,
+            this.AppID,
+            query.Build());
 
         using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
         this.SetHeaders(request);

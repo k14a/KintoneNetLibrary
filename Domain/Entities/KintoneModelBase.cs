@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Infrastructure.Converters;
 
 namespace KintoneNetLibrary.Domain.Entities;
@@ -18,6 +19,7 @@ public abstract class KintoneModelBase : KintoneModelHookBase {
     // ----- 共通フィールド -----
 
     /// <summary>レコード番号（$id）</summary>
+    [KintoneItem(fieldCode: "レコード番号", isUpload: false)]
     public virtual string? RecordID { get; set; }
 
     [JsonIgnore]
@@ -26,10 +28,10 @@ public abstract class KintoneModelBase : KintoneModelHookBase {
         set => RecordID = value;
     }
 
-    [KintoneItem(FieldType = KintoneDateTime.DateTimeType.DateTime, IsUpload = false)]
+    [KintoneItem(dateType: KintoneDateTimeType.DateTime, isUpload: false)]
     public virtual DateTime CreatedTime { get; set; } = DateTime.MinValue;
 
-    [KintoneItem(FieldType = KintoneDateTime.DateTimeType.DateTime, IsUpload = false)]
+    [KintoneItem(dateType: KintoneDateTimeType.DateTime, isUpload: false)]
     public virtual DateTime UpdatedTime { get; set; } = DateTime.MinValue;
 
     public virtual KintoneUser CreatedBy { get; set; } = new();
@@ -170,40 +172,30 @@ public abstract class KintoneModelBase : KintoneModelHookBase {
         return new KintoneIndex();
     }
     public void LoadFromJsonDictionary(Dictionary<string, JsonElement> fieldMap) {
-        var props = this.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
-        foreach (var prop in props) {
+        foreach (var prop in GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)) {
             var attr = prop.GetCustomAttribute<KintoneItemAttribute>();
-            if (attr == null) { continue; }
-
-            var fieldCode = attr.FieldCode;
-            if (fieldMap.TryGetValue(fieldCode, out var valueElement)) {
-                object? value = null;
-
-                if (prop.PropertyType == typeof(string)) {
-                    value = valueElement.GetString();
-                } else if (prop.PropertyType == typeof(int)) {
-                    if (valueElement.ValueKind == JsonValueKind.String && int.TryParse(valueElement.GetString(), out var i)) {
-                        value = i;
-                    } else if (valueElement.ValueKind == JsonValueKind.Number) {
-                        value = valueElement.GetInt32();
-                    }
-                }
-                // 他の型（bool, DateTimeなど）も必要に応じて追加
-
-                if (value != null) {
-                    prop.SetValue(this, value);
-                }
+            if (attr == null) {
+                continue;
             }
-        }
 
-        // ID / Revision などの標準項目
-        if (fieldMap.TryGetValue("$id", out var idElement)) {
-            this.ID = idElement.GetString() ?? string.Empty;
-        }
+            if (!fieldMap.TryGetValue(attr.FieldCode, out var fieldElement) ||
+                !fieldElement.TryGetProperty("value", out var valueElement)) {
+                continue;
+            }
 
-        if (fieldMap.TryGetValue("$revision", out var revElement)) {
-            if (int.TryParse(revElement.GetString(), out var rev)) {
-                this.Revision = rev;
+            // 利用するKintoneFieldTypeとKintoneDateTimeTypeを決定
+            var fieldType = attr.FieldType;
+            var dateType = attr.DateType;
+
+            // KintoneFieldTypeが指定されていない場合、生データのtypeから推定可能にする予定ならここで処理を追加可能
+
+            var value = KintoneValueConverter.ConvertToCSharp(
+                valueElement,
+                dateType,          // KintoneDateTimeType?（Date, Time, DateTimeなど）
+                prop.PropertyType);
+
+            if (value != null) {
+                prop.SetValue(this, value);
             }
         }
     }

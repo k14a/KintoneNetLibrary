@@ -6,9 +6,31 @@ using KintoneNetLibrary.Domain.Entities;
 namespace KintoneNetLibrary.Infrastructure.Converters;
 
 public class KintoneRecordConverter<T> : JsonConverter<T> where T : KintoneModelBase, new() {
+    // public override T? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
+    //     var jsonDoc = JsonDocument.ParseValue(ref reader);
+    //     var root = jsonDoc.RootElement;
+
+    //     var model = new T();
+    //     var props = typeof(T).GetProperties();
+
+    //     foreach (var prop in props) {
+    //         var attr = prop.GetCustomAttribute<KintoneItemAttribute>();
+    //         if (attr == null) { continue; }
+
+    //         var fieldName = attr.FieldCode;
+    //         if (!root.TryGetProperty(fieldName, out var fieldElement)) { continue; }
+
+    //         var type = fieldElement.GetProperty("type").GetString();
+    //         var valueElement = fieldElement.GetProperty("value");
+
+    //         var value = KintoneValueConverter.ConvertToCSharp(prop.PropertyType, type!, valueElement);
+    //         prop.SetValue(model, value);
+    //     }
+
+    //     return model;
+    // }
     public override T? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
-        var jsonDoc = JsonDocument.ParseValue(ref reader);
-        // var recordRoot = jsonDoc.RootElement.GetProperty("record");
+        using var jsonDoc = JsonDocument.ParseValue(ref reader);
         var root = jsonDoc.RootElement;
 
         var model = new T();
@@ -16,16 +38,31 @@ public class KintoneRecordConverter<T> : JsonConverter<T> where T : KintoneModel
 
         foreach (var prop in props) {
             var attr = prop.GetCustomAttribute<KintoneItemAttribute>();
-            if (attr == null) { continue; }
+            if (attr == null) {
+                continue;
+            }
 
-            var fieldName = attr.FieldCode;
-            if (!root.TryGetProperty(fieldName, out var fieldElement)) { continue; }
+            var fieldCode = attr.FieldCode;
+            if (!root.TryGetProperty(fieldCode, out var fieldElement)) {
+                continue;
+            }
 
-            var type = fieldElement.GetProperty("type").GetString();
-            var valueElement = fieldElement.GetProperty("value");
+            if (!fieldElement.TryGetProperty("type", out var typeElement) ||
+                !fieldElement.TryGetProperty("value", out var valueElement)) {
+                continue;
+            }
 
-            var value = KintoneValueConverter.ConvertToCSharp(prop.PropertyType, type!, valueElement);
-            prop.SetValue(model, value);
+            var kintoneType = typeElement.GetString();
+            if (string.IsNullOrWhiteSpace(kintoneType)) {
+                continue;
+            }
+
+            try {
+                var value = KintoneValueConverter.ConvertToCSharp(valueElement, attr.DateType, prop.PropertyType);
+                prop.SetValue(model, value);
+            } catch (Exception ex) {
+                throw new JsonException($"プロパティ '{prop.Name}' (FieldCode='{fieldCode}') の変換に失敗しました。KintoneType='{kintoneType}', TargetType='{prop.PropertyType.Name}'", ex);
+            }
         }
 
         return model;

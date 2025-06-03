@@ -38,4 +38,41 @@ internal static class KintoneModelValidator {
             throw new InvalidOperationException($"同じキー値が複数存在します: {string.Join(", ", duplicateKeys)}");
         }
     }
+    public static void ValidateLinkFields<T>(T model) where T : KintoneModelBase {
+        var props = typeof(T).GetProperties();
+
+        foreach (var prop in props) {
+            var attr = prop.GetCustomAttribute<KintoneItemAttribute>();
+            if (attr == null) {
+                continue;
+            }
+
+            var value = prop.GetValue(model) as string;
+            if (string.IsNullOrWhiteSpace(value)) {
+                continue; // 空は許容（必要なら Required チェックと組み合わせ）
+            }
+
+            switch (attr.FieldType) {
+                case KintoneFieldType.LinkUrl:
+                    if (!value.StartsWith("http://", StringComparison.OrdinalIgnoreCase) &&
+                        !value.StartsWith("https://", StringComparison.OrdinalIgnoreCase)) {
+                        throw new InvalidOperationException($"'{prop.Name}' は URL として無効です: {value}");
+                    }
+                    break;
+
+                case KintoneFieldType.LinkTelephone:
+                    if (!System.Text.RegularExpressions.Regex.IsMatch(value, @"^\+?[0-9\-() ]+$")) {
+                        throw new InvalidOperationException($"'{prop.Name}' は電話番号として無効です: {value}");
+                    }
+                    break;
+
+                case KintoneFieldType.LinkEmail:
+                    if (!value.Contains("@") || value.StartsWith("@") || value.EndsWith("@")) {
+                        throw new InvalidOperationException($"'{prop.Name}' はメールアドレスとして無効です: {value}");
+                    }
+                    break;
+            }
+        }
+    }
+
 }
