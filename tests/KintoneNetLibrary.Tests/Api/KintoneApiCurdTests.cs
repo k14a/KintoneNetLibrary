@@ -4,6 +4,7 @@ using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Infrastructure.Api;
 using KintoneNetLibrary.Infrastructure.Api.DTO;
 using KintoneNetLibrary.Infrastructure.Helpers;
+using KintoneNetLibrary.Extensions;
 using System.Text.Json;
 using System.Reflection;
 using System.IO.Compression;
@@ -868,6 +869,44 @@ public class KintoneApiCrudTests {
             Assert.Equal(model.WebAddress, found.WebAddress);
             Assert.Equal(model.Telephone, found.Telephone);
             Assert.Equal(model.Email, found.Email);
+        } finally {
+            // Cleanup
+            await KintoneTestHelper.DeleteRecordsInChunksAsync(api, created);
+        }
+    }
+    [Fact]
+    public async Task CreateAndFindAsync_WithDateAndTimeFields_WorksCorrectly() {
+        // Arrange
+        var now = DateTime.Now;
+        var today = DateOnly.FromDateTime(now);
+        var time = TimeOnly.FromDateTime(now).TruncateToMinute();
+
+        var model = new BookModel {
+            Title = "日時テスト",
+            Uuid = Guid.NewGuid().ToString(),
+            DateField = new KintoneDateTime(today),
+            TimeField = new KintoneTimeOnly(time)
+        };
+
+        var api = this.CreateApi();
+
+        // Act
+        var created = await KintoneTestHelper.CreateRecordsInChunksAsync(api, [model]);
+        Assert.NotNull(created);
+        Assert.Equal(today, created!.First().DateField.DateOnly);
+        Assert.Equal(time, created.First().TimeField.Value);
+
+        try {
+            var query = $"DateField = \"{today:yyyy-MM-dd}\" and TimeField = \"{time:HH\\:mm}\"";
+            var found = await api.FindByQueryAsync<BookModel>(query);
+            var results = KintoneResponseParser.ParseRecords<BookModel>(found);
+            var match = results.FirstOrDefault(b => b.ID == created.First().ID);
+
+            // Assert
+            Assert.NotNull(match);
+            Assert.Equal(today, match!.DateField.DateOnly);
+            Assert.Equal(time, match.TimeField.Value);
+
         } finally {
             // Cleanup
             await KintoneTestHelper.DeleteRecordsInChunksAsync(api, created);

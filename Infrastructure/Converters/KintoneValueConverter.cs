@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using KintoneNetLibrary.Domain.Entities;
@@ -19,6 +20,8 @@ internal static class KintoneValueConverter {
             return (targetType, fieldType) switch {
                 // --- KintoneDateTime 型への変換 ---
                 (Type t, KintoneFieldType.DateTime) when t == typeof(KintoneDateTime) => new KintoneDateTime(str, KintoneFieldType.DateTime),
+                (Type t, KintoneFieldType.Date) when t == typeof(KintoneDateTime) => new KintoneDateTime(str, KintoneFieldType.Date),
+                (Type t, KintoneFieldType.Time) when t == typeof(KintoneTimeOnly) => new KintoneTimeOnly(str, KintoneFieldType.Time),
 
                 // --- DateTime 型（従来互換） ---
                 (Type t, KintoneFieldType.DateTime) when t == typeof(DateTime) => DateTime.TryParse(str, out var dt) ? dt : DateTime.MinValue,

@@ -1,10 +1,16 @@
+using System.Globalization;
+using KintoneNetLibrary.Extensions;
+
 namespace KintoneNetLibrary.Domain.Entities;
 
 /// <summary>
 /// Kintone の TIME フィールドを表現するクラス（時刻のみ）
 /// </summary>
-public class KintoneTimeOnly {
-    public TimeOnly Value { get; set; }
+public class KintoneTimeOnly : IKintoneFieldConverter {
+    public TimeOnly? Value { get; set; }
+    public string? RawValue { get; set; }
+    public KintoneFieldType Type { get; set; } = KintoneFieldType.Time;
+    public bool HasValue => this.Value.HasValue;
 
     /// <summary>
     /// コンストラクタ
@@ -14,11 +20,22 @@ public class KintoneTimeOnly {
     }
 
     /// <summary>
+    /// コンストラクタ（null許容）
+    /// </summary>
+    /// <param name="value">TimeOnly 値。null の場合は null として扱う</param>
+    public KintoneTimeOnly(TimeOnly? value) {
+        this.Value = value?.TruncateToMinute();
+    }
+
+    /// <summary>
     /// コンストラクタ
     /// </summary>
     /// <param name="value"></param>
-    public KintoneTimeOnly(TimeOnly value) {
-        this.Value = value;
+    /// <param name="type"></param>
+    public KintoneTimeOnly(string? value, KintoneFieldType type) {
+        this.Type = type;
+        this.RawValue = value;
+        this.Value = TimeOnly.TryParse(value, out var to) ? to.TruncateToMinute() : TimeOnly.MinValue;
     }
 
     /// <summary>
@@ -52,4 +69,9 @@ public class KintoneTimeOnly {
 
         return new KintoneTimeOnly(TimeOnly.FromTimeSpan(ts));
     }
+
+    public object? ToJson() {
+        return this.Value.ToString("HH:mm", CultureInfo.InvariantCulture);
+    }
+
 }

@@ -63,4 +63,14 @@ public class BookModel : KintoneModelBase {
     /// </summary>
     [KintoneItem(fieldCode: "Email")]
     public string Email { get; set; } = string.Empty;
+    /// <summary>
+    /// 日付
+    /// </summary>
+    [KintoneItem(fieldCode: "DateField", KintoneFieldType.Date)]
+    public KintoneDateTime DateField { get; set; } = new();
+    /// <summary>
+    /// 時刻
+    /// </summary>
+    [KintoneItem(fieldCode: "TimeField", KintoneFieldType.Time)]
+    public KintoneTimeOnly TimeField { get; set; } = new();
 }

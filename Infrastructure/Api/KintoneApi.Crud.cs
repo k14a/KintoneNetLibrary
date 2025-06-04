@@ -44,7 +44,7 @@ public partial class KintoneApi {
 
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        var response = await _httpClient.PutAsync(KintoneApiEndpoints.UpdateRecord, content);
+        var response = await _httpClient.PutAsync(KintoneApiEndpoints.UpdateRecords, content);
         var responseJson = await response.Content.ReadAsStringAsync();
 
         _logger?.LogDebug("Received response: {Response}", responseJson);
@@ -60,7 +60,7 @@ public partial class KintoneApi {
       Delete – ID リストで一括削除
       ==========================================================*/
     public async Task<string> DeleteJsonAsync(string json) {
-        var request = new HttpRequestMessage(HttpMethod.Delete, KintoneApiEndpoints.DeleteRecord) {
+        var request = new HttpRequestMessage(HttpMethod.Delete, KintoneApiEndpoints.DeleteRecords) {
             Content = new StringContent(json, Encoding.UTF8, "application/json")
         };
 

@@ -81,22 +81,44 @@ public abstract class KintoneModelBase : KintoneModelHookBase {
     }
 
     // ----- レコード生成処理 -----
+    // public virtual IDictionary<string, object> ToKintoneRecord() {
+    //     var record = new Dictionary<string, object>();
+
+    //     var properties = this.GetType().GetProperties();
+
+    //     foreach (var prop in properties) {
+    //         if (prop.GetCustomAttributes(typeof(KintoneItemAttribute), true).FirstOrDefault() is not KintoneItemAttribute attr || !attr.IsUpload || string.IsNullOrWhiteSpace(attr.FieldCode)) {
+    //             continue; // Upload 対象ではない、または無効なFieldCode → スキップ
+    //         }
+
+    //         var value = prop.GetValue(this);
+    //         record[attr.FieldCode] = new { value };
+    //     }
+
+    //     return record;
+    // }
     public virtual IDictionary<string, object> ToKintoneRecord() {
         var record = new Dictionary<string, object>();
 
         var properties = this.GetType().GetProperties();
 
         foreach (var prop in properties) {
-            if (prop.GetCustomAttributes(typeof(KintoneItemAttribute), true).FirstOrDefault() is not KintoneItemAttribute attr || !attr.IsUpload || string.IsNullOrWhiteSpace(attr.FieldCode)) {
-                continue; // Upload 対象ではない、または無効なFieldCode → スキップ
+            if (prop.GetCustomAttributes(typeof(KintoneItemAttribute), true).FirstOrDefault() is not KintoneItemAttribute attr
+                || !attr.IsUpload
+                || string.IsNullOrWhiteSpace(attr.FieldCode)) {
+                continue; // 無効なFieldCodeや非Upload対象をスキップ
             }
 
             var value = prop.GetValue(this);
-            record[attr.FieldCode] = new { value };
+
+            object? jsonValue = value is IKintoneFieldConverter converter ? converter.ToJson() : value;
+
+            record[attr.FieldCode] = new { value = jsonValue };
         }
 
         return record;
     }
+
     public virtual IDictionary<string, object> ToKintoneUpdateRecord() {
         var record = ToKintoneRecord();
 

@@ -8,7 +8,9 @@ internal static class KintoneApiEndpoints {
     public const string AddRecord = "record.json";
     public const string AddRecords = "records.json";
     public const string UpdateRecord = "record.json";
+    public const string UpdateRecords = "records.json";
     public const string DeleteRecord = "record.json";
+    public const string DeleteRecords = "records.json";
     public const string Cursor = "records/cursor.json";
     // 他にも必要に応じて追加
 }
