@@ -42,7 +42,7 @@ public class KintoneTimeOnly : IKintoneFieldConverter {
     /// "HH:mm" 形式で Kintone への文字列化出力
     /// </summary>
     public override string ToString() {
-        return this.Value.ToString("HH:mm");
+        return this.Value?.ToString("HH:mm") ?? string.Empty;
     }
 
     /// <summary>
@@ -56,7 +56,10 @@ public class KintoneTimeOnly : IKintoneFieldConverter {
     /// KintoneTimeOnly → TimeOnly の暗黙的変換
     /// </summary>
     public static implicit operator TimeOnly(KintoneTimeOnly kto) {
-        return kto.Value;
+        if (kto.Value == null) {
+            throw new InvalidOperationException("KintoneTimeOnly does not contain a value.");
+        }
+        return kto.Value.Value;
     }
 
     /// <summary>
@@ -71,7 +74,7 @@ public class KintoneTimeOnly : IKintoneFieldConverter {
     }
 
     public object? ToJson() {
-        return this.Value.ToString("HH:mm", CultureInfo.InvariantCulture);
+        return this.Value?.ToString("HH:mm", CultureInfo.InvariantCulture) ?? string.Empty;
     }
 
 }

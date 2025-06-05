@@ -7,7 +7,7 @@ public class KintoneDateTime : IKintoneFieldConverter {
     /// 日付データ
     /// </summary>
     public DateTime Value { get; set; }
-    public KintoneFieldType Type { get; set; } = KintoneFieldType.DateTime;
+    public KintoneFieldType FieldType { get; set; } = KintoneFieldType.DateTime;
     public string? RawValue { get; set; } = string.Empty;
     public DateOnly DateOnly => DateOnly.FromDateTime(this.Value);
     public TimeOnly TimeOnly => TimeOnly.FromDateTime(this.Value);
@@ -33,7 +33,7 @@ public class KintoneDateTime : IKintoneFieldConverter {
     /// <param name="value"></param>
     public KintoneDateTime(DateOnly value) {
         this.Value = value.ToDateTime(TimeOnly.MinValue);
-        this.Type = KintoneFieldType.Date;
+        this.FieldType = KintoneFieldType.Date;
     }
 
     /// <summary>
@@ -42,8 +42,13 @@ public class KintoneDateTime : IKintoneFieldConverter {
     /// <param name="kintoneStringValue"></param>
     /// <param name="type"></param>
     public KintoneDateTime(string? kintoneStringValue, KintoneFieldType type) {
-        this.Type = type;
+        this.FieldType = type;
         this.RawValue = kintoneStringValue;
+
+        if (string.IsNullOrWhiteSpace(kintoneStringValue)) {
+            this.Value = DateTime.MinValue;
+            return;
+        }
         this.Value = DateTime.TryParse(kintoneStringValue, out var dt) ? dt : DateTime.MinValue;
     }
 
@@ -70,20 +75,25 @@ public class KintoneDateTime : IKintoneFieldConverter {
     /// 日付（yyyy-MM-dd）＋ KintoneTimeOnly から新しい KintoneDateTime を構築
     /// </summary>
     public static KintoneDateTime Combine(DateOnly date, KintoneTimeOnly time) {
-        var dt = date.ToDateTime(time.Value);
+        if (!time.Value.HasValue) {
+            throw new InvalidOperationException("KintoneTimeOnly.Value is null.");
+        }
+
+        var dt = date.ToDateTime(time.Value.Value);
         return new KintoneDateTime(dt);
     }
 
     public object? ToJson() {
-        return Type switch {
+        if (this.Value == DateTime.MinValue) { return null; }
+        return this.FieldType switch {
             KintoneFieldType.Date => Value.ToString("yyyy-MM-dd"),
             KintoneFieldType.DateTime => Value.ToString("yyyy-MM-ddTHH:mm:ssZ"), // UTC対応など必要なら調整
             _ => throw new InvalidOperationException("Invalid KintoneDateTimeType.")
         };
     }
 
-    public static KintoneDateTime Parse(string raw, KintoneFieldType type) {
-        return type switch {
+    public static KintoneDateTime Parse(string raw, KintoneFieldType fieldType) {
+        return fieldType switch {
             KintoneFieldType.Date => new KintoneDateTime(DateOnly.ParseExact(raw, "yyyy-MM-dd")),
             KintoneFieldType.DateTime => new KintoneDateTime(DateTime.Parse(raw, null, DateTimeStyles.RoundtripKind)),
             _ => throw new ArgumentException("Invalid type.")

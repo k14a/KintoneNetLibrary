@@ -37,45 +37,24 @@ public static class KintoneRequestBuilder {
         var records = new List<Dictionary<string, object>>();
 
         foreach (var model in models) {
-            var recordFields = new Dictionary<string, object>();
+            // ToKintoneRecord によってアップロード対象フィールドを取得
+            var recordFields = model.ToKintoneRecord();
 
-            // アップロード対象のフィールドのみ追加
-            foreach (var prop in model.GetType().GetProperties()) {
-                var attr = prop.GetCustomAttribute<KintoneItemAttribute>();
-                if (attr is null || !attr.IsUpload) {
-                    continue;
-                }
-
-                var fieldCode = attr.FieldCode;
-                var value = prop.GetValue(model);
-                recordFields[fieldCode] = new { value };
-            }
-
-            // 各レコードオブジェクト
             var recordWrapper = new Dictionary<string, object>();
 
+            // id または updateKey を指定
             if (!string.IsNullOrWhiteSpace(model.RecordID)) {
                 recordWrapper["id"] = model.RecordID;
             } else {
                 var keyProp = model.GetType()
                     .GetProperties()
-                    .FirstOrDefault(p => p.GetCustomAttribute<KintoneItemAttribute>()?.IsKey == true);
-
-                if (keyProp == null) {
-                    throw new InvalidOperationException("No ID or update key specified in the model.");
-                }
-
+                    .FirstOrDefault(p => p.GetCustomAttribute<KintoneItemAttribute>()?.IsKey == true) ?? throw new InvalidOperationException("No RecordID or IsKey attribute found for update.");
                 var fieldCode = keyProp.GetCustomAttribute<KintoneItemAttribute>()!.FieldCode;
-                var value = keyProp.GetValue(model);
-
-                recordWrapper["updateKey"] = new {
-                    field = fieldCode,
-                    value = value
-                };
+                var value = keyProp.GetValue(model) ?? throw new InvalidOperationException($"Update key property '{fieldCode}' has null value.");
+                recordWrapper["updateKey"] = new { field = fieldCode, value = value };
             }
 
             recordWrapper["record"] = recordFields;
-
             records.Add(recordWrapper);
         }
 
@@ -83,11 +62,12 @@ public static class KintoneRequestBuilder {
 
         var body = new {
             app = appId,
-            records = records
+            records
         };
 
-        return JsonSerializer.Serialize(body);
+        return JsonSerializer.Serialize(body, _jsonOptions);
     }
+
     /// <summary>
     /// Kintone レコード削除（複数）の JSON を構築
     /// </summary>

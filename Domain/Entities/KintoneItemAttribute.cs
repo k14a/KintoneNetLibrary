@@ -31,4 +31,9 @@ public class KintoneItemAttribute(string fieldCode = "", KintoneFieldType fieldT
     /// Kintone側のデータタイプ
     /// </summary>
     public KintoneFieldType FieldType { get; set; } = fieldType;
+    /// <summary>
+    /// プロパティがサブテーブルかどうか
+    /// </summary>
+    public bool IsSubTable => this.FieldType == KintoneFieldType.SubTable;
+
 }

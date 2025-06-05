@@ -74,5 +74,24 @@ internal static class KintoneModelValidator {
             }
         }
     }
+    public static void ValidateSubTableProperties<T>() {
+        var type = typeof(T);
+        foreach (var prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance)) {
+            var attr = prop.GetCustomAttribute<KintoneItemAttribute>();
+            if (attr != null && attr.IsSubTable) {
+                // プロパティが List<T> であることを確認
+                if (!IsValidSubTableType(prop.PropertyType)) {
+                    throw new InvalidOperationException(
+                        $"サブテーブル '{prop.Name}' は List<T> 型で定義する必要があります。現在の型: {prop.PropertyType.FullName}"
+                    );
+                }
+            }
+        }
+    }
+
+    private static bool IsValidSubTableType(Type type) {
+        return type.IsGenericType &&
+               type.GetGenericTypeDefinition() == typeof(List<>);
+    }
 
 }

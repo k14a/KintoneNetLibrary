@@ -29,13 +29,16 @@ public static class KintoneTimeOnlyExtensions {
     /// KintoneTimeOnly を "HH:mm" 形式の文字列に変換
     /// </summary>
     public static string ToKintoneString(this KintoneTimeOnly kto) {
-        return kto.Value.ToString("HH:mm");
+        return kto.Value?.ToString("HH:mm") ?? string.Empty;
     }
 
     /// <summary>
     /// DateOnly と結合して DateTime に変換（例: 2025-06-02 + 15:30 → 2025-06-02 15:30:00）
     /// </summary>
     public static DateTime ToDateTime(this KintoneTimeOnly kto, DateOnly baseDate) {
-        return baseDate.ToDateTime(kto.Value);
+        if (!kto.Value.HasValue) {
+            throw new InvalidOperationException("Cannot convert to DateTime because Value is null.");
+        }
+        return baseDate.ToDateTime(kto.Value.Value);
     }
 }
