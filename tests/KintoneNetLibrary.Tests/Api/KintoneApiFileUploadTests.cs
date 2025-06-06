@@ -1,11 +1,14 @@
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Infrastructure.Api;
 using KintoneNetLibrary.Tests.Helpers;
+using Moq;
+using Moq.Protected;
 using Xunit;
 
 namespace KintoneNetLibrary.Tests.Api;
@@ -418,9 +421,125 @@ public partial class KintoneApiFileUploadTests {
         // Assert
         Assert.Equal("dummy_file_key", fileKey);
     }
+    [Fact]
+    public async Task UploadFileAsync_CancellationRequested_ThrowsTaskCanceledException() {
+        // Arrange
+        using var cts = new CancellationTokenSource();
+        var handler = new CancelledHandler(); // 先ほど定義したキャンセル対応のモック
+        var httpClient = new HttpClient(handler);
 
+        var api = new KintoneApi(new KintoneAccount { Domain = "example.kintone.com", ApiToken = "dummy-token", }, 123, httpClient);
+
+        // テスト用ファイルストリーム（中身は不要）
+        var dummyFileStream = new MemoryStream(new byte[] { 1, 2, 3 });
+        var fileName = "test.txt";
+
+        cts.Cancel(); // キャンセルを事前にトリガー
+
+        // Act & Assert
+        await Assert.ThrowsAsync<TaskCanceledException>(async () => {
+            await api.UploadFileAsync(dummyFileStream, fileName, cts.Token);
+        });
+    }
+    [Fact]
+    public async Task UploadFileAsync_Timeout_ThrowsTaskCanceledException() {
+        // Arrange
+        var handlerMock = new Mock<HttpMessageHandler>();
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .Returns(async (HttpRequestMessage request, CancellationToken token) => {
+                await Task.Delay(TimeSpan.FromSeconds(5), token); // 意図的な遅延
+                return new HttpResponseMessage(HttpStatusCode.OK) {
+                    Content = new StringContent("{\"fileKey\": \"dummyKey\"}")
+                };
+            });
+
+        var httpClient = new HttpClient(handlerMock.Object) {
+            Timeout = TimeSpan.FromMilliseconds(100) // タイムアウトを極端に短く
+        };
+
+        var api = new KintoneApi(new KintoneAccount { Domain = "example.kintone.com", ApiToken = "dummy-token", }, 123, httpClient);
+
+        var dummyContent = new MemoryStream(Encoding.UTF8.GetBytes("dummy data"));
+        var fileName = "test.txt";
+
+        // Act & Assert
+        var ex = await Assert.ThrowsAsync<TaskCanceledException>(async () => {
+            await api.UploadFileAsync(dummyContent, fileName);
+        });
+
+        Assert.True(ex is not null, "Expected TaskCanceledException due to timeout");
+    }
+    [Fact]
+    public async Task UploadFileAsync_ResponseWithUnexpectedContentType_ThrowsJsonException() {
+        // Arrange
+        var unexpectedContent = "<html><body>Service Unavailable</body></html>";
+
+        var handlerMock = new Mock<HttpMessageHandler>();
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK) {
+                Content = new StringContent(unexpectedContent, Encoding.UTF8, "text/html")
+            });
+
+        var httpClient = new HttpClient(handlerMock.Object);
+        var api = new KintoneApi(new KintoneAccount { Domain = "example.kintone.com", ApiToken = "dummy-token", }, 123, httpClient);
+
+        var dummyContent = new MemoryStream(Encoding.UTF8.GetBytes("dummy data"));
+        var fileName = "test.txt";
+
+        // Act & Assert
+        await Assert.ThrowsAsync<KintoneException>(async () => {
+            await api.UploadFileAsync(dummyContent, fileName);
+        });
+    }
+    [Fact]
+    public async Task UploadFileAsync_StreamThrowsExceptionDuringRead_ThrowsHttpRequestException() {
+        // Arrange
+        var dummyData = Encoding.UTF8.GetBytes(new string('A', 1024));
+        var throwingStream = new ThrowingStream(dummyData, throwAfterBytes: 512);
+
+        var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync((HttpRequestMessage request, CancellationToken token) => {
+                var response = new HttpResponseMessage(HttpStatusCode.OK) {
+                    Content = new StreamContent(throwingStream)
+                };
+                response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+                return response;
+            });
+
+        var httpClient = new HttpClient(handlerMock.Object);
+        var api = new KintoneApi(new KintoneAccount { Domain = "example.kintone.com", ApiToken = "dummy-token", }, 123, httpClient);
+
+        // Act & Assert
+        var ex = await Assert.ThrowsAsync<HttpRequestException>(async () => {
+            await api.UploadFileAsync(throwingStream, "faulty_file.txt", CancellationToken.None);
+        });
+
+        // 内部例外がIOExceptionか確認する
+        Assert.NotNull(ex.InnerException);
+        Assert.IsType<IOException>(ex.InnerException);
+        Assert.Contains("読み込み中に例外", ex.InnerException.Message); // ThrowingStream の例外メッセージに合わせて
+    }
+
+    #region <<Private methods>>
     [GeneratedRegex(@"Content-Disposition: form-data;[^\r\n]*")]
     private static partial Regex ContentDispositionRegex();
     [GeneratedRegex(@"filename=(?:""([^""]*)""|([^;]*))")]
     private static partial Regex FileNameRegex();
+    #endregion
 }

@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
 using Moq;
@@ -75,4 +76,36 @@ public static class KintoneHttpTestHelper {
         return clone;
     }
 
+}
+public class CancelledHandler : HttpMessageHandler {
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK));
+    }
+}
+public class TimeoutHandler : HttpMessageHandler {
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
+        await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken); // 故意に長時間待機
+        return new HttpResponseMessage(HttpStatusCode.OK);
+    }
+}
+public class UnexpectedContentTypeHandler : HttpMessageHandler {
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
+        var response = new HttpResponseMessage(HttpStatusCode.OK) {
+            Content = new StringContent("<html><body>Error</body></html>")
+        };
+        response.Content.Headers.ContentType = new MediaTypeHeaderValue("text/html"); // 想定外
+        return Task.FromResult(response);
+    }
+}
+public class StreamCutoffHandler : HttpMessageHandler {
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
+        var faultyStream = new CutoffStream(new byte[] { 1, 2, 3, 4, 5 }, cutoffAfterBytes: 3);
+        var response = new HttpResponseMessage(HttpStatusCode.OK) {
+            Content = new StreamContent(faultyStream)
+        };
+        response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json"); // 必要に応じて
+
+        return Task.FromResult(response);
+    }
 }

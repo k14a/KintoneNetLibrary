@@ -5,8 +5,15 @@ namespace KintoneNetLibrary.Domain.Entities;
 public class KintoneException : Exception {
     [JsonPropertyName("error")]
     public KintoneError? Error { get; set; }
+
     [JsonPropertyName("message")]
-    public override string Message => Error?.Summary ?? base.Message;
+    public override string Message =>
+        !string.IsNullOrEmpty(Error?.Summary)
+            ? Error!.Summary
+            : !string.IsNullOrEmpty(Error?.Message)
+                ? Error!.Message
+                : base.Message;
+
     [JsonPropertyName("detail")]
     public string Detail => Error?.ToString() ?? base.Message;
 
@@ -14,7 +21,9 @@ public class KintoneException : Exception {
     public KintoneException(KintoneError error) : base(error.Summary) { this.Error = error; }
     public KintoneException(string message) : base(message) { }
     public KintoneException(string message, Exception innerException) : base(message, innerException) { }
-    public KintoneException(KintoneError error, Exception innerException) : base(error.Summary, innerException) { this.Error = error; }
+    public KintoneException(KintoneError error, Exception innerException) : base(error.Summary, innerException) {
+        this.Error = error;
+    }
 
     public override string ToString() {
         if (Error != null) {

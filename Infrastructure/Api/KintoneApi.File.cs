@@ -16,15 +16,22 @@ public partial class KintoneApi {
     /// <summary>
     /// 任意のストリームを kintone にアップロードし、fileKey を返します。
     /// </summary>
-    // public async Task<string> UploadFileAsync(Stream stream, string fileName) {
     public async Task<string> UploadFileAsync(Stream stream, string fileName) {
+        return await UploadFileInternalAsync(stream, fileName, CancellationToken.None);
+    }
+
+    public async Task<string> UploadFileAsync(Stream stream, string fileName, CancellationToken cancellationToken) {
+        return await UploadFileInternalAsync(stream, fileName, cancellationToken);
+    }
+
+    private async Task<string> UploadFileInternalAsync(Stream stream, string fileName, CancellationToken cancellationToken) {
         ArgumentNullException.ThrowIfNull(stream);
         fileName ??= "";
+
         if (fileName.Any(char.IsControl)) {
             _logger?.LogWarning("ファイル名に制御文字が含まれていたため、除去されました: {Original}", fileName);
             fileName = string.Concat(fileName.Where(c => !char.IsControl(c)));
         }
-
 
         if (!stream.CanSeek) {
             throw new InvalidOperationException("アップロード前にファイルサイズを確認できるよう、シーク可能なストリームを使用してください。");
@@ -34,7 +41,6 @@ public partial class KintoneApi {
             throw new InvalidOperationException("空のファイルはアップロードできません。");
         }
 
-        // 容量制限チェック
         if (stream.Length > this.MaxUploadFileSize) {
             var message = $"ファイルサイズが制限（{this.MaxUploadFileSize / 1024 / 1024}MB）を超えています。: {stream.Length} bytes";
             _logger?.LogError(message);
@@ -45,13 +51,12 @@ public partial class KintoneApi {
             });
         }
 
-        // null や空白文字のみのファイル名は代替ファイル名に置き換え
         var safeFileName = Path.GetFileName(fileName).Trim();
         if (string.IsNullOrEmpty(safeFileName)) {
             safeFileName = "unnamed_file";
         }
 
-        stream.Position = 0; // 念のため先頭に戻す
+        stream.Position = 0;
 
         var content = new MultipartFormDataContent();
         var fileCnt = new StreamContent(stream);
@@ -62,13 +67,25 @@ public partial class KintoneApi {
         request.Headers.Add("X-Cybozu-API-Token", this.ApiToken);
         request.Content = content;
 
-        using var resp = await this._httpClient.SendAsync(request);
-        var json = await resp.Content.ReadAsStringAsync();
+        using var resp = await this._httpClient.SendAsync(request, cancellationToken);
+        var json = await resp.Content.ReadAsStringAsync(cancellationToken);
 
         if (!resp.IsSuccessStatusCode) {
             var error = KintoneErrorConverter.Parse(json);
             _logger?.LogError("Kintoneファイルアップロード失敗: {Error}", error);
             throw new KintoneException(error);
+        }
+
+        // Content-Type チェック（補強処理）
+        if (!resp.Content.Headers.ContentType?.MediaType?.Equals("application/json", StringComparison.OrdinalIgnoreCase) ?? true) {
+            var mediaType = resp.Content.Headers.ContentType?.MediaType ?? "null";
+            var errorMessage = $"想定外の Content-Type: {mediaType}";
+            _logger?.LogError(errorMessage);
+            throw new KintoneException(new KintoneError {
+                Code = "INVALID_CONTENT_TYPE",
+                Message = errorMessage,
+                Summary = "Kintone API からのレスポンス形式が不正です。"
+            });
         }
 
         var result = JsonSerializer.Deserialize<FileUploadResult>(json, _jsonOptions) ?? new FileUploadResult();

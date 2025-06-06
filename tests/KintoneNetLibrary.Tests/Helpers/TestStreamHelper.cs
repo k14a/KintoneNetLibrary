@@ -1,5 +1,7 @@
 using System;
 using System.IO;
+using System.Net;
+using System.Net.Http.Headers;
 
 namespace KintoneNetLibrary.Tests.Helpers;
 
@@ -125,4 +127,75 @@ public class EmptyStream : Stream {
     public override void SetLength(long value) => throw new NotSupportedException();
 
     public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+}
+// public class StreamCutoffHandler : HttpMessageHandler {
+//     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
+//         var faultyStream = new CutoffStream(new byte[] { 1, 2, 3, 4, 5 }, cutoffAfterBytes: 3); // 3バイトで切断
+//         var response = new HttpResponseMessage(HttpStatusCode.OK) {
+//             Content = new StreamContent(faultyStream)
+//         };
+//         response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+//         return Task.FromResult(response);
+//     }
+// }
+
+public class CutoffStream : Stream {
+    private readonly MemoryStream _baseStream;
+    private readonly long _cutoff;
+    private long _readBytes;
+
+    public CutoffStream(byte[] content, long cutoffAfterBytes) {
+        _baseStream = new MemoryStream(content);
+        _cutoff = cutoffAfterBytes;
+        _readBytes = 0;
+    }
+
+    public override int Read(byte[] buffer, int offset, int count) {
+        if (_readBytes >= _cutoff) {
+            throw new IOException("Simulated stream cutoff.");
+        }
+
+        var readCount = _baseStream.Read(buffer, offset, count);
+        _readBytes += readCount;
+        return readCount;
+    }
+
+    // 必須のオーバーライド（詳細は省略可）
+    public override bool CanRead => _baseStream.CanRead;
+    public override bool CanSeek => false;
+    public override bool CanWrite => false;
+    public override long Length => _baseStream.Length;
+    public override long Position { get => _baseStream.Position; set => _baseStream.Position = value; }
+    public override void Flush() => _baseStream.Flush();
+    public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+    public override void SetLength(long value) => throw new NotSupportedException();
+    public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+}
+public class ThrowingStream : MemoryStream {
+    private readonly long _throwAfterBytes;
+    private long _totalBytesRead = 0;
+
+    public ThrowingStream(byte[] buffer, long throwAfterBytes) : base(buffer) {
+        _throwAfterBytes = throwAfterBytes;
+    }
+
+    public override int Read(byte[] buffer, int offset, int count) {
+        if (_totalBytesRead >= _throwAfterBytes) {
+            throw new IOException("読み込み中に例外が発生しました（テスト用）。");
+        }
+
+        int bytesRead = base.Read(buffer, offset, count);
+        _totalBytesRead += bytesRead;
+        return bytesRead;
+    }
+
+    public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) {
+        if (_totalBytesRead >= _throwAfterBytes) {
+            throw new IOException("読み込み中に例外が発生しました（テスト用）。");
+        }
+
+        int bytesRead = await base.ReadAsync(buffer, offset, count, cancellationToken);
+        _totalBytesRead += bytesRead;
+        return bytesRead;
+    }
 }
