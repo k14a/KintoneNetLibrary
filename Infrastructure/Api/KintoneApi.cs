@@ -7,7 +7,6 @@ using Microsoft.Extensions.Options;
 using KintoneNetLibrary.Domain.Common;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Infrastructure.Converters;
-using static KintoneNetLibrary.Domain.Common.KintoneConstants;
 
 namespace KintoneNetLibrary.Infrastructure.Api;
 
@@ -17,7 +16,9 @@ public partial class KintoneApi {
     // JsonSerializerOptions は再利用推奨のためstaticで保持
     private readonly JsonSerializerOptions _jsonOptions;
     private readonly ILogger<KintoneApi>? _logger;
-    private int _cursorPageSize = CursorFetchLimit;
+    private int _cursorPageSize = KintoneConstants.CursorFetchLimit;
+    private long _maxUploadFileSize = KintoneConstants.MaxUploadFileSize;
+    private int _maxUploadFileCount = KintoneConstants.MaxUploadFileCount;
     #endregion
 
     #region <<Properties>>
@@ -59,10 +60,35 @@ public partial class KintoneApi {
     public int CursorPageSize {
         get => this._cursorPageSize;
         set {
-            if (value <= 0 || value > CursorFetchLimit) {
-                throw new ArgumentOutOfRangeException(nameof(this.CursorPageSize), value, $"CursorPageSizeは1以上{CursorFetchLimit}以下でなければなりません。");
+            if (value <= 0 || value > KintoneConstants.CursorFetchLimit) {
+                throw new ArgumentOutOfRangeException(nameof(this.CursorPageSize), value, $"CursorPageSizeは1以上{KintoneConstants.CursorFetchLimit}以下でなければなりません。");
             }
             this._cursorPageSize = value;
+        }
+    }
+    /// <summary>
+    /// アップロード可能なファイルサイズ(省略時はKintoneの最大値である100MB)
+    /// </summary>
+    public long MaxUploadFileSize {
+        get => this._maxUploadFileSize;
+        set {
+            if (value <= 0 || value > KintoneConstants.MaxUploadFileSize) {
+                throw new ArgumentOutOfRangeException(nameof(this.MaxUploadFileSize), value, $"MaxUploadFileSize は 1〜{KintoneConstants.MaxUploadFileSize}（{KintoneConstants.MaxUploadFileSize / 1024 / 1024}MB）までの値でなければなりません。");
+            }
+            this._maxUploadFileSize = value;
+        }
+    }
+    /// <summary>
+    /// アップロード可能なファイル数(省略時はKintoneの最大値である20)
+    /// </summary>
+    public int MaxUploadFileCount {
+        get => this._maxUploadFileCount;
+        set {
+            if (value <= 0 || value > KintoneConstants.MaxUploadFileCount) {
+                throw new ArgumentOutOfRangeException(nameof(this.MaxUploadFileCount), value,
+                    $"MaxUploadFileCount は 1〜{KintoneConstants.MaxUploadFileCount} の間でなければなりません。");
+            }
+            this._maxUploadFileCount = value;
         }
     }
     #endregion

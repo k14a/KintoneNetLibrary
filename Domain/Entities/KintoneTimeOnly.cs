@@ -9,52 +9,31 @@ namespace KintoneNetLibrary.Domain.Entities;
 public class KintoneTimeOnly : IKintoneFieldConverter {
     public TimeOnly? Value { get; set; }
     public string? RawValue { get; set; }
-    public KintoneFieldType Type { get; set; } = KintoneFieldType.Time;
+    public KintoneFieldType FieldType { get; set; } = KintoneFieldType.Time;
     public bool HasValue => this.Value.HasValue;
 
-    /// <summary>
-    /// コンストラクタ
-    /// </summary>
     public KintoneTimeOnly() {
         this.Value = TimeOnly.MinValue;
     }
 
-    /// <summary>
-    /// コンストラクタ（null許容）
-    /// </summary>
-    /// <param name="value">TimeOnly 値。null の場合は null として扱う</param>
     public KintoneTimeOnly(TimeOnly? value) {
         this.Value = value?.TruncateToMinute();
     }
 
-    /// <summary>
-    /// コンストラクタ
-    /// </summary>
-    /// <param name="value"></param>
-    /// <param name="type"></param>
-    public KintoneTimeOnly(string? value, KintoneFieldType type) {
-        this.Type = type;
+    public KintoneTimeOnly(string? value, KintoneFieldType fieldType) {
+        this.FieldType = fieldType;
         this.RawValue = value;
-        this.Value = TimeOnly.TryParse(value, out var to) ? to.TruncateToMinute() : TimeOnly.MinValue;
+        this.Value = TimeOnly.TryParse(value, out var to) ? to.TruncateToMinute() : null;
     }
 
-    /// <summary>
-    /// "HH:mm" 形式で Kintone への文字列化出力
-    /// </summary>
     public override string ToString() {
-        return this.Value?.ToString("HH:mm") ?? string.Empty;
+        return this.Value?.ToString("HH:mm", CultureInfo.InvariantCulture) ?? string.Empty;
     }
 
-    /// <summary>
-    /// TimeOnly からの暗黙的変換
-    /// </summary>
     public static implicit operator KintoneTimeOnly(TimeOnly value) {
         return new KintoneTimeOnly(value);
     }
 
-    /// <summary>
-    /// KintoneTimeOnly → TimeOnly の暗黙的変換
-    /// </summary>
     public static implicit operator TimeOnly(KintoneTimeOnly kto) {
         if (kto.Value == null) {
             throw new InvalidOperationException("KintoneTimeOnly does not contain a value.");
@@ -62,9 +41,6 @@ public class KintoneTimeOnly : IKintoneFieldConverter {
         return kto.Value.Value;
     }
 
-    /// <summary>
-    /// TimeSpan からの明示的変換（00:00～23:59 のみ許容）
-    /// </summary>
     public static explicit operator KintoneTimeOnly(TimeSpan ts) {
         if (ts < TimeSpan.Zero || ts >= TimeSpan.FromHours(24)) {
             throw new ArgumentOutOfRangeException(nameof(ts), "Time must be between 00:00 and 23:59.");
@@ -74,7 +50,21 @@ public class KintoneTimeOnly : IKintoneFieldConverter {
     }
 
     public object? ToJson() {
-        return this.Value?.ToString("HH:mm", CultureInfo.InvariantCulture) ?? string.Empty;
+        return this.HasValue ? this.Value?.ToString("HH:mm", CultureInfo.InvariantCulture) : null;
+    }
+
+    public static KintoneTimeOnly Parse(string raw) {
+        return new KintoneTimeOnly(TimeOnly.ParseExact(raw, "HH:mm", CultureInfo.InvariantCulture));
+    }
+
+    public static bool TryParse(string raw, out KintoneTimeOnly result) {
+        if (TimeOnly.TryParseExact(raw, "HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out var time)) {
+            result = new KintoneTimeOnly(time);
+            return true;
+        }
+
+        result = new KintoneTimeOnly();
+        return false;
     }
 
 }

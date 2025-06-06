@@ -31,8 +31,12 @@ public abstract partial class KintoneModelBase : KintoneModelHookBase {
 
                             var itemValue = itemProp.GetValue(item);
                             object? fieldValue;
-                            if (itemValue is IKintoneFieldConverter converter) {
+                            if (itemValue is KintoneDateTime kd) {
+                                fieldValue = kd.ToJson(itemAttr.FieldType);
+                            } else if (itemValue is IKintoneFieldConverter converter) {
                                 fieldValue = converter.ToJson();
+                            } else if (itemValue is null) {
+                                fieldValue = null;
                             } else {
                                 fieldValue = itemValue;
                             }

@@ -17,5 +17,13 @@ public static class KintoneConstants {
     /// Kintoneのフィールドコード最大文字数
     /// </summary>
     public const int KintoneFieldCodeMaxLength = 128;
+    /// <summary>
+    /// Kintoneでのアップロード可能ファイルサイズ(100MB)
+    /// </summary>
+    public const long MaxUploadFileSize = 100 * 1024 * 1024;
+    /// <summary>
+    /// Kintoneでの1APIリクエストでの最大ファイルサイズ(20)
+    /// </summary>
+    public const int MaxUploadFileCount = 20;
     // 必要に応じてここに他の定数を追加してください
 }
