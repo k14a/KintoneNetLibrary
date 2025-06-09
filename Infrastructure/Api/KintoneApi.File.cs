@@ -106,27 +106,46 @@ public partial class KintoneApi {
        ========================================================= */
 
     public async Task<byte[]> DownloadFileAsync(string fileKey) {
-        var url = $"file.json?fileKey={Uri.EscapeDataString(fileKey)}";
-
-        using var request = new HttpRequestMessage(HttpMethod.Get, url);
-        request.Headers.Add("X-Cybozu-API-Token", this.ApiToken);
-
-        using var resp = await this._httpClient.SendAsync(request);
-        var json = await resp.Content.ReadAsStringAsync();
-
-        if (!resp.IsSuccessStatusCode) {
-            var error = KintoneErrorConverter.Parse(json);
-            _logger?.LogError("Kintoneファイルダウンロード失敗（バイト配列）: fileKey={FileKey}, Error={Error}", fileKey, error);
-            throw new KintoneException(error);
+        ArgumentNullException.ThrowIfNull(fileKey);
+        if (fileKey == string.Empty) {
+            throw new ArgumentException("fileKey must not be empty.");
         }
 
-        return await resp.Content.ReadAsByteArrayAsync();
+        var url = $"file.json?fileKey={Uri.EscapeDataString(fileKey)}";
+        try {
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.Add("X-Cybozu-API-Token", this.ApiToken);
+
+            using var resp = await this._httpClient.SendAsync(request);
+            var body = await resp.Content.ReadAsStringAsync();
+
+            if (!resp.IsSuccessStatusCode) {
+                // application/json の場合は Kintone のエラーメッセージをパースする
+                if (resp.Content.Headers.ContentType?.MediaType == "application/json") {
+                    var error = KintoneErrorConverter.Parse(body);
+                    throw new KintoneException(error);
+                }
+
+                throw new KintoneException($"ファイル取得に失敗しました。Status: {resp.StatusCode} Raw response: {body}");
+            }
+
+            // 成功時は Content-Type に関わらずバイト列として返す
+            return await resp.Content.ReadAsByteArrayAsync();
+        } catch (TaskCanceledException ex) {
+            throw new KintoneException("HTTPリクエストがタイムアウトしました。", ex);
+        } catch (HttpRequestException ex) {
+            throw new KintoneException("HTTPリクエストに失敗しました。", ex);
+        }
     }
 
     /// <summary>
     /// fileKey からファイルをダウンロードし、ストリームとして返します。
     /// </summary>
     public async Task<Stream> DownloadFileStreamAsync(string fileKey) {
+        ArgumentNullException.ThrowIfNull(fileKey);
+        if (fileKey == string.Empty) {
+            throw new ArgumentException("fileKey must not be empty.");
+        }
         var url = $"file.json?fileKey={Uri.EscapeDataString(fileKey)}";
 
         using var request = new HttpRequestMessage(HttpMethod.Get, url);
@@ -134,11 +153,26 @@ public partial class KintoneApi {
 
         var resp = await this._httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 
-        if (!resp.IsSuccessStatusCode) {
+        var contentType = resp.Content.Headers.ContentType?.MediaType;
+
+        if (!resp.IsSuccessStatusCode || contentType != "application/octet-stream") {
             var json = await resp.Content.ReadAsStringAsync();
-            var error = KintoneErrorConverter.Parse(json);
-            _logger?.LogError("Kintoneファイルダウンロード失敗（ストリーム）: fileKey={FileKey}, Error={Error}", fileKey, error);
-            throw new KintoneException(error);
+
+            KintoneError? error = null;
+            try {
+                error = KintoneErrorConverter.Parse(json);
+            } catch (Exception ex) {
+                _logger?.LogError(ex, "Kintoneエラー解析失敗: fileKey={FileKey}, body={Json}", fileKey, json);
+                throw new KintoneException($"予期しないContent-Type: {contentType}, body={json}");
+            }
+
+            if (error != null) {
+                _logger?.LogError("Kintoneファイルダウンロード失敗（ストリーム）: fileKey={FileKey}, Error={Error}", fileKey, error);
+                throw new KintoneException(error);
+            }
+
+            throw new KintoneException($"予期しないContent-Type: {contentType}, body={json}");
+
         }
 
         return await resp.Content.ReadAsStreamAsync();

@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Infrastructure.Api;
@@ -20,6 +21,7 @@ public class KintoneApiDownloadFileTests {
             var response = new HttpResponseMessage(HttpStatusCode.OK) {
                 Content = new ByteArrayContent(expectedContent)
             };
+            response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
             return response;
         });
 
@@ -66,7 +68,11 @@ public class KintoneApiDownloadFileTests {
         mockHttp
             .When(HttpMethod.Get, $"https://{DummyDomain}/k/v1/file.json?fileKey={DummyFileKey}")
             .WithHeaders("X-Cybozu-API-Token", "dummyToken")
-            .Respond(req => new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(expectedContent) });
+            .Respond(req => {
+                var content = new ByteArrayContent(expectedContent);
+                content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                return new HttpResponseMessage(HttpStatusCode.OK) { Content = content };
+            });
 
         var httpClient = mockHttp.ToHttpClient();
         httpClient.BaseAddress = new Uri("https://dummy.domain/k/v1/");
@@ -88,8 +94,10 @@ public class KintoneApiDownloadFileTests {
         mockHttp
             .When(HttpMethod.Get, $"https://{DummyDomain}/k/v1/file.json?fileKey={DummyFileKey}")
             .WithHeaders("X-Cybozu-API-Token", "dummyToken")
-            .Respond(req => new HttpResponseMessage(HttpStatusCode.OK) {
-                Content = new ByteArrayContent(expectedBytes)
+            .Respond(req => {
+                var content = new ByteArrayContent(expectedBytes);
+                content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                return new HttpResponseMessage(HttpStatusCode.OK) { Content = content };
             });
 
         var httpClient = mockHttp.ToHttpClient();
@@ -120,6 +128,295 @@ public class KintoneApiDownloadFileTests {
         // Act & Assert
         var ex = await Assert.ThrowsAsync<KintoneException>(() => api.DownloadFileAsync(DummyFileKey));
         Assert.Contains("Invalid fileKey", ex.Message);
+    }
+    [Fact]
+    public async Task DownloadFileAsync_NullFileKey_ThrowsArgumentNullException() {
+        var httpClient = new HttpClient(); // 実際に送信されない
+        var api = new KintoneApi(CreateMockAccount(), appID: 1, httpClient: httpClient);
+
+        var ex = await Assert.ThrowsAsync<ArgumentNullException>(() => api.DownloadFileAsync(null));
+        Assert.Contains("fileKey", ex.Message);
+    }
+    [Fact]
+    public async Task DownloadFileAsync_EmptyFileKey_ThrowsArgumentException() {
+        var httpClient = new HttpClient(); // 実際に送信されない
+        var api = new KintoneApi(CreateMockAccount(), appID: 1, httpClient: httpClient);
+
+        var ex = await Assert.ThrowsAsync<ArgumentException>(() => api.DownloadFileAsync(""));
+        Assert.Contains("fileKey", ex.Message);
+    }
+    [Fact]
+    public async Task DownloadFileAsync_InvalidFileKey_ThrowsKintoneException() {
+        // Arrange
+        var errorJson = "{\"message\":\"Invalid fileKey\"}";
+
+        var mockHttp = new MockHttpMessageHandler();
+        mockHttp
+            .When(HttpMethod.Get, $"https://{DummyDomain}/k/v1/file.json?fileKey={DummyFileKey}")
+            .Respond(HttpStatusCode.BadRequest, "application/json", errorJson);
+
+        var httpClient = mockHttp.ToHttpClient();
+        var api = new KintoneApi(CreateMockAccount(), appID: 1, httpClient: httpClient);
+
+        // Act & Assert
+        var ex = await Assert.ThrowsAsync<KintoneException>(() => api.DownloadFileAsync(DummyFileKey));
+        Assert.Contains("Invalid fileKey", ex.Message);
+    }
+    [Fact]
+    public async Task DownloadFileAsync_ErrorJsonReturned_ThrowsKintoneException() {
+        var errorJson = "{\"message\":\"File not found\"}";
+
+        var mockHttp = new MockHttpMessageHandler();
+        mockHttp
+            .When(HttpMethod.Get, $"https://{DummyDomain}/k/v1/file.json?fileKey={DummyFileKey}")
+            .Respond("application/json", errorJson); // ← ステータスコード200だがJSON
+
+        var httpClient = mockHttp.ToHttpClient();
+        var api = new KintoneApi(CreateMockAccount(), appID: 1, httpClient: httpClient);
+
+        var ex = await Assert.ThrowsAsync<KintoneException>(() => api.DownloadFileAsync(DummyFileKey));
+        Assert.Contains("File not found", ex.Message);
+    }
+    [Fact]
+    public async Task DownloadFileAsync_InvalidJsonStructure_ThrowsKintoneException() {
+        var invalidJson = "{ this is not valid json }";
+
+        var mockHttp = new MockHttpMessageHandler();
+        mockHttp
+            .When(HttpMethod.Get, $"https://{DummyDomain}/k/v1/file.json?fileKey={DummyFileKey}")
+            .Respond("application/json", invalidJson);
+
+        var httpClient = mockHttp.ToHttpClient();
+        var api = new KintoneApi(CreateMockAccount(), appID: 1, httpClient: httpClient);
+
+        var ex = await Assert.ThrowsAsync<KintoneException>(() => api.DownloadFileAsync(DummyFileKey));
+        Assert.Contains("JSON", ex.Message); // メッセージ内容はKintoneErrorConverter次第で調整
+    }
+    [Fact]
+    public async Task DownloadFileAsync_UnexpectedContentType_ThrowsKintoneException() {
+        var errorJson = "{\"message\":\"Unexpected response\"}";
+
+        var mockHttp = new MockHttpMessageHandler();
+        mockHttp
+            .When(HttpMethod.Get, $"https://{DummyDomain}/k/v1/file.json?fileKey={DummyFileKey}")
+            .Respond("text/html", errorJson); // Content-Typeが想定外
+
+        var httpClient = mockHttp.ToHttpClient();
+        var api = new KintoneApi(CreateMockAccount(), appID: 1, httpClient: httpClient);
+
+        var ex = await Assert.ThrowsAsync<KintoneException>(() => api.DownloadFileAsync(DummyFileKey));
+        Assert.Contains("Content-Type", ex.Message); // もしくは "Unexpected response"
+    }
+    [Fact]
+    public async Task DownloadFileAsync_HttpTimeout_ThrowsKintoneException() {
+        // Arrange
+        var handler = new StubHttpMessageHandler(async _ => {
+            // 疑似的にタイムアウトを発生させる
+            await Task.Delay(1);
+            throw new TaskCanceledException("タイムアウト模擬");
+        });
+
+        var httpClient = new HttpClient(handler);
+        var api = new KintoneApi(CreateMockAccount(), appID: 1, httpClient: httpClient);
+
+        // Act & Assert
+        var ex = await Assert.ThrowsAsync<KintoneException>(() => api.DownloadFileAsync(DummyFileKey));
+        Assert.Contains("タイムアウト", ex.Message); // 実装に応じて調整
+    }
+    [Fact]
+    public async Task DownloadFileStreamAsync_ValidResponse_ReturnsStream() {
+        // Arrange
+        var fileBytes = new byte[] { 1, 2, 3, 4 };
+        var mockHttp = new MockHttpMessageHandler();
+
+        var response = new HttpResponseMessage(HttpStatusCode.OK) {
+            Content = new ByteArrayContent(fileBytes)
+        };
+        response.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+
+        mockHttp
+            .When(HttpMethod.Get, $"https://{DummyDomain}/k/v1/file.json?fileKey={DummyFileKey}")
+            .Respond(_ => response);
+
+        var httpClient = mockHttp.ToHttpClient();
+        var api = new KintoneApi(CreateMockAccount(), appID: 1, httpClient: httpClient);
+
+        // Act
+        using var stream = await api.DownloadFileStreamAsync(DummyFileKey);
+
+        // Assert
+        Assert.NotNull(stream);
+        var buffer = new byte[fileBytes.Length];
+        var readCount = await stream.ReadAsync(buffer, 0, buffer.Length);
+        Assert.Equal(fileBytes.Length, readCount);
+        Assert.Equal(fileBytes, buffer);
+    }
+    [Fact]
+    public async Task DownloadFileStreamAsync_ErrorResponse_ThrowsKintoneException() {
+        // Arrange
+        var errorJson = "{\"message\":\"Invalid fileKey\"}";
+        var mockHttp = new MockHttpMessageHandler();
+        mockHttp
+            .When(HttpMethod.Get, $"https://{DummyDomain}/k/v1/file.json?fileKey={DummyFileKey}")
+            .Respond(HttpStatusCode.BadRequest, "application/json", errorJson);
+
+        var httpClient = mockHttp.ToHttpClient();
+        var api = new KintoneApi(CreateMockAccount(), appID: 1, httpClient: httpClient);
+
+        // Act & Assert
+        var ex = await Assert.ThrowsAsync<KintoneException>(() => api.DownloadFileStreamAsync(DummyFileKey));
+        Assert.Contains("Invalid fileKey", ex.Message);
+    }
+    [Fact]
+    public async Task DownloadFileStreamAsync_NullFileKey_ThrowsArgumentNullException() {
+        var httpClient = new HttpClient();
+        var api = new KintoneApi(CreateMockAccount(), appID: 1, httpClient: httpClient);
+
+        var ex = await Assert.ThrowsAsync<ArgumentNullException>(() => api.DownloadFileStreamAsync(null!));
+        Assert.Contains("fileKey", ex.Message);
+    }
+    [Fact]
+    public async Task DownloadFileStreamAsync_EmptyFileKey_ThrowsArgumentException() {
+        var httpClient = new HttpClient();
+        var api = new KintoneApi(CreateMockAccount(), appID: 1, httpClient: httpClient);
+
+        var ex = await Assert.ThrowsAsync<ArgumentException>(() => api.DownloadFileStreamAsync(string.Empty));
+        Assert.Contains("fileKey must not be empty", ex.Message);
+    }
+    [Fact]
+    public async Task DownloadFileStreamAsync_UnexpectedContentType_ThrowsKintoneException() {
+        // Arrange
+        var errorHtml = "<html><body>Error</body></html>";
+        var mockHttp = new MockHttpMessageHandler();
+        mockHttp
+            .When(HttpMethod.Get, $"https://{DummyDomain}/k/v1/file.json?fileKey={DummyFileKey}")
+            .Respond("text/html", errorHtml);
+
+        var httpClient = mockHttp.ToHttpClient();
+        var api = new KintoneApi(CreateMockAccount(), appID: 1, httpClient: httpClient);
+
+        // Act & Assert
+        var ex = await Assert.ThrowsAsync<KintoneException>(() => api.DownloadFileStreamAsync(DummyFileKey));
+        Assert.Contains("予期しないContent-Type", ex.Message);
+    }
+    [Fact]
+    public async Task DownloadFileStreamAsync_ValidFileKey_ReturnsStream() {
+        var contentBytes = new byte[] { 1, 2, 3 };
+        var mockHttp = new MockHttpMessageHandler();
+        mockHttp.When(HttpMethod.Get, $"https://{DummyDomain}/k/v1/file.json*")
+                .Respond(request => new HttpResponseMessage {
+                    StatusCode = HttpStatusCode.OK,
+                    Content = new ByteArrayContent(contentBytes) {
+                        Headers = { ContentType = new MediaTypeHeaderValue("application/octet-stream") }
+                    }
+                });
+
+        var api = new KintoneApi(CreateMockAccount(), appID: 1, httpClient: mockHttp.ToHttpClient());
+        var stream = await api.DownloadFileStreamAsync("valid_file_key");
+
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
+        Assert.Equal(contentBytes, ms.ToArray());
+    }
+    [Fact]
+    public async Task DownloadFileStreamAsync_InvalidContentType_ThrowsKintoneException_WithContentTypeInMessage() {
+        // Arrange
+        var htmlBody = "<html><body>Error Page</body></html>";
+        var mockHttp = new MockHttpMessageHandler();
+        mockHttp
+            .When(HttpMethod.Get, $"https://{DummyDomain}/k/v1/file.json*")
+            .Respond("text/html", htmlBody);
+
+        var api = new KintoneApi(CreateMockAccount(), appID: 1, httpClient: mockHttp.ToHttpClient());
+
+        // Act & Assert
+        var ex = await Assert.ThrowsAsync<KintoneException>(() => api.DownloadFileStreamAsync("invalid_key"));
+        Assert.Contains("Content-Type", ex.Message); // Content-Typeの記述が含まれていること
+        Assert.Contains("text/html", ex.Message);    // 実際に受信したContent-Typeが含まれていること
+    }
+    [Fact]
+    public async Task DownloadFileStreamAsync_KintoneJsonError_ThrowsKintoneException_WithErrorMessage() {
+        // Arrange
+        var jsonError = "{\"code\":\"E001\",\"message\":\"Invalid fileKey\"}";
+        var mockHttp = new MockHttpMessageHandler();
+        mockHttp
+            .When(HttpMethod.Get, $"https://{DummyDomain}/k/v1/file.json*")
+            .Respond("application/json", jsonError);
+
+        var api = new KintoneApi(CreateMockAccount(), appID: 1, httpClient: mockHttp.ToHttpClient());
+
+        // Act & Assert
+        var ex = await Assert.ThrowsAsync<KintoneException>(() => api.DownloadFileStreamAsync("invalid_key"));
+        Assert.Contains("Invalid fileKey", ex.Message); // Kintoneのエラーメッセージが含まれていること
+    }
+    [Fact]
+    public async Task DownloadFileStreamAsync_HttpErrorWithJson_ThrowsParsedKintoneException() {
+        var jsonError = "{\"code\":\"E001\",\"message\":\"Invalid fileKey\"}";
+        var mockHttp = new MockHttpMessageHandler();
+        mockHttp.When(HttpMethod.Get, $"https://{DummyDomain}/k/v1/file.json*")
+                .Respond(HttpStatusCode.BadRequest, "application/json", jsonError);
+
+        var api = new KintoneApi(CreateMockAccount(), appID: 1, httpClient: mockHttp.ToHttpClient());
+
+        var ex = await Assert.ThrowsAsync<KintoneException>(() => api.DownloadFileStreamAsync("invalid_key"));
+        Assert.NotNull(ex.Error);
+        Assert.Equal("E001", ex.Error.Code);
+    }
+    [Fact]
+    public async Task DownloadFileStreamAsync_HttpErrorWithNonJsonBody_ThrowsGenericKintoneException() {
+        var badBody = "<html>Internal Error</html>";
+        var mockHttp = new MockHttpMessageHandler();
+        mockHttp.When(HttpMethod.Get, $"https://{DummyDomain}/k/v1/file.json*")
+                .Respond(HttpStatusCode.InternalServerError, "text/html", badBody);
+
+        var api = new KintoneApi(CreateMockAccount(), appID: 1, httpClient: mockHttp.ToHttpClient());
+
+        var ex = await Assert.ThrowsAsync<KintoneException>(() => api.DownloadFileStreamAsync("filekey"));
+        Assert.Contains("Content-Type", ex.Message);
+    }
+    [Fact]
+    public async Task DownloadFileStreamAsync_EmptyFileKey_EncodedProperly() {
+        var contentBytes = new byte[] { 1 };
+        var capturedUri = string.Empty;
+
+        var mockHttp = new MockHttpMessageHandler();
+        mockHttp.When(HttpMethod.Get, $"https://{DummyDomain}/k/v1/file.json*")
+                .Respond(request => {
+                    capturedUri = request.RequestUri?.ToString() ?? "";
+                    return new HttpResponseMessage {
+                        StatusCode = HttpStatusCode.OK,
+                        Content = new ByteArrayContent(contentBytes) {
+                            Headers = { ContentType = new MediaTypeHeaderValue("application/octet-stream") }
+                        }
+                    };
+                });
+
+        var api = new KintoneApi(CreateMockAccount(), appID: 1, httpClient: mockHttp.ToHttpClient());
+        var ex = await Assert.ThrowsAsync<ArgumentException>(() => api.DownloadFileStreamAsync(""));
+        Assert.Contains("fileKey must not be empty.", ex.Message);
+    }
+    [Fact]
+    public async Task DownloadFileStreamAsync_FileKeyWithSpecialChars_EncodedInUrl() {
+        var fileKey = "abc+/=def";
+        var encoded = Uri.EscapeDataString(fileKey);
+        var actualUri = "";
+
+        var mockHttp = new MockHttpMessageHandler();
+        mockHttp.When(HttpMethod.Get, $"https://{DummyDomain}/k/v1/file.json*")
+                .Respond(req => {
+                    actualUri = req.RequestUri!.ToString();
+                    return new HttpResponseMessage {
+                        StatusCode = HttpStatusCode.OK,
+                        Content = new ByteArrayContent(new byte[] { 1 }) {
+                            Headers = { ContentType = new MediaTypeHeaderValue("application/octet-stream") }
+                        }
+                    };
+                });
+
+        var api = new KintoneApi(CreateMockAccount(), appID: 1, httpClient: mockHttp.ToHttpClient());
+        await api.DownloadFileStreamAsync(fileKey);
+
+        Assert.Contains($"fileKey={encoded}", actualUri);
     }
 
     #region <<Private method(s)>>

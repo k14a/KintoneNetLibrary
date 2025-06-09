@@ -256,7 +256,7 @@ public partial class KintoneApiFileUploadTests {
         Assert.Contains("stream", ex.ParamName);
     }
     [Fact]
-    public async Task UploadFileAsync_ResponseWithNullFileKey_ThrowsInvalidOperationException() {
+    public async Task UploadFileAsync_ResponseWithNullFileKey_ThrowsKintoneException() {
         var httpClient = KintoneHttpTestHelper.CreateMockHttpClient(request => {
             var jsonWithNullFileKey = @"{ ""fileKey"": null }"; // fileKey が null
             return new HttpResponseMessage(HttpStatusCode.OK) {
@@ -269,11 +269,13 @@ public partial class KintoneApiFileUploadTests {
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes("dummy"));
         var fileName = "file.txt";
 
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        var ex = await Assert.ThrowsAsync<KintoneException>(() =>
             api.UploadFileAsync(stream, fileName));
 
-        Assert.Contains("fileKey", ex.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("FILEKEY_MISSING", ex.Error.Code);
+        Assert.Contains("fileKey", ex.Error.Message, StringComparison.OrdinalIgnoreCase);
     }
+
     [Fact(DisplayName = "UploadFileAsync: 非常に長いファイル名（255バイト以上）でも正常にアップロードされる")]
     public async Task UploadFileAsync_WithVeryLongFileName_WorksCorrectly() {
         // Arrange
@@ -296,9 +298,10 @@ public partial class KintoneApiFileUploadTests {
                 $"Request body does not contain expected file name. Actual body: {body}"
             );
 
-            return new HttpResponseMessage(HttpStatusCode.OK) {
-                Content = new StringContent(JsonSerializer.Serialize(new { fileKey = "dummy_file_key" }))
+            var response = new HttpResponseMessage(HttpStatusCode.OK) {
+                Content = new StringContent("{\"fileKey\":\"dummy_file_key\"}", Encoding.UTF8, "application/json")
             };
+            return response;
         });
 
         var api = new KintoneApi(new KintoneAccount { Domain = "dummy", ApiToken = "dummyToken" }, 123, httpClient);
@@ -326,9 +329,10 @@ public partial class KintoneApiFileUploadTests {
             // 中身がストリーム全体（0123456789）であることを確認
             Assert.Contains(expectedUploadContent, body);
 
-            return new HttpResponseMessage(HttpStatusCode.OK) {
-                Content = new StringContent("{\"fileKey\":\"dummy_file_key\"}")
+            var response = new HttpResponseMessage(HttpStatusCode.OK) {
+                Content = new StringContent("{\"fileKey\":\"dummy_file_key\"}", Encoding.UTF8, "application/json")
             };
+            return response;
         });
 
         var api = new KintoneApi(new KintoneAccount { Domain = "dummy", ApiToken = "dummyToken" }, 123, httpClient);
@@ -371,9 +375,10 @@ public partial class KintoneApiFileUploadTests {
             Assert.DoesNotContain("\r", sanitizedFileName);
             Assert.DoesNotContain("\n", sanitizedFileName);
 
-            return new HttpResponseMessage(HttpStatusCode.OK) {
-                Content = new StringContent("{\"fileKey\":\"dummy_file_key\"}")
+            var response = new HttpResponseMessage(HttpStatusCode.OK) {
+                Content = new StringContent("{\"fileKey\":\"dummy_file_key\"}", Encoding.UTF8, "application/json")
             };
+            return response;
         });
 
         var api = new KintoneApi(
@@ -408,9 +413,10 @@ public partial class KintoneApiFileUploadTests {
                 }
             }
 
-            return new HttpResponseMessage(HttpStatusCode.OK) {
-                Content = new StringContent("{\"fileKey\":\"dummy_file_key\"}")
+            var response = new HttpResponseMessage(HttpStatusCode.OK) {
+                Content = new StringContent("{\"fileKey\":\"dummy_file_key\"}", Encoding.UTF8, "application/json")
             };
+            return response;
         });
 
         var api = new KintoneApi(new KintoneAccount { Domain = "dummy", ApiToken = "dummyToken" }, 123, httpClient);

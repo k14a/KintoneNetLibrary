@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using KintoneNetLibrary.Domain.Common;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Infrastructure.Api;
@@ -7,6 +9,15 @@ using KintoneNetLibrary.Tests.Models;
 namespace KintoneNetLibrary.Tests.Helpers;
 
 public static class KintoneTestHelper {
+    public static KintoneApi CreateApi() {
+        var cfg = TestEnv.Settings;
+        var cli = new HttpClient {
+            BaseAddress = new Uri($"https://{cfg.Domain}/k/v1/")
+        };
+        var account = new KintoneAccount { ApiToken = cfg.ApiToken, Domain = cfg.Domain };
+        return new KintoneApi(account, cfg.AppID, cli);
+    }
+
     public static async Task<IList<T>> CreateRecordsInChunksAsync<T>(KintoneApi api, IList<T> models) where T : KintoneModelBase, new() {
         var allCreated = new List<T>();
         foreach (var chunk in models.Chunk(KintoneConstants.KintoneLimit)) {

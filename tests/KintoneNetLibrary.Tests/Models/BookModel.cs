@@ -79,6 +79,11 @@ public class BookModel : KintoneModelBase {
     [KintoneItem(fieldCode: "MultiSelector", KintoneFieldType.MultiSelect)]
     public IEnumerable<string> MultiSelector { get; set; } = [];
     /// <summary>
+    /// 添付ファイル
+    /// </summary>
+    [KintoneItem(fieldCode: "Files", KintoneFieldType.File)]
+    public IList<KintoneFile>? Files { get; set; }
+    /// <summary>
     /// サブテーブル
     /// </summary>
     [KintoneItem("Details", KintoneFieldType.SubTable)]

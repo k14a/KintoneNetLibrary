@@ -13,18 +13,9 @@ using KintoneNetLibrary.Tests.Helpers;
 namespace KintoneNetLibrary.Tests.Api;
 
 public class KintoneApiCrudTests {
-    private KintoneApi CreateApi() {
-        var cfg = TestEnv.Settings;
-        var cli = new HttpClient {
-            BaseAddress = new Uri($"https://{cfg.Domain}/k/v1/")
-        };
-        var account = new KintoneAccount { ApiToken = cfg.ApiToken, Domain = cfg.Domain };
-        return new KintoneApi(account, cfg.AppID, cli);
-    }
-
     [Fact]
     public async Task Can_Create_Read_Delete_Record() {
-        var api = this.CreateApi();
+        var api = KintoneTestHelper.CreateApi();
         // 準備：BookModelのインスタンス
         var book = new BookModel { Title = "Test Book", Price = 1000, Uuid = Guid.NewGuid().ToString() };
 
@@ -49,7 +40,7 @@ public class KintoneApiCrudTests {
     }
     [Fact]
     public async Task Can_Create_Read_Delete_Multiple_Records() {
-        var api = this.CreateApi();
+        var api = KintoneTestHelper.CreateApi();
 
         // 準備：複数の BookModel インスタンス
         var books = new List<BookModel> {
@@ -81,7 +72,7 @@ public class KintoneApiCrudTests {
     }
     [Fact]
     public async Task Can_Create_Update_Find_Delete_Record() {
-        var api = this.CreateApi();
+        var api = KintoneTestHelper.CreateApi();
 
         // Step 1: Create
         var book = new BookModel { Title = "Initial Title", Price = 1000, Uuid = Guid.NewGuid().ToString() };
@@ -113,7 +104,7 @@ public class KintoneApiCrudTests {
     }
     [Fact]
     public async Task Can_Update_ByKey() {
-        var api = this.CreateApi();
+        var api = KintoneTestHelper.CreateApi();
 
         // UUID を生成
         var uuid = Guid.NewGuid().ToString();
@@ -155,7 +146,7 @@ public class KintoneApiCrudTests {
     }
     [Fact]
     public async Task FindByQueryAsync_ShouldReturnFilteredRecords() {
-        var api = this.CreateApi();
+        var api = KintoneTestHelper.CreateApi();
         // Arrange
         var books = new List<BookModel> {
             new() { Title = "Book A", Price = 1000, Uuid = Guid.NewGuid().ToString() },
@@ -189,7 +180,7 @@ public class KintoneApiCrudTests {
     [Fact]
     public async Task FindAllAsync_CursorPaging_WorksCorrectly() {
         // Arrange
-        var api = this.CreateApi();
+        var api = KintoneTestHelper.CreateApi();
         api.CursorPageSize = 2;
 
         var books = new List<BookModel> {
@@ -226,7 +217,7 @@ public class KintoneApiCrudTests {
     [Fact]
     public async Task FindAsync_QueryExceedsPageSize_WorksCorrectly() {
         // Arrange
-        var api = this.CreateApi();
+        var api = KintoneTestHelper.CreateApi();
         api.CursorPageSize = 2;
 
         var books = new List<BookModel> {
@@ -264,7 +255,7 @@ public class KintoneApiCrudTests {
     [InlineData(2, 5)] // カーソル不使用
     public async Task FindAsync_QueryWithOrderBy_WorksCorrectly(int recordCount, int pageSize) {
         // Arrange
-        var api = this.CreateApi();
+        var api = KintoneTestHelper.CreateApi();
         api.CursorPageSize = pageSize;
 
         var books = new List<BookModel>();
@@ -303,7 +294,7 @@ public class KintoneApiCrudTests {
     [InlineData(5, 10)] // カーソル不使用（pageSize >= recordCount）
     public async Task FindAsync_QueryWithComplexCondition_WorksCorrectly(int recordCount, int pageSize) {
         // Arrange
-        var api = this.CreateApi();
+        var api = KintoneTestHelper.CreateApi();
         api.CursorPageSize = pageSize;
 
         var books = Enumerable.Range(1, recordCount).Select(i =>
@@ -337,7 +328,7 @@ public class KintoneApiCrudTests {
     [InlineData(5, 10)]  // カーソル不使用（pageSize >= recordCount）
     public async Task FindAsync_QueryWithNoHit_WorksCorrectly(int recordCount, int pageSize) {
         // Arrange
-        var api = this.CreateApi();
+        var api = KintoneTestHelper.CreateApi();
         api.CursorPageSize = pageSize;
 
         var books = Enumerable.Range(1, recordCount).Select(i =>
@@ -371,7 +362,7 @@ public class KintoneApiCrudTests {
     [InlineData(5, 10)]  // カーソル不使用（pageSize >= recordCount）
     public async Task FindAsync_WithInvalidQuery_ThrowsException(int recordCount, int pageSize) {
         // Arrange
-        var api = this.CreateApi();
+        var api = KintoneTestHelper.CreateApi();
         api.CursorPageSize = pageSize;
 
         var books = Enumerable.Range(1, recordCount).Select(i =>
@@ -408,7 +399,7 @@ public class KintoneApiCrudTests {
     [InlineData(5, 10)]  // カーソル不使用（pageSize >= recordCount）
     public async Task FindAsync_RepeatedQuery_ReturnsSameResults(int recordCount, int pageSize) {
         // Arrange
-        var api = this.CreateApi();
+        var api = KintoneTestHelper.CreateApi();
         api.CursorPageSize = pageSize;
 
         var books = Enumerable.Range(1, recordCount).Select(i =>
@@ -450,7 +441,7 @@ public class KintoneApiCrudTests {
     [InlineData(5, 10)] // カーソル不使用（pageSize >= recordCount）
     public async Task FindAsync_EmptyQuery_ReturnsAllRecords(int recordCount, int pageSize) {
         // Arrange
-        var api = this.CreateApi();
+        var api = KintoneTestHelper.CreateApi();
         api.CursorPageSize = pageSize;
 
         var books = Enumerable.Range(1, recordCount).Select(i =>
@@ -486,7 +477,7 @@ public class KintoneApiCrudTests {
     [InlineData(499, 500)]  // カーソル不使用（pageSize >= recordCount）
     public async Task FindAsync_OverMaxLimit_WorksCorrectly(int recordCount, int pageSize) {
         // Arrange
-        var api = this.CreateApi();
+        var api = KintoneTestHelper.CreateApi();
         api.CursorPageSize = pageSize;
 
         var books = Enumerable.Range(1, recordCount).Select(i =>
@@ -529,7 +520,7 @@ public class KintoneApiCrudTests {
     [InlineData(5, 10)] // カーソル不使用：recordCount = 4, pageSize = 10 → 1ページで済むためカーソル不要
     public async Task FindAsync_TitleInCondition_WorksCorrectly(int cursorPageSize, int dummyPageSize) {
         // Arrange
-        var api = this.CreateApi();
+        var api = KintoneTestHelper.CreateApi();
         api.CursorPageSize = cursorPageSize;
 
         var books = new List<BookModel>
@@ -569,7 +560,7 @@ public class KintoneApiCrudTests {
     [InlineData(5, 10)] // カーソル不使用：pageSize >= レコード数
     public async Task FindAsync_ClassificationInCondition_WorksCorrectly(int cursorPageSize, int dummyPageSize) {
         // Arrange
-        var api = this.CreateApi();
+        var api = KintoneTestHelper.CreateApi();
         api.CursorPageSize = cursorPageSize;
 
         var books = new List<BookModel>
@@ -608,7 +599,7 @@ public class KintoneApiCrudTests {
     [InlineData(5, 10)] // カーソル不使用：pageSize >= レコード数
     public async Task FindAsync_PriceNotEqualCondition_WorksCorrectly(int cursorPageSize, int dummyPageSize) {
         // Arrange
-        var api = this.CreateApi();
+        var api = KintoneTestHelper.CreateApi();
         api.CursorPageSize = cursorPageSize;
 
         var books = new List<BookModel>
@@ -648,7 +639,7 @@ public class KintoneApiCrudTests {
     [InlineData(5, 10)] // カーソル不使用（pageSize >= recordCount）
     public async Task FindAsync_TitleNotEmptyCondition_SwapTitles_UpdatesCorrectly(int cursorPageSize, int dummyPageSize) {
         // Arrange
-        var api = this.CreateApi();
+        var api = KintoneTestHelper.CreateApi();
         api.CursorPageSize = cursorPageSize;
 
         var books = new List<BookModel>
@@ -706,7 +697,7 @@ public class KintoneApiCrudTests {
     [InlineData(5, 10)] // カーソル不使用（pageSize >= recordCount）
     public async Task CreateUpdateAndFind_PriceGreaterThanOrEqualZero_HandlesNullsCorrectly(int cursorPageSize, int dummyPageSize) {
         // Arrange
-        var api = this.CreateApi();
+        var api = KintoneTestHelper.CreateApi();
         api.CursorPageSize = cursorPageSize;
 
         var books = new List<BookModel>
@@ -757,7 +748,7 @@ public class KintoneApiCrudTests {
     [InlineData(5, 10)] // カーソル不使用（pageSize >= recordCount）
     public async Task CreateUpdateAndFind_ReleaseDateCondition_WorksCorrectly(int pageSize, int recordCount) {
         // Arrange
-        var api = this.CreateApi();
+        var api = KintoneTestHelper.CreateApi();
         api.CursorPageSize = pageSize;
 
         var books = new List<BookModel> {
@@ -831,7 +822,7 @@ public class KintoneApiCrudTests {
     [InlineData("1")] // まったく勧めない
     public async Task CreateUpdateAndFind_RadioButtonField_WorksCorrectly(string recommendation) {
         // Arrange
-        var api = this.CreateApi();
+        var api = KintoneTestHelper.CreateApi();
         var model = new BookModel {
             Title = $"おすすめ度テスト_{recommendation}",
             Price = 1800,
@@ -879,7 +870,7 @@ public class KintoneApiCrudTests {
     [MemberData(nameof(CheckBoxTestData))]
     public async Task CreateUpdateAndFind_CheckBoxField_WorksCorrectly(string[] selections) {
         // Arrange
-        var api = this.CreateApi();
+        var api = KintoneTestHelper.CreateApi();
         var model = new BookModel {
             Title = "チェックボックステスト",
             Price = 2000,
@@ -928,7 +919,7 @@ public class KintoneApiCrudTests {
     [MemberData(nameof(LinkFieldTestData))]
     public async Task CreateUpdateAndFind_LinkFields_WorksCorrectly(string webAddress, string telephone, string email) {
         // Arrange
-        var api = this.CreateApi();
+        var api = KintoneTestHelper.CreateApi();
         var model = new BookModel {
             Title = "リンク型フィールドテスト",
             Price = 3000,
@@ -993,7 +984,7 @@ public class KintoneApiCrudTests {
             TimeField = new KintoneTimeOnly(time),
         };
 
-        var api = this.CreateApi();
+        var api = KintoneTestHelper.CreateApi();
 
         // Act
         var created = await KintoneTestHelper.CreateRecordsInChunksAsync(api, [model]);
@@ -1041,7 +1032,7 @@ public class KintoneApiCrudTests {
     [Fact]
     public async Task CreateAndUpdateAsync_WithMultiSelect_WorksCorrectly() {
         // Arrange
-        var api = this.CreateApi();
+        var api = KintoneTestHelper.CreateApi();
 
         var book = new BookModel {
             Uuid = Guid.NewGuid().ToString(),
@@ -1094,7 +1085,7 @@ public class KintoneApiCrudTests {
     [Fact]
     public async Task CreateAndUpdateAsync_WithMultiSelect_AddAndRemove_WorksCorrectly() {
         // Arrange
-        var api = this.CreateApi();
+        var api = KintoneTestHelper.CreateApi();
 
         var bookWithSelector = new BookModel {
             Uuid = Guid.NewGuid().ToString(),
@@ -1161,7 +1152,7 @@ public class KintoneApiCrudTests {
     [Fact]
     public async Task CreateAndUpdateAsync_WithSubTable_WorksCorrectly() {
         // Arrange
-        var api = this.CreateApi();
+        var api = KintoneTestHelper.CreateApi();
 
         var book = new BookModel {
             Uuid = Guid.NewGuid().ToString(),

@@ -47,7 +47,15 @@ internal static class KintoneValueConverter {
             (Type t, JsonValueKind.Number) when t == typeof(int?) => valueElement.TryGetInt32(out var i) ? i : null,
             (Type t, JsonValueKind.Object) when t == typeof(KintoneUser) => JsonSerializer.Deserialize<KintoneUser>(valueElement.GetRawText()),
             (Type t, JsonValueKind.Array) when IsStringListType(t) => valueElement.EnumerateArray().Select(e => e.GetString()!).ToList(),
-            (Type t, JsonValueKind.Array) when t == typeof(List<KintoneFile>) =>
+            // (Type t, JsonValueKind.Array) when t == typeof(List<KintoneFile>) =>
+            //     valueElement.EnumerateArray()
+            //         .Select(f => new KintoneFile {
+            //             ContentType = f.GetProperty("contentType").GetString() ?? "",
+            //             FileKey = f.GetProperty("fileKey").GetString() ?? "",
+            //             Name = f.GetProperty("name").GetString() ?? "",
+            //             Size = long.TryParse(f.GetProperty("size").GetString(), out var size) ? size : 0
+            //         }).ToList(),
+            (Type t, JsonValueKind.Array) when typeof(IList<KintoneFile>).IsAssignableFrom(t) =>
                 valueElement.EnumerateArray()
                     .Select(f => new KintoneFile {
                         ContentType = f.GetProperty("contentType").GetString() ?? "",
