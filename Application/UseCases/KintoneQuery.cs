@@ -96,6 +96,40 @@ public class KintoneQuery<T> {
         return query;
     }
 
+    private readonly List<string> _orderBys = new();
+
+    // OrderBy は最初のソート条件としてリストに追加
+    public KintoneQuery<T> OrderBy(Expression<Func<T, object>> keySelector) {
+        _orderBys.Clear();
+        _orderBys.Add($"{GetFieldName(keySelector)} asc");
+        return this;
+    }
+
+    // OrderByDescending は最初のソート条件としてリストに追加
+    public KintoneQuery<T> OrderByDescending(Expression<Func<T, object>> keySelector) {
+        _orderBys.Clear();
+        _orderBys.Add($"{GetFieldName(keySelector)} desc");
+        return this;
+    }
+
+    // ThenBy は既存のソート条件に追加
+    public KintoneQuery<T> ThenBy(Expression<Func<T, object>> keySelector) {
+        _orderBys.Add($"{GetFieldName(keySelector)} asc");
+        return this;
+    }
+
+    // ThenByDescending は既存のソート条件に追加
+    public KintoneQuery<T> ThenByDescending(Expression<Func<T, object>> keySelector) {
+        _orderBys.Add($"{GetFieldName(keySelector)} desc");
+        return this;
+    }
+
+    // ソート条件の取得メソッド（ToStringやBuild内で使用）
+    private string BuildOrderBy() {
+        if (_orderBys.Count == 0) return string.Empty;
+        return " order by " + string.Join(", ", _orderBys);
+    }
+
     public override string ToString() {
         var query = new StringBuilder();
 
@@ -103,20 +137,40 @@ public class KintoneQuery<T> {
             query.Append(string.Join(" and ", this._conditions));
         }
 
-        if (!string.IsNullOrEmpty(_orderBy)) {
-            query.Append($" order by {this._orderBy}");
+        var orderByClause = BuildOrderBy();
+        if (!string.IsNullOrEmpty(orderByClause)) {
+            query.Append(orderByClause);
         }
 
         if (_limit.HasValue) {
-            query.Append($" limit {this._limit.Value}");
+            query.Append($" limit {_limit.Value}");
         }
 
         if (_offset.HasValue) {
-            query.Append($" offset {this._offset.Value}");
+            query.Append($" offset {_offset.Value}");
         }
 
         return query.ToString();
     }
+
+    private static string GetFieldName(Expression<Func<T, object>> keySelector) {
+        if (keySelector == null) throw new ArgumentNullException(nameof(keySelector));
+
+        MemberExpression? memberExpr = null;
+
+        if (keySelector.Body is MemberExpression m) {
+            memberExpr = m;
+        } else if (keySelector.Body is UnaryExpression u && u.NodeType == ExpressionType.Convert) {
+            memberExpr = u.Operand as MemberExpression;
+        }
+
+        if (memberExpr == null) {
+            throw new ArgumentException("無効なフィールド指定です。", nameof(keySelector));
+        }
+
+        return memberExpr.Member.Name;
+    }
+
 }
 
 internal static class KintoneQueryExpressionParser {
