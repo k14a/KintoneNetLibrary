@@ -7,23 +7,23 @@ public class BookModel : KintoneModelBase {
     /// <summary>
     /// タイトル
     /// </summary>
-    [KintoneItem(fieldCode: "Title")]
+    [KintoneItem(fieldCode: "Title", KintoneFieldType.SingleLineText)]
     public string Title { get; set; } = string.Empty;
     /// <summary>
     /// 価格
     /// </summary>
-    [KintoneItem(fieldCode: "Price")]
+    [KintoneItem(fieldCode: "Price", KintoneFieldType.Number)]
     public int? Price { get; set; }
     /// <summary>
     /// UUID
     /// </summary>
-    [KintoneItem(fieldCode: "UUID", isKey: true)]
+    [KintoneItem(fieldCode: "UUID", isKey: true, fieldType: KintoneFieldType.SingleLineText)]
     public string Uuid { get; set; } = string.Empty;
     /// <summary>
     /// 分野
     /// </summary>
     /// <value>雑誌<br/>技術書<br/>SF</value>
-    [KintoneItem(fieldCode: "Classification")]
+    [KintoneItem(fieldCode: "Classification", KintoneFieldType.DropDown)]
     public string Classification { get; set; } = string.Empty;
     /// <summary>
     /// 発売日
@@ -33,19 +33,19 @@ public class BookModel : KintoneModelBase {
     /// <summary>
     /// レビュー
     /// </summary>
-    [KintoneItem(fieldCode: "Reviews")]
+    [KintoneItem(fieldCode: "Reviews", KintoneFieldType.MultiLineText)]
     public string Reviews { get; set; } = string.Empty;
     /// <summary>
     /// おすすめ度
     /// </summary>
     /// <value>5：強く勧めたい<br/>4：おすすめ<br/>3：どちらでもない<br/>2：おすすめしない<br/>1：まったく勧めない</value>
-    [KintoneItem(fieldCode: "Recommendation")]
+    [KintoneItem(fieldCode: "Recommendation", KintoneFieldType.RadioButton)]
     public string Recommendation { get; set; } = string.Empty;
     /// <summary>
     /// チェックボックス
     /// </summary>
     /// <value>チェック1<br/>チェック2<br/>チェック3<br/>チェック4</value>
-    [KintoneItem(fieldCode: "Checkboxes")]
+    [KintoneItem(fieldCode: "Checkboxes", KintoneFieldType.CheckBox)]
     public IEnumerable<string> CheckBoxes { get; set; } = [];
     /// <summary>
     /// Webアドレス
@@ -60,7 +60,7 @@ public class BookModel : KintoneModelBase {
     /// <summary>
     /// メールアドレス
     /// </summary>
-    [KintoneItem(fieldCode: "Email")]
+    [KintoneItem(fieldCode: "Email", KintoneFieldType.LinkEmail)]
     public string Email { get; set; } = string.Empty;
     /// <summary>
     /// 日付

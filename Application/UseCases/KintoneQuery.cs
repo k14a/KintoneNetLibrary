@@ -4,15 +4,21 @@ using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.Application.UseCases;
 
-public class KintoneQuery<T> {
+public class KintoneQuery<T> where T : KintoneModelBase {
     private readonly List<string> _conditions = [];
     private string? _orderBy;
     private int? _limit;
     private int? _offset;
 
+    public KintoneQuery() { }
+    public KintoneQuery(Expression<Func<T, bool>> predicate) {
+        var expression = new KintoneQueryExpression<T>(predicate);
+        this._conditions.Add(expression.ToQueryString());
+    }
+
     public KintoneQuery<T> Where(Expression<Func<T, bool>> predicate) {
-        var condition = KintoneQueryExpressionParser.Parse(predicate);
-        this._conditions.Add(condition);
+        var expression = new KintoneQueryExpression<T>(predicate);
+        this._conditions.Add(expression.ToQueryString());
         return this;
     }
 
@@ -26,16 +32,16 @@ public class KintoneQuery<T> {
         return this;
     }
 
-    [Obsolete("'offset' は使用できません。カーソルAPIを利用してください。")]
     public KintoneQuery<T> Limit(int limit) {
-        throw new KintoneException("'offset' は使用できません。カーソルAPIを利用してください。");
-        // this._limit = limit;
-        // return this;
+        this._limit = limit;
+        return this;
     }
 
+    [Obsolete("'offset' は使用できません。カーソルAPIを利用してください。")]
     public KintoneQuery<T> Offset(int offset) {
-        this._offset = offset;
-        return this;
+        throw new KintoneException("'offset' は使用できません。カーソルAPIを利用してください。");
+        // this._offset = offset;
+        // return this;
     }
 
     public KintoneQuery<T> WhereIdEquals(string id) {
@@ -130,6 +136,29 @@ public class KintoneQuery<T> {
         return " order by " + string.Join(", ", _orderBys);
     }
 
+    public string ToQueryString() => this.ToString();
+    // public override string ToString() {
+    //     var query = new StringBuilder();
+
+    //     if (this._conditions.Count != 0) {
+    //         query.Append(string.Join(" and ", this._conditions));
+    //     }
+
+    //     var orderByClause = BuildOrderBy();
+    //     if (!string.IsNullOrEmpty(orderByClause)) {
+    //         query.Append(orderByClause);
+    //     }
+
+    //     if (_limit.HasValue) {
+    //         query.Append($" limit {_limit.Value}");
+    //     }
+
+    //     if (_offset.HasValue) {
+    //         query.Append($" offset {_offset.Value}");
+    //     }
+
+    //     return query.ToString();
+    // }
     public override string ToString() {
         var query = new StringBuilder();
 
@@ -154,7 +183,7 @@ public class KintoneQuery<T> {
     }
 
     private static string GetFieldName(Expression<Func<T, object>> keySelector) {
-        if (keySelector == null) throw new ArgumentNullException(nameof(keySelector));
+        ArgumentNullException.ThrowIfNull(keySelector);
 
         MemberExpression? memberExpr = null;
 
@@ -173,10 +202,3 @@ public class KintoneQuery<T> {
 
 }
 
-internal static class KintoneQueryExpressionParser {
-    public static string Parse<T>(Expression<Func<T, bool>> expression) {
-        // このメソッドは、Expression を解析して kintone のクエリ文字列を生成するロジックを実装します。
-        // 実装は省略していますが、必要に応じて追加してください。
-        throw new NotImplementedException("Expression の解析ロジックを実装してください。");
-    }
-}

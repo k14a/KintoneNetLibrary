@@ -33,54 +33,6 @@ public static partial class KintoneQueryValidator {
             }
         }
     }
-    /// <summary>
-    /// 指定モデルの KintoneItemAttribute.FieldCode に基づき、クエリ内に存在しないフィールドコードが使われていないか検証します。
-    /// </summary>
-    /// <typeparam name="T">KintoneModelBaseを継承したモデル型</typeparam>
-    /// <param name="query">検証対象のクエリ</param>
-    /// <param name="throwOnError">trueの場合、無効フィールドがあれば例外をスロー。falseならログ警告のみ。</param>
-    /// <param name="onWarn">警告ログ出力用デリゲート。nullなら出力しない。</param>
-    // public static void ValidateFieldCodes<T>(string? query, bool throwOnError = true, Action<string>? onWarn = null) where T : KintoneModelBase {
-    //     if (string.IsNullOrWhiteSpace(query)) {
-    //         return;
-    //     }
-
-    //     // モデルの FieldCode を取得
-    //     var validFieldCodes = typeof(T).GetProperties()
-    //         .Select(p => p.GetCustomAttribute<KintoneItemAttribute>())
-    //         .Where(attr => attr != null)
-    //         .Select(attr => attr!.FieldCode)
-    //         .Where(code => !string.IsNullOrWhiteSpace(code))
-    //         .Select(code => code!.Trim())
-    //         .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-    //     if (validFieldCodes.Count == 0) {
-    //         // FieldCode設定が無いモデルは検証不可なのでスキップ
-    //         return;
-    //     }
-
-    //     // クエリからフィールド名を抽出（ざっくり正規表現: 文字列リテラルや比較演算子周辺で分割など、要調整）
-    //     // ここでは単純に単語を抽出し、数字リテラルやキーワードを除外する例
-    //     var candidates = Regex.Matches(query, @"\b\w+\b")
-    //         .Select(m => m.Value)
-    //         .Distinct()
-    //         .Where(w => !IsKintoneQueryKeyword(w))
-    //         .Where(w => !IsLiteralValue(w))
-    //         .ToList();
-
-    //     // クエリ中に存在しているが、FieldCodeに無いものを抽出
-    //     var invalidFields = candidates.Where(f => !validFieldCodes.Contains(f)).ToList();
-
-    //     if (invalidFields.Any()) {
-    //         var message = $"[KintoneQueryValidator] クエリ内にKintoneモデルのFieldCodeに存在しないフィールドが含まれています: {string.Join(", ", invalidFields)}";
-
-    //         if (throwOnError) {
-    //             throw new InvalidOperationException(message);
-    //         } else {
-    //             onWarn?.Invoke(message);
-    //         }
-    //     }
-    // }
     public static void ValidateFieldCodes<T>(string query, bool throwOnError = true, Action<string> onWarn = null) {
         if (string.IsNullOrWhiteSpace(query)) {
             return;
