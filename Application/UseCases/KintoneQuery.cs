@@ -5,7 +5,7 @@ using KintoneNetLibrary.Domain.Entities;
 namespace KintoneNetLibrary.Application.UseCases;
 
 public class KintoneQuery<T> where T : KintoneModelBase {
-    private readonly List<string> _conditions = [];
+    private readonly List<string> _conditions = new List<string>();
     private string? _orderBy;
     private int? _limit;
     private int? _offset;
@@ -137,28 +137,6 @@ public class KintoneQuery<T> where T : KintoneModelBase {
     }
 
     public string ToQueryString() => this.ToString();
-    // public override string ToString() {
-    //     var query = new StringBuilder();
-
-    //     if (this._conditions.Count != 0) {
-    //         query.Append(string.Join(" and ", this._conditions));
-    //     }
-
-    //     var orderByClause = BuildOrderBy();
-    //     if (!string.IsNullOrEmpty(orderByClause)) {
-    //         query.Append(orderByClause);
-    //     }
-
-    //     if (_limit.HasValue) {
-    //         query.Append($" limit {_limit.Value}");
-    //     }
-
-    //     if (_offset.HasValue) {
-    //         query.Append($" offset {_offset.Value}");
-    //     }
-
-    //     return query.ToString();
-    // }
     public override string ToString() {
         var query = new StringBuilder();
 
