@@ -8,14 +8,18 @@ using KintoneNetLibrary.Infrastructure.Helpers;
 namespace KintoneNetLibrary.Application.UseCases;
 
 public class KintoneQueryExpression<T> {
-    private readonly Expression<Func<T, bool>> _expression;
+    public Expression<Func<T, bool>> Predicate { get; set; }
+    public TimeZoneInfo TimeZone { get; set; } = TimeZoneInfo.Local;
+
+    public KintoneQueryExpression() { }
 
     public KintoneQueryExpression(Expression<Func<T, bool>> expression) {
-        _expression = expression ?? throw new ArgumentNullException(nameof(expression));
+        Predicate = expression ?? throw new ArgumentNullException(nameof(expression));
     }
 
     public string ToQueryString() {
-        var visitor = new KintoneExpressionVisitor();
-        return visitor.ToQueryString(_expression.Body);
+        if (this.Predicate == null) { return string.Empty; }
+        var visitor = new KintoneExpressionVisitor { TimeZone = this.TimeZone };
+        return visitor.ToQueryString(Predicate.Body);
     }
 }

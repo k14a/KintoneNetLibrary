@@ -7,6 +7,7 @@ namespace KintoneNetLibrary.Infrastructure.Helpers;
 
 public class KintoneExpressionVisitor : ExpressionVisitor {
     private readonly StringBuilder _queryBuilder = new();
+    public TimeZoneInfo TimeZone { get; set; } = TimeZoneInfo.Local;
 
     public string ToQueryString(Expression expression) {
         _queryBuilder.Clear();
@@ -14,73 +15,126 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
         return _queryBuilder.ToString();
     }
 
+    // protected override Expression VisitBinary(BinaryExpression node) {
+    //     // 論理演算（AND/OR）なら再帰的に処理
+    //     if (node.NodeType == ExpressionType.AndAlso || node.NodeType == ExpressionType.OrElse) {
+    //         Visit(node.Left);
+    //         _queryBuilder.Append(node.NodeType == ExpressionType.AndAlso ? " and " : " or ");
+    //         Visit(node.Right);
+    //         return node;
+    //     }
+
+    //     var left = node.Left;
+    //     var right = node.Right;
+
+    //     // 左右の MemberExpression を抽出
+    //     bool isLeftMember = TryUnwrapMemberExpression(left, out var leftMember);
+    //     bool isRightMember = TryUnwrapMemberExpression(right, out var rightMember);
+
+    //     if (isLeftMember && !isRightMember) {
+    //         Visit(leftMember); // フィールド
+    //         _queryBuilder.Append(GetOperator(node.NodeType));
+    //         Visit(right); // 値
+    //     } else if (!isLeftMember && isRightMember) {
+    //         Visit(rightMember); // フィールド
+    //         _queryBuilder.Append(GetOperator(FlipOperator(node.NodeType)));
+    //         Visit(left); // 値
+    //     } else {
+    //         throw new NotSupportedException(
+    //             $"フィールドが左右どちらにも見つかりません。サポートされていない式構造です。\nLeft: {left}\nRight: {right}");
+    //     }
+
+    //     return node;
+    // }
+    private Expression UnwrapConvert(Expression expr) {
+        while (expr is UnaryExpression unary && expr.NodeType == ExpressionType.Convert) {
+            expr = unary.Operand;
+        }
+        return expr;
+    }
+
     protected override Expression VisitBinary(BinaryExpression node) {
-        Visit(node.Left);
+        // 論理演算（AND/OR）なら再帰的に処理
+        if (node.NodeType == ExpressionType.AndAlso || node.NodeType == ExpressionType.OrElse) {
+            Visit(node.Left);
+            _queryBuilder.Append(node.NodeType == ExpressionType.AndAlso ? " and " : " or ");
+            Visit(node.Right);
+            return node;
+        }
 
-        string op = node.NodeType switch {
-            ExpressionType.Equal => " = ",
-            ExpressionType.NotEqual => " != ",
-            ExpressionType.GreaterThan => " > ",
-            ExpressionType.GreaterThanOrEqual => " >= ",
-            ExpressionType.LessThan => " < ",
-            ExpressionType.LessThanOrEqual => " <= ",
-            ExpressionType.AndAlso => " and ",
-            ExpressionType.OrElse => " or ",
-            _ => throw new NotSupportedException($"Unsupported binary operator: {node.NodeType}")
-        };
+        // Convert を解除して中身を取り出す
+        var left = UnwrapConvert(node.Left);
+        var right = UnwrapConvert(node.Right);
 
-        _queryBuilder.Append(op);
+        // 左右の MemberExpression を抽出
+        bool isLeftMember = TryUnwrapMemberExpression(left, out var leftMember);
+        bool isRightMember = TryUnwrapMemberExpression(right, out var rightMember);
 
-        // EvaluateExpressionではなく、Visitで処理を任せるようにする
-        Visit(node.Right);
+        if (isLeftMember && !isRightMember) {
+            Visit(leftMember); // フィールド
+            _queryBuilder.Append(GetOperator(node.NodeType));
+            Visit(right); // 値
+        } else if (!isLeftMember && isRightMember) {
+            Visit(rightMember); // フィールド
+            _queryBuilder.Append(GetOperator(FlipOperator(node.NodeType)));
+            Visit(left); // 値
+        } else {
+            throw new NotSupportedException(
+                $"フィールドが左右どちらにも見つかりません。サポートされていない式構造です。\nLeft: {left}\nRight: {right}");
+        }
 
         return node;
     }
 
+    private bool TryUnwrapMemberExpression(Expression expr, out MemberExpression? memberExpr) {
+        memberExpr = null;
+
+        while (expr is MemberExpression me) {
+            if (me.Expression is ParameterExpression) {
+                memberExpr = me;
+                return true;
+            }
+
+            expr = me.Expression;
+        }
+
+        return false;
+    }
+
+    // private bool IsModelMemberExpression(Expression expr) {
+    //     // Unary (e.g., Convert) unwrap
+    //     if (expr is UnaryExpression unary && unary.Operand is MemberExpression innerMember) {
+    //         expr = innerMember;
+    //     }
+
+    //     return expr is MemberExpression memberExpr &&
+    //            memberExpr.Expression is ParameterExpression;
+    // }
+
     protected override Expression VisitMember(MemberExpression node) {
-        // Nullable<T>.Value を特別扱い
-        if (node.Member.Name == "Value" && node.Expression != null) {
-            var nullableExpr = node.Expression;
-            var evaluated = EvaluateExpression(nullableExpr);
-            if (evaluated != null) {
-                // EvaluateExpression で取り出した値（DateTime等）を VisitConstant へ渡す
-                return Visit(Expression.Constant(evaluated, node.Type));
-            }
+        // x.ReleaseDate! のような UnaryExpression 経由の MemberAccess に対応
+        if (node.Expression is ParameterExpression) {
+            var fieldName = GetFieldNameFromMemberExpression(node);
+            _queryBuilder.Append(fieldName);
+            return node;
         }
 
-        // 左辺: モデルのプロパティへのアクセス（例: b.ReleaseDate.Value）
-        Expression? current = node;
-        while (current is MemberExpression memberExpr) {
-            if (memberExpr.Expression is ParameterExpression) {
-                // 最も外側のプロパティを取得
-                var outerMember = memberExpr.Member;
-                var kintoneAttr = outerMember.GetCustomAttributes(typeof(KintoneItemAttribute), true)
-                    .FirstOrDefault() as KintoneItemAttribute;
-
-                var fieldCode = kintoneAttr?.FieldCode ?? outerMember.Name;
-                _queryBuilder.Append(fieldCode);
-                return node;
-            }
-
-            current = memberExpr.Expression;
-        }
-
-        // 右辺: クロージャ変数等の静的評価
+        // 定数やクロージャ参照もサポート（値取得）
         if (node.Expression is ConstantExpression constantExpr) {
             object? container = constantExpr.Value;
-            if (container != null) {
-                object? value = node.Member switch {
-                    FieldInfo fi => fi.GetValue(container),
-                    PropertyInfo pi => pi.GetValue(container),
-                    _ => null
-                };
+            object? value = node.Member switch {
+                FieldInfo fi => fi.GetValue(container),
+                PropertyInfo pi => pi.GetValue(container),
+                _ => null
+            };
 
-                return Visit(Expression.Constant(value, node.Type));
+            if (value != null) {
+                _queryBuilder.Append(FormatValue(value));
+                return node;
             }
         }
 
-        _queryBuilder.Append("null");
-        return node;
+        throw new NotSupportedException($"未対応の式: {node}");
     }
 
     protected override Expression VisitConstant(ConstantExpression node) {
@@ -89,6 +143,11 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
         } else if (node.Value is string str) {
             _queryBuilder.Append($"\"{str}\"");
         } else if (node.Value is DateTime dt) {
+            if (dt.Kind == DateTimeKind.Unspecified) {
+                dt = TimeZoneInfo.ConvertTimeToUtc(dt, TimeZone);
+            } else {
+                dt = dt.ToUniversalTime();
+            }
             _queryBuilder.Append($"\"{dt:yyyy-MM-ddTHH:mm:ssZ}\"");
         } else if (node.Value is TimeOnly t) {
             _queryBuilder.Append($"\"{t:HH:mm}\"");
@@ -100,6 +159,17 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
         }
 
         return node;
+    }
+    protected override Expression VisitNew(NewExpression node) {
+        // コンストラクタ式を評価して値を取得
+        var value = EvaluateExpression(node);
+
+        if (value != null) {
+            _queryBuilder.Append(FormatValue(value));
+            return node;
+        }
+
+        throw new NotSupportedException($"未対応のNew式: {node}");
     }
 
     private string GetMemberName(MemberExpression node) {
@@ -123,7 +193,10 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
 
     protected override Expression VisitMethodCall(MethodCallExpression node) {
         // string.Contains は禁止例（そのまま例外）
-        if (node.Method.Name == nameof(string.Contains) && node.Object != null) {
+        // if (node.Method.Name == nameof(string.Contains) && node.Object != null) {
+        //     throw new NotSupportedException("Kintoneの仕様上、like演算子は英数字での部分一致には対応していません。");
+        // }
+        if (node.Method.Name == nameof(string.Contains) && node.Method.DeclaringType == typeof(string)) {
             throw new NotSupportedException("Kintoneの仕様上、like演算子は英数字での部分一致には対応していません。");
         }
 
@@ -143,15 +216,27 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
             }
 
             if (collection != null && memberAccess != null) {
-                if (memberAccess is MemberExpression memberExpr) {
-                    var values = EvaluateExpression(collection) as IEnumerable<object>;
-                    if (values != null) {
-                        var fieldName = GetFieldNameFromMemberExpression(memberExpr);
+                try {
+                    var fieldName = GetFieldNameFromMemberExpression(memberAccess);
+
+                    var evaluated = EvaluateExpression(collection);
+
+                    if (evaluated is IEnumerable<object> values) {
                         _queryBuilder.Append($"{fieldName} in (");
                         _queryBuilder.Append(string.Join(", ", values.Select(v => FormatValue(v))));
                         _queryBuilder.Append(")");
                         return node;
                     }
+
+                    if (evaluated is System.Collections.IEnumerable rawEnumerable) {
+                        var formatted = rawEnumerable.Cast<object>().Select(FormatValue);
+                        _queryBuilder.Append($"{fieldName} in (");
+                        _queryBuilder.Append(string.Join(", ", formatted));
+                        _queryBuilder.Append(")");
+                        return node;
+                    }
+                } catch (NotSupportedException) {
+                    // フィールド名が取得できなかった → 無視して次の可能性へ
                 }
             }
         }
@@ -190,6 +275,14 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
 
         return base.VisitMethodCall(node);
     }
+    protected override Expression VisitExtension(Expression node) {
+        if (node is KintoneSpecialFieldExpression special) {
+            _queryBuilder.Append(special.FieldName);
+            return node;
+        }
+
+        return base.VisitExtension(node);
+    }
 
     private string FormatValue(object? value) {
         return value switch {
@@ -204,13 +297,46 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
             _ => $"\"{value?.ToString() ?? "null"}\""
         };
     }
-    private static string GetFieldNameFromMemberExpression(MemberExpression memberExpr) {
-        // ネストされた場合は再帰的に親の名前も取得（例: b.ReleaseDate.Value など）
-        if (memberExpr.Expression is MemberExpression innerMember) {
-            return GetFieldNameFromMemberExpression(innerMember) + "." + memberExpr.Member.Name;
+    private string GetFieldNameFromMemberExpression(Expression expr) {
+        switch (expr) {
+            case MemberExpression memberExpr:
+                return memberExpr.Member.Name;
+            case KintoneSpecialFieldExpression specialExpr:
+                return specialExpr.FieldName;
+            default:
+                throw new NotSupportedException($"Unsupported field expression type: {expr.GetType().Name}");
         }
-
-        return memberExpr.Member.Name;
     }
 
+    private string GetOperator(ExpressionType nodeType) => nodeType switch {
+        ExpressionType.Equal => " = ",
+        ExpressionType.NotEqual => " != ",
+        ExpressionType.GreaterThan => " > ",
+        ExpressionType.GreaterThanOrEqual => " >= ",
+        ExpressionType.LessThan => " < ",
+        ExpressionType.LessThanOrEqual => " <= ",
+        ExpressionType.AndAlso => " and ",
+        ExpressionType.OrElse => " or ",
+        _ => throw new NotSupportedException($"未対応の演算子: {nodeType}")
+    };
+
+    private ExpressionType FlipOperator(ExpressionType op) => op switch {
+        ExpressionType.GreaterThan => ExpressionType.LessThan,
+        ExpressionType.GreaterThanOrEqual => ExpressionType.LessThanOrEqual,
+        ExpressionType.LessThan => ExpressionType.GreaterThan,
+        ExpressionType.LessThanOrEqual => ExpressionType.GreaterThanOrEqual,
+        _ => op
+    };
+
+}
+
+public class KintoneSpecialFieldExpression : Expression {
+    public string FieldName { get; }
+
+    public KintoneSpecialFieldExpression(string fieldName) {
+        FieldName = fieldName;
+    }
+
+    public override ExpressionType NodeType => ExpressionType.Extension;
+    public override Type Type => typeof(string);
 }

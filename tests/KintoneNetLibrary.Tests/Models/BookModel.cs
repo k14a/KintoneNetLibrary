@@ -36,6 +36,11 @@ public class BookModel : KintoneModelBase {
     [KintoneItem(fieldCode: "Reviews", KintoneFieldType.MultiLineText)]
     public string Reviews { get; set; } = string.Empty;
     /// <summary>
+    /// レイティング
+    /// </summary>
+    [KintoneItem(fieldCode: "Rating", isUpload: false, fieldType: KintoneFieldType.Number)]
+    public decimal Rating { get; set; }
+    /// <summary>
     /// おすすめ度
     /// </summary>
     /// <value>5：強く勧めたい<br/>4：おすすめ<br/>3：どちらでもない<br/>2：おすすめしない<br/>1：まったく勧めない</value>
