@@ -25,5 +25,9 @@ public static class KintoneConstants {
     /// Kintoneでの1APIリクエストでの最大ファイルサイズ(20)
     /// </summary>
     public const int MaxUploadFileCount = 20;
+    /// <summary>
+    /// Kintoneの並列登録処理における最大同時実行数（例：4）
+    /// </summary>
+    public const int MaxConcurrentRequestCount = 4;
     // 必要に応じてここに他の定数を追加してください
 }

@@ -52,16 +52,6 @@ public class KintoneQueryExpressionsTests {
 
         Assert.Equal("TimeField = \"09:30\"", queryString);
     }
-    // [Fact]
-    // public void ToQueryString_BooleanLikeExpression_ThrowsNotSupported() {
-    //     var query = new KintoneQuery<BookModel>().Where(b => b.Title.Contains("test"));
-
-    //     var exception = Assert.Throws<NotSupportedException>(() =>
-    //         query.Build() // ← ここで式が訪問され、例外が発生
-    //     );
-
-    //     Assert.Contains("like", exception.Message, StringComparison.OrdinalIgnoreCase);
-    // }
     [Fact]
     public void ToQueryString_BooleanLikeExpression_ThrowsNotSupported() {
         var exception = Assert.Throws<NotSupportedException>(() =>

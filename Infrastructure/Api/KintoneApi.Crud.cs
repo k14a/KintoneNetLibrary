@@ -15,7 +15,7 @@ public partial class KintoneApi {
     /*==========================================================
       Create – 複数レコード一括登録
       ==========================================================*/
-    public async Task<string> CreateRecordsAsync(string json) {
+    public async Task<string> CreateAsync(string json) {
         if (string.IsNullOrWhiteSpace(json)) {
             throw new ArgumentException("JSONデータが空です", nameof(json));
         }
@@ -59,7 +59,7 @@ public partial class KintoneApi {
     /*==========================================================
       Delete – ID リストで一括削除
       ==========================================================*/
-    public async Task<string> DeleteJsonAsync(string json) {
+    public async Task<string> DeleteAsync(string json) {
         var request = new HttpRequestMessage(HttpMethod.Delete, KintoneApiEndpoints.DeleteRecords) {
             Content = new StringContent(json, Encoding.UTF8, "application/json")
         };

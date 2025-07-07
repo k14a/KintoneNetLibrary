@@ -61,26 +61,26 @@ public partial class KintoneApi {
     }
 
     // 全レコード取得（条件なし）
-    public async Task<string> FindAllAsync<T>() where T : KintoneModelBase, new() {
+    public async Task<string?> FindAllAsync<T>() where T : KintoneModelBase, new() {
         var query = new KintoneQuery<T>();
         return await FindBaseJsonAsync(query);
     }
 
     // フィールドと値で検索
-    public async Task<string> FindByFieldAsync<T>(string field, string value) where T : KintoneModelBase, new() {
+    public async Task<string?> FindByFieldAsync<T>(string field, string value) where T : KintoneModelBase, new() {
         var query = new KintoneQuery<T>().WhereEquals(field, value);
         return await FindBaseJsonAsync(query);
     }
 
     // 任意のkintoneクエリ文字列で検索
-    public async Task<string> FindByQueryAsync<T>(string queryStr) where T : KintoneModelBase, new() {
+    public async Task<string?> FindByQueryAsync<T>(string queryStr) where T : KintoneModelBase, new() {
         KintoneQueryValidator.ValidateLikeClause(queryStr, msg => _logger?.LogWarning(msg));
         var query = new KintoneQuery<T>().SetQuery(queryStr);
         return await FindBaseJsonAsync(query);
     }
 
     // 内部的な共通検索処理
-    private async Task<string> FindBaseJsonAsync<T>(KintoneQuery<T> query, bool skipThresholdCheck = false) where T : KintoneModelBase, new() {
+    private async Task<string?> FindBaseJsonAsync<T>(KintoneQuery<T> query, bool skipThresholdCheck = false) where T : KintoneModelBase, new() {
         if (!skipThresholdCheck) {
             // 1) 件数取得（limit=1 で totalCount を得る）
             var queryText = query.Build();

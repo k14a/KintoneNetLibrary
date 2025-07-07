@@ -24,7 +24,7 @@ public class KintoneApiCrudTests {
 
         // Create
         var json = KintoneRequestBuilder.BuildCreateJson([book]);
-        var createResult = await api.CreateRecordsAsync(json);
+        var createResult = await api.CreateAsync(json);
         var createParsed = KintoneResponseParser.ParseCreatedRecords([book], createResult);
         Assert.Single(createParsed);
 
@@ -38,7 +38,7 @@ public class KintoneApiCrudTests {
 
         // Delete
         var deleteJson = KintoneRequestBuilder.BuildDeleteJson([record]);
-        var deleteResult = await api.DeleteJsonAsync(deleteJson);
+        var deleteResult = await api.DeleteAsync(deleteJson);
         Assert.NotNull(deleteResult);
     }
     [Fact]
@@ -54,7 +54,7 @@ public class KintoneApiCrudTests {
 
         // Create
         var createJson = KintoneRequestBuilder.BuildCreateJson(books);
-        var createResult = await api.CreateRecordsAsync(createJson);
+        var createResult = await api.CreateAsync(createJson);
         var createdBooks = KintoneResponseParser.ParseCreatedRecords(books, createResult);
         Assert.Equal(3, createdBooks.Count);
 
@@ -70,7 +70,7 @@ public class KintoneApiCrudTests {
 
         // Delete
         var deleteJson = KintoneRequestBuilder.BuildDeleteJson(foundRecords);
-        var deleteResult = await api.DeleteJsonAsync(deleteJson);
+        var deleteResult = await api.DeleteAsync(deleteJson);
         Assert.NotNull(deleteResult);
     }
     [Fact]
@@ -80,7 +80,7 @@ public class KintoneApiCrudTests {
         // Step 1: Create
         var book = new BookModel { Title = "Initial Title", Price = 1000, Uuid = Guid.NewGuid().ToString() };
         var createJson = KintoneRequestBuilder.BuildCreateJson([book]);
-        var createResult = await api.CreateRecordsAsync(createJson);
+        var createResult = await api.CreateAsync(createJson);
         var createdRecords = KintoneResponseParser.ParseCreatedRecords([book], createResult);
         var created = createdRecords.First();
         Assert.NotNull(created.ID);
@@ -102,7 +102,7 @@ public class KintoneApiCrudTests {
 
         // Step 4: Delete
         var deleteJson = KintoneRequestBuilder.BuildDeleteJson([foundRecord]);
-        var deleteResult = await api.DeleteJsonAsync(deleteJson);
+        var deleteResult = await api.DeleteAsync(deleteJson);
         Assert.NotNull(deleteResult);
     }
     [Fact]
@@ -120,7 +120,7 @@ public class KintoneApiCrudTests {
         };
 
         var createJson = KintoneRequestBuilder.BuildCreateJson([book]);
-        var createResult = await api.CreateRecordsAsync(createJson);
+        var createResult = await api.CreateAsync(createJson);
         var createdRecords = KintoneResponseParser.ParseCreatedRecords([book], createResult);
         var created = createdRecords.First();
         Assert.False(string.IsNullOrWhiteSpace(created.ID), "Record ID is null or empty after creation.");
@@ -144,7 +144,7 @@ public class KintoneApiCrudTests {
 
         // ④ 削除（IDを使う必要があるので fetched を使う）
         var deleteJson = KintoneRequestBuilder.BuildDeleteJson([fetched]);
-        var deleteResult = await api.DeleteJsonAsync(deleteJson);
+        var deleteResult = await api.DeleteAsync(deleteJson);
         Assert.NotNull(deleteResult);
     }
     [Fact]
@@ -159,7 +159,7 @@ public class KintoneApiCrudTests {
 
         // 1. レコード登録
         var createJson = KintoneRequestBuilder.BuildCreateJson(books);
-        var createResult = await api.CreateRecordsAsync(createJson);
+        var createResult = await api.CreateAsync(createJson);
         var createdRecords = KintoneResponseParser.ParseCreatedRecords(books, createResult);
         Assert.All(createdRecords, r => Assert.NotNull(r.ID));
 
@@ -177,7 +177,7 @@ public class KintoneApiCrudTests {
 
         // 4. 後始末：登録したレコード削除
         var deleteJson = KintoneRequestBuilder.BuildDeleteJson(createdRecords);
-        var deleteResult = await api.DeleteJsonAsync(deleteJson);
+        var deleteResult = await api.DeleteAsync(deleteJson);
         Assert.NotNull(deleteResult);
     }
     [Fact]
@@ -196,7 +196,7 @@ public class KintoneApiCrudTests {
 
         // Act - 登録
         var createJson = KintoneRequestBuilder.BuildCreateJson(books);
-        var createResult = await api.CreateRecordsAsync(createJson);
+        var createResult = await api.CreateAsync(createJson);
         var createdRecords = KintoneResponseParser.ParseCreatedRecords(books, createResult);
 
         // Assert - 登録確認
@@ -214,7 +214,7 @@ public class KintoneApiCrudTests {
 
         // Cleanup - 削除
         var deleteJson = KintoneRequestBuilder.BuildDeleteJson(createdRecords);
-        var deleteResult = await api.DeleteJsonAsync(deleteJson);
+        var deleteResult = await api.DeleteAsync(deleteJson);
         Assert.NotNull(deleteResult);
     }
     [Fact]
@@ -233,7 +233,7 @@ public class KintoneApiCrudTests {
 
         // Act - 登録
         var createJson = KintoneRequestBuilder.BuildCreateJson(books);
-        var createResult = await api.CreateRecordsAsync(createJson);
+        var createResult = await api.CreateAsync(createJson);
         var createdRecords = KintoneResponseParser.ParseCreatedRecords(books, createResult);
 
         // Assert - 登録確認
@@ -250,7 +250,7 @@ public class KintoneApiCrudTests {
 
         // Cleanup
         var deleteJson = KintoneRequestBuilder.BuildDeleteJson(createdRecords);
-        var deleteResult = await api.DeleteJsonAsync(deleteJson);
+        var deleteResult = await api.DeleteAsync(deleteJson);
         Assert.NotNull(deleteResult);
     }
     [Theory]
@@ -272,7 +272,7 @@ public class KintoneApiCrudTests {
 
         // Act - 登録
         var createJson = KintoneRequestBuilder.BuildCreateJson(books);
-        var createResult = await api.CreateRecordsAsync(createJson);
+        var createResult = await api.CreateAsync(createJson);
         var createdRecords = KintoneResponseParser.ParseCreatedRecords(books, createResult);
         Assert.Equal(recordCount, createdRecords.Count);
 
@@ -289,7 +289,7 @@ public class KintoneApiCrudTests {
 
         // Cleanup
         var deleteJson = KintoneRequestBuilder.BuildDeleteJson(createdRecords);
-        var deleteResult = await api.DeleteJsonAsync(deleteJson);
+        var deleteResult = await api.DeleteAsync(deleteJson);
         Assert.NotNull(deleteResult);
     }
     [Theory]
@@ -310,7 +310,7 @@ public class KintoneApiCrudTests {
         books.Add(new BookModel { Title = "ぶっく", Price = 1000, Uuid = Guid.NewGuid().ToString() });
 
         var createJson = KintoneRequestBuilder.BuildCreateJson(books);
-        var createResult = await api.CreateRecordsAsync(createJson);
+        var createResult = await api.CreateAsync(createJson);
         var createdRecords = KintoneResponseParser.ParseCreatedRecords(books, createResult);
 
         // Act
@@ -323,7 +323,7 @@ public class KintoneApiCrudTests {
 
         // Cleanup
         var deleteJson = KintoneRequestBuilder.BuildDeleteJson(createdRecords);
-        var deleteResult = await api.DeleteJsonAsync(deleteJson);
+        var deleteResult = await api.DeleteAsync(deleteJson);
         Assert.NotNull(deleteResult);
     }
     [Theory]
@@ -343,7 +343,7 @@ public class KintoneApiCrudTests {
         ).ToList();
 
         var createJson = KintoneRequestBuilder.BuildCreateJson(books);
-        var createResult = await api.CreateRecordsAsync(createJson);
+        var createResult = await api.CreateAsync(createJson);
         var createdRecords = KintoneResponseParser.ParseCreatedRecords(books, createResult);
 
         // Act
@@ -357,7 +357,7 @@ public class KintoneApiCrudTests {
 
         // Cleanup
         var deleteJson = KintoneRequestBuilder.BuildDeleteJson(createdRecords);
-        var deleteResult = await api.DeleteJsonAsync(deleteJson);
+        var deleteResult = await api.DeleteAsync(deleteJson);
         Assert.NotNull(deleteResult);
     }
     [Theory]
@@ -376,7 +376,7 @@ public class KintoneApiCrudTests {
             }).ToList();
 
         var createJson = KintoneRequestBuilder.BuildCreateJson(books);
-        var createResult = await api.CreateRecordsAsync(createJson);
+        var createResult = await api.CreateAsync(createJson);
         var createdRecords = KintoneResponseParser.ParseCreatedRecords(books, createResult);
 
         try {
@@ -394,7 +394,7 @@ public class KintoneApiCrudTests {
 
         // Cleanup
         var deleteJson = KintoneRequestBuilder.BuildDeleteJson(createdRecords);
-        var deleteResult = await api.DeleteJsonAsync(deleteJson);
+        var deleteResult = await api.DeleteAsync(deleteJson);
         Assert.NotNull(deleteResult);
     }
     [Theory]
@@ -413,7 +413,7 @@ public class KintoneApiCrudTests {
             }).ToList();
 
         var createJson = KintoneRequestBuilder.BuildCreateJson(books);
-        var createResult = await api.CreateRecordsAsync(createJson);
+        var createResult = await api.CreateAsync(createJson);
         var createdRecords = KintoneResponseParser.ParseCreatedRecords(books, createResult);
 
         string query = "Price >= 100";
@@ -436,7 +436,7 @@ public class KintoneApiCrudTests {
 
         // Cleanup
         var deleteJson = KintoneRequestBuilder.BuildDeleteJson(createdRecords);
-        var deleteResult = await api.DeleteJsonAsync(deleteJson);
+        var deleteResult = await api.DeleteAsync(deleteJson);
         Assert.NotNull(deleteResult);
     }
     [Theory]
@@ -455,7 +455,7 @@ public class KintoneApiCrudTests {
             }).ToList();
 
         var createJson = KintoneRequestBuilder.BuildCreateJson(books);
-        var createResult = await api.CreateRecordsAsync(createJson);
+        var createResult = await api.CreateAsync(createJson);
         var createdRecords = KintoneResponseParser.ParseCreatedRecords(books, createResult);
 
         // Act
@@ -472,7 +472,7 @@ public class KintoneApiCrudTests {
 
         // Cleanup
         var deleteJson = KintoneRequestBuilder.BuildDeleteJson(createdRecords);
-        var deleteResult = await api.DeleteJsonAsync(deleteJson);
+        var deleteResult = await api.DeleteAsync(deleteJson);
         Assert.NotNull(deleteResult);
     }
     [Theory]
@@ -495,7 +495,7 @@ public class KintoneApiCrudTests {
         foreach (var chunk in books.Chunk(100))  // Kintoneは最大100件/リクエスト
         {
             var createJson = KintoneRequestBuilder.BuildCreateJson(chunk);
-            var createResult = await api.CreateRecordsAsync(createJson);
+            var createResult = await api.CreateAsync(createJson);
             var parsed = KintoneResponseParser.ParseCreatedRecords(chunk.ToList(), createResult);
             createdRecords.AddRange(parsed);
         }
@@ -514,7 +514,7 @@ public class KintoneApiCrudTests {
         // Cleanup
         foreach (var deleteChunk in createdRecords.Chunk(100)) {
             var deleteJson = KintoneRequestBuilder.BuildDeleteJson(deleteChunk);
-            var deleteResult = await api.DeleteJsonAsync(deleteJson);
+            var deleteResult = await api.DeleteAsync(deleteJson);
             Assert.NotNull(deleteResult);
         }
     }
@@ -535,7 +535,7 @@ public class KintoneApiCrudTests {
         };
 
         var createJson = KintoneRequestBuilder.BuildCreateJson(books);
-        var createResult = await api.CreateRecordsAsync(createJson);
+        var createResult = await api.CreateAsync(createJson);
         var createdRecords = KintoneResponseParser.ParseCreatedRecords(books, createResult);
 
         try {
@@ -554,7 +554,7 @@ public class KintoneApiCrudTests {
         } finally {
             // Clean up
             var deleteJson = KintoneRequestBuilder.BuildDeleteJson(createdRecords);
-            var deleteResult = await api.DeleteJsonAsync(deleteJson);
+            var deleteResult = await api.DeleteAsync(deleteJson);
             Assert.NotNull(deleteResult);
         }
     }
@@ -575,7 +575,7 @@ public class KintoneApiCrudTests {
         };
 
         var createJson = KintoneRequestBuilder.BuildCreateJson(books);
-        var createResult = await api.CreateRecordsAsync(createJson);
+        var createResult = await api.CreateAsync(createJson);
         var createdRecords = KintoneResponseParser.ParseCreatedRecords(books, createResult);
 
         try {
@@ -593,7 +593,7 @@ public class KintoneApiCrudTests {
         } finally {
             // Clean up
             var deleteJson = KintoneRequestBuilder.BuildDeleteJson(createdRecords);
-            var deleteResult = await api.DeleteJsonAsync(deleteJson);
+            var deleteResult = await api.DeleteAsync(deleteJson);
             Assert.NotNull(deleteResult);
         }
     }
@@ -614,7 +614,7 @@ public class KintoneApiCrudTests {
         };
 
         var createJson = KintoneRequestBuilder.BuildCreateJson(books);
-        var createResult = await api.CreateRecordsAsync(createJson);
+        var createResult = await api.CreateAsync(createJson);
         var createdRecords = KintoneResponseParser.ParseCreatedRecords(books, createResult);
 
         try {
@@ -633,7 +633,7 @@ public class KintoneApiCrudTests {
         } finally {
             // Clean up
             var deleteJson = KintoneRequestBuilder.BuildDeleteJson(createdRecords);
-            var deleteResult = await api.DeleteJsonAsync(deleteJson);
+            var deleteResult = await api.DeleteAsync(deleteJson);
             Assert.NotNull(deleteResult);
         }
     }
@@ -654,7 +654,7 @@ public class KintoneApiCrudTests {
     };
 
         var createJson = KintoneRequestBuilder.BuildCreateJson(books);
-        var createResult = await api.CreateRecordsAsync(createJson);
+        var createResult = await api.CreateAsync(createJson);
         var createdRecords = KintoneResponseParser.ParseCreatedRecords(books, createResult);
 
         try {
@@ -691,7 +691,7 @@ public class KintoneApiCrudTests {
         } finally {
             // Clean up
             var deleteJson = KintoneRequestBuilder.BuildDeleteJson(createdRecords);
-            var deleteResult = await api.DeleteJsonAsync(deleteJson);
+            var deleteResult = await api.DeleteAsync(deleteJson);
             Assert.NotNull(deleteResult);
         }
     }
@@ -710,7 +710,7 @@ public class KintoneApiCrudTests {
     };
 
         var createJson = KintoneRequestBuilder.BuildCreateJson(books);
-        var createResult = await api.CreateRecordsAsync(createJson);
+        var createResult = await api.CreateAsync(createJson);
         var createdRecords = KintoneResponseParser.ParseCreatedRecords(books, createResult);
 
         try {
@@ -742,7 +742,7 @@ public class KintoneApiCrudTests {
         } finally {
             // Clean up
             var deleteJson = KintoneRequestBuilder.BuildDeleteJson(createdRecords);
-            var deleteResult = await api.DeleteJsonAsync(deleteJson);
+            var deleteResult = await api.DeleteAsync(deleteJson);
             Assert.NotNull(deleteResult);
         }
     }
@@ -779,7 +779,7 @@ public class KintoneApiCrudTests {
     };
 
         var createJson = KintoneRequestBuilder.BuildCreateJson(books);
-        var createResult = await api.CreateRecordsAsync(createJson);
+        var createResult = await api.CreateAsync(createJson);
         var createdRecords = KintoneResponseParser.ParseCreatedRecords(books, createResult);
 
         try {
@@ -815,7 +815,7 @@ public class KintoneApiCrudTests {
         } finally {
             // Clean up
             var deleteJson = KintoneRequestBuilder.BuildDeleteJson(createdRecords);
-            var deleteResult = await api.DeleteJsonAsync(deleteJson);
+            var deleteResult = await api.DeleteAsync(deleteJson);
             Assert.NotNull(deleteResult);
         }
     }
@@ -1046,7 +1046,7 @@ public class KintoneApiCrudTests {
         };
 
         var createJson = KintoneRequestBuilder.BuildCreateJson([book]);
-        var createResult = await api.CreateRecordsAsync(createJson);
+        var createResult = await api.CreateAsync(createJson);
         var createdRecords = KintoneResponseParser.ParseCreatedRecords([book], createResult);
 
         try {
@@ -1081,7 +1081,7 @@ public class KintoneApiCrudTests {
         } finally {
             // Clean up
             var deleteJson = KintoneRequestBuilder.BuildDeleteJson(createdRecords);
-            var deleteResult = await api.DeleteJsonAsync(deleteJson);
+            var deleteResult = await api.DeleteAsync(deleteJson);
             Assert.NotNull(deleteResult);
         }
     }
@@ -1109,7 +1109,7 @@ public class KintoneApiCrudTests {
         var books = new[] { bookWithSelector, bookWithoutSelector };
 
         var createJson = KintoneRequestBuilder.BuildCreateJson(books);
-        var createResult = await api.CreateRecordsAsync(createJson);
+        var createResult = await api.CreateAsync(createJson);
         var createdRecords = KintoneResponseParser.ParseCreatedRecords(books, createResult);
 
         try {
@@ -1148,7 +1148,7 @@ public class KintoneApiCrudTests {
         } finally {
             // Clean up
             var deleteJson = KintoneRequestBuilder.BuildDeleteJson(createdRecords);
-            var deleteResult = await api.DeleteJsonAsync(deleteJson);
+            var deleteResult = await api.DeleteAsync(deleteJson);
             Assert.NotNull(deleteResult);
         }
     }
@@ -1179,7 +1179,7 @@ public class KintoneApiCrudTests {
         };
 
         var createJson = KintoneRequestBuilder.BuildCreateJson([book]);
-        var createResult = await api.CreateRecordsAsync(createJson);
+        var createResult = await api.CreateAsync(createJson);
         var createdRecords = KintoneResponseParser.ParseCreatedRecords([book], createResult);
 
         try {
@@ -1227,7 +1227,7 @@ public class KintoneApiCrudTests {
         } finally {
             // Clean up
             var deleteJson = KintoneRequestBuilder.BuildDeleteJson(createdRecords);
-            var deleteResult = await api.DeleteJsonAsync(deleteJson);
+            var deleteResult = await api.DeleteAsync(deleteJson);
             Assert.NotNull(deleteResult);
         }
     }

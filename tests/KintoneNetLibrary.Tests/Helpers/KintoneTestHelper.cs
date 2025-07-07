@@ -22,7 +22,7 @@ public static class KintoneTestHelper {
         var allCreated = new List<T>();
         foreach (var chunk in models.Chunk(KintoneConstants.KintoneLimit)) {
             var createJson = KintoneRequestBuilder.BuildCreateJson(chunk);
-            var createResult = await api.CreateRecordsAsync(createJson);
+            var createResult = await api.CreateAsync(createJson);
             var parsed = KintoneResponseParser.ParseCreatedRecords(chunk.ToList(), createResult);
             allCreated.AddRange(parsed);
         }
@@ -33,7 +33,7 @@ public static class KintoneTestHelper {
     public static async Task DeleteRecordsInChunksAsync<T>(KintoneApi api, IList<T> models) where T : KintoneModelBase {
         foreach (var chunk in models.Chunk(KintoneConstants.KintoneDeleteLimit)) {
             var deleteJson = KintoneRequestBuilder.BuildDeleteJson(chunk);
-            var deleteResult = await api.DeleteJsonAsync(deleteJson) ?? throw new InvalidOperationException("Delete failed on a chunk.");
+            var deleteResult = await api.DeleteAsync(deleteJson) ?? throw new InvalidOperationException("Delete failed on a chunk.");
         }
     }
 

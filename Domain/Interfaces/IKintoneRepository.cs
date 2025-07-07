@@ -4,17 +4,13 @@ using KintoneNetLibrary.Application.UseCases;
 namespace KintoneNetLibrary.Domain.Interfaces;
 
 public interface IKintoneRepository {
-    string Domain { get; }
-    int AppCode { get; }
-    string ApiToken { get; }
-
-    Task<string> CreateRecordsAsync<T>(string json) where T : KintoneModelBase;
-    Task<string?> FindByIDAsync<T>(string id) where T : KintoneModelBase, new();
-    Task<string?> FindByIDsAsync<T>(IList<string> ids) where T : KintoneModelBase, new();
-    Task<string> FindAllAsync<T>() where T : KintoneModelBase, new();
-    Task<string> FindByFieldAsync<T>(string field, string value) where T : KintoneModelBase, new();
-    Task<string> FindByQueryAsync<T>(string queryStr) where T : KintoneModelBase, new();
-    Task<string> UpdateAsync<T>(string json) where T : KintoneModelBase;
-    Task<string> DeleteAsync<T>(string json) where T : KintoneModelBase;
-    Task<KintoneIndexes> SaveAsync<T>(IEnumerable<T> models) where T : KintoneModelBase;
+    Task<string> CreateRecordsAsync<T>(IList<T> records) where T : KintoneModelBase;
+    Task<string> UpdateRecordsAsync<T>(IList<T> records) where T : KintoneModelBase;
+    Task<string> DeleteRecordsAsync<T>(IList<T> records) where T : KintoneModelBase;
+    
+    Task<string?> FindByIDAsync<T>(T model, string id) where T : KintoneModelBase, new();
+    Task<string?> FindByIDsAsync<T>(T model, IList<string> ids) where T : KintoneModelBase, new();
+    Task<string?> FindAllAsync<T>(T model) where T : KintoneModelBase, new();
+    Task<string?> FindByFieldAsync<T>(T model, string field, string value) where T : KintoneModelBase, new();
+    Task<string?> FindByQueryAsync<T>(T model, string queryStr) where T : KintoneModelBase, new();
 }
