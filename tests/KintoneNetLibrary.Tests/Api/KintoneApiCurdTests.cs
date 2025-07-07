@@ -4,11 +4,14 @@ using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Infrastructure.Api;
 using KintoneNetLibrary.Infrastructure.Api.DTO;
 using KintoneNetLibrary.Infrastructure.Helpers;
+using KintoneNetLibrary.Infrastructure.Converters;
 using KintoneNetLibrary.Extensions;
 using System.Text.Json;
 using System.Reflection;
 using System.IO.Compression;
 using KintoneNetLibrary.Tests.Helpers;
+using System.Net;
+using DocumentFormat.OpenXml.Drawing.Charts;
 
 namespace KintoneNetLibrary.Tests.Api;
 
@@ -1228,6 +1231,61 @@ public class KintoneApiCrudTests {
             Assert.NotNull(deleteResult);
         }
     }
+    [Fact]
+    public async Task CreateAndUpdateAsync_WithRichTextField_WorksCorrectly() {
+        // Arrange
+        var api = KintoneTestHelper.CreateApi();
+        var uuid = Guid.NewGuid().ToString();
+
+        var richTextInitial = "<p><b>初期レビュー</b>：内容は <i>充実</i> していた。</p>";
+        var richTextUpdated = "<h3>更新済みレビュー</h3><ul><li>良かった点</li><li>改善点</li></ul><script>alert('XSS');</script>";
+
+        var model = new BookModel {
+            Title = "RichTextフィールドテスト",
+            Uuid = uuid,
+            RichText = richTextInitial
+        };
+
+        // Act
+        var created = await KintoneTestHelper.CreateRecordsInChunksAsync(api, [model]);
+        Assert.NotNull(created);
+        Assert.Equal(richTextInitial, created!.First().RichText);
+
+        try {
+            // Step 1: 検索直後に一致確認（R）
+            var query = $"UUID = \"{uuid}\"";
+            var foundJson = await api.FindByQueryAsync<BookModel>(query);
+            var found = KintoneResponseParser.ParseRecords<BookModel>(foundJson);
+            var match = found.FirstOrDefault(b => b.ID == created.First().ID);
+
+            Assert.NotNull(match);
+            var actual = WebUtility.HtmlDecode(match!.RichText);
+            Assert.Equal(richTextInitial, actual);
+
+            // Step 2: 更新（U）
+            match.RichText = richTextUpdated;
+            var updateJson = KintoneRequestBuilder.BuildUpdateJson([match]);
+            var updateResultJson = await api.UpdateAsync<BookModel>(updateJson);
+            Assert.NotNull(updateResultJson);
+
+            // Step 3: 更新結果の再取得（R after U）
+            var afterUpdateJson = await api.FindByQueryAsync<BookModel>(query);
+            var updatedRecords = KintoneResponseParser.ParseRecords<BookModel>(afterUpdateJson);
+            var updatedMatch = updatedRecords.FirstOrDefault(b => b.ID == match.ID);
+
+            Assert.NotNull(updatedMatch);
+            var updatedActual = WebUtility.HtmlDecode(updatedMatch!.RichText);
+            // updatedActualはrichTextUpdatedから危険なスクリプトが削除されているため。StartWithの値を入れ替えている
+            Assert.StartsWith(updatedActual, richTextUpdated);
+
+            // Optional Step: セキュリティ的に <script> 要素が保持されたか確認
+            Assert.DoesNotContain("<script>", updatedMatch.RichText, StringComparison.OrdinalIgnoreCase);
+
+        } finally {
+            // Cleanup（D）
+            await KintoneTestHelper.DeleteRecordsInChunksAsync(api, created);
+        }
+    }
 
     #region <<Protected method>>
     public static IEnumerable<object[]> CheckBoxTestData => new List<object[]> {
@@ -1241,4 +1299,45 @@ public class KintoneApiCrudTests {
         new object[] { string.Empty, string.Empty, string.Empty } // 空も許容
     };
     #endregion
+}
+
+public static class KintoneFieldTestCases {
+    public static readonly Dictionary<string, KintoneFieldType> FieldMap = new() {
+        { "UserSelect", KintoneFieldType.UserSelect },
+        { "GroupSelect", KintoneFieldType.GroupSelect },
+        { "DivisionSelect", KintoneFieldType.OrganizationSelect }
+    };
+}
+public class UserSelectionFieldTests {
+    [Theory]
+    [InlineData("UserSelect")]
+    [InlineData("GroupSelect")]
+    [InlineData("DivisionSelect")]
+    public void ConvertToCSharp_UserSelectionFields_WorkCorrectly(string fieldName) {
+        // Arrange
+        var fieldType = KintoneFieldTestCases.FieldMap[fieldName];
+
+        var json = $$"""
+        {
+          "{{fieldName}}": {
+            "value": [
+              { "code": "test_code_001", "name": "テスト表示A" },
+              { "code": "test_code_002", "name": "テスト表示B" }
+            ]
+          }
+        }
+        """;
+
+        var root = JsonDocument.Parse(json).RootElement;
+        var valueElement = root.GetProperty(fieldName).GetProperty("value");
+
+        // Act
+        var result = KintoneValueConverter.ConvertToCSharp(valueElement, fieldType, typeof(List<KintoneUser>)) as List<KintoneUser>;
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(2, result!.Count);
+        Assert.Equal("test_code_001", result[0].Code);
+        Assert.Equal("テスト表示B", result[1].Name);
+    }
 }

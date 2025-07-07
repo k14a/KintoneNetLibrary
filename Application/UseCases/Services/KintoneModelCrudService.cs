@@ -28,10 +28,11 @@ public class KintoneModelCrudService {
         this._jsonOptions = jsonOptions ?? DefaultJsonOptions.Default;
     }
 
-    public async Task<KintoneWriteResult<T>> CreateAsync<T>(IEnumerable<T> records, bool enableSingleRetryOnError = false) where T : KintoneModelBase, new() {
+    public async Task<KintoneWriteResult<T>> CreateAsync<T>(IList<T> records, bool enableSingleRetryOnError = false) where T : KintoneModelBase, new() {
+        this._logger?.LogInformation("CreateAsync() - Start");
         var result = new KintoneWriteResult<T>();
 
-        foreach (var chunk in records.Chunk(KintoneLimit)) {
+        foreach (var chunk in records.Chunk(KintoneLimit).ToList()) {
             try {
                 var json = KintoneRequestBuilder.BuildCreateJson(chunk);
                 var responseJson = await _repository.CreateRecordsAsync<T>(json);
@@ -56,9 +57,9 @@ public class KintoneModelCrudService {
                 // 単件ずつ再実行
                 foreach (var record in chunk) {
                     try {
-                        var singleJson = BuildCreateJson([record]);
+                        var singleJson = KintoneRequestBuilder.BuildCreateJson([record]);
                         var singleRespJson = await this._repository.CreateRecordsAsync<T>(singleJson);
-                        var parsed = ParseCreatedRecords<T>([record], singleRespJson);
+                        var parsed = KintoneResponseParser.ParseCreatedRecords([record], singleRespJson);
                         result.Succeeded.AddRange(parsed);
 
                     } catch (KintoneException singleEx) {
@@ -73,6 +74,7 @@ public class KintoneModelCrudService {
             }
         }
 
+        this._logger?.LogInformation("CreateAsync() - Finish");
         return result;
     }
 
@@ -160,7 +162,7 @@ public class KintoneModelCrudService {
                 // 単件リトライ
                 foreach (var record in chunk) {
                     try {
-                        var singleJson = BuildUpdateJson([record]);
+                        var singleJson = KintoneRequestBuilder.BuildUpdateJson([record]);
                         var singleRespJson = await _repository.UpdateAsync<T>(singleJson);
                         var parsed = ParseUpdatedRecords([record], singleRespJson);
                         result.Succeeded.AddRange(parsed);
@@ -282,46 +284,6 @@ public class KintoneModelCrudService {
         }
 
         return result;
-    }
-
-    [Obsolete()]
-    private string BuildCreateJson<T>(IEnumerable<T> records) where T : KintoneModelBase {
-        var list = records.ToList();
-        var appID = list.First().AppID;
-
-        var body = new {
-            app = appID,
-            records = list.Select(r => r.ToKintoneRecord())
-        };
-
-        return JsonSerializer.Serialize(body, _jsonOptions);
-    }
-    [Obsolete()]
-    private string BuildUpdateJson<T>(IEnumerable<T> records) where T : KintoneModelBase, new() {
-        var jsonObj = new Dictionary<string, object> {
-            ["records"] = records.Select(r => r.ToKintoneUpdateRecord())
-        };
-
-        return JsonSerializer.Serialize(jsonObj);
-    }
-    [Obsolete()]
-    private IList<T> ParseCreatedRecords<T>(IEnumerable<T> originalRecords, string responseJson)
-        where T : KintoneModelBase, new() {
-        var indexes = KintoneRecordIndexesResponse.Parse(responseJson).ToIndexes();
-
-        var originals = originalRecords.ToList();
-        if (indexes.IDs.Count != originals.Count) {
-            throw new KintoneException("Mismatch between the number of request and response records.");
-        }
-
-        for (int i = 0; i < originals.Count; i++) {
-            originals[i].ID = indexes.IDs[i] ?? string.Empty;
-            if (int.TryParse(indexes.Revisions[i], out var rev)) {
-                originals[i].Revision = rev;
-            }
-        }
-
-        return originals;
     }
     private IList<T> ParseUpdatedRecords<T>(IEnumerable<T> records, string responseJson) where T : KintoneModelBase, new() {
         var indexResponse = KintoneRecordIndexesResponse.Parse(responseJson);

@@ -38,7 +38,7 @@ public class BookModel : KintoneModelBase {
     /// <summary>
     /// レイティング
     /// </summary>
-    [KintoneItem(fieldCode: "Rating", isUpload: false, fieldType: KintoneFieldType.Number)]
+    [KintoneItem(fieldCode: "Rating", fieldType: KintoneFieldType.Number)]
     public decimal Rating { get; set; }
     /// <summary>
     /// おすすめ度
@@ -87,12 +87,32 @@ public class BookModel : KintoneModelBase {
     /// 添付ファイル
     /// </summary>
     [KintoneItem(fieldCode: "Files", KintoneFieldType.File)]
-    public IList<KintoneFile>? Files { get; set; }
+    public IList<KintoneFile> Files { get; set; } = [];
     /// <summary>
     /// サブテーブル
     /// </summary>
     [KintoneItem("Details", KintoneFieldType.SubTable)]
     public List<BookModelDetail>? Details { get; set; }
+    /// <summary>
+    /// リッチテキスト
+    /// </summary>
+    [KintoneItem(fieldCode: "RichText", fieldType: KintoneFieldType.RichText)]
+    public string RichText { get; set; } = string.Empty;
+    /// <summary>
+    /// ユーザー選択
+    /// </summary>
+    [KintoneItem(fieldCode: "UserSelect", fieldType: KintoneFieldType.UserSelect)]
+    public IEnumerable<KintoneUser> UserSelect { get; set; } = [];
+    /// <summary>
+    /// グループ選択
+    /// </summary>
+    [KintoneItem(fieldCode: "GroupSelect", KintoneFieldType.GroupSelect)]
+    public IEnumerable<KintoneUser> GroupSelect { get; set; } = [];
+    /// <summary>
+    /// 組織選択
+    /// </summary>
+    [KintoneItem(fieldCode: "DivisionSelect", KintoneFieldType.OrganizationSelect)]
+    public IEnumerable<KintoneUser> DivisionSelect { get; set; } = [];
 }
 public class BookModelDetail : KintoneSubTableBase {
     /// <summary>

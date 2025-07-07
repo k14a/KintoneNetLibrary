@@ -5,7 +5,7 @@ using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.Infrastructure.Converters;
 
-internal static class KintoneValueConverter {
+public static class KintoneValueConverter {
     public static object? ConvertToCSharp(JsonElement valueElement, KintoneFieldType fieldType, Type targetType) {
         if (valueElement.ValueKind == JsonValueKind.Null) {
             return null;
@@ -45,16 +45,12 @@ internal static class KintoneValueConverter {
             (Type t, JsonValueKind.String) when t == typeof(int?) => int.TryParse(str, out var i) ? i : null,
             (Type t, JsonValueKind.Number) when t == typeof(int) => valueElement.TryGetInt32(out var i) ? i : 0,
             (Type t, JsonValueKind.Number) when t == typeof(int?) => valueElement.TryGetInt32(out var i) ? i : null,
+            (Type t, JsonValueKind.String) when t == typeof(decimal) => decimal.TryParse(str, out var d) ? d : 0m,
+            (Type t, JsonValueKind.String) when t == typeof(decimal?) => decimal.TryParse(str, out var d) ? d : null,
+            (Type t, JsonValueKind.Number) when t == typeof(decimal) => valueElement.TryGetDecimal(out var d) ? d : 0m,
+            (Type t, JsonValueKind.Number) when t == typeof(decimal?) => valueElement.TryGetDecimal(out var d) ? d : null,
             (Type t, JsonValueKind.Object) when t == typeof(KintoneUser) => JsonSerializer.Deserialize<KintoneUser>(valueElement.GetRawText()),
             (Type t, JsonValueKind.Array) when IsStringListType(t) => valueElement.EnumerateArray().Select(e => e.GetString()!).ToList(),
-            // (Type t, JsonValueKind.Array) when t == typeof(List<KintoneFile>) =>
-            //     valueElement.EnumerateArray()
-            //         .Select(f => new KintoneFile {
-            //             ContentType = f.GetProperty("contentType").GetString() ?? "",
-            //             FileKey = f.GetProperty("fileKey").GetString() ?? "",
-            //             Name = f.GetProperty("name").GetString() ?? "",
-            //             Size = long.TryParse(f.GetProperty("size").GetString(), out var size) ? size : 0
-            //         }).ToList(),
             (Type t, JsonValueKind.Array) when typeof(IList<KintoneFile>).IsAssignableFrom(t) =>
                 valueElement.EnumerateArray()
                     .Select(f => new KintoneFile {
@@ -67,6 +63,12 @@ internal static class KintoneValueConverter {
                 valueElement.EnumerateArray()
                     .Select(row => row.GetProperty("value").EnumerateObject().ToDictionary(p => p.Name, p => p.Value))
                     .ToList(),
+            (Type t, JsonValueKind.Array) when typeof(IEnumerable<KintoneUser>).IsAssignableFrom(t) =>
+                valueElement.EnumerateArray()
+                    .Select(u => new KintoneUser {
+                        Code = u.GetProperty("code").GetString() ?? "",
+                        Name = u.GetProperty("name").GetString() ?? ""
+                    }).ToList(),
             _ => throw new NotSupportedException($"Unsupported value conversion to {targetType.Name} from kind: {valueElement.ValueKind}")
         };
     }

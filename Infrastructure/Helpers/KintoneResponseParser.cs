@@ -15,22 +15,22 @@ public static class KintoneResponseParser {
     /// <summary>
     /// CreateRecordsAsync などのレスポンス JSON を元に、作成結果を元のモデルに反映する
     /// </summary>
-    public static IList<T> ParseCreatedRecords<T>(IEnumerable<T> originalRecords, string responseJson) where T : KintoneModelBase, new() {
+    public static IList<T> ParseCreatedRecords<T>(IList<T> originalRecords, string responseJson) where T : KintoneModelBase, new() {
         var indexes = KintoneRecordIndexesResponse.Parse(responseJson).ToIndexes();
 
-        var originals = originalRecords.ToList();
-        if (indexes.IDs.Count != originals.Count) {
+        // var originals = originalRecords.ToList();
+        if (indexes.IDs.Count != originalRecords.Count) {
             throw new KintoneException("Mismatch between the number of request and response records.");
         }
 
-        for (int i = 0; i < originals.Count; i++) {
-            originals[i].ID = indexes.IDs[i] ?? string.Empty;
+        for (int i = 0; i < originalRecords.Count; i++) {
+            originalRecords[i].ID = indexes.IDs[i] ?? string.Empty;
             if (int.TryParse(indexes.Revisions[i], out var rev)) {
-                originals[i].Revision = rev;
+                originalRecords[i].Revision = rev;
             }
         }
 
-        return originals;
+        return originalRecords;
     }
     public static T ParseRecord<T>(string json) where T : KintoneModelBase, new() {
         using var doc = JsonDocument.Parse(json);

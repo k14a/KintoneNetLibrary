@@ -88,6 +88,28 @@ internal static class KintoneModelValidator {
             }
         }
     }
+    public static void ValidateFileFields<T>(T model) where T : KintoneModelBase {
+        var props = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        foreach (var prop in props) {
+            var attr = prop.GetCustomAttribute<KintoneItemAttribute>();
+            if (attr == null || attr.FieldType != KintoneFieldType.File) {
+                continue;
+            }
+
+            var value = prop.GetValue(model);
+            if (value is null) {
+                throw new InvalidOperationException(
+                    $"File型フィールド '{prop.Name}' の値が null です。空でも IList<KintoneFile> として初期化してください（例：new List<KintoneFile>()）。"
+                );
+            }
+
+            if (value is not IList<KintoneFile>) {
+                throw new InvalidOperationException(
+                    $"File型フィールド '{prop.Name}' は IList<KintoneFile> 型として定義されている必要があります。現在の型: {value.GetType().FullName}"
+                );
+            }
+        }
+    }
 
     private static bool IsValidSubTableType(Type type) {
         return type.IsGenericType &&
