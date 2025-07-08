@@ -71,21 +71,4 @@ public static class KintoneResponseParser {
 
         return result;
     }
-    /// <summary>
-    /// Kintoneの削除レスポンスJSONから削除されたレコードIDのリストを取得する
-    /// </summary>
-    /// <param name="json">Kintoneの削除APIからのレスポンスJSON</param>
-    /// <returns>削除されたレコードIDのリスト</returns>
-    [Obsolete()]
-    public static List<string> ParseDeletedRecords(string json) {
-        if (string.IsNullOrWhiteSpace(json)) {
-            throw new ArgumentException("JSON string is null or empty", nameof(json));
-        }
-
-        var response = JsonSerializer.Deserialize<DeleteResponse>(json)
-            ?? throw new InvalidOperationException("Failed to parse deleted records response JSON");
-
-        return response.IDs;
-    }
-
 }

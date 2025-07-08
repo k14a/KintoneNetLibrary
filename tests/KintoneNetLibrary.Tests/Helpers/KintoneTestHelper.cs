@@ -1,10 +1,16 @@
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
+using KintoneNetLibrary.Application.UseCases.Services;
 using KintoneNetLibrary.Domain.Common;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Infrastructure.Api;
+using KintoneNetLibrary.Infrastructure.Factories;
 using KintoneNetLibrary.Infrastructure.Helpers;
+using KintoneNetLibrary.Infrastructure.Repositories;
 using KintoneNetLibrary.Tests.Models;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace KintoneNetLibrary.Tests.Helpers;
 
@@ -52,4 +58,26 @@ public static class KintoneTestHelper {
         throw new TimeoutException($"Expected {expectedCount} records, but condition was not met after {maxRetry} retries.");
     }
 
+    public static KintoneModelCrudService CreateCrudService() {
+        var config = TestEnv.Settings;
+        var account = new KintoneAccount { Domain = config.Domain, ApiToken = config.ApiToken, };
+        var options = new KintoneExecutionOptions { MaxConcurrency = 2 };
+
+        var httpClient = new HttpClient { BaseAddress = new Uri($"https://{config.Domain}/k/v1/") };
+        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+        var apiLogger = loggerFactory.CreateLogger<KintoneApi>();
+
+        var factory = new KintoneApiFactory(httpClient, apiLogger);
+        var repository = new KintoneRepository(factory);
+
+        var serviceLogger = loggerFactory.CreateLogger<KintoneModelCrudService>();
+
+        return new KintoneModelCrudService(
+            repository,
+            Options.Create(account),
+            Options.Create(options),
+            new JsonSerializerOptions(),
+            serviceLogger
+        );
+    }
 }
