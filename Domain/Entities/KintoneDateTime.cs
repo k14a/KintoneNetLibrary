@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using KintoneNetLibrary.Domain.Interfaces;
 
 namespace KintoneNetLibrary.Domain.Entities;
 

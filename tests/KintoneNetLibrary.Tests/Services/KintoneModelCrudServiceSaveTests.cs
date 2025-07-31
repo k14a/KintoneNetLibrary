@@ -214,7 +214,7 @@ public class KintoneModelCrudServiceSaveTests {
     #endregion
 }
 internal class SampleModel2 : KintoneModelBase {
-    public override int AppID => 9999;
+    public int AppID => 9999;
 
     [KintoneItem(isKey: true)]
     public string CustomUpdateKey { get; set; } = string.Empty;

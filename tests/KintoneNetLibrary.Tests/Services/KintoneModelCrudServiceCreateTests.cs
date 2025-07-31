@@ -385,7 +385,7 @@ public class KintoneModelCrudServiceCreateTests {
     #endregion
 }
 internal class SampleModel : KintoneModelBase {
-    public override int AppID => 9999;
+    public int AppID => 9999;
 
     [KintoneItem(fieldCode: "FieldA", fieldType: KintoneFieldType.SingleLineText)]
     public string FieldA { get; set; } = string.Empty;

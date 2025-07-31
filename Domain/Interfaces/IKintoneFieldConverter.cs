@@ -1,4 +1,4 @@
-namespace KintoneNetLibrary.Domain.Entities;
+namespace KintoneNetLibrary.Domain.Interfaces;
 
 public interface IKintoneFieldConverter {
     object? ToJson();

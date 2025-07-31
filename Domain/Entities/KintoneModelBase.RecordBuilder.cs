@@ -1,4 +1,5 @@
 using System.Reflection;
+using KintoneNetLibrary.Domain.Interfaces;
 
 namespace KintoneNetLibrary.Domain.Entities;
 

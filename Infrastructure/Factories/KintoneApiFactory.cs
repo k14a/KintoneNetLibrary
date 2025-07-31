@@ -14,14 +14,19 @@ public class KintoneApiFactory : IKintoneApiFactory {
         this._httpClient = httpclient ?? throw new ArgumentNullException(nameof(httpclient));
         this._logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
-    public KintoneApi Create(KintoneModelBase model) {
-        var account = new KintoneAccount {
-            Domain = model.Domain,
-            ApiToken = model.ApiToken
-        };
+    // public KintoneApi Create(KintoneModelBase model) {
+    //     var account = new KintoneAccount {
+    //         Domain = model.Domain,
+    //         ApiToken = model.ApiToken
+    //     };
 
+    //     return new KintoneApi(account, model.AppID, _httpClient, _logger);
+    // }
+    public KintoneApi Create(KintoneModelBase model) {
+        var account = model.Account ?? throw new InvalidOperationException("KintoneAccount が未設定です");
         return new KintoneApi(account, model.AppID, _httpClient, _logger);
     }
+
     public KintoneApi Create(KintoneAccount account, int appID) {
         return new KintoneApi(account, appID, this._httpClient, this._logger);
     }

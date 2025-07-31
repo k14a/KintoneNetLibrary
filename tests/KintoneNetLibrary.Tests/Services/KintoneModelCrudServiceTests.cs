@@ -1,4 +1,5 @@
 using System.Net;
+using KintoneNetLibrary.Domain.Access;
 using KintoneNetLibrary.Tests.Helpers;
 using KintoneNetLibrary.Tests.Models;
 using Xunit;
@@ -17,7 +18,8 @@ public class KintoneModelCrudServiceTests {
             Title = "RichTextフィールドテスト",
             Uuid = uuid,
             RichText = richTextInitial,
-            ApiToken = TestEnv.Settings.ApiToken,
+            // ApiToken = TestEnv.Settings.ApiToken,
+            Access = new ApiTokenAccess(TestEnv.Settings.Domain, TestEnv.Settings.ApiToken,TestEnv.Settings.AppID)
         };
 
         var service = KintoneTestHelper.CreateCrudService();

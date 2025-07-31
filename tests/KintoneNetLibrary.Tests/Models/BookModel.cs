@@ -3,7 +3,7 @@ using KintoneNetLibrary.Domain.Entities;
 namespace KintoneNetLibrary.Tests.Models;
 
 public class BookModel : KintoneModelBase {
-    public override int AppID => TestEnv.Settings.AppID;
+    public int AppID => TestEnv.Settings.AppID;
     /// <summary>
     /// タイトル
     /// </summary>
