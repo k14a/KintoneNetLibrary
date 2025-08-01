@@ -12,6 +12,8 @@ namespace KintoneNetLibrary.Infrastructure.Api;
 
 public partial class KintoneApi {
     #region <<Private values>>
+    private readonly KintoneAccessBase _access;
+    private readonly int _appID;
     private HttpClient _httpClient;
     // JsonSerializerOptions は再利用推奨のためstaticで保持
     private readonly JsonSerializerOptions _jsonOptions;
@@ -22,38 +24,6 @@ public partial class KintoneApi {
     #endregion
 
     #region <<Properties>>
-    /// <summary>
-    /// Kintoneドメイン
-    /// </summary>
-    public string Domain { get; set; } = string.Empty;
-    /// <summary>
-    /// Kintoneアプリケーション番号
-    /// </summary>
-    public int AppID { get; set; }
-    /// <summary>
-    /// エンコード
-    /// </summary>
-    public Encoding Encoding { get; set; } = Encoding.UTF8;
-    /// <summary>
-    /// ApiToken
-    /// </summary>
-    public string ApiToken { get; set; } = string.Empty;
-    /// <summary>
-    /// Kintoneログイン名
-    /// </summary>
-    public string LoginName { get; set; } = string.Empty;
-    /// <summary>
-    /// Kintoneログインパスワード
-    /// </summary>
-    public string Password { get; set; } = string.Empty;
-    /// <summary>
-    /// Basic認証ユーザ名
-    /// </summary>
-    public string BasicAuthUser { get; set; } = string.Empty;
-    /// <summary>
-    /// Basic認証パスワード
-    /// </summary>
-    public string BasicAuthPassword { get; set; } = string.Empty;
     /// <summary>
     /// カーソルAPIで一度に取得する件数(省略時はKintoneの最大値である500)
     /// </summary>
@@ -97,36 +67,23 @@ public partial class KintoneApi {
     /// <summary>
     /// コンストラクタ
     /// </summary>
-    /// <param name="account">KintoneAccount</param>
-    /// <param name="appID">KintoneアプリケーションID</param>
+    /// <param name="access">KintoneAccessBase</param>
+    /// <param name="appID">Kintone Application ID</param>
     /// <param name="httpClient"></param>
     /// <param name="logger"></param>
     /// <param name="jsonOptions"></param>
     /// <exception cref="ArgumentNullException"></exception>
-    public KintoneApi(KintoneAccount account, int appID, HttpClient? httpClient = null, ILogger<KintoneApi>? logger = null, JsonSerializerOptions? jsonOptions = null) {
-        ArgumentNullException.ThrowIfNull(account);
+    public KintoneApi(KintoneAccessBase access, int appID, HttpClient? httpClient = null, ILogger<KintoneApi>? logger = null, JsonSerializerOptions? jsonOptions = null) {
+        ArgumentNullException.ThrowIfNull(access);
 
-        this.Domain = account.Domain;
-        this.AppID = appID;
+        this._access = access;
+        this._appID = appID;
         this._logger = logger;
         this._httpClient = httpClient ?? new HttpClient();
         this._jsonOptions = jsonOptions ?? DefaultJsonOptions.Default;
 
-        if (!string.IsNullOrWhiteSpace(this.Domain)) {
-            this._httpClient.BaseAddress = new Uri($"https://{this.Domain.TrimEnd('/')}/k/v1/");
-        }
-
-        // 優先順位：APIトークン → ログイン名/パスワード → BasicAuth
-        if (!string.IsNullOrWhiteSpace(account.ApiToken)) {
-            this.ApiToken = account.ApiToken;
-        } else if (!string.IsNullOrWhiteSpace(account.LoginName) && !string.IsNullOrWhiteSpace(account.Password)) {
-            this.LoginName = account.LoginName;
-            this.Password = account.Password;
-        }
-
-        if (!string.IsNullOrWhiteSpace(account.BasicAuthUser) && !string.IsNullOrWhiteSpace(account.BasicAuthPassword)) {
-            this.BasicAuthUser = account.BasicAuthUser;
-            this.BasicAuthPassword = account.BasicAuthPassword;
+        if (!string.IsNullOrWhiteSpace(this._access.Domain)) {
+            this._httpClient.BaseAddress = new Uri($"https://{this._access.Domain.TrimEnd('/')}/k/v1/");
         }
 
         this.EnsureDefaultHeaders();
@@ -141,7 +98,7 @@ public partial class KintoneApi {
         if (this._httpClient != null) { return; }
 
         this._httpClient = new HttpClient {
-            BaseAddress = string.IsNullOrWhiteSpace(this.Domain) ? null : new Uri($"https://{this.Domain.TrimEnd('/')}/k/v1/"),
+            BaseAddress = string.IsNullOrWhiteSpace(this._access.Domain) ? null : new Uri($"https://{this._access.Domain.TrimEnd('/')}/k/v1/"),
         };
 
         this._httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -154,8 +111,8 @@ public partial class KintoneApi {
             this._httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
-        if (!string.IsNullOrEmpty(this.ApiToken) && !this._httpClient.DefaultRequestHeaders.Contains("X-Cybozu-API-Token")) {
-            this._httpClient.DefaultRequestHeaders.Add("X-Cybozu-API-Token", this.ApiToken);
+        if (!string.IsNullOrEmpty(this._access.ApiToken) && !this._httpClient.DefaultRequestHeaders.Contains("X-Cybozu-API-Token")) {
+            this._httpClient.DefaultRequestHeaders.Add("X-Cybozu-API-Token", this._access.ApiToken);
         }
     }
     /// <summary>
@@ -164,8 +121,8 @@ public partial class KintoneApi {
     /// <returns>BaseUri</returns>
     /// <exception cref="InvalidOperationException">domain is not set.</exception>
     protected Uri GetBaseUri() {
-        if (string.IsNullOrWhiteSpace(this.Domain)) { throw new InvalidOperationException("Domain is not set."); }
-        return new Uri($"https://{this.Domain.TrimEnd('/')}/k/v1/");
+        if (string.IsNullOrWhiteSpace(this._access.Domain)) { throw new InvalidOperationException("Domain is not set."); }
+        return new Uri($"https://{this._access.Domain.TrimEnd('/')}/k/v1/");
     }
     /// <summary>
     /// AppID取得
@@ -175,10 +132,11 @@ public partial class KintoneApi {
     /// <exception cref="InvalidOperationException"></exception>
     protected int GetAppID<T>() where T : KintoneModelBase, new() {
         var attr = typeof(T).GetCustomAttribute<KintoneItemAttribute>() ?? throw new InvalidOperationException($"KintoneItemAttribute is not defined on type {typeof(T).FullName}.");
-        return new T().AppID;
+        // return new T().AppID;
+        return this._appID;
     }
     /// <summary>
-    /// 
+    /// リクエストURL作成
     /// </summary>
     /// <param name="path"></param>
     /// <param name="query"></param>
@@ -193,15 +151,11 @@ public partial class KintoneApi {
         return builder.Uri;
     }
     /// <summary>
-    /// 
+    /// リクエストヘッダ作成
     /// </summary>
     /// <param name="request"></param>
     protected void SetHeaders(HttpRequestMessage request) {
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        if (!string.IsNullOrEmpty(this.ApiToken)) {
-            request.Headers.Add("X-Cybozu-API-Token", this.ApiToken);
-        }
-        // 他にも必要なヘッダーを設定
+        this._access.ApplyAuthentication(request);
     }
     #endregion
 }

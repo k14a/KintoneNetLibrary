@@ -24,7 +24,6 @@ public class KintoneModelCrudServiceSaveTests {
 
         var service = new KintoneModelCrudService(
             mockRepo.Object,
-            Options.Create(new KintoneAccount()),
             Options.Create(new KintoneExecutionOptions()),
             null,
             mockLogger.Object
@@ -67,7 +66,6 @@ public class KintoneModelCrudServiceSaveTests {
 
         var service = new KintoneModelCrudService(
             mockRepo.Object,
-            Options.Create(new KintoneAccount()),
             Options.Create(new KintoneExecutionOptions()),
             null,
             mockLogger.Object
@@ -112,7 +110,6 @@ public class KintoneModelCrudServiceSaveTests {
 
         var service = new KintoneModelCrudService(
             mockRepo.Object,
-            Options.Create(new KintoneAccount()),
             Options.Create(new KintoneExecutionOptions()),
             null,
             mockLogger.Object
@@ -141,7 +138,6 @@ public class KintoneModelCrudServiceSaveTests {
 
         var service = new KintoneModelCrudService(
             mockRepo.Object,
-            Options.Create(new KintoneAccount()),
             Options.Create(new KintoneExecutionOptions()),
             null,
             mockLogger.Object
@@ -168,7 +164,6 @@ public class KintoneModelCrudServiceSaveTests {
 
         var service = new KintoneModelCrudService(
             mockRepo.Object,
-            Options.Create(new KintoneAccount()),
             Options.Create(new KintoneExecutionOptions()),
             null,
             mockLogger.Object
@@ -198,7 +193,6 @@ public class KintoneModelCrudServiceSaveTests {
 
         var service = new KintoneModelCrudService(
             mockRepo.Object,
-            Options.Create(new KintoneAccount()),
             Options.Create(new KintoneExecutionOptions()),
             null,
             new Mock<ILogger<KintoneModelCrudService>>().Object
@@ -214,7 +208,7 @@ public class KintoneModelCrudServiceSaveTests {
     #endregion
 }
 internal class SampleModel2 : KintoneModelBase {
-    public int AppID => 9999;
+    public override int AppID => 9999;
 
     [KintoneItem(isKey: true)]
     public string CustomUpdateKey { get; set; } = string.Empty;

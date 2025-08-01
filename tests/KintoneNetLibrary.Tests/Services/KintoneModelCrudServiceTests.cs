@@ -18,8 +18,7 @@ public class KintoneModelCrudServiceTests {
             Title = "RichTextフィールドテスト",
             Uuid = uuid,
             RichText = richTextInitial,
-            // ApiToken = TestEnv.Settings.ApiToken,
-            Access = new ApiTokenAccess(TestEnv.Settings.Domain, TestEnv.Settings.ApiToken,TestEnv.Settings.AppID)
+            Access = new ApiTokenAccess(TestEnv.Settings.Domain, TestEnv.Settings.ApiToken)
         };
 
         var service = KintoneTestHelper.CreateCrudService();
@@ -44,7 +43,7 @@ public class KintoneModelCrudServiceTests {
 
             // --- U: Update ---
             match.RichText = richTextUpdated;
-            var updateResult = await service.UpdateAsync(new List<BookModel> { match });
+            var updateResult = await service.UpdateAsync([match]);
             Assert.Single(updateResult.Succeeded);
 
             // --- R: Find after update ---
@@ -58,7 +57,7 @@ public class KintoneModelCrudServiceTests {
 
         } finally {
             // --- D: Delete ---
-            await service.DeleteAsync(new List<BookModel> { created });
+            await service.DeleteAsync([created]);
         }
     }
 

@@ -22,11 +22,13 @@ public abstract partial class KintoneModelBase : KintoneModelHookBase {
     public KintoneAccount? Account => Access?.ToKintoneAccount();
 
     /// <summary>AppID（Access に委譲）</summary>
-    public int AppID => Access?.AppID ?? throw new InvalidOperationException("Access が未設定のため AppID を取得できません");
+    // public int AppID => Access?.AppID ?? throw new InvalidOperationException("Access が未設定のため AppID を取得できません");
+    public abstract int AppID { get; }
 
     // ----- 共通フィールド -----
 
-    [KintoneItem(fieldCode: "レコード番号", isUpload: false)]
+    [JsonPropertyName("$id")]
+    [KintoneItem(fieldCode: "RecordID", isUpload: false)]
     public virtual string? RecordID { get; set; }
 
     [JsonIgnore]

@@ -8,5 +8,4 @@ public interface IKintoneApiFactory {
     /// KintoneModelBase のプロパティから API インスタンスを生成します。
     /// </summary>
     KintoneApi Create(KintoneModelBase model);
-    KintoneApi Create(KintoneAccount account, int AppID);
 }

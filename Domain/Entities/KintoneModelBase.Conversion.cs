@@ -18,7 +18,7 @@ public abstract partial class KintoneModelBase : KintoneModelHookBase {
         NameConvertor.Create("作業者", nameof(Assignee))
     ];
 
-    protected virtual IList<NameConvertor> ConvertDictionary {
+    public virtual IList<NameConvertor> ConvertDictionary {
         get => _convertDictionary;
         set => _convertDictionary = value;
     }

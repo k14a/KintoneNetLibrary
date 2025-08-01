@@ -4,6 +4,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using KintoneNetLibrary.Domain.Access;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Infrastructure.Api;
 using KintoneNetLibrary.Tests.Helpers;
@@ -27,7 +28,7 @@ public partial class KintoneApiFileUploadTests {
             };
         });
 
-        var api = new KintoneApi(new KintoneAccount { Domain = "dummyAppId", ApiToken = "dummyToken" }, 123, httpClient);
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes("Dummy Content"));
 
@@ -55,7 +56,7 @@ public partial class KintoneApiFileUploadTests {
             };
         });
 
-        var api = new KintoneApi(new KintoneAccount { Domain = "dummyAppId", ApiToken = "dummyToken" }, 123, httpClient);
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes("Too large!"));
 
@@ -73,7 +74,7 @@ public partial class KintoneApiFileUploadTests {
                 Content = new StringContent("{\"fileKey\": \"dummyKey\"}")
             });
 
-        var api = new KintoneApi(new KintoneAccount { Domain = "example", ApiToken = "dummy" }, 1, httpClient) {
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient) {
             MaxUploadFileSize = 10 // 非常に小さく設定
         };
 
@@ -88,10 +89,10 @@ public partial class KintoneApiFileUploadTests {
         var httpClient = KintoneHttpTestHelper.CreateMockHttpClient(_ =>
             throw new InvalidOperationException("HTTPリクエストは呼ばれないはずです"));
 
-        var api = new KintoneApi(new KintoneAccount { Domain = "dummyAppId", ApiToken = "dummyToken" }, 123, httpClient);
-
-        // 制限値を意図的に小さくする（10バイト）
-        api.MaxUploadFileSize = 10;
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient) {
+            // 制限値を意図的に小さくする（10バイト）
+            MaxUploadFileSize = 10
+        };
 
         // 内容が制限値（10バイト）を超えるデータ
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes("これは11バイト以上の内容です"));
@@ -110,7 +111,7 @@ public partial class KintoneApiFileUploadTests {
             throw new InvalidOperationException("送信される前に例外が発生するため、このコードは到達しないはずです。");
         });
 
-        var api = new KintoneApi(new KintoneAccount { Domain = "dummyAppId", ApiToken = "dummyToken" }, appID: 123, httpClient: httpClient);
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient: httpClient);
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => api.UploadFileAsync(stream, "dummy.txt"));
 
@@ -129,7 +130,7 @@ public partial class KintoneApiFileUploadTests {
             return responseMessage;
         });
 
-        var api = new KintoneApi(new KintoneAccount { Domain = "dummyAppId", ApiToken = "dummyToken" }, 123, httpClient);
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
         var ex = await Record.ExceptionAsync(() => api.UploadFileAsync(slowStream, "slow.txt"));
 
         Assert.Null(ex);
@@ -147,7 +148,7 @@ public partial class KintoneApiFileUploadTests {
             };
         });
 
-        var api = new KintoneApi(new KintoneAccount { Domain = "dummyAppId", ApiToken = "dummyToken" }, 123, httpClient);
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
 
         var ex = await Assert.ThrowsAsync<HttpRequestException>(() => api.UploadFileAsync(faultyStream, "faulty.txt"));
 
@@ -161,7 +162,7 @@ public partial class KintoneApiFileUploadTests {
         var httpClient = KintoneHttpTestHelper.CreateMockHttpClient(_ =>
             throw new InvalidOperationException("このコードには到達しないはずです。"));
 
-        var api = new KintoneApi(new KintoneAccount { Domain = "dummyAppId", ApiToken = "dummyToken" }, 123, httpClient);
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             api.UploadFileAsync(emptyStream, "empty.txt"));
@@ -184,7 +185,7 @@ public partial class KintoneApiFileUploadTests {
                 Content = new StringContent(errorJson, Encoding.UTF8, "application/json")
             });
 
-        var api = new KintoneApi(new KintoneAccount { Domain = "dummyAppId", ApiToken = "dummyToken" }, 123, httpClient);
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
 
         var ex = await Assert.ThrowsAsync<KintoneException>(() => api.UploadFileAsync(stream, "error.txt"));
 
@@ -235,7 +236,7 @@ public partial class KintoneApiFileUploadTests {
             };
         });
 
-        var api = new KintoneApi(new KintoneAccount { Domain = "dummyDomain", ApiToken = "dummyToken" }, 123, httpClient);
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes("dummy"));
         var fileKey = await api.UploadFileAsync(stream, fileName);
@@ -244,7 +245,7 @@ public partial class KintoneApiFileUploadTests {
     }
     [Fact]
     public async Task UploadFileAsync_NullStream_ThrowsArgumentNullException() {
-        var api = new KintoneApi(new KintoneAccount { Domain = "dummyDomain", ApiToken = "dummyToken" }, 123);
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123);
 
         Stream? nullStream = null;
         var fileName = "dummy.txt";
@@ -264,7 +265,7 @@ public partial class KintoneApiFileUploadTests {
             };
         });
 
-        var api = new KintoneApi(new KintoneAccount { Domain = "dummy", ApiToken = "dummyToken" }, 123, httpClient);
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes("dummy"));
         var fileName = "file.txt";
@@ -304,7 +305,7 @@ public partial class KintoneApiFileUploadTests {
             return response;
         });
 
-        var api = new KintoneApi(new KintoneAccount { Domain = "dummy", ApiToken = "dummyToken" }, 123, httpClient);
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
 
         // Act
         var result = await api.UploadFileAsync(stream, longFileName);
@@ -335,7 +336,7 @@ public partial class KintoneApiFileUploadTests {
             return response;
         });
 
-        var api = new KintoneApi(new KintoneAccount { Domain = "dummy", ApiToken = "dummyToken" }, 123, httpClient);
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
 
         // Act
         var fileKey = await api.UploadFileAsync(stream, fileName);
@@ -381,11 +382,7 @@ public partial class KintoneApiFileUploadTests {
             return response;
         });
 
-        var api = new KintoneApi(
-            new KintoneAccount { Domain = "dummy", ApiToken = "dummyToken" },
-            123,
-            httpClient
-        );
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
 
         // Act
         var fileKey = await api.UploadFileAsync(stream, fileName);
@@ -419,7 +416,7 @@ public partial class KintoneApiFileUploadTests {
             return response;
         });
 
-        var api = new KintoneApi(new KintoneAccount { Domain = "dummy", ApiToken = "dummyToken" }, 123, httpClient);
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
 
         // Act
         var fileKey = await api.UploadFileAsync(stream, testFileName);
@@ -434,7 +431,7 @@ public partial class KintoneApiFileUploadTests {
         var handler = new CancelledHandler(); // 先ほど定義したキャンセル対応のモック
         var httpClient = new HttpClient(handler);
 
-        var api = new KintoneApi(new KintoneAccount { Domain = "example.kintone.com", ApiToken = "dummy-token", }, 123, httpClient);
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
 
         // テスト用ファイルストリーム（中身は不要）
         var dummyFileStream = new MemoryStream(new byte[] { 1, 2, 3 });
@@ -468,7 +465,7 @@ public partial class KintoneApiFileUploadTests {
             Timeout = TimeSpan.FromMilliseconds(100) // タイムアウトを極端に短く
         };
 
-        var api = new KintoneApi(new KintoneAccount { Domain = "example.kintone.com", ApiToken = "dummy-token", }, 123, httpClient);
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
 
         var dummyContent = new MemoryStream(Encoding.UTF8.GetBytes("dummy data"));
         var fileName = "test.txt";
@@ -497,7 +494,7 @@ public partial class KintoneApiFileUploadTests {
             });
 
         var httpClient = new HttpClient(handlerMock.Object);
-        var api = new KintoneApi(new KintoneAccount { Domain = "example.kintone.com", ApiToken = "dummy-token", }, 123, httpClient);
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
 
         var dummyContent = new MemoryStream(Encoding.UTF8.GetBytes("dummy data"));
         var fileName = "test.txt";
@@ -529,7 +526,7 @@ public partial class KintoneApiFileUploadTests {
             });
 
         var httpClient = new HttpClient(handlerMock.Object);
-        var api = new KintoneApi(new KintoneAccount { Domain = "example.kintone.com", ApiToken = "dummy-token", }, 123, httpClient);
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
 
         // Act & Assert
         var ex = await Assert.ThrowsAsync<HttpRequestException>(async () => {

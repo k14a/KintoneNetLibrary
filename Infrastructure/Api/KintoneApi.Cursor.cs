@@ -14,8 +14,8 @@ public partial class KintoneApi {
 
     /* ---------- カーソル作成 ---------- */
     public async Task<string> CreateCursorAsync(Dictionary<string, object> body) {
-        using var request = new HttpRequestMessage(HttpMethod.Post,KintoneApiEndpoints.Cursor);
-        request.Headers.Add("X-Cybozu-API-Token", this.ApiToken);
+        using var request = new HttpRequestMessage(HttpMethod.Post, KintoneApiEndpoints.Cursor);
+        request.Headers.Add("X-Cybozu-API-Token", this._access.ApiToken);
         request.Content = JsonContent.Create(body, options: _jsonOptions);
 
         using var resp = await this._httpClient.SendAsync(request);

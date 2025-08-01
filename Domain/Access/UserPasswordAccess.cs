@@ -1,24 +1,17 @@
 using KintoneNetLibrary.Domain.Entities;
+using KintoneNetLibrary.Domain.Enums;
 
 namespace KintoneNetLibrary.Domain.Access;
 
 public class UserPasswordAccess : KintoneAccessBase {
-    public string Domain { get; }
-    public string LoginName { get; }
-    public string Password { get; }
-    public int AppID { get; }
-    public string BasicAuthUser { get; }
-    public string BasicAuthPassword { get; }
-    public int GuestSpaceId { get; }
-
-    public UserPasswordAccess( string domain, string loginName, string password, int appID, string basicAuthUser = "", string basicAuthPassword = "", int guestSpaceId = 0) {
+    public UserPasswordAccess(string domain, string loginName, string password, string basicAuthUser = "", string basicAuthPassword = "", int guestSpaceId = 0) {
         Domain = domain;
         LoginName = loginName;
         Password = password;
-        AppID = appID;
         BasicAuthUser = basicAuthUser;
         BasicAuthPassword = basicAuthPassword;
         GuestSpaceId = guestSpaceId;
+        AuthType = KintoneAuthType.Login;
     }
 
     public override KintoneAccount ToKintoneAccount() => new KintoneAccount {
@@ -30,6 +23,7 @@ public class UserPasswordAccess : KintoneAccessBase {
         GuestSpaceId = GuestSpaceId
     };
 
-    protected override int ExtractAppID() => AppID;
-    protected override int ExtractGuestAppID() => AppID;
+    public override void ApplyAuthentication(HttpRequestMessage request) {
+        throw new NotImplementedException();
+    }
 }

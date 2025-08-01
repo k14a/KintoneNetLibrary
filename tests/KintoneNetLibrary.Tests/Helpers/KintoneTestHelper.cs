@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using KintoneNetLibrary.Application.UseCases.Services;
+using KintoneNetLibrary.Domain.Access;
 using KintoneNetLibrary.Domain.Common;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Infrastructure.Api;
@@ -20,8 +21,8 @@ public static class KintoneTestHelper {
         var cli = new HttpClient {
             BaseAddress = new Uri($"https://{cfg.Domain}/k/v1/")
         };
-        var account = new KintoneAccount { ApiToken = cfg.ApiToken, Domain = cfg.Domain };
-        return new KintoneApi(account, cfg.AppID, cli);
+        var access = new ApiTokenAccess(cfg.Domain, cfg.ApiToken);
+        return new KintoneApi(access, cfg.AppID, cli);
     }
 
     public static async Task<IList<T>> CreateRecordsInChunksAsync<T>(KintoneApi api, IList<T> models) where T : KintoneModelBase, new() {
@@ -60,7 +61,6 @@ public static class KintoneTestHelper {
 
     public static KintoneModelCrudService CreateCrudService() {
         var config = TestEnv.Settings;
-        var account = new KintoneAccount { Domain = config.Domain, ApiToken = config.ApiToken, };
         var options = new KintoneExecutionOptions { MaxConcurrency = 2 };
 
         var httpClient = new HttpClient { BaseAddress = new Uri($"https://{config.Domain}/k/v1/") };
@@ -74,7 +74,6 @@ public static class KintoneTestHelper {
 
         return new KintoneModelCrudService(
             repository,
-            Options.Create(account),
             Options.Create(options),
             new JsonSerializerOptions(),
             serviceLogger

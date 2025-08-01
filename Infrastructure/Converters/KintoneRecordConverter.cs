@@ -20,8 +20,19 @@ public class KintoneRecordConverter<T> : JsonConverter<T> where T : KintoneModel
             }
 
             var fieldCode = attr.FieldCode;
-            if (!root.TryGetProperty(fieldCode, out var fieldElement)) {
-                continue;
+            if (!root.TryGetProperty(fieldCode, out JsonElement fieldElement)) {
+                var fallbackCodes = model.ConvertDictionary
+                    .Where(c => c.PropertyName == prop.Name && c.ConvertDirection == NameConvertor.Direction.Read)
+                    .Select(c => c.ItemName);
+                var found = false;
+                foreach (var fallbackCode in fallbackCodes) {
+                    if (root.TryGetProperty(fallbackCode, out fieldElement)) {
+                        fieldCode = fallbackCode;
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) { continue; }
             }
 
             if (!fieldElement.TryGetProperty("type", out var typeElement) ||

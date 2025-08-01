@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using KintoneNetLibrary.Application.UseCases.Services;
+using KintoneNetLibrary.Domain.Access;
 using KintoneNetLibrary.Domain.Common;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Domain.Interfaces;
@@ -33,7 +34,6 @@ public class KintoneModelCrudServiceCreateTests {
 
         var service = new KintoneModelCrudService(
             mockRepo.Object,
-            Options.Create(new KintoneAccount { ApiToken = "dummy-token" }),
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 2 }),
             new JsonSerializerOptions(),
             NullLogger<KintoneModelCrudService>.Instance
@@ -60,7 +60,6 @@ public class KintoneModelCrudServiceCreateTests {
 
         var service = new KintoneModelCrudService(
             mockRepo.Object,
-            Options.Create(new KintoneAccount()),
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 1 }),
             null,
             NullLogger<KintoneModelCrudService>.Instance
@@ -86,7 +85,6 @@ public class KintoneModelCrudServiceCreateTests {
 
         var service = new KintoneModelCrudService(
             mockRepo.Object,
-            Options.Create(new KintoneAccount()),
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 1 }),
             null,
             NullLogger<KintoneModelCrudService>.Instance
@@ -126,7 +124,6 @@ public class KintoneModelCrudServiceCreateTests {
 
         var service = new KintoneModelCrudService(
             mockRepo.Object,
-            Options.Create(new KintoneAccount()),
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 1 }),
             null,
             NullLogger<KintoneModelCrudService>.Instance
@@ -172,7 +169,6 @@ public class KintoneModelCrudServiceCreateTests {
 
         var service = new KintoneModelCrudService(
             mockRepo.Object,
-            Options.Create(new KintoneAccount()),
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 1 }),
             null,
             NullLogger<KintoneModelCrudService>.Instance
@@ -202,7 +198,6 @@ public class KintoneModelCrudServiceCreateTests {
 
         var service = new KintoneModelCrudService(
             mockRepo.Object,
-            Options.Create(new KintoneAccount()),
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 1 }),
             null,
             NullLogger<KintoneModelCrudService>.Instance
@@ -229,7 +224,6 @@ public class KintoneModelCrudServiceCreateTests {
 
         var service = new KintoneModelCrudService(
             mockRepo.Object,
-            Options.Create(new KintoneAccount()),
             Options.Create(new KintoneExecutionOptions { }),
             null,
             NullLogger<KintoneModelCrudService>.Instance
@@ -259,7 +253,6 @@ public class KintoneModelCrudServiceCreateTests {
 
         var service = new KintoneModelCrudService(
             mockRepo.Object,
-            Options.Create(new KintoneAccount()),
             Options.Create(new KintoneExecutionOptions { }),
             null,
             NullLogger<KintoneModelCrudService>.Instance
@@ -292,7 +285,6 @@ public class KintoneModelCrudServiceCreateTests {
 
         var service = new KintoneModelCrudService(
             mockRepo.Object,
-            Options.Create(new KintoneAccount { ApiToken = "dummy-token" }),
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 1 }),
             null,
             NullLogger<KintoneModelCrudService>.Instance
@@ -330,7 +322,6 @@ public class KintoneModelCrudServiceCreateTests {
 
         var service = new KintoneModelCrudService(
             mockRepo.Object,
-            Options.Create(new KintoneAccount()),
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 1 }),
             null,
             NullLogger<KintoneModelCrudService>.Instance
@@ -362,7 +353,6 @@ public class KintoneModelCrudServiceCreateTests {
 
         var service = new KintoneModelCrudService(
             mockRepo.Object,
-            Options.Create(new KintoneAccount()),
             Options.Create(new KintoneExecutionOptions { }),
             null,
             mockLogger.Object
@@ -385,7 +375,8 @@ public class KintoneModelCrudServiceCreateTests {
     #endregion
 }
 internal class SampleModel : KintoneModelBase {
-    public int AppID => 9999;
+    public override int AppID => 8888;
+    public override KintoneAccessBase? Access { get; set; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
 
     [KintoneItem(fieldCode: "FieldA", fieldType: KintoneFieldType.SingleLineText)]
     public string FieldA { get; set; } = string.Empty;

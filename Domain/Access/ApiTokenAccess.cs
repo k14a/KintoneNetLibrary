@@ -1,25 +1,20 @@
+using System.Net.Http.Headers;
 using KintoneNetLibrary.Domain.Entities;
+using KintoneNetLibrary.Domain.Enums;
 
 namespace KintoneNetLibrary.Domain.Access;
 
 public class ApiTokenAccess : KintoneAccessBase {
-    public string Domain { get; }
-    public string ApiToken { get; }
-    public int AppID { get; }
-    public string BasicAuthUser { get; }
-    public string BasicAuthPassword { get; }
-    public int GuestSpaceId { get; }
-
-    public ApiTokenAccess( string domain, string apiToken, int appID, string basicAuthUser = "", string basicAuthPassword = "", int guestSpaceId = 0) {
+    public ApiTokenAccess(string domain, string apiToken, string basicAuthUser = "", string basicAuthPassword = "", int guestSpaceId = 0) {
         Domain = domain;
         ApiToken = apiToken;
-        AppID = appID;
         BasicAuthUser = basicAuthUser;
         BasicAuthPassword = basicAuthPassword;
         GuestSpaceId = guestSpaceId;
+        AuthType = KintoneAuthType.ApiToken;
     }
 
-    public override KintoneAccount ToKintoneAccount() => new KintoneAccount {
+    public override KintoneAccount ToKintoneAccount() => new() {
         Domain = Domain,
         ApiToken = ApiToken,
         BasicAuthUser = BasicAuthUser,
@@ -27,6 +22,11 @@ public class ApiTokenAccess : KintoneAccessBase {
         GuestSpaceId = GuestSpaceId
     };
 
-    protected override int ExtractAppID() => AppID;
-    protected override int ExtractGuestAppID() => AppID;
+    public override void ApplyAuthentication(HttpRequestMessage request) {
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        if (!string.IsNullOrEmpty(this.ApiToken)) {
+            request.Headers.Add("X-Cybozu-API-Token", this.ApiToken);
+        }
+        // 他にも必要なヘッダーを設定
+    }
 }

@@ -64,7 +64,7 @@ public partial class KintoneApi {
         content.Add(fileCnt, "file", safeFileName);
 
         using var request = new HttpRequestMessage(HttpMethod.Post, "file.json");
-        request.Headers.Add("X-Cybozu-API-Token", this.ApiToken);
+        request.Headers.Add("X-Cybozu-API-Token", this._access.ApiToken);
         request.Content = content;
 
         using var resp = await this._httpClient.SendAsync(request, cancellationToken);
@@ -114,23 +114,32 @@ public partial class KintoneApi {
         var url = $"file.json?fileKey={Uri.EscapeDataString(fileKey)}";
         try {
             using var request = new HttpRequestMessage(HttpMethod.Get, url);
-            request.Headers.Add("X-Cybozu-API-Token", this.ApiToken);
+            request.Headers.Add("X-Cybozu-API-Token", this._access.ApiToken);
 
             using var resp = await this._httpClient.SendAsync(request);
+            var contentType = resp.Content.Headers.ContentType?.MediaType;
             var body = await resp.Content.ReadAsStringAsync();
 
-            if (!resp.IsSuccessStatusCode) {
-                // application/json の場合は Kintone のエラーメッセージをパースする
-                if (resp.Content.Headers.ContentType?.MediaType == "application/json") {
+            if (resp.IsSuccessStatusCode) {
+                if (contentType == "application/json") {
+                    // 成功ステータスでもapplication/jsonが返ってきた場合はKintoneのエラーとみなす
                     var error = KintoneErrorConverter.Parse(body);
                     throw new KintoneException(error);
                 }
 
-                throw new KintoneException($"ファイル取得に失敗しました。Status: {resp.StatusCode} Raw response: {body}");
+                if (contentType != "application/octet-stream") {
+                    throw new KintoneException($"予期しないContent-Typeが返されました。Content-Type: {contentType} Response: {body}");
+                }
+
+                // 成功時は Content-Type に関わらずバイト列として返す
+                return await resp.Content.ReadAsByteArrayAsync();
+
+            } else {
+                // throw new KintoneException($"ファイル取得に失敗しました。Status: {resp.StatusCode} Raw response: {body}");
+                var error = KintoneErrorConverter.Parse(body);
+                throw new KintoneException(error);
             }
 
-            // 成功時は Content-Type に関わらずバイト列として返す
-            return await resp.Content.ReadAsByteArrayAsync();
         } catch (TaskCanceledException ex) {
             throw new KintoneException("HTTPリクエストがタイムアウトしました。", ex);
         } catch (HttpRequestException ex) {
@@ -149,7 +158,7 @@ public partial class KintoneApi {
         var url = $"file.json?fileKey={Uri.EscapeDataString(fileKey)}";
 
         using var request = new HttpRequestMessage(HttpMethod.Get, url);
-        request.Headers.Add("X-Cybozu-API-Token", this.ApiToken);
+        request.Headers.Add("X-Cybozu-API-Token", this._access.ApiToken);
 
         var resp = await this._httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 

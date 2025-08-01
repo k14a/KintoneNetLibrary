@@ -15,8 +15,8 @@ public partial class KintoneApi {
     public async Task<string?> FindByIDAsync<T>(string id) where T : KintoneModelBase, new() {
         if (string.IsNullOrWhiteSpace(id)) { throw new ArgumentNullException(nameof(id)); }
 
-        var appID = new T().AppID;
-        var requestUri = this.BuildRequestUri(KintoneApiEndpoints.GetSingleRecord, $"app={appID}&id={id}");
+        // var appID = new T().AppID;
+        var requestUri = this.BuildRequestUri(KintoneApiEndpoints.GetSingleRecord, $"app={this._appID}&id={id}");
 
         using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
         this.SetHeaders(request);
@@ -87,7 +87,7 @@ public partial class KintoneApi {
             var countUri = KintoneRequestBuilder.BuildRequestUri(
                 this.GetBaseUri(),
                 KintoneApiEndpoints.GetRecords,
-                this.AppID,
+                this._appID,
                 queryText,
                 new Dictionary<string, string> {
                     { "totalCount", "true" },
@@ -116,7 +116,7 @@ public partial class KintoneApi {
         var requestUri = KintoneRequestBuilder.BuildRequestUri(
             this.GetBaseUri(),
             KintoneApiEndpoints.GetRecords,
-            this.AppID,
+            this._appID,
             query.Build());
 
         using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -135,7 +135,7 @@ public partial class KintoneApi {
     /* ---------- カーソル API を使って最後まで取得 ---------- */
     private async Task<string> CursorFetchAllJsonAsync<T>(string query) where T : KintoneModelBase, new() {
         var cursorRequest = new Dictionary<string, object> {
-            ["app"] = this.AppID,
+            ["app"] = this._appID,
             ["fields"] = typeof(T).GetKintoneFieldCodes(),
             ["size"] = this.CursorPageSize,
         };

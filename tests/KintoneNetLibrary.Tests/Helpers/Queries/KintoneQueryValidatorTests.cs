@@ -9,7 +9,7 @@ namespace KintoneNetLibrary.Tests.Helpers.Queries;
 
 public class KintoneQueryValidatorTests {
     private class SampleModel : KintoneModelBase {
-        public int AppID => TestEnv.Settings.AppID;
+        public override int AppID => TestEnv.Settings.AppID;
 
         [KintoneItem(fieldCode: "UUID")]
         public string Uuid { get; set; } = string.Empty;

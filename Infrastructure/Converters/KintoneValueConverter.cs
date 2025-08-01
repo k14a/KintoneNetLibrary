@@ -38,6 +38,22 @@ public static class KintoneValueConverter {
             };
         }
 
+        if (fieldType == KintoneFieldType.SubTable && valueElement.ValueKind == JsonValueKind.Array) {
+            if (valueElement.GetArrayLength() == 0) { return Activator.CreateInstance(targetType); }
+            Type elementType = targetType.GetGenericArguments()[0]; // 例: BookModelDetail
+
+            var list = new List<object>();
+
+            foreach (var row in valueElement.EnumerateArray()) {
+                var raw = row.GetProperty("value").GetRawText();
+
+                var detail = JsonSerializer.Deserialize(raw, elementType, KintoneJsonOptions.Default);
+                if (detail != null) list.Add(detail);
+            }
+
+            return list;
+        }
+
         // --- 通常型 ---
         return (targetType, valueElement.ValueKind) switch {
             (Type t, JsonValueKind.String) when t == typeof(string) => str,

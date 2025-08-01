@@ -14,19 +14,16 @@ namespace KintoneNetLibrary.Application.UseCases.Services;
 public class KintoneModelCrudService {
     private readonly IKintoneRepository _repository;
     private readonly ILogger<KintoneModelCrudService>? _logger;
-    private readonly KintoneAccount _account;
     private readonly JsonSerializerOptions _jsonOptions;
     private readonly KintoneExecutionOptions _execOptions;
 
     public KintoneModelCrudService(
         IKintoneRepository repository,
-        IOptions<KintoneAccount> accountOptions,
         IOptions<KintoneExecutionOptions>? executionOptions,
         JsonSerializerOptions? jsonOptions = null,
         ILogger<KintoneModelCrudService>? logger = null
     ) {
         this._repository = repository ?? throw new ArgumentNullException(nameof(repository));
-        this._account = accountOptions.Value ?? throw new ArgumentNullException(nameof(accountOptions));
         this._jsonOptions = jsonOptions ?? DefaultJsonOptions.Default;
         this._execOptions = executionOptions?.Value ?? new KintoneExecutionOptions();
         this._logger = logger;
@@ -128,10 +125,8 @@ public class KintoneModelCrudService {
                     var json = await this._repository.FindByIDAsync<T>(model, ids[0]);
                     if (string.IsNullOrEmpty(json)) { return []; }
 
-                    var record = JsonSerializer.Deserialize<KintoneResponseWrapper<T>>(json, this._jsonOptions);
-                    if (record?.Record == null) { return []; }
-
-                    return [record.Record];
+                    var record = KintoneResponseParser.ParseRecord<T>(json);
+                    return [record];
 
                 } else {
                     var json = await this._repository.FindByIDsAsync<T>(model, ids);

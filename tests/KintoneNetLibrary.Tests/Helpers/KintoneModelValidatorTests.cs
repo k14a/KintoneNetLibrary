@@ -9,24 +9,24 @@ namespace KintoneNetLibrary.Tests.Helpers;
 public class KintoneModelValidatorTests {
     #region <<Test classes>>
     public class FakeModelWithMultipleKeys : KintoneModelBase {
-        public int AppID => 8888;
+        public override int AppID => 8888;
         [KintoneItem(IsKey = true)]
         public string CodeA { get; set; } = "A001";
         [KintoneItem(IsKey = true)]
         public string CodeB { get; set; } = "B001";
     }
     public class FakeModelWithMissingKey : KintoneModelBase {
-        public int AppID => 7777;
+        public override int AppID => 7777;
         [KintoneItem(IsKey = true)]
         public string? KeyCode { get; set; } = null;
     }
     public class FakeModelWithKey : KintoneModelBase {
-        public int AppID => 6666;
+        public override int AppID => 6666;
         [KintoneItem(IsKey = true)]
         public string? Code { get; set; }
     }
     public class FakeModelWithLinks : KintoneModelBase {
-        public int AppID => 5555;
+        public override int AppID => 5555;
         [KintoneItem(FieldType = KintoneFieldType.LinkUrl)]
         public string? Website { get; set; }
 
@@ -41,17 +41,17 @@ public class KintoneModelValidatorTests {
         public string Text { get; set; } = string.Empty;
     }
     public class FakeModelWithInvalidSubTable : KintoneModelBase {
-        public int AppID => 5555;
+        public override int AppID => 5555;
         [KintoneItem(fieldType: KintoneFieldType.SubTable)]
         public string NotAList { get; set; } = "invalid";
     }
     public class FakeModelWithValidSubTable : KintoneModelBase {
-        public int AppID => 5555;
+        public override int AppID => 5555;
         [KintoneItem(fieldType: KintoneFieldType.SubTable)]
         public List<FakeSubRow> SubRows { get; set; } = [];
     }
     public class FakeModelWithStructuredFields : KintoneModelBase {
-        public int AppID => 4444;
+        public override int AppID => 4444;
         [KintoneItem(FieldType = KintoneFieldType.File)]
         public object? AttachedFiles { get; set; }
 
@@ -65,7 +65,7 @@ public class KintoneModelValidatorTests {
         public IList<string>? CategoryValues { get; set; } = [];
     }
     public class CompositeTestModel : KintoneModelBase {
-        public int AppID => 3333;
+        public override int AppID => 3333;
         [KintoneItem(IsKey = true)]
         public string? KeyCode { get; set; }
         [KintoneItem(FieldType = KintoneFieldType.File)]

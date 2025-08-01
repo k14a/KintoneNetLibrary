@@ -12,6 +12,7 @@ using System.IO.Compression;
 using KintoneNetLibrary.Tests.Helpers;
 using System.Net;
 using DocumentFormat.OpenXml.Drawing.Charts;
+using KintoneNetLibrary.Domain.Access;
 
 namespace KintoneNetLibrary.Tests.Api;
 
@@ -20,7 +21,12 @@ public class KintoneApiCrudTests {
     public async Task Can_Create_Read_Delete_Record() {
         var api = KintoneTestHelper.CreateApi();
         // 準備：BookModelのインスタンス
-        var book = new BookModel { Title = "Test Book", Price = 1000, Uuid = Guid.NewGuid().ToString() };
+        var book = new BookModel {
+            Title = "Test Book",
+            Price = 1000,
+            Uuid = Guid.NewGuid().ToString(),
+            Access = new ApiTokenAccess(TestEnv.Settings.Domain, TestEnv.Settings.ApiToken)
+        };
 
         // Create
         var json = KintoneRequestBuilder.BuildCreateJson([book]);

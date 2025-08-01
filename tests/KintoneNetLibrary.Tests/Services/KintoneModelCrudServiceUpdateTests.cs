@@ -26,7 +26,6 @@ public class KintoneModelCrudServiceUpdateTests {
 
         var service = new KintoneModelCrudService(
             mockRepo.Object,
-            Options.Create(new KintoneAccount()),
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 1 }),
             null,
             NullLogger<KintoneModelCrudService>.Instance
@@ -56,7 +55,6 @@ public class KintoneModelCrudServiceUpdateTests {
 
         var service = new KintoneModelCrudService(
             mockRepo.Object,
-            Options.Create(new KintoneAccount()),
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 2 }),
             null,
             NullLogger<KintoneModelCrudService>.Instance
@@ -99,7 +97,6 @@ public class KintoneModelCrudServiceUpdateTests {
 
         var service = new KintoneModelCrudService(
             mockRepo.Object,
-            Options.Create(new KintoneAccount()),
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 1 }),
             null,
             NullLogger<KintoneModelCrudService>.Instance
@@ -143,7 +140,6 @@ public class KintoneModelCrudServiceUpdateTests {
 
         var service = new KintoneModelCrudService(
             mockRepo.Object,
-            Options.Create(new KintoneAccount()),
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 1 }),
             null,
             NullLogger<KintoneModelCrudService>.Instance
@@ -174,7 +170,6 @@ public class KintoneModelCrudServiceUpdateTests {
 
         var service = new KintoneModelCrudService(
             mockRepo.Object,
-            Options.Create(new KintoneAccount { ApiToken = "dummy" }),
             Options.Create(new KintoneExecutionOptions { }),
             null,
             NullLogger<KintoneModelCrudService>.Instance
@@ -201,7 +196,6 @@ public class KintoneModelCrudServiceUpdateTests {
 
         var service = new KintoneModelCrudService(
             mockRepo.Object,
-            Options.Create(new KintoneAccount { ApiToken = "dummy" }),
             Options.Create(new KintoneExecutionOptions { }),
             null,
             NullLogger<KintoneModelCrudService>.Instance
@@ -226,7 +220,6 @@ public class KintoneModelCrudServiceUpdateTests {
 
         var service = new KintoneModelCrudService(
             mockRepo.Object,
-            Options.Create(new KintoneAccount { ApiToken = "dummy-token" }),
             Options.Create(new KintoneExecutionOptions { }),
             null,
             NullLogger<KintoneModelCrudService>.Instance
@@ -255,7 +248,6 @@ public class KintoneModelCrudServiceUpdateTests {
 
         var service = new KintoneModelCrudService(
             mockRepo.Object,
-            Options.Create(new KintoneAccount()),
             Options.Create(new KintoneExecutionOptions { }),
             null,
             mockLogger.Object
@@ -289,7 +281,6 @@ public class KintoneModelCrudServiceUpdateTests {
 
         var service = new KintoneModelCrudService(
             mockRepo.Object,
-            Options.Create(new KintoneAccount()),
             Options.Create(new KintoneExecutionOptions { }),
             null,
             mockLogger.Object
