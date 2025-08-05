@@ -243,11 +243,11 @@ public class KintoneModelCrudService {
                 await model.RunBeforeDeleteHookAsync();
             }
 
-            var target = validateExistence ? await PrepareValidatedTargets(models) : models;
+            var target = validateExistence ? await this.PrepareValidatedTargets(models) : models;
 
             var result = new KintoneDeleteResult();
             if (validateExistence) {
-                var failures = CollectNotFoundFailures(models, target);
+                var failures = this.CollectNotFoundFailures(models, target);
                 result.FailedIDs.AddRange(failures);
             }
 

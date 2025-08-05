@@ -10,6 +10,7 @@ using KintoneNetLibrary.Infrastructure.Factories;
 using KintoneNetLibrary.Infrastructure.Helpers;
 using KintoneNetLibrary.Infrastructure.Repositories;
 using KintoneNetLibrary.Tests.Models;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -63,15 +64,22 @@ public static class KintoneTestHelper {
         var config = TestEnv.Settings;
         var options = new KintoneExecutionOptions { MaxConcurrency = 2 };
 
-        var httpClient = new HttpClient { BaseAddress = new Uri($"https://{config.Domain}/k/v1/") };
-        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
-        var apiLogger = loggerFactory.CreateLogger<KintoneApi>();
+        var services = new ServiceCollection();
+        services.AddLogging(builder => builder.AddConsole());
+        services.AddHttpClient("Kintone", client => {
+            client.BaseAddress = new Uri($"https://{config.Domain}/k/v1/");
+        });
 
+        var provider = services.BuildServiceProvider();
+        var httpClientFactory = provider.GetRequiredService<IHttpClientFactory>();
+        var loggerFactory = provider.GetRequiredService<ILoggerFactory>();
+
+        var httpClient = httpClientFactory.CreateClient("Kintone");
+        var apiLogger = loggerFactory.CreateLogger<KintoneApi>();
         var factory = new KintoneApiFactory(httpClient, apiLogger);
         var repository = new KintoneRepository(factory);
 
         var serviceLogger = loggerFactory.CreateLogger<KintoneModelCrudService>();
-
         return new KintoneModelCrudService(
             repository,
             Options.Create(options),
@@ -79,4 +87,5 @@ public static class KintoneTestHelper {
             serviceLogger
         );
     }
+
 }

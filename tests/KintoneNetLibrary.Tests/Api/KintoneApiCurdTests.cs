@@ -1,18 +1,13 @@
-using Xunit;
-using KintoneNetLibrary.Tests.Models;
-using KintoneNetLibrary.Domain.Entities;
-using KintoneNetLibrary.Infrastructure.Api;
-using KintoneNetLibrary.Infrastructure.Api.DTO;
-using KintoneNetLibrary.Infrastructure.Helpers;
-using KintoneNetLibrary.Infrastructure.Converters;
-using KintoneNetLibrary.Extensions;
-using System.Text.Json;
-using System.Reflection;
-using System.IO.Compression;
-using KintoneNetLibrary.Tests.Helpers;
 using System.Net;
-using DocumentFormat.OpenXml.Drawing.Charts;
+using System.Text.Json;
 using KintoneNetLibrary.Domain.Access;
+using KintoneNetLibrary.Domain.Entities;
+using KintoneNetLibrary.Extensions;
+using KintoneNetLibrary.Infrastructure.Converters;
+using KintoneNetLibrary.Infrastructure.Helpers;
+using KintoneNetLibrary.Tests.Helpers;
+using KintoneNetLibrary.Tests.Models;
+using Xunit;
 
 namespace KintoneNetLibrary.Tests.Api;
 
