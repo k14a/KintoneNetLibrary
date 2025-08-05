@@ -32,15 +32,22 @@ public partial class KintoneApi {
         return json;
     }
     // IDリストで複数レコードを取得
-    public async Task<string?> FindByIDsAsync<T>(IList<string> ids) where T : KintoneModelBase, new() {
+    public async Task<string?> FindByIDsAsync<T>(IList<string> ids, IList<string>? fieldCodes = null) where T : KintoneModelBase, new() {
         if (ids == null || ids.Count == 0) {
             throw new ArgumentNullException(nameof(ids));
         }
 
         if (ids.Count <= KintoneLimit) {
             var query = new KintoneQuery<T>().WhereIdsEquals(ids);
-            var appID = new T().AppID;
-            var requestUri = this.BuildRequestUri(KintoneApiEndpoints.GetRecords, $"app={appID}&query={query}");
+            // var appID = new T().AppID;
+            // var requestUri = this.BuildRequestUri(KintoneApiEndpoints.GetRecords, $"app={appID}&query={query}");
+            var requestUri = KintoneRequestBuilder.BuildFindRequestUri(
+                this.GetBaseUri(),
+                KintoneApiEndpoints.GetRecords,
+                this._appID,
+                query.Build(),
+                fieldCodes
+            );
 
             using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
             this.SetHeaders(request);

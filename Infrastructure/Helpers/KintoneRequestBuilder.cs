@@ -1,4 +1,6 @@
+using System.ComponentModel;
 using System.Reflection;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using KintoneNetLibrary.Domain.Common;
 using KintoneNetLibrary.Domain.Entities;
@@ -90,7 +92,7 @@ public static class KintoneRequestBuilder {
 
         return JsonSerializer.Serialize(deleteBody, _jsonOptions);
     }
-    internal static Uri BuildRequestUri(Uri baseUri, string path, int appID, string? query = null, IDictionary<string, string>? additionalParams = null) {
+    public static Uri BuildRequestUri(Uri baseUri, string path, int appID, string? query = null, IDictionary<string, string>? additionalParams = null) {
 
         var builder = new UriBuilder(new Uri(baseUri, path));
         var parameters = new List<string> {
@@ -110,5 +112,27 @@ public static class KintoneRequestBuilder {
         builder.Query = string.Join("&", parameters);
         return builder.Uri;
     }
+    public static Uri BuildFindRequestUri(Uri baseUri, string path, int appID, string? query = null, IList<string>? fieldCodes = null) {
+        var effectiveFields = EnsureMinimumFields(fieldCodes);
 
+        var builder = new UriBuilder(new Uri(baseUri, path));
+        var parameters = new List<string> { $"app={appID}" };
+
+        if (!string.IsNullOrWhiteSpace(query)) {
+            parameters.Add($"query={Uri.EscapeDataString(query)}");
+        }
+
+        if (fieldCodes is { Count: > 0 }) {
+            for (int i = 0; i < fieldCodes.Count; i++) {
+                parameters.Add($"fields[{i}]={Uri.EscapeDataString(fieldCodes[i])}");
+            }
+        }
+
+        builder.Query = string.Join("&", parameters);
+        return builder.Uri;
+    }
+    internal static IList<string> EnsureMinimumFields(IList<string> fieldCodes) {
+        var required = new[] { "$id", "$revision" };
+        return fieldCodes != null && fieldCodes.Count > 0 ? required.Union(fieldCodes).Distinct().ToArray() : null;
+    }
 }

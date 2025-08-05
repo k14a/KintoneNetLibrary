@@ -9,7 +9,7 @@ public interface IKintoneRepository {
     Task<string> DeleteRecordsAsync<T>(IList<T> records) where T : KintoneModelBase;
 
     Task<string?> FindByIDAsync<T>(T model, string id) where T : KintoneModelBase, new();
-    Task<string?> FindByIDsAsync<T>(T model, IList<string> ids) where T : KintoneModelBase, new();
+    Task<string?> FindByIDsAsync<T>(T model, IList<string> ids, IList<string>? fieldCodes = null) where T : KintoneModelBase, new();
     Task<string?> FindAllAsync<T>(T model) where T : KintoneModelBase, new();
     Task<string?> FindByFieldAsync<T>(T model, string field, string value) where T : KintoneModelBase, new();
     Task<string?> FindByQueryAsync<T>(T model, string queryStr) where T : KintoneModelBase, new();

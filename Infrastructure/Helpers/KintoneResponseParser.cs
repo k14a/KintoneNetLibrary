@@ -58,9 +58,6 @@ public static class KintoneResponseParser {
             var dict = new Dictionary<string, JsonElement>();
 
             foreach (var prop in recordElement.EnumerateObject()) {
-                // if (prop.Value.TryGetProperty("value", out var valueElement)) {
-                //     dict[prop.Name] = valueElement;
-                // }
                 dict[prop.Name] = prop.Value;
             }
 

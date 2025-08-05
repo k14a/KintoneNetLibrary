@@ -113,7 +113,7 @@ public class KintoneModelCrudService {
         return result;
     }
 
-    public async Task<IEnumerable<T>> FindAsync<T>(IList<string>? ids = null, string? query = null) where T : KintoneModelBase, new() {
+    public async Task<IEnumerable<T>> FindAsync<T>(IList<string>? ids = null, string? query = null, IList<string>? fieldCodes = null) where T : KintoneModelBase, new() {
         try {
             this._logger?.LogInformation("FindAsync() - Start");
 
@@ -129,26 +129,29 @@ public class KintoneModelCrudService {
                     return [record];
 
                 } else {
-                    var json = await this._repository.FindByIDsAsync<T>(model, ids);
+                    var json = await this._repository.FindByIDsAsync<T>(model, ids, fieldCodes);
                     if (string.IsNullOrEmpty(json)) { return []; }
 
-                    var records = JsonSerializer.Deserialize<KintoneResponseListWrapper<T>>(json, this._jsonOptions);
-                    return records?.Records ?? [];
+                    var records = KintoneResponseParser.ParseRecords<T>(json);
+                    return records ?? [];
                 }
+
             } else if (!string.IsNullOrEmpty(query)) {
                 var json = await this._repository.FindByQueryAsync<T>(model, query);
                 if (string.IsNullOrEmpty(json)) { return []; }
 
-                var records = JsonSerializer.Deserialize<KintoneResponseListWrapper<T>>(json, this._jsonOptions);
-                return records?.Records ?? [];
+                var records = KintoneResponseParser.ParseRecords<T>(json);
+                return records ?? [];
+
             } else {
                 // 全件取得
                 var json = await this._repository.FindAllAsync<T>(model);
                 if (string.IsNullOrEmpty(json)) { return []; }
 
-                var records = JsonSerializer.Deserialize<KintoneResponseListWrapper<T>>(json, this._jsonOptions);
-                return records?.Records ?? [];
+                var records = KintoneResponseParser.ParseRecords<T>(json);
+                return records ?? [];
             }
+
         } catch (JsonException ex) {
             this._logger?.LogError(ex, "JSON deserialization failed in FindAsync<{Model}>", typeof(T).Name);
             throw new KintoneException("Failed to parse Kintone JSON response.", ex);
@@ -230,31 +233,35 @@ public class KintoneModelCrudService {
 
         return result;
     }
-    public async Task<KintoneDeleteResult> DeleteAsync<T>(IList<T> models) where T : KintoneModelBase {
+    public async Task<KintoneDeleteResult> DeleteAsync<T>(IList<T> models, bool validateExistence = true) where T : KintoneModelBase, new() {
         try {
             this._logger?.LogInformation("DeleteAsync() - Start");
 
-            if (models.Count == 0) {
-                return new KintoneDeleteResult();
-            }
+            if (models.Count == 0) { return new KintoneDeleteResult(); }
 
             foreach (var model in models) {
                 await model.RunBeforeDeleteHookAsync();
             }
 
-            var chunks = models.Chunk(KintoneDeleteLimit).Select(c => c.ToList()).ToList();
-            var semaphore = new SemaphoreSlim(this._execOptions.MaxConcurrency);
+            var target = validateExistence ? await PrepareValidatedTargets(models) : models;
+
             var result = new KintoneDeleteResult();
+            if (validateExistence) {
+                var failures = CollectNotFoundFailures(models, target);
+                result.FailedIDs.AddRange(failures);
+            }
+
+            var chunks = target.Chunk(KintoneDeleteLimit).Select(c => c.ToList());
+            var semaphore = new SemaphoreSlim(_execOptions.MaxConcurrency);
 
             var tasks = chunks.Select(async chunk => {
                 await semaphore.WaitAsync();
                 try {
-                    var partial = await DeleteChunkAsync(chunk);
+                    var partial = await this.DeleteChunkAsync(chunk);
                     lock (result) {
                         result.DeletedIDs.AddRange(partial.DeletedIDs);
                         result.FailedIDs.AddRange(partial.FailedIDs);
                     }
-
                 } finally {
                     semaphore.Release();
                 }
@@ -272,7 +279,8 @@ public class KintoneModelCrudService {
         var idList = chunk.Select(m => m.RecordID).Where(id => !string.IsNullOrWhiteSpace(id)).Select(id => id!).ToList();
 
         try {
-            await this._repository.DeleteRecordsAsync(chunk);
+            var validModels = chunk.Where(x => !string.IsNullOrWhiteSpace(x.RecordID)).ToList();
+            await this._repository.DeleteRecordsAsync(validModels);
             result.DeletedIDs.AddRange(idList);
 
             foreach (var model in chunk.Where(m => idList.Contains(m.RecordID!))) {
@@ -283,12 +291,27 @@ public class KintoneModelCrudService {
             foreach (var id in idList) {
                 result.FailedIDs.Add(new KintoneDeleteFailure {
                     ID = id,
-                    ErrorMessage = ex.Message
+                    ErrorMessage = ex.Message,
+                    Reason = KintoneDeleteFailureReason.DeleteError
                 });
             }
         }
 
         return result;
+    }
+    private async Task<IList<T>> PrepareValidatedTargets<T>(IList<T> models) where T : KintoneModelBase, new() {
+        var ids = models.Select(x => x.RecordID).ToList();
+        return (await FindAsync<T>(ids, fieldCodes: ["RecordID"])).ToList();
+    }
+    private List<KintoneDeleteFailure> CollectNotFoundFailures<T>(IList<T> original, IList<T> found) where T : KintoneModelBase {
+        var foundIds = found.Select(x => x.RecordID).ToHashSet();
+        return original
+            .Where(x => !foundIds.Contains(x.RecordID))
+            .Select(x => new KintoneDeleteFailure {
+                ID = x.RecordID,
+                ErrorMessage = "Record is not found.",
+                Reason = KintoneDeleteFailureReason.RecordNotFound
+            }).ToList();
     }
     public async Task<KintoneWriteResult<T>> SaveAsync<T>(IList<T> records, bool enableSingleRetryOnError = false) where T : KintoneModelBase, new() {
         try {

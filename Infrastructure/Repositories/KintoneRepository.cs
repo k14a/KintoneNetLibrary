@@ -1,8 +1,6 @@
-using System;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Domain.Interfaces;
 using KintoneNetLibrary.Infrastructure.Api;
-using KintoneNetLibrary.Infrastructure.Factories;
 using KintoneNetLibrary.Infrastructure.Helpers;
 
 namespace KintoneNetLibrary.Infrastructure.Repositories;
@@ -31,8 +29,8 @@ public class KintoneRepository : IKintoneRepository {
         return ExecuteFindAsync<T>(model, api => api.FindByIDAsync<T>(id));
     }
 
-    public Task<string?> FindByIDsAsync<T>(T model, IList<string> ids) where T : KintoneModelBase, new() {
-        return ExecuteFindAsync<T>(model, api => api.FindByIDsAsync<T>(ids));
+    public Task<string?> FindByIDsAsync<T>(T model, IList<string> ids, IList<string>? fieldCodes = null) where T : KintoneModelBase, new() {
+        return ExecuteFindAsync<T>(model, api => api.FindByIDsAsync<T>(ids, fieldCodes));
     }
 
     public Task<string?> FindAllAsync<T>(T model) where T : KintoneModelBase, new() {
@@ -51,14 +49,14 @@ public class KintoneRepository : IKintoneRepository {
         // 必要であれば保存実装を委譲、それ以外は NotImplemented に
         throw new NotImplementedException("Use KintoneModelCrudService.SaveAsync() instead.");
     }
-    private async Task<string> ExecuteCudAsync<T>( IList<T> records, Func<KintoneApi, string, Task<string>> apiInvoker, Func<IList<T>, string> jsonBuilder) where T : KintoneModelBase {
+    private async Task<string> ExecuteCudAsync<T>(IList<T> records, Func<KintoneApi, string, Task<string>> apiInvoker, Func<IList<T>, string> jsonBuilder) where T : KintoneModelBase {
         if (records.Count == 0) { throw new ArgumentException("Records list cannot be empty.", nameof(records)); }
 
         var api = ResolveApi(records[0]);
         var json = jsonBuilder(records);
         return await apiInvoker(api, json);
     }
-    private async Task<string?> ExecuteFindAsync<T>( KintoneModelBase model, Func<KintoneApi, Task<string>> apiCall) where T : KintoneModelBase, new() {
+    private async Task<string?> ExecuteFindAsync<T>(KintoneModelBase model, Func<KintoneApi, Task<string>> apiCall) where T : KintoneModelBase, new() {
         var api = ResolveApi(model);
         return await apiCall(api);
     }

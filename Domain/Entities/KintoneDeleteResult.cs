@@ -98,8 +98,14 @@ namespace KintoneNetLibrary.Domain.Entities {
         }
     }
 
+    public enum KintoneDeleteFailureReason {
+        RecordNotFound,
+        DeleteError,
+    }
+
     public class KintoneDeleteFailure {
         public string ID { get; init; } = string.Empty;
         public string ErrorMessage { get; init; } = string.Empty;
+        public KintoneDeleteFailureReason Reason { get; set; }
     }
 }

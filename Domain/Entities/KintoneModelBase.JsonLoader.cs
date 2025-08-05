@@ -7,6 +7,13 @@ namespace KintoneNetLibrary.Domain.Entities;
 
 public abstract partial class KintoneModelBase : KintoneModelHookBase {
     public void LoadFromJsonDictionary(Dictionary<string, JsonElement> fieldMap) {
+        // 特殊フィールド '$id' → RecordID にセット
+        if (fieldMap.TryGetValue("$id", out var idElement)) {
+            if (idElement.TryGetProperty("value", out var idValue)) {
+                this.RecordID = idValue.GetString();
+            }
+        }
+
         foreach (var prop in GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)) {
             var attr = prop.GetCustomAttribute<KintoneItemAttribute>();
 

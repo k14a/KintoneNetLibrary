@@ -80,6 +80,36 @@ public class KintoneApiCrudTests {
         Assert.NotNull(deleteResult);
     }
     [Fact]
+    public async Task Can_Read_With_FieldCodes() {
+        var api = KintoneTestHelper.CreateApi();
+
+        // 準備：BookModel の3件（ID確保のため）
+        var books = new List<BookModel> {
+                new() { Title = "Book D", Price = 400, Uuid = Guid.NewGuid().ToString() },
+                new() { Title = "Book E", Price = 500, Uuid = Guid.NewGuid().ToString() },
+                new() { Title = "Book F", Price = 600, Uuid = Guid.NewGuid().ToString() },
+            };
+
+        var createJson = KintoneRequestBuilder.BuildCreateJson(books);
+        var createResult = await api.CreateAsync(createJson);
+        var createdBooks = KintoneResponseParser.ParseCreatedRecords(books, createResult);
+        var idList = createdBooks.Select(b => b.ID).ToList();
+
+        // fieldCodes を使って特定のフィールドのみ取得
+        var fieldCodes = new[] { "Title" };
+        var foundJson = await api.FindByIDsAsync<BookModel>(idList, fieldCodes);
+        var foundRecords = KintoneResponseParser.ParseRecords<BookModel>(foundJson);
+
+        Assert.Equal(3, foundRecords.Count);
+        Assert.All(foundRecords, r => Assert.NotNull(r.Title));
+        Assert.All(foundRecords, r => Assert.Null(r.Price));
+
+        // 後始末：削除
+        var deleteJson = KintoneRequestBuilder.BuildDeleteJson(foundRecords);
+        var deleteResult = await api.DeleteAsync(deleteJson);
+        Assert.NotNull(deleteResult);
+    }
+    [Fact]
     public async Task Can_Create_Update_Find_Delete_Record() {
         var api = KintoneTestHelper.CreateApi();
 
