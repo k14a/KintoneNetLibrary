@@ -13,12 +13,15 @@ namespace KintoneNetLibrary.Domain.Entities;
 public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase where TSelf : KintoneModelBase<TSelf>, new() {
     // ----- 必須情報 -----
 
+    protected KintoneAccessBase? _access;
     /// <summary>接続情報（APIトークン・パスワード認証など）</summary>
     [JsonIgnore]
-    public virtual KintoneAccessBase? Access { get; set; }
+    [KintoneItem(isUpload: false)]
+    public abstract KintoneAccessBase? Access { get; set; }
 
     /// <summary>Kintoneアカウント情報の取得</summary>
     [JsonIgnore]
+    [KintoneItem(isUpload: false)]
     public KintoneAccount? Account => Access?.ToKintoneAccount();
 
     /// <summary>AppID</summary>

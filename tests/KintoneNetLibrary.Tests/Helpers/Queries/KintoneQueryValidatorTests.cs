@@ -4,12 +4,14 @@ using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Infrastructure.Helpers;
 using Xunit;
 using FluentAssertions;
+using KintoneNetLibrary.Domain.Access;
 
 namespace KintoneNetLibrary.Tests.Helpers.Queries;
 
 public class KintoneQueryValidatorTests {
     private class SampleModel : KintoneModelBase<SampleModel> {
         public override int AppID => TestEnv.Settings.AppID;
+        public override KintoneAccessBase? Access { get; set; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
 
         [KintoneItem(fieldCode: "UUID")]
         public string Uuid { get; set; } = string.Empty;
