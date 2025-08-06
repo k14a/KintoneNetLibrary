@@ -1,6 +1,6 @@
 namespace KintoneNetLibrary.Domain.Entities;
 
-public abstract partial class KintoneModelBase : KintoneModelHookBase {
+public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase where TSelf : KintoneModelBase<TSelf>, new() {
     // ----- Hook -----
     public virtual async Task RunBeforeCreateHookAsync() => await OnBeforeCreateAsync();
     public virtual async Task RunAfterCreateHookAsync() => await OnAfterCreateAsync();

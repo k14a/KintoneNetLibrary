@@ -2,7 +2,7 @@ using KintoneNetLibrary.Infrastructure.Converters;
 
 namespace KintoneNetLibrary.Domain.Entities;
 
-public abstract partial class KintoneModelBase : KintoneModelHookBase {
+public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase where TSelf : KintoneModelBase<TSelf>, new() {
 
     // ----- 項目名変換 -----
     private IList<NameConvertor> _convertDictionary =

@@ -11,7 +11,7 @@ public class KintoneQueryExpression<T> {
     public Expression<Func<T, bool>> Predicate { get; set; }
     public TimeZoneInfo TimeZone { get; set; } = TimeZoneInfo.Local;
 
-    public KintoneQueryExpression() { }
+    // public KintoneQueryExpression() {  }
 
     public KintoneQueryExpression(Expression<Func<T, bool>> expression) {
         Predicate = expression ?? throw new ArgumentNullException(nameof(expression));

@@ -5,11 +5,11 @@ namespace KintoneNetLibrary.Infrastructure.Helpers;
 
 internal static class KintoneModelValidator {
     public static bool TryValidateModelStructure<T>(T model, out List<string> errors, IList<T>? bulk = null)
-        where T : KintoneModelBase {
+        where T : KintoneModelBase<T>, new() {
         errors = [];
 
         try {
-            ValidateUpdateKeyIntegrity(model);
+            ValidateKeyIntegrity(model);
         } catch (Exception ex) {
             errors.Add(ex.Message);
         }
@@ -22,7 +22,7 @@ internal static class KintoneModelValidator {
 
         if (bulk != null) {
             try {
-                ValidateDuplicateKeyValues(bulk);
+                ValidateKeyValueUniqueness(bulk);
             } catch (Exception ex) {
                 errors.Add(ex.Message);
             }
@@ -30,7 +30,7 @@ internal static class KintoneModelValidator {
 
         return errors.Count == 0;
     }
-    public static void ValidateUpdateKeyIntegrity<T>(T model) where T : KintoneModelBase {
+    public static void ValidateKeyIntegrity<T>(T model) where T : KintoneModelBase<T>, new() {
         // 1. IsKey プロパティの重複チェック
         var keyProps = GetKeyProperties<T>();
 
@@ -53,7 +53,7 @@ internal static class KintoneModelValidator {
             );
         }
     }
-    public static void ValidateDuplicateKeyValues<T>(IList<T> models) where T : KintoneModelBase {
+    public static void ValidateKeyValueUniqueness<T>(IList<T> models) where T : KintoneModelBase<T>, new() {
         var keyProp = GetKeyProperties<T>().FirstOrDefault();
 
         if (keyProp == null) {
@@ -71,7 +71,7 @@ internal static class KintoneModelValidator {
             throw new InvalidOperationException($"同じキー値が複数存在します: {string.Join(", ", duplicateKeys)}");
         }
     }
-    public static void ValidateLinkFields<T>(T model) where T : KintoneModelBase {
+    public static void ValidateLinkFields<T>(T model) where T : KintoneModelBase<T>, new() {
         var props = typeof(T).GetProperties();
 
         foreach (var prop in props) {
@@ -107,7 +107,7 @@ internal static class KintoneModelValidator {
             }
         }
     }
-    public static void ValidateStructuredFields<T>(T model) where T : KintoneModelBase {
+    public static void ValidateStructuredFields<T>(T model) where T : KintoneModelBase<T>, new() {
         var props = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
         foreach (var prop in props) {

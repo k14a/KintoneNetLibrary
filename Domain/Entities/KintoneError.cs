@@ -1,4 +1,6 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
+using KintoneNetLibrary.Utils;
 
 namespace KintoneNetLibrary.Domain.Entities;
 
@@ -16,32 +18,31 @@ public class KintoneError {
     [JsonPropertyName("summary")]
     public string Summary { get; set; } = string.Empty;
     [JsonIgnore]
-    public bool HasDetails => Details is { Count: > 0 };
+    public bool HasDetails => this.Details is { Count: > 0 };
 
     public KintoneError() { }
     public KintoneError(string message) { this.Message = message; }
 
     public override string ToString() {
         var builder = new System.Text.StringBuilder();
-        builder.AppendLine($"[KintoneError] Code: {Code}, Message: {Message}");
-        if (!string.IsNullOrEmpty(Summary)) {
-            builder.AppendLine($"Summary: {Summary}");
-        }
-        if (!string.IsNullOrEmpty(ID)) {
-            builder.AppendLine($"ID: {ID}");
-        }
-        if (HasDetails) {
+        builder.AppendLine($"[KintoneError] Code: {this.Code}, Message: {this.Message}");
+        if (!string.IsNullOrEmpty(this.Summary)) { builder.AppendLine($"Summary: {this.Summary}"); }
+        if (!string.IsNullOrEmpty(this.ID)) { builder.AppendLine($"ID: {this.ID}"); }
+        if (this.HasDetails) {
             builder.AppendLine("Details:");
-            foreach (var detail in Details) {
+            foreach (var detail in this.Details) {
                 builder.AppendLine($"  - {detail}");
             }
         }
-        if (Errors != null) {
-            builder.AppendLine($"Errors: {Errors}");
-        }
+        if (this.Errors != null) { builder.AppendLine($"Errors: {this.Errors}"); }
 
         return builder.ToString();
     }
+    public string ToJson(bool indented = false) {
+        var options = JsonOptionsUtil.Clone(JsonSerializerOptions.Default, indented);
+        return JsonSerializer.Serialize(this, options);
+    }
+
 }
 
 public class KintoneErrorDetail {
@@ -51,6 +52,6 @@ public class KintoneErrorDetail {
     public IList<string> Messages { get; set; } = [];
 
     public override string ToString() {
-        return $"Index {Index}: {string.Join(", ", Messages)}";
+        return $"Index {this.Index}: {string.Join(", ", this.Messages)}";
     }
 }

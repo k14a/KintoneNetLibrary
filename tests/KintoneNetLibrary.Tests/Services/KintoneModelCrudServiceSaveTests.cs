@@ -207,7 +207,7 @@ public class KintoneModelCrudServiceSaveTests {
 
     #endregion
 }
-internal class SampleModel2 : KintoneModelBase {
+internal class SampleModel2 : KintoneModelBase<SampleModel2> {
     public override int AppID => 9999;
 
     [KintoneItem(isKey: true)]

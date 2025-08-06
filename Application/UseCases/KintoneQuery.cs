@@ -7,7 +7,7 @@ using KintoneNetLibrary.Infrastructure.Helpers;
 
 namespace KintoneNetLibrary.Application.UseCases;
 
-public partial class KintoneQuery<T> where T : KintoneModelBase {
+public partial class KintoneQuery<T> where T : KintoneModelBase<T>, new() {
     #region <<Private values>>
     private readonly List<string> _conditions = new List<string>();
     private readonly List<string> _orderBys = new();

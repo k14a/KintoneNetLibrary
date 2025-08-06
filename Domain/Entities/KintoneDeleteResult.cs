@@ -1,17 +1,20 @@
 using System.Text.Json;
 using System.Collections.Generic;
 using System.Linq;
+using KintoneNetLibrary.Domain.Interfaces;
+using KintoneNetLibrary.Utils;
+using KintoneNetLibrary.Domain.Common;
 
 namespace KintoneNetLibrary.Domain.Entities {
     public class KintoneDeleteResult {
         public IList<string> DeletedIDs { get; init; } = new List<string>();
-        public IList<KintoneDeleteFailure> FailedIDs { get; init; } = new List<KintoneDeleteFailure>();
+        public IList<KintoneDeleteFailure> FailedIDs { get; init; } = [];
 
-        public bool HasFailures => FailedIDs.Count > 0;
+        public bool HasFailures => this.FailedIDs.Count > 0;
 
         public void ThrowIfAnyFailed() {
-            if (HasFailures) {
-                throw new KintoneDeleteException(FailedIDs);
+            if (this.HasFailures) {
+                throw new KintoneDeleteException(this.FailedIDs);
             }
         }
 
@@ -103,9 +106,14 @@ namespace KintoneNetLibrary.Domain.Entities {
         DeleteError,
     }
 
-    public class KintoneDeleteFailure {
+    public class KintoneDeleteFailure : IJsonSerializable {
         public string ID { get; init; } = string.Empty;
         public string ErrorMessage { get; init; } = string.Empty;
         public KintoneDeleteFailureReason Reason { get; set; }
+
+        public string ToJson(bool indented = false) {
+            var options = JsonOptionsUtil.Clone(DefaultJsonOptions.Default, indented);
+            return JsonSerializer.Serialize(new { this.ID, this.ErrorMessage, this.Reason }, options);
+        }
     }
 }

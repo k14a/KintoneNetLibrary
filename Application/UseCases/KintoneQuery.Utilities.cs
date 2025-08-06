@@ -3,7 +3,7 @@ using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.Application.UseCases;
 
-public partial class KintoneQuery<T> where T : KintoneModelBase {
+public partial class KintoneQuery<T> where T : KintoneModelBase<T>, new() {
     #region <<Public method(s)>>
     // ソート条件の取得メソッド（ToStringやBuild内で使用）
     public KintoneQuery<T> Limit(int limit) {

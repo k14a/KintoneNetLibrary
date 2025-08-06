@@ -26,7 +26,7 @@ public static class KintoneTestHelper {
         return new KintoneApi(access, cfg.AppID, cli);
     }
 
-    public static async Task<IList<T>> CreateRecordsInChunksAsync<T>(KintoneApi api, IList<T> models) where T : KintoneModelBase, new() {
+    public static async Task<IList<T>> CreateRecordsInChunksAsync<T>(KintoneApi api, IList<T> models) where T : KintoneModelBase<T>, new() {
         var allCreated = new List<T>();
         foreach (var chunk in models.Chunk(KintoneConstants.KintoneLimit)) {
             var createJson = KintoneRequestBuilder.BuildCreateJson(chunk);
@@ -38,14 +38,14 @@ public static class KintoneTestHelper {
         return allCreated;
     }
 
-    public static async Task DeleteRecordsInChunksAsync<T>(KintoneApi api, IList<T> models) where T : KintoneModelBase {
+    public static async Task DeleteRecordsInChunksAsync<T>(KintoneApi api, IList<T> models) where T : KintoneModelBase<T>, new() {
         foreach (var chunk in models.Chunk(KintoneConstants.KintoneDeleteLimit)) {
             var deleteJson = KintoneRequestBuilder.BuildDeleteJson(chunk);
             var deleteResult = await api.DeleteAsync(deleteJson) ?? throw new InvalidOperationException("Delete failed on a chunk.");
         }
     }
 
-    public static async Task<IList<T>> WaitForExpectedRecordCountAsync<T>(KintoneApi api, string query, int expectedCount, int maxRetry = 6, int delayMilliseconds = 500) where T : KintoneModelBase, new() {
+    public static async Task<IList<T>> WaitForExpectedRecordCountAsync<T>(KintoneApi api, string query, int expectedCount, int maxRetry = 6, int delayMilliseconds = 500) where T : KintoneModelBase<T>, new() {
         for (int retry = 0; retry < maxRetry; retry++) {
             var foundJson = await api.FindByQueryAsync<T>(query);
             var foundRecords = KintoneResponseParser.ParseRecords<T>(foundJson);

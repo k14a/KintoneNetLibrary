@@ -3,7 +3,7 @@ using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.Application.UseCases;
 
-public partial class KintoneQuery<T> where T : KintoneModelBase {
+public partial class KintoneQuery<T> where T : KintoneModelBase<T>, new() {
     #region <<Public methods>>
     public KintoneQuery<T> Equal<TValue>(
     Expression<Func<T, TValue>> fieldSelector, TValue value) {

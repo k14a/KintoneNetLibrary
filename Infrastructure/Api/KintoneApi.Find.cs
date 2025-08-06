@@ -12,7 +12,7 @@ using KintoneNetLibrary.Domain.Common;
 namespace KintoneNetLibrary.Infrastructure.Api;
 
 public partial class KintoneApi {
-    public async Task<string?> FindByIDAsync<T>(string id) where T : KintoneModelBase, new() {
+    public async Task<string?> FindByIDAsync<T>(string id) where T : KintoneModelBase<T>, new() {
         if (string.IsNullOrWhiteSpace(id)) { throw new ArgumentNullException(nameof(id)); }
 
         // var appID = new T().AppID;
@@ -32,7 +32,7 @@ public partial class KintoneApi {
         return json;
     }
     // IDリストで複数レコードを取得
-    public async Task<string?> FindByIDsAsync<T>(IList<string> ids, IList<string>? fieldCodes = null) where T : KintoneModelBase, new() {
+    public async Task<string?> FindByIDsAsync<T>(IList<string> ids, IList<string>? fieldCodes = null) where T : KintoneModelBase<T>, new() {
         if (ids == null || ids.Count == 0) {
             throw new ArgumentNullException(nameof(ids));
         }
@@ -63,32 +63,32 @@ public partial class KintoneApi {
 
         } else {
             var query = new KintoneQuery<T>().WhereIdIn(ids);
-            return await FindBaseJsonAsync(query, skipThresholdCheck: true);
+            return await this.FindBaseJsonAsync(query, forceCursor: true);
         }
     }
 
     // 全レコード取得（条件なし）
-    public async Task<string?> FindAllAsync<T>() where T : KintoneModelBase, new() {
+    public async Task<string?> FindAllAsync<T>(IList<string>? fieldCodes = null) where T : KintoneModelBase<T>, new() {
         var query = new KintoneQuery<T>();
-        return await FindBaseJsonAsync(query);
+        return await this.FindBaseJsonAsync(query, fieldCodes: fieldCodes);
     }
 
     // フィールドと値で検索
-    public async Task<string?> FindByFieldAsync<T>(string field, string value) where T : KintoneModelBase, new() {
+    public async Task<string?> FindByFieldAsync<T>(string field, string value) where T : KintoneModelBase<T>, new() {
         var query = new KintoneQuery<T>().WhereEquals(field, value);
-        return await FindBaseJsonAsync(query);
+        return await this.FindBaseJsonAsync(query);
     }
 
     // 任意のkintoneクエリ文字列で検索
-    public async Task<string?> FindByQueryAsync<T>(string queryStr) where T : KintoneModelBase, new() {
-        KintoneQueryValidator.ValidateLikeClause(queryStr, msg => _logger?.LogWarning(msg));
+    public async Task<string?> FindByQueryAsync<T>(string queryStr) where T : KintoneModelBase<T>, new() {
+        KintoneQueryValidator.ValidateLikeClause(queryStr, msg => this._logger?.LogWarning(msg));
         var query = new KintoneQuery<T>().SetQuery(queryStr);
-        return await FindBaseJsonAsync(query);
+        return await this.FindBaseJsonAsync(query);
     }
 
     // 内部的な共通検索処理
-    private async Task<string?> FindBaseJsonAsync<T>(KintoneQuery<T> query, bool skipThresholdCheck = false) where T : KintoneModelBase, new() {
-        if (!skipThresholdCheck) {
+    private async Task<string?> FindBaseJsonAsync<T>(KintoneQuery<T> query, IList<string>? fieldCodes = null, bool forceCursor = false) where T : KintoneModelBase<T>, new() {
+        if (!forceCursor) {
             // 1) 件数取得（limit=1 で totalCount を得る）
             var queryText = query.Build();
             var countUri = KintoneRequestBuilder.BuildRequestUri(
@@ -96,6 +96,7 @@ public partial class KintoneApi {
                 KintoneApiEndpoints.GetRecords,
                 this._appID,
                 queryText,
+                fieldCodes,
                 new Dictionary<string, string> {
                     { "totalCount", "true" },
                     { "limit", "1" },
@@ -111,7 +112,7 @@ public partial class KintoneApi {
                 throw new KintoneException(KintoneErrorConverter.Parse(countJson));
             }
 
-            var countResult = JsonSerializer.Deserialize<RecordCountResponse>(countJson, _jsonOptions) ?? new RecordCountResponse();
+            var countResult = JsonSerializer.Deserialize<RecordCountResponse>(countJson, this._jsonOptions) ?? new RecordCountResponse();
 
             // 実データ件数がKintoneの制限（通常100件）を超える場合はカーソル API に切り替える
             if (countResult.TotalCount > KintoneLimit) {
@@ -140,7 +141,7 @@ public partial class KintoneApi {
     }
 
     /* ---------- カーソル API を使って最後まで取得 ---------- */
-    private async Task<string> CursorFetchAllJsonAsync<T>(string query) where T : KintoneModelBase, new() {
+    private async Task<string> CursorFetchAllJsonAsync<T>(string query) where T : KintoneModelBase<T>, new() {
         var cursorRequest = new Dictionary<string, object> {
             ["app"] = this._appID,
             ["fields"] = typeof(T).GetKintoneFieldCodes(),
@@ -162,7 +163,7 @@ public partial class KintoneApi {
             }
         }
 
-        return JsonSerializer.Serialize(new { records = allRecords }, _jsonOptions);
+        return JsonSerializer.Serialize(new { records = allRecords }, this._jsonOptions);
     }
 
     /* ---------- 件数取得用 DTO ---------- */

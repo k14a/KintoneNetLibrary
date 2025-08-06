@@ -3,7 +3,7 @@ using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.Application.UseCases;
 
-public partial class KintoneQuery<T> where T : KintoneModelBase {
+public partial class KintoneQuery<T> where T : KintoneModelBase<T>, new() {
     #region <<Public methods>>
     // OrderBy は最初のソート条件としてリストに追加
     public KintoneQuery<T> OrderBy(Expression<Func<T, object>> keySelector) {

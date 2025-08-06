@@ -4,7 +4,7 @@ using KintoneNetLibrary.Infrastructure.Helpers;
 
 namespace KintoneNetLibrary.Application.UseCases;
 
-public partial class KintoneQuery<T> where T : KintoneModelBase {
+public partial class KintoneQuery<T> where T : KintoneModelBase<T>, new() {
     #region <<Public methods>>
     public KintoneQuery<T> Where(Expression<Func<T, bool>> predicate) {
         this.AddCondition(predicate);

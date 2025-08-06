@@ -5,7 +5,7 @@ using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.Infrastructure.Converters;
 
-public class KintoneRecordConverter<T> : JsonConverter<T> where T : KintoneModelBase, new() {
+public class KintoneRecordConverter<T> : JsonConverter<T> where T : KintoneModelBase<T>, new() {
     public override T? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
         using var jsonDoc = JsonDocument.ParseValue(ref reader);
         var root = jsonDoc.RootElement;
@@ -61,9 +61,9 @@ public class KintoneRecordConverter<T> : JsonConverter<T> where T : KintoneModel
     }
 }
 
-public class KintoneRecordConverterFactory : JsonConverterFactory {
+public class KintoneRecordConverterFactory<T> : JsonConverterFactory where T : KintoneModelBase<T>, new() {
     public override bool CanConvert(Type typeToConvert) {
-        return typeof(KintoneModelBase).IsAssignableFrom(typeToConvert);
+        return typeof(T).IsAssignableFrom(typeToConvert);
     }
     public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options) {
         var converterType = typeof(KintoneRecordConverter<>).MakeGenericType(typeToConvert);

@@ -15,7 +15,7 @@ public class KintoneApiFactory : IKintoneApiFactory {
         this._logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public KintoneApi Create(KintoneModelBase model) {
+    public KintoneApi Create<T>(T model) where T : KintoneModelBase<T>, new() {
         return new KintoneApi(model.Access, model.AppID, _httpClient, _logger);
     }
 }

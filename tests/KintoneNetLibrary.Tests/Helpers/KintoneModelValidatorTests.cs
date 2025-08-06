@@ -8,24 +8,24 @@ namespace KintoneNetLibrary.Tests.Helpers;
 
 public class KintoneModelValidatorTests {
     #region <<Test classes>>
-    public class FakeModelWithMultipleKeys : KintoneModelBase {
+    public class FakeModelWithMultipleKeys : KintoneModelBase<FakeModelWithMultipleKeys> {
         public override int AppID => 8888;
         [KintoneItem(IsKey = true)]
         public string CodeA { get; set; } = "A001";
         [KintoneItem(IsKey = true)]
         public string CodeB { get; set; } = "B001";
     }
-    public class FakeModelWithMissingKey : KintoneModelBase {
+    public class FakeModelWithMissingKey : KintoneModelBase<FakeModelWithMissingKey> {
         public override int AppID => 7777;
         [KintoneItem(IsKey = true)]
         public string? KeyCode { get; set; } = null;
     }
-    public class FakeModelWithKey : KintoneModelBase {
+    public class FakeModelWithKey : KintoneModelBase<FakeModelWithKey> {
         public override int AppID => 6666;
         [KintoneItem(IsKey = true)]
         public string? Code { get; set; }
     }
-    public class FakeModelWithLinks : KintoneModelBase {
+    public class FakeModelWithLinks : KintoneModelBase<FakeModelWithLinks> {
         public override int AppID => 5555;
         [KintoneItem(FieldType = KintoneFieldType.LinkUrl)]
         public string? Website { get; set; }
@@ -40,17 +40,17 @@ public class KintoneModelValidatorTests {
         [KintoneItem(FieldCode = "Text")]
         public string Text { get; set; } = string.Empty;
     }
-    public class FakeModelWithInvalidSubTable : KintoneModelBase {
+    public class FakeModelWithInvalidSubTable : KintoneModelBase<FakeModelWithInvalidSubTable> {
         public override int AppID => 5555;
         [KintoneItem(fieldType: KintoneFieldType.SubTable)]
         public string NotAList { get; set; } = "invalid";
     }
-    public class FakeModelWithValidSubTable : KintoneModelBase {
+    public class FakeModelWithValidSubTable : KintoneModelBase<FakeModelWithValidSubTable> {
         public override int AppID => 5555;
         [KintoneItem(fieldType: KintoneFieldType.SubTable)]
         public List<FakeSubRow> SubRows { get; set; } = [];
     }
-    public class FakeModelWithStructuredFields : KintoneModelBase {
+    public class FakeModelWithStructuredFields : KintoneModelBase<FakeModelWithStructuredFields> {
         public override int AppID => 4444;
         [KintoneItem(FieldType = KintoneFieldType.File)]
         public object? AttachedFiles { get; set; }
@@ -64,7 +64,7 @@ public class KintoneModelValidatorTests {
         [KintoneItem(FieldType = KintoneFieldType.Category)]
         public IList<string>? CategoryValues { get; set; } = [];
     }
-    public class CompositeTestModel : KintoneModelBase {
+    public class CompositeTestModel : KintoneModelBase<CompositeTestModel> {
         public override int AppID => 3333;
         [KintoneItem(IsKey = true)]
         public string? KeyCode { get; set; }
@@ -79,7 +79,7 @@ public class KintoneModelValidatorTests {
     public void ValidateUniqueKeyProperty_WhenMultipleKeysExist_ThrowsException() {
         var model = new FakeModelWithMultipleKeys();
 
-        var ex = Assert.Throws<InvalidOperationException>(() => KintoneModelValidator.ValidateUpdateKeyIntegrity(model));
+        var ex = Assert.Throws<InvalidOperationException>(() => KintoneModelValidator.ValidateKeyIntegrity(model));
 
         Assert.Contains("IsKey が複数", ex.Message);
         Assert.Contains("CodeA", ex.Message);
@@ -89,14 +89,14 @@ public class KintoneModelValidatorTests {
     public void ValidateUpdateKey_WhenKeyPropertyIsNullOrEmpty_ThrowsException() {
         var model = new FakeModelWithMissingKey(); // KeyCode は null
 
-        var ex = Assert.Throws<InvalidOperationException>(() => KintoneModelValidator.ValidateUpdateKeyIntegrity(model));
+        var ex = Assert.Throws<InvalidOperationException>(() => KintoneModelValidator.ValidateKeyIntegrity(model));
 
         Assert.Contains("KeyCode", ex.Message);
         Assert.Contains("値が未設定", ex.Message);
 
         // 空文字列でも例外になることを確認
         model.KeyCode = "";
-        var ex2 = Assert.Throws<InvalidOperationException>(() => KintoneModelValidator.ValidateUpdateKeyIntegrity(model));
+        var ex2 = Assert.Throws<InvalidOperationException>(() => KintoneModelValidator.ValidateKeyIntegrity(model));
 
         Assert.Contains("KeyCode", ex2.Message);
     }
@@ -109,7 +109,7 @@ public class KintoneModelValidatorTests {
         };
 
         var ex = Assert.Throws<InvalidOperationException>(() =>
-            KintoneModelValidator.ValidateDuplicateKeyValues(models)
+            KintoneModelValidator.ValidateKeyValueUniqueness(models)
         );
 
         Assert.Contains("同じキー値が複数", ex.Message);

@@ -15,7 +15,7 @@ public static class KintoneResponseParser {
     /// <summary>
     /// CreateRecordsAsync などのレスポンス JSON を元に、作成結果を元のモデルに反映する
     /// </summary>
-    public static IList<T> ParseCreatedRecords<T>(IList<T> originalRecords, string responseJson) where T : KintoneModelBase, new() {
+    public static IList<T> ParseCreatedRecords<T>(IList<T> originalRecords, string responseJson) where T : KintoneModelBase<T>, new() {
         var indexes = KintoneRecordIndexesResponse.Parse(responseJson).ToIndexes();
 
         // var originals = originalRecords.ToList();
@@ -32,7 +32,7 @@ public static class KintoneResponseParser {
 
         return originalRecords;
     }
-    public static T ParseRecord<T>(string json) where T : KintoneModelBase, new() {
+    public static T ParseRecord<T>(string json) where T : KintoneModelBase<T>, new() {
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
 
@@ -44,7 +44,7 @@ public static class KintoneResponseParser {
         return JsonSerializer.Deserialize<T>(modelJson, KintoneJsonOptions.Default)!;
 
     }
-    public static IList<T> ParseRecords<T>(string json) where T : KintoneModelBase, new() {
+    public static IList<T> ParseRecords<T>(string json) where T : KintoneModelBase<T>, new() {
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
 

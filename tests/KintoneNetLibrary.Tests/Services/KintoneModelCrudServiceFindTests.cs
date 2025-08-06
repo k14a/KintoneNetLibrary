@@ -219,7 +219,7 @@ public class KintoneModelCrudServiceFindTests {
 
         var mockRepo = new Mock<IKintoneRepository>();
         mockRepo
-            .Setup(r => r.FindAllAsync<SampleModel3>(It.IsAny<SampleModel3>()))
+            .Setup(r => r.FindAllAsync<SampleModel3>(It.IsAny<SampleModel3>(), It.IsAny<IList<string>?>()))
             .ReturnsAsync(allRecordsJson);
 
         var service = new KintoneModelCrudService(
@@ -316,7 +316,7 @@ public class KintoneModelCrudServiceFindTests {
     #endregion
 }
 
-internal class SampleModel3 : KintoneModelBase {
+internal class SampleModel3 : KintoneModelBase<SampleModel3> {
     public override int AppID => 7778;
     public override KintoneAccessBase? Access { get; set; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
 

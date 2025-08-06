@@ -8,7 +8,7 @@ using FluentAssertions;
 namespace KintoneNetLibrary.Tests.Helpers.Queries;
 
 public class KintoneQueryValidatorTests {
-    private class SampleModel : KintoneModelBase {
+    private class SampleModel : KintoneModelBase<SampleModel> {
         public override int AppID => TestEnv.Settings.AppID;
 
         [KintoneItem(fieldCode: "UUID")]

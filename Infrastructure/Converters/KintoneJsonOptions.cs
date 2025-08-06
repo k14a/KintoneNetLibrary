@@ -1,4 +1,5 @@
 using System.Text.Json;
+using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.Infrastructure.Converters;
 
@@ -10,7 +11,7 @@ public static class KintoneJsonOptions {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase, // 必要に応じて調整
             WriteIndented = false
         };
-        _defaultOptions.Converters.Add(new KintoneRecordConverterFactory());
+        // _defaultOptions.Converters.Add(new KintoneRecordConverterFactory<T>());
         _defaultOptions.Converters.Add(new TimeOnlyJsonConverter());
     }
 
@@ -21,7 +22,7 @@ public static class KintoneJsonOptions {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             WriteIndented = false
         };
-        options.Converters.Add(new KintoneRecordConverterFactory());
+        // options.Converters.Add(new KintoneRecordConverterFactory<T>());
         return options;
     }
 }

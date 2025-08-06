@@ -1,8 +1,9 @@
 using System.Linq.Expressions;
+using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.Application.UseCases;
 
-public partial class KintoneQuery<T> {
+public partial class KintoneQuery<T> where T : KintoneModelBase<T>, new() {
     #region <<Public methods>>
     public KintoneQuery<T> Between(string field, object from, object to) =>
         AddBetweenCondition(field, from, to, inclusiveLower: true, inclusiveUpper: true);

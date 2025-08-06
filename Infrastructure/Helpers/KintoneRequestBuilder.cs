@@ -13,7 +13,7 @@ public static class KintoneRequestBuilder {
     /// <summary>
     /// Kintone レコード登録（複数）の JSON を構築
     /// </summary>
-    public static string BuildCreateJson<T>(IEnumerable<T> records) where T : KintoneModelBase {
+    public static string BuildCreateJson<T>(IEnumerable<T> records) where T : KintoneModelBase<T>, new() {
         var list = records.ToList();
         if (list.Count == 0) {
             throw new ArgumentException("レコードが空です", nameof(records));
@@ -31,7 +31,7 @@ public static class KintoneRequestBuilder {
     /// <summary>
     /// Kintone レコード更新（複数）の JSON を構築
     /// </summary>
-    public static string BuildUpdateJson<T>(IList<T> models) where T : KintoneModelBase {
+    public static string BuildUpdateJson<T>(IList<T> models) where T : KintoneModelBase<T>, new() {
         if (models is null || models.Count == 0) {
             throw new ArgumentException("Models list is null or empty.", nameof(models));
         }
@@ -73,7 +73,7 @@ public static class KintoneRequestBuilder {
     /// <summary>
     /// Kintone レコード削除（複数）の JSON を構築
     /// </summary>
-    public static string BuildDeleteJson<T>(IEnumerable<T> models) where T : KintoneModelBase {
+    public static string BuildDeleteJson<T>(IEnumerable<T> models) where T : KintoneModelBase<T>, new() {
         var modelList = models.ToList();
         if (modelList.Count == 0) {
             throw new ArgumentException("Model list is empty", nameof(models));
@@ -92,7 +92,14 @@ public static class KintoneRequestBuilder {
 
         return JsonSerializer.Serialize(deleteBody, _jsonOptions);
     }
-    public static Uri BuildRequestUri(Uri baseUri, string path, int appID, string? query = null, IDictionary<string, string>? additionalParams = null) {
+    public static Uri BuildRequestUri(
+        Uri baseUri,
+        string path,
+        int appID,
+        string? query = null,
+        IList<string>? fieldCodes = null,
+        IDictionary<string, string>? additionalParams = null
+        ) {
 
         var builder = new UriBuilder(new Uri(baseUri, path));
         var parameters = new List<string> {
@@ -103,6 +110,12 @@ public static class KintoneRequestBuilder {
             parameters.Add($"query={Uri.EscapeDataString(query)}");
         }
 
+        if (fieldCodes is { Count: > 0 }) {
+            var effectiveFields = EnsureMinimumFields(fieldCodes);
+            for (int i = 0; i < effectiveFields.Count; i++) {
+                parameters.Add($"fields[{i}]={Uri.EscapeDataString(effectiveFields[i])}");
+            }
+        }
         if (additionalParams != null) {
             foreach (var kvp in additionalParams) {
                 parameters.Add($"{kvp.Key}={Uri.EscapeDataString(kvp.Value)}");

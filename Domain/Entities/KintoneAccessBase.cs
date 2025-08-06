@@ -14,7 +14,7 @@ public abstract class KintoneAccessBase {
     // /// </summary>
     // public virtual int AppID => ToKintoneAccount().GuestSpaceId == 0 ? ExtractAppID() : ExtractGuestAppID();
     // public virtual int AppID { get; set; }
-    public virtual string Domain { get; set; }
+    public virtual string Domain { get; set; } = string.Empty;
     public virtual string BasicAuthUser { get; set; } = string.Empty;
     public virtual string BasicAuthPassword { get; set; } = string.Empty;
     public virtual string ApiToken { get; set; } = string.Empty;

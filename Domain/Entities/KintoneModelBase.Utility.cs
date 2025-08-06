@@ -2,7 +2,7 @@ using System.Reflection;
 
 namespace KintoneNetLibrary.Domain.Entities;
 
-public abstract partial class KintoneModelBase : KintoneModelHookBase {
+public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase where TSelf : KintoneModelBase<TSelf>, new() {
     // ----- 判定・ユーティリティ -----
     public virtual bool HasUpdateKeyOrID() {
         if (!string.IsNullOrEmpty(ID)) {

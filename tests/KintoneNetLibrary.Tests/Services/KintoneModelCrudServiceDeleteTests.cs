@@ -38,7 +38,7 @@ public class KintoneModelCrudServiceDeleteTests {
         Assert.Empty(result.FailedIDs);
 
         // Hookや削除処理は呼ばれない
-        mockRepo.Verify(x => x.DeleteRecordsAsync(It.IsAny<IList<KintoneModelBase>>()), Times.Never);
+        mockRepo.Verify(x => x.DeleteRecordsAsync(It.IsAny<IList<SampleModel>>()), Times.Never);
         loggerMock.Verify(x => x.Log(
             LogLevel.Information,
             It.IsAny<EventId>(),
@@ -64,7 +64,7 @@ public class KintoneModelCrudServiceDeleteTests {
         var models = new List<SampleModel> { model };
 
         mockRepo
-            .Setup(x => x.DeleteRecordsAsync(It.IsAny<IList<KintoneModelBase>>()))
+            .Setup(x => x.DeleteRecordsAsync(It.IsAny<IList<SampleModel>>()))
             .ReturnsAsync("");
 
         var service = new KintoneModelCrudService(

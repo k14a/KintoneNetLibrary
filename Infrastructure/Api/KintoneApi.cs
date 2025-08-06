@@ -130,7 +130,7 @@ public partial class KintoneApi {
     /// <typeparam name="T"></typeparam>
     /// <returns>AppID</returns>
     /// <exception cref="InvalidOperationException"></exception>
-    protected int GetAppID<T>() where T : KintoneModelBase, new() {
+    protected int GetAppID<T>() where T : KintoneModelBase<T>, new() {
         var attr = typeof(T).GetCustomAttribute<KintoneItemAttribute>() ?? throw new InvalidOperationException($"KintoneItemAttribute is not defined on type {typeof(T).FullName}.");
         // return new T().AppID;
         return this._appID;

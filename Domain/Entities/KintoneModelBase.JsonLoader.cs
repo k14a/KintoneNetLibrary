@@ -5,7 +5,7 @@ using KintoneNetLibrary.Infrastructure.Converters;
 
 namespace KintoneNetLibrary.Domain.Entities;
 
-public abstract partial class KintoneModelBase : KintoneModelHookBase {
+public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase where TSelf : KintoneModelBase<TSelf>, new() {
     public void LoadFromJsonDictionary(Dictionary<string, JsonElement> fieldMap) {
         // 特殊フィールド '$id' → RecordID にセット
         if (fieldMap.TryGetValue("$id", out var idElement)) {

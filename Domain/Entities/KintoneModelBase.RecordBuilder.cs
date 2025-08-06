@@ -3,7 +3,7 @@ using KintoneNetLibrary.Domain.Interfaces;
 
 namespace KintoneNetLibrary.Domain.Entities;
 
-public abstract partial class KintoneModelBase : KintoneModelHookBase {
+public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase where TSelf : KintoneModelBase<TSelf>, new() {
     // ----- レコード生成処理 -----
     /// <summary>
     /// Kintoneに送信するためのJSONレコード形式に変換する

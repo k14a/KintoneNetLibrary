@@ -11,7 +11,7 @@ using Microsoft.Extensions.Options;
 
 namespace KintoneNetLibrary.Application.UseCases.Services;
 
-public class KintoneModelCrudService {
+public class KintoneModelCrudService : IKintoneModelCrudService {
     private readonly IKintoneRepository _repository;
     private readonly ILogger<KintoneModelCrudService>? _logger;
     private readonly JsonSerializerOptions _jsonOptions;
@@ -29,7 +29,7 @@ public class KintoneModelCrudService {
         this._logger = logger;
     }
 
-    public async Task<KintoneWriteResult<T>> CreateAsync<T>(IList<T> records, bool enableSingleRetryOnError = false) where T : KintoneModelBase, new() {
+    public async Task<KintoneWriteResult<T>> CreateAsync<T>(IList<T> records, bool enableSingleRetryOnError = false) where T : KintoneModelBase<T>, new() {
         try {
             this._logger?.LogInformation("CreateAsync() - Start");
 
@@ -60,7 +60,7 @@ public class KintoneModelCrudService {
         }
     }
 
-    private async Task<KintoneWriteResult<T>> CreateChunkAsync<T>(IList<T> chunk, bool enableSingleRetryOnError) where T : KintoneModelBase, new() {
+    private async Task<KintoneWriteResult<T>> CreateChunkAsync<T>(IList<T> chunk, bool enableSingleRetryOnError) where T : KintoneModelBase<T>, new() {
         var result = new KintoneWriteResult<T>();
 
         try {
@@ -113,7 +113,7 @@ public class KintoneModelCrudService {
         return result;
     }
 
-    public async Task<IEnumerable<T>> FindAsync<T>(IList<string>? ids = null, string? query = null, IList<string>? fieldCodes = null) where T : KintoneModelBase, new() {
+    public async Task<IEnumerable<T>> FindAsync<T>(IList<string>? ids = null, string? query = null, IList<string>? fieldCodes = null) where T : KintoneModelBase<T>, new() {
         try {
             this._logger?.LogInformation("FindAsync() - Start");
 
@@ -145,7 +145,7 @@ public class KintoneModelCrudService {
 
             } else {
                 // 全件取得
-                var json = await this._repository.FindAllAsync<T>(model);
+                var json = await this._repository.FindAllAsync<T>(model, fieldCodes);
                 if (string.IsNullOrEmpty(json)) { return []; }
 
                 var records = KintoneResponseParser.ParseRecords<T>(json);
@@ -164,7 +164,7 @@ public class KintoneModelCrudService {
             this._logger?.LogInformation("FindAsync() - Finish");
         }
     }
-    public async Task<KintoneWriteResult<T>> UpdateAsync<T>(IList<T> records, bool enableSingleRetryOnError = false) where T : KintoneModelBase, new() {
+    public async Task<KintoneWriteResult<T>> UpdateAsync<T>(IList<T> records, bool enableSingleRetryOnError = false) where T : KintoneModelBase<T>, new() {
         try {
             this._logger?.LogInformation("UpdateAsync() - Start");
 
@@ -192,7 +192,7 @@ public class KintoneModelCrudService {
             this._logger?.LogInformation("UpdateAsync() - Finish");
         }
     }
-    private async Task<KintoneWriteResult<T>> UpdateChunkAsync<T>(IList<T> chunk, bool enableSingleRetryOnError) where T : KintoneModelBase, new() {
+    private async Task<KintoneWriteResult<T>> UpdateChunkAsync<T>(IList<T> chunk, bool enableSingleRetryOnError) where T : KintoneModelBase<T>, new() {
         var result = new KintoneWriteResult<T>();
 
         try {
@@ -233,7 +233,7 @@ public class KintoneModelCrudService {
 
         return result;
     }
-    public async Task<KintoneDeleteResult> DeleteAsync<T>(IList<T> models, bool validateExistence = true) where T : KintoneModelBase, new() {
+    public async Task<KintoneDeleteResult> DeleteAsync<T>(IList<T> models, bool validateExistence = true) where T : KintoneModelBase<T>, new() {
         try {
             this._logger?.LogInformation("DeleteAsync() - Start");
 
@@ -274,7 +274,7 @@ public class KintoneModelCrudService {
             this._logger?.LogInformation("DeleteAsync() - Finish");
         }
     }
-    private async Task<KintoneDeleteResult> DeleteChunkAsync<T>(IList<T> chunk) where T : KintoneModelBase {
+    private async Task<KintoneDeleteResult> DeleteChunkAsync<T>(IList<T> chunk) where T : KintoneModelBase<T>, new() {
         var result = new KintoneDeleteResult();
         var idList = chunk.Select(m => m.RecordID).Where(id => !string.IsNullOrWhiteSpace(id)).Select(id => id!).ToList();
 
@@ -299,11 +299,11 @@ public class KintoneModelCrudService {
 
         return result;
     }
-    private async Task<IList<T>> PrepareValidatedTargets<T>(IList<T> models) where T : KintoneModelBase, new() {
+    private async Task<IList<T>> PrepareValidatedTargets<T>(IList<T> models) where T : KintoneModelBase<T>, new() {
         var ids = models.Select(x => x.RecordID).ToList();
         return (await FindAsync<T>(ids, fieldCodes: ["RecordID"])).ToList();
     }
-    private List<KintoneDeleteFailure> CollectNotFoundFailures<T>(IList<T> original, IList<T> found) where T : KintoneModelBase {
+    private List<KintoneDeleteFailure> CollectNotFoundFailures<T>(IList<T> original, IList<T> found) where T : KintoneModelBase<T>, new() {
         var foundIds = found.Select(x => x.RecordID).ToHashSet();
         return original
             .Where(x => !foundIds.Contains(x.RecordID))
@@ -313,7 +313,7 @@ public class KintoneModelCrudService {
                 Reason = KintoneDeleteFailureReason.RecordNotFound
             }).ToList();
     }
-    public async Task<KintoneWriteResult<T>> SaveAsync<T>(IList<T> records, bool enableSingleRetryOnError = false) where T : KintoneModelBase, new() {
+    public async Task<KintoneWriteResult<T>> SaveAsync<T>(IList<T> records, bool enableSingleRetryOnError = false) where T : KintoneModelBase<T>, new() {
         try {
             this._logger?.LogInformation("SaveAsync() - Start");
 
@@ -339,7 +339,7 @@ public class KintoneModelCrudService {
             this._logger?.LogInformation("SaveAsync() - Finish");
         }
     }
-    public async Task<KintoneWriteResult<T>> SaveWithRetryAsync<T>(IList<T> records, bool enableSingleRetryOnError = false, bool enableCreateToUpdateRetry = true) where T : KintoneModelBase, new() {
+    public async Task<KintoneWriteResult<T>> SaveWithRetryAsync<T>(IList<T> records, bool enableSingleRetryOnError = false, bool enableCreateToUpdateRetry = true) where T : KintoneModelBase<T>, new() {
         try {
             this._logger?.LogInformation("SaveWithRetryAsync() - Start");
 
@@ -392,7 +392,7 @@ public class KintoneModelCrudService {
             this._logger?.LogInformation("SaveWithRetryAsync() - Finish");
         }
     }
-    private static IList<T> ParseUpdatedRecords<T>(IList<T> records, string responseJson) where T : KintoneModelBase, new() {
+    private static IList<T> ParseUpdatedRecords<T>(IList<T> records, string responseJson) where T : KintoneModelBase<T>, new() {
         var indexResponse = KintoneRecordIndexesResponse.Parse(responseJson);
         var indexes = indexResponse.ToIndexes();
 
@@ -408,7 +408,7 @@ public class KintoneModelCrudService {
 
         return result;
     }
-    private static (List<T> createTargets, List<T> updateTargets) SplitRecords<T>(IList<T> records) where T : KintoneModelBase {
+    private static (List<T> createTargets, List<T> updateTargets) SplitRecords<T>(IList<T> records) where T : KintoneModelBase<T>, new() {
         var createTargets = new List<T>();
         var updateTargets = new List<T>();
 

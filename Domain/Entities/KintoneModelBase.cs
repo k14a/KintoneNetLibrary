@@ -10,7 +10,7 @@ namespace KintoneNetLibrary.Domain.Entities;
 /// Kintone アプリのレコードに対応する抽象基底モデル。
 /// 継承して具体モデル（例: BookModel）を作成してください。
 /// </summary>
-public abstract partial class KintoneModelBase : KintoneModelHookBase {
+public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase where TSelf : KintoneModelBase<TSelf>, new() {
     // ----- 必須情報 -----
 
     /// <summary>接続情報（APIトークン・パスワード認証など）</summary>
@@ -21,8 +21,7 @@ public abstract partial class KintoneModelBase : KintoneModelHookBase {
     [JsonIgnore]
     public KintoneAccount? Account => Access?.ToKintoneAccount();
 
-    /// <summary>AppID（Access に委譲）</summary>
-    // public int AppID => Access?.AppID ?? throw new InvalidOperationException("Access が未設定のため AppID を取得できません");
+    /// <summary>AppID</summary>
     public abstract int AppID { get; }
 
     // ----- 共通フィールド -----

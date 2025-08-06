@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace KintoneNetLibrary.Domain.Entities;
 
-public class KintoneRecordResponse<T> where T : KintoneModelBase, new() {
+public class KintoneRecordResponse<T> where T : KintoneModelBase<T>, new() {
     [JsonPropertyName("record")]
     public T Record { get; set; } = default!;
     [JsonPropertyName("revision")]

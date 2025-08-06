@@ -37,7 +37,7 @@ public partial class KintoneApi {
     /*==========================================================
       Update – 複数レコード一括更新
       ==========================================================*/
-    public async Task<string> UpdateAsync<T>(string json) where T : KintoneModelBase {
+    public async Task<string> UpdateAsync<T>(string json) where T : KintoneModelBase<T>, new() {
         if (string.IsNullOrWhiteSpace(json)) {
             throw new ArgumentException("更新対象JSONが空です", nameof(json));
         }
