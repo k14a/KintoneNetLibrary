@@ -34,8 +34,8 @@ public class KintoneModelCrudServiceDeleteTests {
         var result = await service.DeleteAsync<SampleModel>([]);
 
         // Assert
-        Assert.Empty(result.DeletedIDs);
-        Assert.Empty(result.FailedIDs);
+        Assert.Empty(result.Succeeded);
+        Assert.Empty(result.Failed);
 
         // Hookや削除処理は呼ばれない
         mockRepo.Verify(x => x.DeleteRecordsAsync(It.IsAny<IList<SampleModel>>()), Times.Never);
@@ -78,9 +78,9 @@ public class KintoneModelCrudServiceDeleteTests {
         var result = await service.DeleteAsync(models, false);
 
         // Assert
-        Assert.Single(result.DeletedIDs);
-        Assert.Contains("123", result.DeletedIDs);
-        Assert.Empty(result.FailedIDs);
+        Assert.Single(result.Succeeded);
+        Assert.Contains("123", result.Succeeded);
+        Assert.Empty(result.Failed);
 
         mockRepo.Verify(x => x.DeleteRecordsAsync<SampleModel>(
             It.Is<IList<SampleModel>>(list => list.Count == 1 && list[0].RecordID == "123")
@@ -181,8 +181,8 @@ public class KintoneModelCrudServiceDeleteTests {
 
         // Act & Assert
         var result = await service.DeleteAsync(models);
-        Assert.Empty(result.DeletedIDs);
-        Assert.Single(result.FailedIDs);
+        Assert.Empty(result.Succeeded);
+        Assert.Single(result.Failed);
         Assert.True(result.HasFailures);
     }
     [Fact]
@@ -239,13 +239,13 @@ public class KintoneModelCrudServiceDeleteTests {
         var result = await service.DeleteAsync(models);
 
         // Assert
-        Assert.Equal(2, result.DeletedIDs.Count);
-        Assert.Contains(validId1, result.DeletedIDs);
-        Assert.Contains(validId2, result.DeletedIDs);
+        Assert.Equal(2, result.Succeeded.Count);
+        Assert.Contains(validId1, result.Succeeded);
+        Assert.Contains(validId2, result.Succeeded);
 
-        Assert.Single(result.FailedIDs);
-        Assert.Equal(invalidId, result.FailedIDs[0].ID);
-        Assert.Equal("Record is not found.", result.FailedIDs[0].ErrorMessage);
+        Assert.Single(result.Failed);
+        Assert.Equal(invalidId, result.Failed[0].ID);
+        Assert.Equal("Record is not found.", result.Failed[0].ErrorMessage);
 
         Assert.True(result.HasFailures);
     }

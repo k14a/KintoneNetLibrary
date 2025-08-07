@@ -376,10 +376,7 @@ public class KintoneModelCrudServiceCreateTests {
 }
 internal class SampleModel : KintoneModelBase<SampleModel> {
     public override int AppID => 8888;
-    public override KintoneAccessBase? Access {
-        get => this.Access;
-        set => new ApiTokenAccess("dummyDomain", "dummyApiToken");
-    }
+    public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("dummyDomain", "dummyApiToken");
 
     [KintoneItem(fieldCode: "FieldA", fieldType: KintoneFieldType.SingleLineText)]
     public string FieldA { get; set; } = string.Empty;

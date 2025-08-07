@@ -210,10 +210,7 @@ public class KintoneModelCrudServiceSaveTests {
 }
 internal class SampleModel2 : KintoneModelBase<SampleModel2> {
     public override int AppID => 9999;
-    public override KintoneAccessBase? Access {
-        get => this.Access;
-        set => new ApiTokenAccess("dummyDomain", "dummyApiToken");
-    }
+    public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("dummyDomain", "dummyApiToken");
 
     [KintoneItem(isKey: true)]
     public string CustomUpdateKey { get; set; } = string.Empty;

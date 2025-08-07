@@ -6,20 +6,20 @@ namespace KintoneNetLibrary.Domain.Access;
 
 public class ApiTokenAccess : KintoneAccessBase {
     public ApiTokenAccess(string domain, string apiToken, string basicAuthUser = "", string basicAuthPassword = "", int guestSpaceId = 0) {
-        Domain = domain;
-        ApiToken = apiToken;
-        BasicAuthUser = basicAuthUser;
-        BasicAuthPassword = basicAuthPassword;
-        GuestSpaceId = guestSpaceId;
-        AuthType = KintoneAuthType.ApiToken;
+        this.Domain = domain;
+        this.ApiToken = apiToken;
+        this.BasicAuthUser = basicAuthUser;
+        this.BasicAuthPassword = basicAuthPassword;
+        this.GuestSpaceId = guestSpaceId;
+        this.AuthType = KintoneAuthType.ApiToken;
     }
 
     public override KintoneAccount ToKintoneAccount() => new() {
-        Domain = Domain,
-        ApiToken = ApiToken,
-        BasicAuthUser = BasicAuthUser,
-        BasicAuthPassword = BasicAuthPassword,
-        GuestSpaceId = GuestSpaceId
+        Domain = this.Domain,
+        ApiToken = this.ApiToken,
+        BasicAuthUser = this.BasicAuthUser,
+        BasicAuthPassword = this.BasicAuthPassword,
+        GuestSpaceId = this.GuestSpaceId
     };
 
     public override void ApplyAuthentication(HttpRequestMessage request) {

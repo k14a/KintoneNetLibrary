@@ -11,10 +11,7 @@ public class KintoneModelValidatorTests {
     #region <<Test classes>>
     public class FakeModelWithMultipleKeys : KintoneModelBase<FakeModelWithMultipleKeys> {
         public override int AppID => 8888;
-        public override KintoneAccessBase? Access {
-            get => this.Access;
-            set => new ApiTokenAccess("dummyDomain", "dummyApiToken");
-        }
+        public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("dummyDomain", "dummyApiToken");
         [KintoneItem(IsKey = true)]
         public string CodeA { get; set; } = "A001";
         [KintoneItem(IsKey = true)]
@@ -22,28 +19,19 @@ public class KintoneModelValidatorTests {
     }
     public class FakeModelWithMissingKey : KintoneModelBase<FakeModelWithMissingKey> {
         public override int AppID => 7777;
-        public override KintoneAccessBase? Access {
-            get => this.Access;
-            set => new ApiTokenAccess("dummyDomain", "dummyApiToken");
-        }
+        public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("dummyDomain", "dummyApiToken");
         [KintoneItem(IsKey = true)]
         public string? KeyCode { get; set; } = null;
     }
     public class FakeModelWithKey : KintoneModelBase<FakeModelWithKey> {
         public override int AppID => 6666;
-        public override KintoneAccessBase? Access {
-            get => this.Access;
-            set => new ApiTokenAccess("dummyDomain", "dummyApiToken");
-        }
+        public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("dummyDomain", "dummyApiToken");
         [KintoneItem(IsKey = true)]
         public string? Code { get; set; }
     }
     public class FakeModelWithLinks : KintoneModelBase<FakeModelWithLinks> {
         public override int AppID => 5555;
-        public override KintoneAccessBase? Access {
-            get => this.Access;
-            set => new ApiTokenAccess("dummyDomain", "dummyApiToken");
-        }
+        public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("dummyDomain", "dummyApiToken");
         [KintoneItem(FieldType = KintoneFieldType.LinkUrl)]
         public string? Website { get; set; }
 
@@ -59,28 +47,19 @@ public class KintoneModelValidatorTests {
     }
     public class FakeModelWithInvalidSubTable : KintoneModelBase<FakeModelWithInvalidSubTable> {
         public override int AppID => 5555;
-        public override KintoneAccessBase? Access {
-            get => this.Access;
-            set => new ApiTokenAccess("dummyDomain", "dummyApiToken");
-        }
+        public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("dummyDomain", "dummyApiToken");
         [KintoneItem(fieldType: KintoneFieldType.SubTable)]
         public string NotAList { get; set; } = "invalid";
     }
     public class FakeModelWithValidSubTable : KintoneModelBase<FakeModelWithValidSubTable> {
         public override int AppID => 5555;
-        public override KintoneAccessBase? Access {
-            get => this.Access;
-            set => new ApiTokenAccess("dummyDomain", "dummyApiToken");
-        }
+        public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("dummyDomain", "dummyApiToken");
         [KintoneItem(fieldType: KintoneFieldType.SubTable)]
         public List<FakeSubRow> SubRows { get; set; } = [];
     }
     public class FakeModelWithStructuredFields : KintoneModelBase<FakeModelWithStructuredFields> {
         public override int AppID => 4444;
-        public override KintoneAccessBase? Access {
-            get => this.Access;
-            set => new ApiTokenAccess("dummyDomain", "dummyApiToken");
-        }
+        public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("dummyDomain", "dummyApiToken");
         [KintoneItem(FieldType = KintoneFieldType.File)]
         public object? AttachedFiles { get; set; }
 
@@ -95,10 +74,7 @@ public class KintoneModelValidatorTests {
     }
     public class CompositeTestModel : KintoneModelBase<CompositeTestModel> {
         public override int AppID => 3333;
-        public override KintoneAccessBase? Access {
-            get => this.Access;
-            set => new ApiTokenAccess("dummyDomain", "dummyApiToken");
-        }
+        public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("dummyDomain", "dummyApiToken");
 
         [KintoneItem(IsKey = true)]
         public string? KeyCode { get; set; }

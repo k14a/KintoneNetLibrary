@@ -26,11 +26,11 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
         return await this._service.SaveWithRetryAsync([(TSelf)this], enableSingleRetryOnError, enableCreateToUpdateRetry);
     }
 
-    public static async Task<KintoneWriteResult<TSelf>> CreateBulkAsync(IEnumerable<TSelf> models, bool enableSingleRetryOnError = false) {
+    public static async Task<KintoneWriteResult<TSelf>> CreateBulkAsync(IList<TSelf> models, bool enableSingleRetryOnError = false) {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         return await service.CreateAsync([.. models], enableSingleRetryOnError);
     }
-    public static async Task<KintoneWriteResult<TSelf>> CreateSingleAsync(IEnumerable<TSelf> models, bool enableSingleRetryOnError = false) {
+    public static async Task<KintoneWriteResult<TSelf>> CreateSingleAsync(IList<TSelf> models, bool enableSingleRetryOnError = false) {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         var mergedResult = new KintoneWriteResult<TSelf>();
 
@@ -41,11 +41,11 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
 
         return mergedResult;
     }
-    public static async Task<KintoneWriteResult<TSelf>> UpdateBulkAsync(IEnumerable<TSelf> models, bool enableSingleRetryOnError = false) {
+    public static async Task<KintoneWriteResult<TSelf>> UpdateBulkAsync(IList<TSelf> models, bool enableSingleRetryOnError = false) {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         return await service.UpdateAsync([.. models], enableSingleRetryOnError);
     }
-    public static async Task<KintoneWriteResult<TSelf>> UpdateSingleAsync(IEnumerable<TSelf> models, bool enableSingleRetryOnError = false) {
+    public static async Task<KintoneWriteResult<TSelf>> UpdateSingleAsync(IList<TSelf> models, bool enableSingleRetryOnError = false) {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         var mergedResult = new KintoneWriteResult<TSelf>();
 
@@ -56,28 +56,28 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
 
         return mergedResult;
     }
-    public static async Task<KintoneDeleteResult> DeleteBulkAsync(IEnumerable<TSelf> models, bool validateExistence = true) {
+    public static async Task<KintoneDeleteResult> DeleteBulkAsync(IList<TSelf> models, bool validateExistence = true) {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         return await service.DeleteAsync([.. models], validateExistence);
     }
-    public static async Task<KintoneDeleteResult> DeleteSingleAsync(IEnumerable<TSelf> models, bool validateExistence = true) {
+    public static async Task<KintoneDeleteResult> DeleteSingleAsync(IList<TSelf> models, bool validateExistence = true) {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         var mergedResult = new KintoneDeleteResult();
 
         foreach (var model in models) {
             var result = await service.DeleteAsync([model], validateExistence);
-            mergedResult.DeletedIDs.AddRange(result.DeletedIDs);
-            mergedResult.FailedIDs.AddRange(result.FailedIDs);
+            mergedResult.Succeeded.AddRange(result.Succeeded);
+            mergedResult.Failed.AddRange(result.Failed);
         }
 
         return mergedResult;
     }
-    public static async Task<KintoneWriteResult<TSelf>> SaveBulkAsync(IEnumerable<TSelf> models, bool enableSingleRetryOnError = false) {
+    public static async Task<KintoneWriteResult<TSelf>> SaveBulkAsync(IList<TSelf> models, bool enableSingleRetryOnError = false) {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         return await service.SaveAsync([.. models], enableSingleRetryOnError);
     }
 
-    public static async Task<KintoneWriteResult<TSelf>> SaveSingleAsync(IEnumerable<TSelf> models, bool enableSingleRetryOnError = false) {
+    public static async Task<KintoneWriteResult<TSelf>> SaveSingleAsync(IList<TSelf> models, bool enableSingleRetryOnError = false) {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         var mergedResult = new KintoneWriteResult<TSelf>();
 
@@ -88,12 +88,12 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
 
         return mergedResult;
     }
-    public static async Task<KintoneWriteResult<TSelf>> SaveWithRetryBulkAsync(IEnumerable<TSelf> models, bool enableSingleRetryOnError = false, bool enableCreateToUpdateRetry = true) {
+    public static async Task<KintoneWriteResult<TSelf>> SaveWithRetryBulkAsync(IList<TSelf> models, bool enableSingleRetryOnError = false, bool enableCreateToUpdateRetry = true) {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         return await service.SaveWithRetryAsync([.. models], enableSingleRetryOnError, enableCreateToUpdateRetry);
     }
 
-    public static async Task<KintoneWriteResult<TSelf>> SaveWithRetrySingleAsync(IEnumerable<TSelf> models, bool enableSingleRetryOnError = false, bool enableCreateToUpdateRetry = true) {
+    public static async Task<KintoneWriteResult<TSelf>> SaveWithRetrySingleAsync(IList<TSelf> models, bool enableSingleRetryOnError = false, bool enableCreateToUpdateRetry = true) {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         var mergedResult = new KintoneWriteResult<TSelf>();
 
@@ -110,7 +110,7 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
         return result.FirstOrDefault();
     }
 
-    public static async Task<List<TSelf>> FindByIDsAsync(IEnumerable<string> ids) {
+    public static async Task<List<TSelf>> FindByIDsAsync(IList<string> ids) {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         return (await service.FindAsync<TSelf>(ids.ToList(), fieldCodes: null)).ToList();
     }
@@ -129,7 +129,7 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
         return (await service.FindAsync<TSelf>(query: query.Build())).FirstOrDefault();
     }
 
-    public static async Task<List<TSelf>> FindByKeysAsync(IEnumerable<TSelf> models) {
+    public static async Task<List<TSelf>> FindByKeysAsync(IList<TSelf> models) {
         var modelList = models.ToList();
         foreach (var model in modelList) {
             KintoneModelValidator.ValidateKeyIntegrity(model);

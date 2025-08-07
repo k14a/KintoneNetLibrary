@@ -20,7 +20,7 @@ public abstract class KintoneAccessBase {
     public virtual string ApiToken { get; set; } = string.Empty;
     public virtual string LoginName { get; set; } = string.Empty;
     public virtual string Password { get; set; } = string.Empty;
-    public virtual int GuestSpaceId { get; set; } = 0;
+    public virtual int GuestSpaceId { get; set; }
     public KintoneAuthType AuthType { get; protected set; }
 
     public abstract void ApplyAuthentication(HttpRequestMessage request);

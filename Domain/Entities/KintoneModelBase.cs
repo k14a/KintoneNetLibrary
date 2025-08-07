@@ -13,16 +13,16 @@ namespace KintoneNetLibrary.Domain.Entities;
 public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase where TSelf : KintoneModelBase<TSelf>, new() {
     // ----- 必須情報 -----
 
-    protected KintoneAccessBase? _access;
+    // protected KintoneAccessBase _access;
     /// <summary>接続情報（APIトークン・パスワード認証など）</summary>
     [JsonIgnore]
     [KintoneItem(isUpload: false)]
-    public abstract KintoneAccessBase? Access { get; set; }
+    public abstract KintoneAccessBase Access { get; init; }
 
     /// <summary>Kintoneアカウント情報の取得</summary>
     [JsonIgnore]
     [KintoneItem(isUpload: false)]
-    public KintoneAccount? Account => Access?.ToKintoneAccount();
+    public KintoneAccount Account => this.Access.ToKintoneAccount();
 
     /// <summary>AppID</summary>
     public abstract int AppID { get; }
@@ -35,8 +35,8 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
 
     [JsonIgnore]
     public string? ID {
-        get => RecordID;
-        set => RecordID = value;
+        get => this.RecordID;
+        set => this.RecordID = value;
     }
 
     [KintoneItem(fieldType: KintoneFieldType.DateTime, isUpload: false)]
@@ -63,11 +63,11 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
 
     // ----- Name変換辞書の取得 -----
 
-    public IDictionary<string, string> GetToPropertyDic() => GetNameConvertDic(NameConvertor.Direction.Read);
-    public IDictionary<string, string> GetToItemNameDic() => GetNameConvertDic(NameConvertor.Direction.Send);
+    public IDictionary<string, string> GetToPropertyDic() => this.GetNameConvertDic(NameConvertor.Direction.Read);
+    public IDictionary<string, string> GetToItemNameDic() => this.GetNameConvertDic(NameConvertor.Direction.Send);
 
     private IDictionary<string, string> GetNameConvertDic(NameConvertor.Direction direction) {
-        return ConvertDictionary
+        return this.ConvertDictionary
             .Where(c => c.ConvertDirection == direction || c.ConvertDirection == NameConvertor.Direction.Both)
             .ToDictionary(
                 c => direction == NameConvertor.Direction.Read ? c.ItemName : c.PropertyName,

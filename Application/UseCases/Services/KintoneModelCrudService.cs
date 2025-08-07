@@ -248,7 +248,7 @@ public class KintoneModelCrudService : IKintoneModelCrudService {
             var result = new KintoneDeleteResult();
             if (validateExistence) {
                 var failures = this.CollectNotFoundFailures(models, target);
-                result.FailedIDs.AddRange(failures);
+                result.Failed.AddRange(failures);
             }
 
             var chunks = target.Chunk(KintoneDeleteLimit).Select(c => c.ToList());
@@ -259,8 +259,8 @@ public class KintoneModelCrudService : IKintoneModelCrudService {
                 try {
                     var partial = await this.DeleteChunkAsync(chunk);
                     lock (result) {
-                        result.DeletedIDs.AddRange(partial.DeletedIDs);
-                        result.FailedIDs.AddRange(partial.FailedIDs);
+                        result.Succeeded.AddRange(partial.Succeeded);
+                        result.Failed.AddRange(partial.Failed);
                     }
                 } finally {
                     semaphore.Release();
@@ -281,7 +281,7 @@ public class KintoneModelCrudService : IKintoneModelCrudService {
         try {
             var validModels = chunk.Where(x => !string.IsNullOrWhiteSpace(x.RecordID)).ToList();
             await this._repository.DeleteRecordsAsync(validModels);
-            result.DeletedIDs.AddRange(idList);
+            result.Succeeded.AddRange(idList);
 
             foreach (var model in chunk.Where(m => idList.Contains(m.RecordID!))) {
                 await model.RunAfterDeleteHookAsync();
@@ -289,7 +289,7 @@ public class KintoneModelCrudService : IKintoneModelCrudService {
 
         } catch (KintoneException ex) {
             foreach (var id in idList) {
-                result.FailedIDs.Add(new KintoneDeleteFailure {
+                result.Failed.Add(new KintoneDeleteFailure {
                     ID = id,
                     ErrorMessage = ex.Message,
                     Reason = KintoneDeleteFailureReason.DeleteError
