@@ -28,7 +28,7 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
 
     public static async Task<KintoneWriteResult<TSelf>> CreateBulkAsync(IList<TSelf> models, bool enableSingleRetryOnError = false) {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
-        return await service.CreateAsync([.. models], enableSingleRetryOnError);
+        return await service.CreateAsync(models, enableSingleRetryOnError);
     }
     public static async Task<KintoneWriteResult<TSelf>> CreateSingleAsync(IList<TSelf> models, bool enableSingleRetryOnError = false) {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
@@ -43,7 +43,7 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     }
     public static async Task<KintoneWriteResult<TSelf>> UpdateBulkAsync(IList<TSelf> models, bool enableSingleRetryOnError = false) {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
-        return await service.UpdateAsync([.. models], enableSingleRetryOnError);
+        return await service.UpdateAsync(models, enableSingleRetryOnError);
     }
     public static async Task<KintoneWriteResult<TSelf>> UpdateSingleAsync(IList<TSelf> models, bool enableSingleRetryOnError = false) {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
@@ -56,9 +56,25 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
 
         return mergedResult;
     }
+    public static async Task<KintoneDeleteResult> DeleteBulkAsync(IList<string> ids, bool validateExistence = true) {
+        var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
+        return await service.DeleteAsync<TSelf>(ids, validateExistence);
+    }
     public static async Task<KintoneDeleteResult> DeleteBulkAsync(IList<TSelf> models, bool validateExistence = true) {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
-        return await service.DeleteAsync([.. models], validateExistence);
+        return await service.DeleteAsync(models, validateExistence);
+    }
+    public static async Task<KintoneDeleteResult> DeleteSingleAsync(IList<string> ids, bool validateExistence = true) {
+        var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
+        var mergedResult = new KintoneDeleteResult();
+
+        foreach (var id in ids) {
+            var result = await service.DeleteAsync<TSelf>([id], validateExistence);
+            mergedResult.Succeeded.AddRange(result.Succeeded);
+            mergedResult.Failed.AddRange(result.Failed);
+        }
+
+        return mergedResult;
     }
     public static async Task<KintoneDeleteResult> DeleteSingleAsync(IList<TSelf> models, bool validateExistence = true) {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
@@ -74,9 +90,8 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     }
     public static async Task<KintoneWriteResult<TSelf>> SaveBulkAsync(IList<TSelf> models, bool enableSingleRetryOnError = false) {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
-        return await service.SaveAsync([.. models], enableSingleRetryOnError);
+        return await service.SaveAsync(models, enableSingleRetryOnError);
     }
-
     public static async Task<KintoneWriteResult<TSelf>> SaveSingleAsync(IList<TSelf> models, bool enableSingleRetryOnError = false) {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         var mergedResult = new KintoneWriteResult<TSelf>();
@@ -90,9 +105,8 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     }
     public static async Task<KintoneWriteResult<TSelf>> SaveWithRetryBulkAsync(IList<TSelf> models, bool enableSingleRetryOnError = false, bool enableCreateToUpdateRetry = true) {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
-        return await service.SaveWithRetryAsync([.. models], enableSingleRetryOnError, enableCreateToUpdateRetry);
+        return await service.SaveWithRetryAsync(models, enableSingleRetryOnError, enableCreateToUpdateRetry);
     }
-
     public static async Task<KintoneWriteResult<TSelf>> SaveWithRetrySingleAsync(IList<TSelf> models, bool enableSingleRetryOnError = false, bool enableCreateToUpdateRetry = true) {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         var mergedResult = new KintoneWriteResult<TSelf>();
@@ -109,7 +123,6 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
         var result = await service.FindAsync<TSelf>([id], fieldCodes: null);
         return result.FirstOrDefault();
     }
-
     public static async Task<List<TSelf>> FindByIDsAsync(IList<string> ids) {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         return (await service.FindAsync<TSelf>(ids.ToList(), fieldCodes: null)).ToList();
@@ -128,7 +141,6 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         return (await service.FindAsync<TSelf>(query: query.Build())).FirstOrDefault();
     }
-
     public static async Task<List<TSelf>> FindByKeysAsync(IList<TSelf> models) {
         var modelList = models.ToList();
         foreach (var model in modelList) {
@@ -150,13 +162,10 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         return (await service.FindAsync<TSelf>(query: query.Build())).ToList();
     }
-
-
     public static async Task<List<TSelf>> FindByQueryAsync(string query) {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         return (await service.FindAsync<TSelf>(query: query)).ToList();
     }
-
     public static async Task<List<TSelf>> FindAllAsync() {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         return (await service.FindAsync<TSelf>()).ToList();

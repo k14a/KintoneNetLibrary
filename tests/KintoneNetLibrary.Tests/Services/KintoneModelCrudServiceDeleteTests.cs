@@ -31,7 +31,7 @@ public class KintoneModelCrudServiceDeleteTests {
 
         var model = new SampleModel { RecordID = "123" };
         // Act
-        var result = await service.DeleteAsync<SampleModel>([]);
+        var result = await service.DeleteAsync<SampleModel>(models: []);
 
         // Assert
         Assert.Empty(result.Succeeded);
@@ -248,6 +248,33 @@ public class KintoneModelCrudServiceDeleteTests {
         Assert.Equal("Record is not found.", result.Failed[0].ErrorMessage);
 
         Assert.True(result.HasFailures);
+    }
+    [Fact]
+    public async Task DeleteAsync_ShouldDeleteMultipleModels_WhenMultipleIdsProvided() {
+        // Arrange
+        var ids = new List<string> { "101", "102", "103" };
+
+        var mockRepo = new Mock<IKintoneRepository>();
+        var loggerMock = new Mock<ILogger<KintoneModelCrudService>>();
+        var service = new KintoneModelCrudService(
+            mockRepo.Object,
+            Options.Create(new KintoneExecutionOptions { MaxConcurrency = 2 }),
+            KintoneJsonOptions.Default,
+            loggerMock.Object
+        );
+
+        // Act
+        await service.DeleteAsync<SampleModel>(ids, false);
+
+        // Assert
+        mockRepo.Verify(x => x.DeleteRecordsAsync<SampleModel>(
+            It.Is<IList<SampleModel>>(list =>
+                list.Count == 3 &&
+                list.Any(m => m.RecordID == "101") &&
+                list.Any(m => m.RecordID == "102") &&
+                list.Any(m => m.RecordID == "103")
+            )
+        ), Times.Once);
     }
 
     #endregion

@@ -41,7 +41,7 @@ public class KintoneModelCrudService : IKintoneModelCrudService {
                 await semaphore.WaitAsync();
 
                 try {
-                    var partialResult = await CreateChunkAsync(chunk.ToList(), enableSingleRetryOnError);
+                    var partialResult = await this.CreateChunkAsync(chunk.ToList(), enableSingleRetryOnError);
                     lock (result) {
                         result.Succeeded.AddRange(partialResult.Succeeded);
                         result.Failed.AddRange(partialResult.Failed);
@@ -175,7 +175,7 @@ public class KintoneModelCrudService : IKintoneModelCrudService {
             var tasks = chunks.Select(async chunk => {
                 await semaphore.WaitAsync();
                 try {
-                    var partial = await UpdateChunkAsync(chunk, enableSingleRetryOnError);
+                    var partial = await this.UpdateChunkAsync(chunk, enableSingleRetryOnError);
                     lock (result) {
                         result.Succeeded.AddRange(partial.Succeeded);
                         result.Failed.AddRange(partial.Failed);
@@ -233,6 +233,10 @@ public class KintoneModelCrudService : IKintoneModelCrudService {
 
         return result;
     }
+    public async Task<KintoneDeleteResult> DeleteAsync<T>(IList<string> ids, bool validateExistence = true) where T : KintoneModelBase<T>, new() {
+        var models = ids.Select(id => new T { RecordID = id }).ToList();
+        return await this.DeleteAsync(models, validateExistence);
+    }
     public async Task<KintoneDeleteResult> DeleteAsync<T>(IList<T> models, bool validateExistence = true) where T : KintoneModelBase<T>, new() {
         try {
             this._logger?.LogInformation("DeleteAsync() - Start");
@@ -252,7 +256,7 @@ public class KintoneModelCrudService : IKintoneModelCrudService {
             }
 
             var chunks = target.Chunk(KintoneDeleteLimit).Select(c => c.ToList());
-            var semaphore = new SemaphoreSlim(_execOptions.MaxConcurrency);
+            var semaphore = new SemaphoreSlim(this._execOptions.MaxConcurrency);
 
             var tasks = chunks.Select(async chunk => {
                 await semaphore.WaitAsync();
@@ -301,7 +305,7 @@ public class KintoneModelCrudService : IKintoneModelCrudService {
     }
     private async Task<IList<T>> PrepareValidatedTargets<T>(IList<T> models) where T : KintoneModelBase<T>, new() {
         var ids = models.Select(x => x.RecordID).ToList();
-        return (await FindAsync<T>(ids, fieldCodes: ["RecordID"])).ToList();
+        return (await this.FindAsync<T>(ids, fieldCodes: ["RecordID"])).ToList();
     }
     private List<KintoneDeleteFailure> CollectNotFoundFailures<T>(IList<T> original, IList<T> found) where T : KintoneModelBase<T>, new() {
         var foundIds = found.Select(x => x.RecordID).ToHashSet();
@@ -322,13 +326,13 @@ public class KintoneModelCrudService : IKintoneModelCrudService {
             var (createTargets, updateTargets) = SplitRecords(records);
 
             if (createTargets.Count > 0) {
-                var createResult = await CreateAsync(createTargets, enableSingleRetryOnError);
+                var createResult = await this.CreateAsync(createTargets, enableSingleRetryOnError);
                 result.Succeeded.AddRange(createResult.Succeeded);
                 result.Failed.AddRange(createResult.Failed);
             }
 
             if (updateTargets.Count > 0) {
-                var updateResult = await UpdateAsync(updateTargets, enableSingleRetryOnError);
+                var updateResult = await this.UpdateAsync(updateTargets, enableSingleRetryOnError);
                 result.Succeeded.AddRange(updateResult.Succeeded);
                 result.Failed.AddRange(updateResult.Failed);
             }
@@ -358,7 +362,7 @@ public class KintoneModelCrudService : IKintoneModelCrudService {
 
             // create 処理
             if (createTargets.Count > 0) {
-                var createResult = await CreateAsync(createTargets, enableSingleRetryOnError);
+                var createResult = await this.CreateAsync(createTargets, enableSingleRetryOnError);
 
                 result.Succeeded.AddRange(createResult.Succeeded);
                 result.Failed.AddRange(createResult.Failed);
@@ -371,7 +375,7 @@ public class KintoneModelCrudService : IKintoneModelCrudService {
                         .ToList();
 
                     if (retryCandidates.Count != 0) {
-                        var updateResult = await UpdateAsync(retryCandidates, enableSingleRetryOnError);
+                        var updateResult = await this.UpdateAsync(retryCandidates, enableSingleRetryOnError);
                         result.Succeeded.AddRange(updateResult.Succeeded);
                         result.Failed.RemoveAll(f => retryCandidates.Contains(f.Record)); // 一度失敗したが成功に変わったものを除外
                         result.Failed.AddRange(updateResult.Failed); // 再試行の失敗分を追加
@@ -381,7 +385,7 @@ public class KintoneModelCrudService : IKintoneModelCrudService {
 
             // update 処理
             if (updateTargets.Count > 0) {
-                var updateResult = await UpdateAsync(updateTargets, enableSingleRetryOnError);
+                var updateResult = await this.UpdateAsync(updateTargets, enableSingleRetryOnError);
                 result.Succeeded.AddRange(updateResult.Succeeded);
                 result.Failed.AddRange(updateResult.Failed);
             }
