@@ -17,8 +17,8 @@ public class KintoneModelCrudServiceSaveTests {
     [Fact]
     public async Task SaveAsync_WhenOnlyCreateTargetsExist_CallsCreateOnly() {
         var records = new List<SampleModel> {
-        new() { FieldA = "Create", RecordID = null, Revision = -1 }
-    };
+            new() { FieldA = "Create", RecordID = null, Revision = -1 }
+        };
 
         var mockRepo = new Mock<IKintoneRepository>();
         var mockLogger = new Mock<ILogger<KintoneModelCrudService>>();

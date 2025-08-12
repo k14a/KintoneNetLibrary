@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Linq.Expressions;
 using System.Reflection;
 using KintoneNetLibrary.Application.UseCases;
@@ -125,7 +126,7 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     }
     public static async Task<List<TSelf>> FindByIDsAsync(IList<string> ids) {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
-        return (await service.FindAsync<TSelf>(ids.ToList(), fieldCodes: null)).ToList();
+        return [.. await service.FindAsync<TSelf>([.. ids], fieldCodes: null)];
     }
     public static async Task<TSelf?> FindByKeyAsync(TSelf model) {
         KintoneModelValidator.ValidateKeyIntegrity(model);
@@ -137,7 +138,21 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
         var keyValue = keyProp.GetValue(model);
         if (keyValue == null) { return null; }
 
-        var query = new KintoneQuery<TSelf>().Equal(CreateFieldSelector(keyProp), keyValue);
+        var keyTYpe = keyProp.PropertyType;
+        var underlyingType = Nullable.GetUnderlyingType(keyTYpe) ?? keyTYpe;
+
+        var method = typeof(KintoneModelBase<TSelf>)
+            .GetMethod("CreateFieldSelector", BindingFlags.NonPublic | BindingFlags.Static)!
+            .MakeGenericMethod(underlyingType);
+
+        var fieldSelector = method.Invoke(null, [keyProp]);
+        var equalMethod = typeof(KintoneQuery<TSelf>)
+            .GetMethod("Equal")!
+            .MakeGenericMethod(underlyingType);
+
+        var query = new KintoneQuery<TSelf>();
+        query = (KintoneQuery<TSelf>)equalMethod.Invoke(query, [fieldSelector, keyValue])!;
+
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         return (await service.FindAsync<TSelf>(query: query.Build())).FirstOrDefault();
     }
@@ -158,23 +173,62 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
             .Distinct()
             .ToList();
 
-        var query = new KintoneQuery<TSelf>().In(CreateFieldSelector(keyProp), keyValues);
+        var keyTYpe = keyProp.PropertyType;
+        var underlyingType = Nullable.GetUnderlyingType(keyTYpe) ?? keyTYpe;
+
+        var method = typeof(KintoneModelBase<TSelf>)
+            .GetMethod("CreateFieldSelector", BindingFlags.NonPublic | BindingFlags.Static)!
+            .MakeGenericMethod(underlyingType);
+
+        var fieldSelector = (LambdaExpression)method.Invoke(null, [keyProp])!;
+        var targetType = typeof(Expression<>)
+            .MakeGenericType(typeof(Func<,>).MakeGenericType(typeof(TSelf), underlyingType));
+
+        var typedSelector = ConvertExpression(fieldSelector, targetType);
+
+        var inMethod = typeof(KintoneQuery<TSelf>)
+            .GetMethods(BindingFlags.Public | BindingFlags.Instance)
+            .First(m => m.Name == "In" && m.IsGenericMethod)
+            .MakeGenericMethod(underlyingType);
+
+        var castMethod = typeof(Enumerable)
+            .GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .First(m => m.Name == "Cast" && m.GetParameters().Length == 1)
+            .MakeGenericMethod(underlyingType);
+
+        var castedValues = castMethod.Invoke(null, [keyValues]);
+
+        var query = new KintoneQuery<TSelf>();
+        query = (KintoneQuery<TSelf>)inMethod.Invoke(query, [typedSelector, castedValues])!;
+
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
-        return (await service.FindAsync<TSelf>(query: query.Build())).ToList();
+        var result = await service.FindAsync<TSelf>(query: query.Build());
+        return [.. result];
     }
     public static async Task<List<TSelf>> FindByQueryAsync(string query) {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
-        return (await service.FindAsync<TSelf>(query: query)).ToList();
+        return [.. await service.FindAsync<TSelf>(query: query)];
     }
     public static async Task<List<TSelf>> FindAllAsync() {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
-        return (await service.FindAsync<TSelf>()).ToList();
+        return [.. await service.FindAsync<TSelf>()];
     }
 
-    private static Expression<Func<TSelf, object>> CreateFieldSelector(PropertyInfo prop) {
+    private static Expression<Func<TSelf, TValue>> CreateFieldSelector<TValue>(PropertyInfo prop) {
         var param = Expression.Parameter(typeof(TSelf), "x");
-        var access = Expression.Convert(Expression.Property(param, prop), typeof(object));
-        return Expression.Lambda<Func<TSelf, object>>(access, param);
+        var body = Expression.Property(param, prop.Name);
+        return Expression.Lambda<Func<TSelf, TValue>>(body, param);
+    }
+    private static object ConvertExpression(LambdaExpression source, Type targetType) {
+        var method = typeof(Expression)
+            .GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .First(m => m.Name == "Lambda" && m.IsGenericMethod && m.GetParameters().Length == 2);
+
+        var delegateType = targetType.GetGenericArguments()[0]; // Func<TSelf, TValue>
+        var genericMethod = method.MakeGenericMethod(delegateType);
+
+        var parameters = new object[] { source.Body, source.Parameters.ToArray() };
+        return genericMethod.Invoke(null, parameters)!;
     }
 
 }

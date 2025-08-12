@@ -5,10 +5,9 @@ namespace KintoneNetLibrary.Application.UseCases;
 
 public partial class KintoneQuery<T> where T : KintoneModelBase<T>, new() {
     #region <<Public methods>>
-    public KintoneQuery<T> Equal<TValue>(
-    Expression<Func<T, TValue>> fieldSelector, TValue value) {
+    public KintoneQuery<T> Equal<TValue>(Expression<Func<T, TValue>> fieldSelector, TValue value) {
         ArgumentNullException.ThrowIfNull(fieldSelector);
-        ValidateSupportedType(typeof(TValue), allowStringAndBool: true);
+        this.ValidateSupportedType(typeof(TValue), allowStringAndBool: true);
 
         var parameter = fieldSelector.Parameters[0];
         var field = fieldSelector.Body;
@@ -20,10 +19,9 @@ public partial class KintoneQuery<T> where T : KintoneModelBase<T>, new() {
         return this.And(lambda);
     }
 
-    public KintoneQuery<T> NotEqual<TValue>(
-        Expression<Func<T, TValue>> fieldSelector, TValue value) {
+    public KintoneQuery<T> NotEqual<TValue>(Expression<Func<T, TValue>> fieldSelector, TValue value) {
         ArgumentNullException.ThrowIfNull(fieldSelector);
-        ValidateSupportedType(typeof(TValue), allowStringAndBool: true);
+        this.ValidateSupportedType(typeof(TValue), allowStringAndBool: true);
 
         var parameter = fieldSelector.Parameters[0];
         var field = fieldSelector.Body;

@@ -28,25 +28,25 @@ public partial class KintoneQuery<T> where T : KintoneModelBase<T>, new() {
     private void AddCondition(Expression<Func<T, bool>> predicate) {
         ArgumentNullException.ThrowIfNull(predicate);
         var condition = new KintoneQueryExpression<T>(predicate) { TimeZone = this.TimeZone }.ToQueryString();
-        _conditions.Add(condition);
+        this._conditions.Add(condition);
     }
     private void AddRawCondition(string condition) {
         if (!string.IsNullOrWhiteSpace(condition)) {
-            _conditions.Add(condition);
+            this._conditions.Add(condition);
         }
     }
     private void AddEqualityCondition(string field, string value) {
         if (!string.IsNullOrWhiteSpace(field)) {
-            AddRawCondition($"{field}=\"{value}\"");
+            this.AddRawCondition($"{field}=\"{value}\"");
         }
     }
     private void AddOrConditions(string field, IEnumerable<string> values) {
         if (values != null && values.Any()) {
             var conditions = string.Join(" or ", values.Select(v => $"{field}=\"{v}\""));
-            AddRawCondition(conditions);
+            this.AddRawCondition(conditions);
         }
     }
-    private string BuildOrderBy() => this._orderBys.Count == 0 ? string.Empty : "order by " + string.Join(", ", _orderBys);
+    private string BuildOrderBy() => this._orderBys.Count == 0 ? string.Empty : "order by " + string.Join(", ", this._orderBys);
     // ベースの基本的な型群
     private static readonly HashSet<Type> BaseSupportedTypes = new HashSet<Type> {
         typeof(int), typeof(long), typeof(float), typeof(double), typeof(decimal),
@@ -76,32 +76,36 @@ public partial class KintoneQuery<T> where T : KintoneModelBase<T>, new() {
         }
     }
     private KintoneQuery<T> AddBetweenCondition(string field, object from, object to, bool inclusiveLower, bool inclusiveUpper) {
-        if (string.IsNullOrWhiteSpace(field))
+        if (string.IsNullOrWhiteSpace(field)) {
             throw new ArgumentException("Field name must be specified.", nameof(field));
+        }
 
-        if (from == null || to == null)
+        if (from == null || to == null) {
             throw new ArgumentNullException("from/to cannot be null");
+        }
 
         var valueType = from.GetType();
-        if (valueType != to.GetType())
+        if (valueType != to.GetType()) {
             throw new ArgumentException($"from（{valueType.Name}）と to（{to.GetType().Name}）の型は一致している必要があります。");
+        }
 
         // 型のサポート確認
-        ValidateSupportedType(valueType, allowStringAndBool: false);
+        this.ValidateSupportedType(valueType, allowStringAndBool: false);
 
         // 値の比較
-        if (Comparer<object>.Default.Compare(from, to) > 0)
+        if (Comparer<object>.Default.Compare(from, to) > 0) {
             throw new ArgumentException("from must be less than or equal to to");
+        }
 
         // 演算子選択
         var lowerOp = inclusiveLower ? ">=" : ">";
         var upperOp = inclusiveUpper ? "<=" : "<";
 
         // フォーマットして条件追加
-        var fromStr = FormatValue(from);
-        var toStr = FormatValue(to);
+        var fromStr = this.FormatValue(from);
+        var toStr = this.FormatValue(to);
 
-        _conditions.Add($"{field} {lowerOp} {fromStr} and {field} {upperOp} {toStr}");
+        this._conditions.Add($"{field} {lowerOp} {fromStr} and {field} {upperOp} {toStr}");
         return this;
     }
     private string FormatValue(object value) {
@@ -120,23 +124,24 @@ public partial class KintoneQuery<T> where T : KintoneModelBase<T>, new() {
         ArgumentNullException.ThrowIfNull(values);
 
         var valueList = values.ToList();
-        if (valueList.Count == 0)
+        if (valueList.Count == 0) {
             throw new ArgumentException("値のリストが空です。", nameof(values));
+        }
 
         var type = typeof(TValue);
-        ValidateSupportedType(type, allowStringAndBool: true);  // Equal系と同じチェック
+        this.ValidateSupportedType(type, allowStringAndBool: true);  // Equal系と同じチェック
 
-        var memberExpr = fieldSelector.Body as MemberExpression;
-        if (memberExpr == null)
+        if (fieldSelector.Body is not MemberExpression memberExpr) {
             throw new NotSupportedException("フィールドセレクタは MemberExpression である必要があります");
+        }
 
         var fieldName = memberExpr.Member.Name;
 
-        var formattedValues = valueList.Select(v => FormatValue(v));
+        var formattedValues = valueList.Select(v => this.FormatValue(v));
         var joinedValues = string.Join(", ", formattedValues);
         var operatorStr = negate ? "not in" : "in";
 
-        _conditions.Add($"{fieldName} {operatorStr} ({joinedValues})");
+        this._conditions.Add($"{fieldName} {operatorStr} ({joinedValues})");
         return this;
     }
     private static string GetFieldName<TValue>(Expression<Func<T, TValue>> keySelector) {
