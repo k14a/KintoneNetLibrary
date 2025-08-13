@@ -23,7 +23,7 @@ public class KintoneApiFileTests {
             var model = new BookModel {
                 Title = "PDFファイルテスト",
                 Uuid = uuid,
-                Files = new List<KintoneFile> { new KintoneFile { FileKey = fileKey } }
+                Files = [new KintoneFile { FileKey = fileKey }]
             };
 
             var created = await KintoneTestHelper.CreateRecordsInChunksAsync(api, [model]);
@@ -67,7 +67,7 @@ public class KintoneApiFileTests {
         var model = new BookModel {
             Title = "CSVファイルテスト",
             Uuid = uuid,
-            Files = new List<KintoneFile> { new KintoneFile { FileKey = fileKey } }
+            Files = [new KintoneFile { FileKey = fileKey }]
         };
 
         var created = await KintoneTestHelper.CreateRecordsInChunksAsync(api, [model]);
@@ -112,7 +112,7 @@ public class KintoneApiFileTests {
         var model = new BookModel {
             Title = "PNGファイルテスト",
             Uuid = uuid,
-            Files = new List<KintoneFile> { new KintoneFile { FileKey = fileKey } }
+            Files = [new KintoneFile { FileKey = fileKey }]
         };
 
         var created = await KintoneTestHelper.CreateRecordsInChunksAsync(api, [model]);
@@ -156,10 +156,10 @@ public class KintoneApiFileTests {
         var model = new BookModel {
             Title = "ZIPファイルテスト",
             Uuid = uuid,
-            Files = new List<KintoneFile> { new KintoneFile { FileKey = fileKey } }
+            Files = [new KintoneFile { FileKey = fileKey }]
         };
 
-        var created = await KintoneTestHelper.CreateRecordsInChunksAsync(api, new[] { model });
+        var created = await KintoneTestHelper.CreateRecordsInChunksAsync(api, [model]);
         var createdRecord = created!.First();
 
         try {
@@ -180,7 +180,7 @@ public class KintoneApiFileTests {
             var downloadedHash = KintoneFileTestHelper.ComputeSha256Hash(downloadedBytes);
             Assert.Equal(originalHash, downloadedHash);
         } finally {
-            await KintoneTestHelper.DeleteRecordsInChunksAsync(api, new[] { createdRecord });
+            await KintoneTestHelper.DeleteRecordsInChunksAsync(api, [createdRecord]);
         }
     }
     [Fact(DisplayName = "テキストファイルアップロードとダウンロードが正常に動作すること")]
@@ -197,10 +197,10 @@ public class KintoneApiFileTests {
         var model = new BookModel {
             Title = "ファイルテスト",
             Uuid = uuid,
-            Files = new List<KintoneFile> { new KintoneFile { FileKey = fileKey } }
+            Files = [new KintoneFile { FileKey = fileKey }]
         };
 
-        var created = await KintoneTestHelper.CreateRecordsInChunksAsync(api, new[] { model });
+        var created = await KintoneTestHelper.CreateRecordsInChunksAsync(api, [model]);
         var createdRecord = created!.First();
 
         try {
@@ -229,7 +229,7 @@ public class KintoneApiFileTests {
             var downloadedHash = KintoneFileTestHelper.ComputeSha256Hash(downloadedText);
             Assert.Equal(originalHash, downloadedHash);
         } finally {
-            await KintoneTestHelper.DeleteRecordsInChunksAsync(api, new[] { createdRecord });
+            await KintoneTestHelper.DeleteRecordsInChunksAsync(api, [createdRecord]);
         }
     }
     [Fact(DisplayName = "Excelファイルのアップロードとダウンロードが正常に動作すること")]
@@ -246,10 +246,10 @@ public class KintoneApiFileTests {
         var model = new BookModel {
             Title = "Excelファイルテスト",
             Uuid = uuid,
-            Files = new List<KintoneFile> { new KintoneFile { FileKey = fileKey } }
+            Files = [new KintoneFile { FileKey = fileKey }]
         };
 
-        var created = await KintoneTestHelper.CreateRecordsInChunksAsync(api, new[] { model });
+        var created = await KintoneTestHelper.CreateRecordsInChunksAsync(api, [model]);
         Assert.NotNull(created);
         var createdRecord = created!.First();
 
@@ -275,7 +275,7 @@ public class KintoneApiFileTests {
             Assert.Equal(originalHash, downloadedHash);
         } finally {
             // Cleanup
-            await KintoneTestHelper.DeleteRecordsInChunksAsync(api, new[] { createdRecord });
+            await KintoneTestHelper.DeleteRecordsInChunksAsync(api, [createdRecord]);
         }
     }
 

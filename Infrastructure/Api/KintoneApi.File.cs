@@ -9,19 +9,25 @@ using Microsoft.Extensions.Logging;
 namespace KintoneNetLibrary.Infrastructure.Api;
 
 public partial class KintoneApi {
-    /* =========================================================
-       ファイルアップロード
-       ========================================================= */
-
+    #region <<File upload>>
     /// <summary>
     /// 任意のストリームを kintone にアップロードし、fileKey を返します。
     /// </summary>
     public async Task<string> UploadFileAsync(Stream stream, string fileName) {
-        return await UploadFileInternalAsync(stream, fileName, CancellationToken.None);
+        return await this.UploadFileInternalAsync(stream, fileName, CancellationToken.None);
     }
 
     public async Task<string> UploadFileAsync(Stream stream, string fileName, CancellationToken cancellationToken) {
-        return await UploadFileInternalAsync(stream, fileName, cancellationToken);
+        return await this.UploadFileInternalAsync(stream, fileName, cancellationToken);
+    }
+
+    public async Task<string> UploadFileAsync(FileInfo file) {
+        if (!file.Exists) {
+            throw new FileNotFoundException("指定されたファイルが存在しません。", file.FullName);
+        }
+
+        using var stream = file.OpenRead();
+        return await this.UploadFileAsync(stream, file.Name);
     }
 
     private async Task<string> UploadFileInternalAsync(Stream stream, string fileName, CancellationToken cancellationToken) {
@@ -29,7 +35,7 @@ public partial class KintoneApi {
         fileName ??= "";
 
         if (fileName.Any(char.IsControl)) {
-            _logger?.LogWarning("ファイル名に制御文字が含まれていたため、除去されました: {Original}", fileName);
+            this._logger?.LogWarning("ファイル名に制御文字が含まれていたため、除去されました: {Original}", fileName);
             fileName = string.Concat(fileName.Where(c => !char.IsControl(c)));
         }
 
@@ -43,7 +49,7 @@ public partial class KintoneApi {
 
         if (stream.Length > this.MaxUploadFileSize) {
             var message = $"ファイルサイズが制限（{this.MaxUploadFileSize / 1024 / 1024}MB）を超えています。: {stream.Length} bytes";
-            _logger?.LogError(message);
+            this._logger?.LogError(message);
             throw new KintoneException(new KintoneError {
                 Code = "LOCAL_FILE_TOO_LARGE",
                 Message = message,
@@ -72,7 +78,7 @@ public partial class KintoneApi {
 
         if (!resp.IsSuccessStatusCode) {
             var error = KintoneErrorConverter.Parse(json);
-            _logger?.LogError("Kintoneファイルアップロード失敗: {Error}", error);
+            this._logger?.LogError("Kintoneファイルアップロード失敗: {Error}", error);
             throw new KintoneException(error);
         }
 
@@ -80,7 +86,7 @@ public partial class KintoneApi {
         if (!resp.Content.Headers.ContentType?.MediaType?.Equals("application/json", StringComparison.OrdinalIgnoreCase) ?? true) {
             var mediaType = resp.Content.Headers.ContentType?.MediaType ?? "null";
             var errorMessage = $"想定外の Content-Type: {mediaType}";
-            _logger?.LogError(errorMessage);
+            this._logger?.LogError(errorMessage);
             throw new KintoneException(new KintoneError {
                 Code = "INVALID_CONTENT_TYPE",
                 Message = errorMessage,
@@ -88,7 +94,7 @@ public partial class KintoneApi {
             });
         }
 
-        var result = JsonSerializer.Deserialize<FileUploadResult>(json, _jsonOptions) ?? new FileUploadResult();
+        var result = JsonSerializer.Deserialize<FileUploadResult>(json, this._jsonOptions) ?? new FileUploadResult();
 
         if (string.IsNullOrEmpty(result.FileKey)) {
             throw new KintoneException(new KintoneError {
@@ -100,11 +106,9 @@ public partial class KintoneApi {
 
         return result.FileKey;
     }
+    #endregion
 
-    /* =========================================================
-       ファイルダウンロード
-       ========================================================= */
-
+    #region <<File upload>>
     public async Task<byte[]> DownloadFileAsync(string fileKey) {
         ArgumentNullException.ThrowIfNull(fileKey);
         if (fileKey == string.Empty) {
@@ -171,12 +175,12 @@ public partial class KintoneApi {
             try {
                 error = KintoneErrorConverter.Parse(json);
             } catch (Exception ex) {
-                _logger?.LogError(ex, "Kintoneエラー解析失敗: fileKey={FileKey}, body={Json}", fileKey, json);
+                this._logger?.LogError(ex, "Kintoneエラー解析失敗: fileKey={FileKey}, body={Json}", fileKey, json);
                 throw new KintoneException($"予期しないContent-Type: {contentType}, body={json}");
             }
 
             if (error != null) {
-                _logger?.LogError("Kintoneファイルダウンロード失敗（ストリーム）: fileKey={FileKey}, Error={Error}", fileKey, error);
+                this._logger?.LogError("Kintoneファイルダウンロード失敗（ストリーム）: fileKey={FileKey}, Error={Error}", fileKey, error);
                 throw new KintoneException(error);
             }
 
@@ -187,9 +191,13 @@ public partial class KintoneApi {
         return await resp.Content.ReadAsStreamAsync();
     }
 
-    /* =========================================================
-       内部 DTO
-       ========================================================= */
+    public async Task DownloadFileAsync(string fileKey, FileInfo destination) {
+        var bytes = await this.DownloadFileAsync(fileKey);
+        using var fs = destination.OpenWrite();
+        await fs.WriteAsync(bytes, 0, bytes.Length);
+    }
+    #endregion
+
     private sealed class FileUploadResult {
         [JsonPropertyName("fileKey")]
         public string FileKey { get; set; } = string.Empty;
