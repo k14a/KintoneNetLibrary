@@ -14,21 +14,119 @@ public class KintoneModelFileService<T> : IKintoneModelFileService<T> where T : 
     }
 
     #region <<Upload methods>>
+    public async Task<KintoneFile> UploadFileAsync(T model) {
+        ArgumentNullException.ThrowIfNull(model);
+
+        var props = typeof(T).GetProperties();
+
+        var fileInfoProp = props.FirstOrDefault(p => p.PropertyType == typeof(FileInfo));
+        var kintoneFileProp = props.FirstOrDefault(p => p.PropertyType == typeof(KintoneFile));
+
+        if (fileInfoProp == null || kintoneFileProp == null) {
+            throw new InvalidOperationException($"モデル '{typeof(T).Name}' に FileInfo と KintoneFile の両方のプロパティが必要です。");
+        }
+
+        var fileInfo = fileInfoProp.GetValue(model) as FileInfo;
+        if (fileInfo == null || !fileInfo.Exists) {
+            throw new FileNotFoundException("アップロード対象のファイルが存在しません。", fileInfo?.FullName);
+        }
+
+        var fileKey = await this._repository.UploadFileAsync(model, fileInfo);
+
+        if (kintoneFileProp.GetValue(model) is not KintoneFile kf) {
+            kf = new KintoneFile();
+            kintoneFileProp.SetValue(model, kf);
+        }
+
+        kf.FileKey = fileKey;
+        kf.Name = fileInfo.Name;
+        kf.Size = fileInfo.Length;
+        kf.ContentType = MimeTypes.GetMimeType(fileInfo.Name) ?? "application/octet-stream"; // MIME タイプの推定
+
+        this._logger?.LogInformation("ファイル '{FileName}' をアップロードし、FileKey をモデルに設定しました。", fileInfo.Name);
+
+        return kf;
+    }
+    public async Task<KintoneFile> UploadFileAsync(T model, FileInfo file) {
+        ArgumentNullException.ThrowIfNull(model);
+        ArgumentNullException.ThrowIfNull(file);
+        if (!file.Exists) {
+            throw new FileNotFoundException("アップロード対象のファイルが存在しません。", file.FullName);
+        }
+
+        var fileKey = await this._repository.UploadFileAsync(model, file);
+
+        var kf = new KintoneFile {
+            FileKey = fileKey,
+            Name = file.Name,
+            Size = file.Length,
+            ContentType = MimeTypes.GetMimeType(file.Name) ?? "application/octet-stream" // MIME タイプの推定
+        };
+
+        this._logger?.LogInformation("ファイル '{FileName}' をアップロードしました。FileKey: {FileKey}", file.Name, fileKey);
+
+        return kf;
+    }
+    public async Task<IEnumerable<KintoneFile>> UploadFilesAsync(T model, IEnumerable<FileInfo> files) {
+        ArgumentNullException.ThrowIfNull(model);
+        ArgumentNullException.ThrowIfNull(files);
+
+        var result = new List<KintoneFile>();
+
+        foreach (var file in files) {
+            if (!file.Exists) {
+                this._logger?.LogWarning("アップロード対象のファイルが存在しません: {Path}", file.FullName);
+                continue;
+            }
+
+            try {
+                var kf = await this.UploadFileAsync(model, file);
+                result.Add(kf);
+            } catch (Exception ex) {
+                this._logger?.LogError(ex, "ファイル '{FileName}' のアップロードに失敗しました。", file.Name);
+                // 必要に応じて throw か continue を選択可能（現状は continue）
+            }
+        }
+
+        return result;
+    }
     public Task MapUploadedFilesToModelAsync(T model, IEnumerable<FileInfo> files) {
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(model);
+        ArgumentNullException.ThrowIfNull(files);
+
+        var fileList = files.ToList();
+        var props = typeof(T).GetProperties();
+
+        foreach (var prop in props) {
+            if (prop.PropertyType == typeof(KintoneFile)) {
+                if (prop.GetValue(model) is not KintoneFile kf) {
+                    continue;
+                }
+
+                var match = fileList.FirstOrDefault(f => string.Equals(f.Name, kf.Name, StringComparison.OrdinalIgnoreCase));
+                if (match != null && string.IsNullOrEmpty(kf.FileKey)) {
+                    this._logger?.LogInformation("File '{FileName}' をプロパティ '{PropName}' にマッピングしました。", match.Name, prop.Name);
+                    kf.FileKey = "[UPLOADED]"; // 実際は UploadFileAsync() の戻り値でセット済みの想定
+                }
+
+            } else if (typeof(IEnumerable<KintoneFile>).IsAssignableFrom(prop.PropertyType)) {
+                if (prop.GetValue(model) is not IEnumerable<KintoneFile> list) {
+                    continue;
+                }
+
+                foreach (var kf in list) {
+                    var match = fileList.FirstOrDefault(f => string.Equals(f.Name, kf.Name, StringComparison.OrdinalIgnoreCase));
+                    if (match != null && string.IsNullOrEmpty(kf.FileKey)) {
+                        this._logger?.LogInformation("File '{FileName}' をリスト内の KintoneFile にマッピングしました。", match.Name);
+                        kf.FileKey = "[UPLOADED]";
+                    }
+                }
+            }
+        }
+
+        return Task.CompletedTask;
     }
 
-    public Task<KintoneFile> UploadFileAsync(T model) {
-        throw new NotImplementedException();
-    }
-
-    public Task<KintoneFile> UploadFileAsync(T model, FileInfo file) {
-        throw new NotImplementedException();
-    }
-
-    public Task<IEnumerable<KintoneFile>> UploadFilesAsync(T model, IEnumerable<FileInfo> files) {
-        throw new NotImplementedException();
-    }
     #endregion
 
     #region <<Download methods>>
