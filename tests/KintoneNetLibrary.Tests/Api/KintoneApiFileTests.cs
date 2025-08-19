@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Text;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Infrastructure.Helpers;
@@ -275,6 +276,119 @@ public class KintoneApiFileTests {
             Assert.Equal(originalHash, downloadedHash);
         } finally {
             // Cleanup
+            await KintoneTestHelper.DeleteRecordsInChunksAsync(api, [createdRecord]);
+        }
+    }
+    [Fact(DisplayName = "FileInfoベースのアップロード・ダウンロードが正常に動作すること")]
+    public async Task UploadAndDownloadFile_WithFileInfo_WorksCorrectly() {
+        var api = KintoneTestHelper.CreateApi();
+        var uuid = Guid.NewGuid().ToString();
+
+        var originalFile = KintoneFileTestHelper.CreateSampleTxtFile(); // returns FileInfo
+        var fileInfo = new FileInfo(originalFile);
+
+        // FileInfoベースのアップロード
+        var fileKey = await api.UploadFileAsync(fileInfo);
+        Assert.False(string.IsNullOrWhiteSpace(fileKey));
+
+        var model = new BookModel {
+            Title = "FileInfoテスト",
+            Uuid = uuid,
+            Files = [new KintoneFile { FileKey = fileKey }]
+        };
+
+        var created = await KintoneTestHelper.CreateRecordsInChunksAsync(api, [model]);
+        var createdRecord = created!.First();
+
+        try {
+            var query = $"UUID = \"{uuid}\"";
+            var found = await api.FindByQueryAsync<BookModel>(query);
+            var results = KintoneResponseParser.ParseRecords<BookModel>(found);
+            var match = results.FirstOrDefault(b => b.ID == createdRecord.ID);
+
+            Assert.NotNull(match);
+            Assert.NotNull(match!.Files);
+            Assert.Single(match.Files);
+
+            var uploadedFile = match.Files.First();
+            Assert.False(string.IsNullOrEmpty(uploadedFile.FileKey));
+
+            // FileInfoベースのダウンロード
+            var destinationPath = Path.Combine(Path.GetTempPath(), $"downloaded_{uuid}.txt");
+            var destinationFile = new FileInfo(destinationPath);
+
+            await api.DownloadFileAsync(uploadedFile.FileKey, destinationFile);
+            Assert.True(destinationFile.Exists);
+
+            // 内容比較
+            var originalText = await File.ReadAllTextAsync(fileInfo.FullName, Encoding.UTF8);
+            var downloadedText = await File.ReadAllTextAsync(destinationFile.FullName, Encoding.UTF8);
+            Assert.Equal(originalText, downloadedText);
+
+            var originalHash = KintoneFileTestHelper.ComputeSha256Hash(originalText);
+            var downloadedHash = KintoneFileTestHelper.ComputeSha256Hash(downloadedText);
+            Assert.Equal(originalHash, downloadedHash);
+        } finally {
+            await KintoneTestHelper.DeleteRecordsInChunksAsync(api, [createdRecord]);
+        }
+    }
+    [Fact(DisplayName = "ZIPファイルのアップロード・ダウンロードが正常に動作すること")]
+    public async Task UploadAndDownloadZipFile_WorksCorrectly() {
+        var api = KintoneTestHelper.CreateApi();
+        var uuid = Guid.NewGuid().ToString();
+
+        // ZIPファイルの作成（サンプルファイルを圧縮）
+        var sampleTextPath = KintoneFileTestHelper.CreateSampleTxtFile(); // returns string path
+        var zipFilePath = Path.Combine(Path.GetTempPath(), $"sample_{uuid}.zip");
+        using (var zip = ZipFile.Open(zipFilePath, ZipArchiveMode.Create)) {
+            zip.CreateEntryFromFile(sampleTextPath, Path.GetFileName(sampleTextPath));
+        }
+
+        var zipFileInfo = new FileInfo(zipFilePath);
+        Assert.True(zipFileInfo.Exists);
+
+        // アップロード
+        var fileKey = await api.UploadFileAsync(zipFileInfo);
+        Assert.False(string.IsNullOrWhiteSpace(fileKey));
+
+        var model = new BookModel {
+            Title = "ZIPファイルテスト",
+            Uuid = uuid,
+            Files = [new KintoneFile { FileKey = fileKey }]
+        };
+
+        var created = await KintoneTestHelper.CreateRecordsInChunksAsync(api, [model]);
+        var createdRecord = created!.First();
+
+        try {
+            var query = $"UUID = \"{uuid}\"";
+            var found = await api.FindByQueryAsync<BookModel>(query);
+            var results = KintoneResponseParser.ParseRecords<BookModel>(found);
+            var match = results.FirstOrDefault(b => b.ID == createdRecord.ID);
+
+            Assert.NotNull(match);
+            Assert.NotNull(match!.Files);
+            Assert.Single(match.Files);
+
+            var uploadedFile = match.Files.First();
+            Assert.False(string.IsNullOrEmpty(uploadedFile.FileKey));
+
+            // ダウンロード
+            var destinationPath = Path.Combine(Path.GetTempPath(), $"downloaded_{uuid}.zip");
+            var destinationFile = new FileInfo(destinationPath);
+
+            await api.DownloadFileAsync(uploadedFile.FileKey, destinationFile);
+            Assert.True(destinationFile.Exists);
+
+            // ハッシュ比較（バイナリ一致）
+            var originalBytes = await File.ReadAllBytesAsync(zipFileInfo.FullName);
+            var downloadedBytes = await File.ReadAllBytesAsync(destinationFile.FullName);
+            Assert.Equal(originalBytes.Length, downloadedBytes.Length);
+
+            var originalHash = KintoneFileTestHelper.ComputeSha256Hash(originalBytes);
+            var downloadedHash = KintoneFileTestHelper.ComputeSha256Hash(downloadedBytes);
+            Assert.Equal(originalHash, downloadedHash);
+        } finally {
             await KintoneTestHelper.DeleteRecordsInChunksAsync(api, [createdRecord]);
         }
     }

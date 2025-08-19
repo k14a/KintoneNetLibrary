@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using KintoneNetLibrary.Domain.Common;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Infrastructure.Converters;
+using KintoneNetLibrary.Infrastructure.Helpers;
 using Microsoft.Extensions.Logging;
 
 namespace KintoneNetLibrary.Infrastructure.Api;
@@ -131,9 +132,12 @@ public partial class KintoneApi {
                     throw new KintoneException(error);
                 }
 
-                if (contentType != "application/octet-stream") {
+                if (!MimeTypeWrapper.IsAcceptableContentType(contentType)) {
                     throw new KintoneException($"予期しないContent-Typeが返されました。Content-Type: {contentType} Response: {body}");
                 }
+                // if (contentType != "application/octet-stream") {
+                //     throw new KintoneException($"予期しないContent-Typeが返されました。Content-Type: {contentType} Response: {body}");
+                // }
 
                 // 成功時は Content-Type に関わらずバイト列として返す
                 return await resp.Content.ReadAsByteArrayAsync();

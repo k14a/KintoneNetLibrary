@@ -67,6 +67,41 @@ public class KintoneModelFileService<T> : IKintoneModelFileService<T> where T : 
 
         return kf;
     }
+    public async Task<List<KintoneFile>> UploadFilesAsync(T model) {
+        ArgumentNullException.ThrowIfNull(model);
+
+        var props = typeof(T).GetProperties();
+        var fileListProp = props.FirstOrDefault(p => p.PropertyType == typeof(List<FileInfo>));
+        var kintoneFileListProp = props.FirstOrDefault(p => p.PropertyType == typeof(List<KintoneFile>));
+
+        if (fileListProp == null || kintoneFileListProp == null) {
+            throw new InvalidOperationException($"モデル '{typeof(T).Name}' に List<FileInfo> と List<KintoneFile> の両方のプロパティが必要です。");
+        }
+
+        if (fileListProp.GetValue(model) is not List<FileInfo> fileList || fileList.Count == 0) {
+            throw new FileNotFoundException("アップロード対象のファイルが存在しません。");
+        }
+
+        var resultList = new List<KintoneFile>();
+        foreach (var file in fileList) {
+            if (!file.Exists) { continue; }
+
+            var fileKey = await this._repository.UploadFileAsync(model, file);
+            var kf = new KintoneFile {
+                FileKey = fileKey,
+                Name = file.Name,
+                Size = file.Length,
+                ContentType = MimeTypes.GetMimeType(file.Name) ?? "application/octet-stream"
+            };
+
+            resultList.Add(kf);
+            this._logger?.LogInformation("ファイル '{FileName}' をアップロードしました。", file.Name);
+        }
+
+        kintoneFileListProp.SetValue(model, resultList);
+        return resultList;
+    }
+
     public async Task<IEnumerable<KintoneFile>> UploadFilesAsync(T model, IEnumerable<FileInfo> files) {
         ArgumentNullException.ThrowIfNull(model);
         ArgumentNullException.ThrowIfNull(files);
@@ -132,12 +167,7 @@ public class KintoneModelFileService<T> : IKintoneModelFileService<T> where T : 
     #region <<Download methods>>
     public async Task<FileInfo> DownloadFileAsync(T model, string? targetDirectory = null, bool overwrite = true, bool throwIfExists = false) {
         // モデル内の KintoneFile を探索（単一ファイルを想定）
-        var fileProp = typeof(T).GetProperties().FirstOrDefault(p => p.PropertyType == typeof(KintoneFile));
-
-        if (fileProp == null) {
-            throw new InvalidOperationException($"Model '{typeof(T).Name}' に KintoneFile 型のプロパティが見つかりません。");
-        }
-
+        var fileProp = typeof(T).GetProperties().FirstOrDefault(p => p.PropertyType == typeof(KintoneFile)) ?? throw new InvalidOperationException($"Model '{typeof(T).Name}' に KintoneFile 型のプロパティが見つかりません。");
         if (fileProp.GetValue(model) is not KintoneFile file || string.IsNullOrEmpty(file.FileKey)) {
             throw new ArgumentException("モデルに有効な KintoneFile が設定されていません。");
         }
