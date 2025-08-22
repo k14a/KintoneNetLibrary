@@ -22,5 +22,5 @@ public class KintoneRecordsResponse<T> {
     /// 数値型に変換したtotalCount。nullの場合は未取得。
     /// </summary>
     [JsonIgnore]
-    public int? TotalCount => int.TryParse(TotalCountRaw, out var count) ? count : null;
+    public int? TotalCount => int.TryParse(this.TotalCountRaw, out var count) ? count : null;
 }

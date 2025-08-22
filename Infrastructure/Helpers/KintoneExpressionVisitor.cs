@@ -10,9 +10,9 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
     public TimeZoneInfo TimeZone { get; set; } = TimeZoneInfo.Local;
 
     public string ToQueryString(Expression expression) {
-        _queryBuilder.Clear();
-        Visit(expression);
-        return _queryBuilder.ToString();
+        this._queryBuilder.Clear();
+        this.Visit(expression);
+        return this._queryBuilder.ToString();
     }
 
     // protected override Expression VisitBinary(BinaryExpression node) {
@@ -56,28 +56,28 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
     protected override Expression VisitBinary(BinaryExpression node) {
         // 論理演算（AND/OR）なら再帰的に処理
         if (node.NodeType == ExpressionType.AndAlso || node.NodeType == ExpressionType.OrElse) {
-            Visit(node.Left);
-            _queryBuilder.Append(node.NodeType == ExpressionType.AndAlso ? " and " : " or ");
-            Visit(node.Right);
+            this.Visit(node.Left);
+            this._queryBuilder.Append(node.NodeType == ExpressionType.AndAlso ? " and " : " or ");
+            this.Visit(node.Right);
             return node;
         }
 
         // Convert を解除して中身を取り出す
-        var left = UnwrapConvert(node.Left);
-        var right = UnwrapConvert(node.Right);
+        var left = this.UnwrapConvert(node.Left);
+        var right = this.UnwrapConvert(node.Right);
 
         // 左右の MemberExpression を抽出
-        bool isLeftMember = TryUnwrapMemberExpression(left, out var leftMember);
-        bool isRightMember = TryUnwrapMemberExpression(right, out var rightMember);
+        bool isLeftMember = this.TryUnwrapMemberExpression(left, out var leftMember);
+        bool isRightMember = this.TryUnwrapMemberExpression(right, out var rightMember);
 
         if (isLeftMember && !isRightMember) {
-            Visit(leftMember); // フィールド
-            _queryBuilder.Append(GetOperator(node.NodeType));
-            Visit(right); // 値
+            this.Visit(leftMember); // フィールド
+            this._queryBuilder.Append(this.GetOperator(node.NodeType));
+            this.Visit(right); // 値
         } else if (!isLeftMember && isRightMember) {
-            Visit(rightMember); // フィールド
-            _queryBuilder.Append(GetOperator(FlipOperator(node.NodeType)));
-            Visit(left); // 値
+            this.Visit(rightMember); // フィールド
+            this._queryBuilder.Append(this.GetOperator(this.FlipOperator(node.NodeType)));
+            this.Visit(left); // 値
         } else {
             throw new NotSupportedException(
                 $"フィールドが左右どちらにも見つかりません。サポートされていない式構造です。\nLeft: {left}\nRight: {right}");
@@ -114,8 +114,8 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
     protected override Expression VisitMember(MemberExpression node) {
         // x.ReleaseDate! のような UnaryExpression 経由の MemberAccess に対応
         if (node.Expression is ParameterExpression) {
-            var fieldName = GetFieldNameFromMemberExpression(node);
-            _queryBuilder.Append(fieldName);
+            var fieldName = this.GetFieldNameFromMemberExpression(node);
+            this._queryBuilder.Append(fieldName);
             return node;
         }
 
@@ -129,7 +129,7 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
             };
 
             if (value != null) {
-                _queryBuilder.Append(FormatValue(value));
+                this._queryBuilder.Append(this.FormatValue(value));
                 return node;
             }
         }
@@ -139,33 +139,33 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
 
     protected override Expression VisitConstant(ConstantExpression node) {
         if (node.Value == null) {
-            _queryBuilder.Append("null");
+            this._queryBuilder.Append("null");
         } else if (node.Value is string str) {
-            _queryBuilder.Append($"\"{str}\"");
+            this._queryBuilder.Append($"\"{str}\"");
         } else if (node.Value is DateTime dt) {
             if (dt.Kind == DateTimeKind.Unspecified) {
-                dt = TimeZoneInfo.ConvertTimeToUtc(dt, TimeZone);
+                dt = TimeZoneInfo.ConvertTimeToUtc(dt, this.TimeZone);
             } else {
                 dt = dt.ToUniversalTime();
             }
-            _queryBuilder.Append($"\"{dt:yyyy-MM-ddTHH:mm:ssZ}\"");
+            this._queryBuilder.Append($"\"{dt:yyyy-MM-ddTHH:mm:ssZ}\"");
         } else if (node.Value is TimeOnly t) {
-            _queryBuilder.Append($"\"{t:HH:mm}\"");
+            this._queryBuilder.Append($"\"{t:HH:mm}\"");
         } else if (node.Value is bool b) {
-            _queryBuilder.Append(b.ToString().ToLower());
+            this._queryBuilder.Append(b.ToString().ToLower());
         } else {
             // 数値などはそのまま出力
-            _queryBuilder.Append(Convert.ToString(node.Value, System.Globalization.CultureInfo.InvariantCulture));
+            this._queryBuilder.Append(Convert.ToString(node.Value, System.Globalization.CultureInfo.InvariantCulture));
         }
 
         return node;
     }
     protected override Expression VisitNew(NewExpression node) {
         // コンストラクタ式を評価して値を取得
-        var value = EvaluateExpression(node);
+        var value = this.EvaluateExpression(node);
 
         if (value != null) {
-            _queryBuilder.Append(FormatValue(value));
+            this._queryBuilder.Append(this.FormatValue(value));
             return node;
         }
 
@@ -174,7 +174,7 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
 
     private string GetMemberName(MemberExpression node) {
         if (node.Expression is MemberExpression inner) {
-            return $"{GetMemberName(inner)}.{node.Member.Name}";
+            return $"{this.GetMemberName(inner)}.{node.Member.Name}";
         }
 
         return node.Member.Name;
@@ -217,22 +217,22 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
 
             if (collection != null && memberAccess != null) {
                 try {
-                    var fieldName = GetFieldNameFromMemberExpression(memberAccess);
+                    var fieldName = this.GetFieldNameFromMemberExpression(memberAccess);
 
-                    var evaluated = EvaluateExpression(collection);
+                    var evaluated = this.EvaluateExpression(collection);
 
                     if (evaluated is IEnumerable<object> values) {
-                        _queryBuilder.Append($"{fieldName} in (");
-                        _queryBuilder.Append(string.Join(", ", values.Select(v => FormatValue(v))));
-                        _queryBuilder.Append(")");
+                        this._queryBuilder.Append($"{fieldName} in (");
+                        this._queryBuilder.Append(string.Join(", ", values.Select(v => this.FormatValue(v))));
+                        this._queryBuilder.Append(")");
                         return node;
                     }
 
                     if (evaluated is System.Collections.IEnumerable rawEnumerable) {
-                        var formatted = rawEnumerable.Cast<object>().Select(FormatValue);
-                        _queryBuilder.Append($"{fieldName} in (");
-                        _queryBuilder.Append(string.Join(", ", formatted));
-                        _queryBuilder.Append(")");
+                        var formatted = rawEnumerable.Cast<object>().Select(this.FormatValue);
+                        this._queryBuilder.Append($"{fieldName} in (");
+                        this._queryBuilder.Append(string.Join(", ", formatted));
+                        this._queryBuilder.Append(")");
                         return node;
                     }
                 } catch (NotSupportedException) {
@@ -255,16 +255,16 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
                 // predicate の中身が list.Contains(s) か確認
                 if (predicateMethodCall.Method.Name == "Contains") {
                     // list.Contains(s) の list 部分を評価して値を取得
-                    var values = EvaluateExpression(predicateMethodCall.Object ?? predicateMethodCall.Arguments[0]) as IEnumerable<object>;
+                    var values = this.EvaluateExpression(predicateMethodCall.Object ?? predicateMethodCall.Arguments[0]) as IEnumerable<object>;
 
                     if (values != null) {
                         // collectionExpr はフィールドアクセスと想定
                         if (collectionExpr is MemberExpression memberExpr) {
-                            var fieldName = GetFieldNameFromMemberExpression(memberExpr);
+                            var fieldName = this.GetFieldNameFromMemberExpression(memberExpr);
 
-                            _queryBuilder.Append($"{fieldName} in (");
-                            _queryBuilder.Append(string.Join(", ", values.Select(v => FormatValue(v))));
-                            _queryBuilder.Append(")");
+                            this._queryBuilder.Append($"{fieldName} in (");
+                            this._queryBuilder.Append(string.Join(", ", values.Select(v => this.FormatValue(v))));
+                            this._queryBuilder.Append(")");
 
                             return node;
                         }
@@ -277,7 +277,7 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
     }
     protected override Expression VisitExtension(Expression node) {
         if (node is KintoneSpecialFieldExpression special) {
-            _queryBuilder.Append(special.FieldName);
+            this._queryBuilder.Append(special.FieldName);
             return node;
         }
 
@@ -334,7 +334,7 @@ public class KintoneSpecialFieldExpression : Expression {
     public string FieldName { get; }
 
     public KintoneSpecialFieldExpression(string fieldName) {
-        FieldName = fieldName;
+        this.FieldName = fieldName;
     }
 
     public override ExpressionType NodeType => ExpressionType.Extension;

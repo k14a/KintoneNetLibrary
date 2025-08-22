@@ -7,28 +7,42 @@ namespace KintoneNetLibrary.Application.UseCases;
 /// </summary>
 /// <typeparam name="T">モデル型</typeparam>
 public class FieldRef<T> {
+    /// <summary>
+    /// フィールド名
+    /// </summary>
+    /// <remarks>このフィールド名は、Kintoneのフィールドコードとして使用されます。</remarks>
     public string FieldName { get; }
 
-    private FieldRef(string fieldName) {
-        FieldName = fieldName;
-    }
+    /// <summary>
+    /// FieldRef のコンストラクタ
+    /// </summary>
+    /// <remarks>フィールド名は、Kintoneのフィールドコードとして使用されます。</remarks>
+    /// <param name="fieldName">フィールド名</param>
+    /// <exception cref="ArgumentNullException">フィールド名が null の場合にスローされます。</exception>
+    private FieldRef(string fieldName) { this.FieldName = fieldName; }
 
     /// <summary>
-    /// ラムダ式からフィールド名を取得し、FieldRef を生成します。
-    /// 例: FieldRef<BookModel>.Create(x => x.Title) → "Title"
+    /// フィールド名を指定して FieldRef を作成します。
     /// </summary>
-    /// <param name="fieldSelector">フィールドを指定するラムダ式</param>
+    /// <remarks>フィールド名は、Kintoneのフィールドコードとして使用されます。</remarks>
+    /// <param name="fieldSelector">フィールドを指定する式</param>
+    /// <returns>FieldRef インスタンス</returns>
+    /// <exception cref="ArgumentNullException">フィールドセレクターが null の場合にスローされます。</exception>
+    /// <exception cref="ArgumentException">フィールドセレクターが有効なフィールドを指定していない場合にスローされます。</exception>
     public static FieldRef<T> Create(Expression<Func<T, object>> fieldSelector) {
-        if (fieldSelector == null) throw new ArgumentNullException(nameof(fieldSelector));
+        ArgumentNullException.ThrowIfNull(fieldSelector);
 
-        var memberExpr = ExtractMemberExpression(fieldSelector.Body);
-        if (memberExpr == null) {
-            throw new ArgumentException("フィールドを指定してください。", nameof(fieldSelector));
-        }
-
+        var memberExpr = ExtractMemberExpression(fieldSelector.Body) ?? throw new ArgumentException("フィールドを指定してください。", nameof(fieldSelector));
         return new FieldRef<T>(memberExpr.Member.Name);
     }
 
+    /// <summary>
+    /// フィールド名を指定して FieldRef を作成します。
+    /// </summary>
+    /// <remarks>フィールド名は、Kintoneのフィールドコードとして使用されます。</remarks>
+    /// <param name="expr"></param>
+    /// <returns>FieldRef インスタンス</returns>
+    /// <exception cref="ArgumentNullException">フィールド名が null の場合にスローされます。</exception>
     private static MemberExpression? ExtractMemberExpression(Expression expr) {
         if (expr is MemberExpression memberExpr) {
             return memberExpr;
@@ -42,5 +56,9 @@ public class FieldRef<T> {
         return null;
     }
 
-    public override string ToString() => FieldName;
+    /// <summary>
+    /// フィールド名を文字列として返します。
+    /// </summary>
+    /// <returns>フィールド名</returns>
+    public override string ToString() => this.FieldName;
 }

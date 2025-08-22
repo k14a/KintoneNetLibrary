@@ -48,7 +48,9 @@ public static class KintoneValueConverter {
                 var raw = row.GetProperty("value").GetRawText();
 
                 var detail = JsonSerializer.Deserialize(raw, elementType, KintoneJsonOptions.Default);
-                if (detail != null) list.Add(detail);
+                if (detail != null) {
+                    list.Add(detail);
+                }
             }
 
             return list;

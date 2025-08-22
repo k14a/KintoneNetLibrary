@@ -12,7 +12,7 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     public Dictionary<string, object> ToKintoneRecord() {
         var record = new Dictionary<string, object>();
 
-        foreach (var prop in GetType().GetProperties()) {
+        foreach (var prop in this.GetType().GetProperties()) {
             var attr = prop.GetCustomAttribute<KintoneItemAttribute>();
             if (attr == null) {
                 continue;
@@ -74,12 +74,12 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     }
 
     public virtual IDictionary<string, object> ToKintoneUpdateRecord() {
-        var record = ToKintoneRecord();
+        var record = this.ToKintoneRecord();
 
-        if (!string.IsNullOrEmpty(ID)) {
-            record["id"] = ID;
+        if (!string.IsNullOrEmpty(this.ID)) {
+            record["id"] = this.ID;
         } else {
-            var (fieldCode, keyValue) = GetUpdateKeyField(out var value);
+            var (fieldCode, keyValue) = this.GetUpdateKeyField(out var value);
             if (!string.IsNullOrEmpty(fieldCode) && value is not null) {
                 record["updateKey"] = new Dictionary<string, object?> {
                     ["field"] = fieldCode,
@@ -88,14 +88,14 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
             }
         }
 
-        if (Revision >= 0) {
-            record["revision"] = Revision;
+        if (this.Revision >= 0) {
+            record["revision"] = this.Revision;
         }
 
         return record;
     }
     private (string? fieldCode, object? value) GetUpdateKeyField(out object? keyValue) {
-        var keyProp = GetType().GetProperties().FirstOrDefault(p => p.GetCustomAttribute<KintoneItemAttribute>()?.IsKey == true);
+        var keyProp = this.GetType().GetProperties().FirstOrDefault(p => p.GetCustomAttribute<KintoneItemAttribute>()?.IsKey == true);
 
         if (keyProp is not null) {
             var attr = keyProp.GetCustomAttribute<KintoneItemAttribute>();

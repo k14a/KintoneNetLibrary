@@ -11,7 +11,7 @@ public abstract class KintoneSubTableBase {
     /// サブテーブル行のJSON辞書をプロパティに読み込む
     /// </summary>
     public virtual void LoadFromJsonDictionary(Dictionary<string, JsonElement> fieldMap) {
-        foreach (var prop in GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)) {
+        foreach (var prop in this.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)) {
             var attr = prop.GetCustomAttribute<KintoneItemAttribute>();
             if (attr == null) {
                 continue;

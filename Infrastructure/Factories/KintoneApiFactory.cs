@@ -16,6 +16,6 @@ public class KintoneApiFactory : IKintoneApiFactory {
     }
 
     public KintoneApi Create<T>(T model) where T : KintoneModelBase<T>, new() {
-        return new KintoneApi(model.Access, model.AppID, _httpClient, _logger);
+        return new KintoneApi(model.Access, model.AppID, this._httpClient, this._logger);
     }
 }

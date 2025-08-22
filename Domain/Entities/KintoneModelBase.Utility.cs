@@ -5,11 +5,11 @@ namespace KintoneNetLibrary.Domain.Entities;
 public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase where TSelf : KintoneModelBase<TSelf>, new() {
     // ----- 判定・ユーティリティ -----
     public virtual bool HasUpdateKeyOrID() {
-        if (!string.IsNullOrEmpty(ID)) {
+        if (!string.IsNullOrEmpty(this.ID)) {
             return true;
         }
 
-        return GetType().GetProperties()
+        return this.GetType().GetProperties()
             .Where(p => p.GetCustomAttribute<KintoneItemAttribute>()?.IsKey == true)
             .Any(p => p.GetValue(this) is string s ? !string.IsNullOrEmpty(s) : p.GetValue(this) is not null);
     }
@@ -20,7 +20,7 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
             this.Revision = Convert.ToInt32(indexes.Revisions[index]);
 
             return new KintoneIndex {
-                ID = RecordID,
+                ID = this.RecordID,
                 Revision = this.Revision
             };
         }

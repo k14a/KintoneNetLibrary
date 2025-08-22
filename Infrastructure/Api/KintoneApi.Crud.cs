@@ -22,10 +22,10 @@ public partial class KintoneApi {
 
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        var response = await _httpClient.PostAsync(KintoneApiEndpoints.AddRecords, content);
+        var response = await this._httpClient.PostAsync(KintoneApiEndpoints.AddRecords, content);
         var responseJson = await response.Content.ReadAsStringAsync();
 
-        _logger?.LogDebug("Received response from Kintone: {Response}", responseJson);
+        this._logger?.LogDebug("Received response from Kintone: {Response}", responseJson);
 
         if (!response.IsSuccessStatusCode) {
             throw new KintoneException(KintoneErrorConverter.Parse(responseJson));
@@ -44,10 +44,10 @@ public partial class KintoneApi {
 
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        var response = await _httpClient.PutAsync(KintoneApiEndpoints.UpdateRecords, content);
+        var response = await this._httpClient.PutAsync(KintoneApiEndpoints.UpdateRecords, content);
         var responseJson = await response.Content.ReadAsStringAsync();
 
-        _logger?.LogDebug("Received response: {Response}", responseJson);
+        this._logger?.LogDebug("Received response: {Response}", responseJson);
 
         if (!response.IsSuccessStatusCode) {
             throw new KintoneException(KintoneErrorConverter.Parse(responseJson));
@@ -64,10 +64,10 @@ public partial class KintoneApi {
             Content = new StringContent(json, Encoding.UTF8, "application/json")
         };
 
-        var response = await _httpClient.SendAsync(request);
+        var response = await this._httpClient.SendAsync(request);
         var responseJson = await response.Content.ReadAsStringAsync();
 
-        _logger?.LogDebug("Delete response: {Response}", responseJson);
+        this._logger?.LogDebug("Delete response: {Response}", responseJson);
 
         if (!response.IsSuccessStatusCode) {
             throw new KintoneException(KintoneErrorConverter.Parse(responseJson));

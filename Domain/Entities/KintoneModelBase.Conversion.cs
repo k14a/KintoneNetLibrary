@@ -4,7 +4,9 @@ namespace KintoneNetLibrary.Domain.Entities;
 
 public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase where TSelf : KintoneModelBase<TSelf>, new() {
 
-    // ----- 項目名変換 -----
+    /// <summary>
+    /// 変換辞書
+    /// </summary>
     private IList<NameConvertor> _convertDictionary =
     [
         NameConvertor.Create("$id", nameof(RecordID), NameConvertor.Direction.Read),
@@ -18,8 +20,14 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
         NameConvertor.Create("作業者", nameof(Assignee))
     ];
 
+    /// <summary>
+    /// 変換辞書
+    /// </summary>
+    /// <remarks>
+    /// このプロパティは、Kintoneのフィールド名とモデルのプロパティ名をマッピングするために使用されます。
+    /// </remarks>
     public virtual IList<NameConvertor> ConvertDictionary {
-        get => _convertDictionary;
-        set => _convertDictionary = value;
+        get => this._convertDictionary;
+        set => this._convertDictionary = value;
     }
 }

@@ -16,7 +16,7 @@ public partial class KintoneApi {
     public async Task<string> CreateCursorAsync(Dictionary<string, object> body) {
         using var request = new HttpRequestMessage(HttpMethod.Post, KintoneApiEndpoints.Cursor);
         request.Headers.Add("X-Cybozu-API-Token", this._access.ApiToken);
-        request.Content = JsonContent.Create(body, options: _jsonOptions);
+        request.Content = JsonContent.Create(body, options: this._jsonOptions);
 
         using var resp = await this._httpClient.SendAsync(request);
         var json = await resp.Content.ReadAsStringAsync();
@@ -25,26 +25,26 @@ public partial class KintoneApi {
             throw new KintoneException(KintoneErrorConverter.Parse(json));
         }
 
-        var created = JsonSerializer.Deserialize<CursorCreated>(json, _jsonOptions);
+        var created = JsonSerializer.Deserialize<CursorCreated>(json, this._jsonOptions);
         return created?.Id ?? throw new KintoneException("Cursor ID が取得できませんでした。");
     }
 
     /* ---------- 1ページ取得 ---------- */
     private async Task<string> FetchCursorAsync(string cursorId) {
         var endpoint = $"records/cursor.json?id={cursorId}";
-        var requestUri = $"{GetBaseUri()}{endpoint}";
+        var requestUri = $"{this.GetBaseUri()}{endpoint}";
 
         using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
-        SetHeaders(request);
+        this.SetHeaders(request);
 
-        var response = await _httpClient.SendAsync(request);
+        var response = await this._httpClient.SendAsync(request);
         var json = await response.Content.ReadAsStringAsync();
 
-        _logger?.LogDebug("FetchCursorRawJson received: {Json}", json);
+        this._logger?.LogDebug("FetchCursorRawJson received: {Json}", json);
 
         if (!response.IsSuccessStatusCode) {
             var error = KintoneErrorConverter.Parse(json);
-            _logger?.LogError("FetchCursorRawJson failed: {Message}", error.Message);
+            this._logger?.LogError("FetchCursorRawJson failed: {Message}", error.Message);
             throw new KintoneException(error);
         }
 
@@ -53,13 +53,13 @@ public partial class KintoneApi {
 
     /* ---------- カーソル削除 ---------- */
     public async Task<string> DeleteCursorJsonAsync(string json) {
-        var request = new HttpRequestMessage(HttpMethod.Delete, $"{GetBaseUri()}{KintoneApiEndpoints.Cursor}") {
+        var request = new HttpRequestMessage(HttpMethod.Delete, $"{this.GetBaseUri()}{KintoneApiEndpoints.Cursor}") {
             Content = new StringContent(json, Encoding.UTF8, "application/json")
         };
 
-        SetHeaders(request);
+        this.SetHeaders(request);
 
-        var response = await _httpClient.SendAsync(request);
+        var response = await this._httpClient.SendAsync(request);
         var responseJson = await response.Content.ReadAsStringAsync();
 
         if (!response.IsSuccessStatusCode) {
@@ -73,7 +73,7 @@ public partial class KintoneApi {
     public async IAsyncEnumerable<string> StreamCursorAsync(string cursorId) {
         try {
             while (true) {
-                var pageJson = await FetchCursorAsync(cursorId);
+                var pageJson = await this.FetchCursorAsync(cursorId);
 
                 using var doc = JsonDocument.Parse(pageJson);
                 var hasNext = doc.RootElement.TryGetProperty("next", out var doneProp) && doneProp.GetBoolean();
@@ -84,12 +84,12 @@ public partial class KintoneApi {
             }
 
         } finally {
-            var deleteRequestJson = JsonSerializer.Serialize(new { id = cursorId }, _jsonOptions);
+            var deleteRequestJson = JsonSerializer.Serialize(new { id = cursorId }, this._jsonOptions);
             try {
-                await DeleteCursorJsonAsync(deleteRequestJson);
+                await this.DeleteCursorJsonAsync(deleteRequestJson);
             } catch (KintoneException ex) when (ex.Detail.Contains("GAIA_CN01")) {
                 // カーソルが自動終了されたため、エラーを握りつぶす
-                _logger?.LogWarning(ex.ToString());
+                this._logger?.LogWarning(ex.ToString());
             }
         }
     }
