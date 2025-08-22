@@ -485,41 +485,41 @@ public class KintoneModelFileServiceTests {
 
 public class SampleFileModel : KintoneModelBase<SampleFileModel> {
     public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
-    public override int AppID => 6666;
+    public override int AppID { get; init; } = 6666;
 
     public FileInfo? LocalFile { get; set; }
     public KintoneFile? UploadedFile { get; set; }
 }
 public class MultiFileModel : KintoneModelBase<MultiFileModel> {
     public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
-    public override int AppID => 6667;
+    public override int AppID { get; init; } = 6667;
 
     public List<FileInfo>? LocalFiles { get; set; }
     public List<KintoneFile>? UploadedFiles { get; set; }
 }
 public class ValidFileModel : KintoneModelBase<ValidFileModel> {
     public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
-    public override int AppID => 6668;
+    public override int AppID { get; init; } = 6668;
 
     public FileInfo? LocalFile { get; set; }
     public KintoneFile? UploadedFile { get; set; }
 }
 public class InvalidFileModel_NoProps : KintoneModelBase<InvalidFileModel_NoProps> {
     public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
-    public override int AppID => 6669;
+    public override int AppID { get; init; } = 6669;
 
     public string? Dummy { get; set; }
 }
 public class TestModel : KintoneModelBase<TestModel> {
     public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
-    public override int AppID => 6670;
+    public override int AppID { get; init; } = 6670;
 
     public KintoneFile? SingleFile { get; set; }
     public List<KintoneFile>? FileList { get; set; }
 }
 public class NoFileModel : KintoneModelBase<NoFileModel> {
     public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
-    public override int AppID => 6671;
+    public override int AppID { get; init; } = 6671;
 
     public string? Dummy { get; set; }
 }

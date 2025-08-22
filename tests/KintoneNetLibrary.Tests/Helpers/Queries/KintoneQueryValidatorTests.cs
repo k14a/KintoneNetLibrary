@@ -10,7 +10,7 @@ namespace KintoneNetLibrary.Tests.Helpers.Queries;
 
 public class KintoneQueryValidatorTests {
     private class SampleModel : KintoneModelBase<SampleModel> {
-        public override int AppID => TestEnv.Settings.AppID;
+        public override int AppID { get; init; } = TestEnv.Settings.AppID;
         public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("dummyDomain", "dummyApiToken");
 
         [KintoneItem(fieldCode: "UUID")]

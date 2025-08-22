@@ -11,7 +11,7 @@ namespace KintoneNetLibrary.Tests.Entities;
 
 public class KintoneModelBase_FindTests {
     public class DummyModel : KintoneModelBase<DummyModel> {
-        public override int AppID => throw new NotImplementedException();
+        public override int AppID { get; init; }
         public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
 
         [KintoneItem(fieldCode: "FieldA", fieldType: KintoneFieldType.SingleLineText)]
@@ -20,7 +20,7 @@ public class KintoneModelBase_FindTests {
         public int FieldB { get; set; }
     }
     public class KeyedModel : KintoneModelBase<KeyedModel> {
-        public override int AppID => throw new NotImplementedException();
+        public override int AppID { get; init; }
         public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
 
         [KintoneItem(IsKey = true)]
@@ -28,14 +28,14 @@ public class KintoneModelBase_FindTests {
         public string Name { get; set; } = default!;
     }
     public class NoKeyModel : KintoneModelBase<NoKeyModel> {
-        public override int AppID => throw new NotImplementedException();
+        public override int AppID { get; init; }
         public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
 
         public string Code { get; set; } = default!;
         public string Name { get; set; } = default!;
     }
     public class NullKeyModel : KintoneModelBase<NullKeyModel> {
-        public override int AppID => throw new NotImplementedException();
+        public override int AppID { get; init; }
         public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
 
         [KintoneItem(IsKey = true)]
@@ -43,7 +43,7 @@ public class KintoneModelBase_FindTests {
         public string Name { get; set; } = default!;
     }
     public class EmptyKeyModel : KintoneModelBase<EmptyKeyModel> {
-        public override int AppID => throw new NotImplementedException();
+        public override int AppID { get; init; }
         public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
 
         [KintoneItem(IsKey = true)]
@@ -51,7 +51,7 @@ public class KintoneModelBase_FindTests {
         public string Name { get; set; } = default!;
     }
     public class MultipleKeyModel : KintoneModelBase<MultipleKeyModel> {
-        public override int AppID => throw new NotImplementedException();
+        public override int AppID { get; init; }
         public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
 
         [KintoneItem(IsKey = true)]

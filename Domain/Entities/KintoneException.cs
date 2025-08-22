@@ -8,14 +8,14 @@ public class KintoneException : Exception {
 
     [JsonPropertyName("message")]
     public override string Message =>
-        !string.IsNullOrEmpty(Error?.Summary)
-            ? Error!.Summary
-            : !string.IsNullOrEmpty(Error?.Message)
-                ? Error!.Message
+        !string.IsNullOrEmpty(this.Error?.Summary)
+            ? this.Error!.Summary
+            : !string.IsNullOrEmpty(this.Error?.Message)
+                ? this.Error!.Message
                 : base.Message;
 
     [JsonPropertyName("detail")]
-    public string Detail => Error?.ToString() ?? base.Message;
+    public string Detail => this.Error?.ToString() ?? base.Message;
 
     public KintoneException() { }
     public KintoneException(KintoneError error) : base(error.Summary) { this.Error = error; }
@@ -26,8 +26,8 @@ public class KintoneException : Exception {
     }
 
     public override string ToString() {
-        if (Error != null) {
-            return $"KintoneException: {Error.Summary}\nDetails: {Error}";
+        if (this.Error != null) {
+            return $"KintoneException: {this.Error.Summary}\nDetails: {this.Error}";
         }
         return base.ToString();
     }

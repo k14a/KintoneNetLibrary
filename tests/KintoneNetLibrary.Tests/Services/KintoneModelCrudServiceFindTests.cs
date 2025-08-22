@@ -317,7 +317,7 @@ public class KintoneModelCrudServiceFindTests {
 }
 
 internal class SampleModel3 : KintoneModelBase<SampleModel3> {
-    public override int AppID => 7778;
+    public override int AppID { get; init; } = 7778;
     public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("dummyDomain", "dummyApiToken");
 
     [KintoneItem(fieldCode: "Title", fieldType: KintoneFieldType.SingleLineText)]

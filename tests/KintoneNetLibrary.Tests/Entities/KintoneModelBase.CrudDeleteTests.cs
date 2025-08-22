@@ -10,7 +10,7 @@ namespace KintoneNetLibrary.Tests.Entities;
 
 public class KintoneModelBase_DeleteAsyncTests {
     public class DummyModel : KintoneModelBase<DummyModel> {
-        public override int AppID => throw new NotImplementedException();
+        public override int AppID { get; init; }
         public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
 
         [KintoneItem(fieldCode: "FieldA", fieldType: KintoneFieldType.SingleLineText)]

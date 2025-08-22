@@ -11,6 +11,7 @@ public class KintoneWriteException<T> : Exception where T : KintoneModelBase<T>,
 
     public KintoneWriteException(IList<KintoneWriteFailure<T>> failures) : base(BuildMessage(failures)) {
         this.Failures = failures;
+        this.Data["Json"] = this.ToJson();
     }
 
     private static string BuildMessage(IList<KintoneWriteFailure<T>> failures) {

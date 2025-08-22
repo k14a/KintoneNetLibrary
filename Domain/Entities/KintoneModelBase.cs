@@ -25,7 +25,7 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     public KintoneAccount Account => this.Access.ToKintoneAccount();
 
     /// <summary>AppID</summary>
-    public abstract int AppID { get; }
+    public abstract int AppID { get; init; }
 
     // ----- 共通フィールド -----
 

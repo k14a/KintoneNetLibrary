@@ -209,7 +209,7 @@ public class KintoneModelCrudServiceSaveTests {
     #endregion
 }
 internal class SampleModel2 : KintoneModelBase<SampleModel2> {
-    public override int AppID => 9999;
+    public override int AppID { get; init; } = 9999;
     public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("dummyDomain", "dummyApiToken");
 
     [KintoneItem(isKey: true)]

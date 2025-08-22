@@ -10,7 +10,7 @@ namespace KintoneNetLibrary.Tests.Extensions;
 public class KintoneModelFileServiceExtensionsTests {
     public class SampleModel : KintoneModelBase<SampleModel> {
         public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
-        public override int AppID => 11111;
+        public override int AppID { get; init; } = 11111;
 
         [KintoneItem(fieldType: KintoneFieldType.File)]
         public List<KintoneFile> Attachments { get; set; }
