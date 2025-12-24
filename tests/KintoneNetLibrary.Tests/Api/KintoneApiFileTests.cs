@@ -12,7 +12,7 @@ public class KintoneApiFileTests {
     private const string FilePath = "Files/test1.txt";
 
     [Fact(DisplayName = "PDFファイルのアップロードとダウンロードが正常に動作すること")]
-    public async Task UploadAndDownloadPdfFile_WorksCorrectly() {
+    public async Task UploadAndDownloadPdfFileWorksCorrectly() {
         var api = KintoneTestHelper.CreateApi();
         var uuid = Guid.NewGuid().ToString();
         var pdfPath = KintoneFileTestHelper.CreateSamplePdfFile();
@@ -55,7 +55,7 @@ public class KintoneApiFileTests {
         }
     }
     [Fact(DisplayName = "CSVファイルのアップロードとダウンロードが正常に動作すること")]
-    public async Task UploadAndDownloadCsvFile_WorksCorrectly() {
+    public async Task UploadAndDownloadCsvFileWorksCorrectly() {
         // Arrange
         var api = KintoneTestHelper.CreateApi();
         var filePath = KintoneFileTestHelper.CreateSampleCsvFile();
@@ -100,7 +100,7 @@ public class KintoneApiFileTests {
         }
     }
     [Fact(DisplayName = "PNGファイルのアップロードとダウンロードが正常に動作すること")]
-    public async Task UploadAndDownloadPngFile_WorksCorrectly() {
+    public async Task UploadAndDownloadPngFileWorksCorrectly() {
         // Arrange
         var api = KintoneTestHelper.CreateApi();
         var filePath = KintoneFileTestHelper.CreateSamplePngFile();
@@ -144,48 +144,8 @@ public class KintoneApiFileTests {
             await KintoneTestHelper.DeleteRecordsInChunksAsync(api, [createdRecord]);
         }
     }
-    [Fact(DisplayName = "ZIPファイルのアップロードとダウンロードが正常に動作すること")]
-    public async Task UploadAndDownload_ZipFile_WorksCorrectly() {
-        var api = KintoneTestHelper.CreateApi();
-        var filePath = KintoneFileTestHelper.CreateSampleZipFile();
-        var uuid = Guid.NewGuid().ToString();
-
-        await using var stream = File.OpenRead(filePath);
-        var fileKey = await api.UploadFileAsync(stream, Path.GetFileName(filePath));
-        Assert.False(string.IsNullOrWhiteSpace(fileKey));
-
-        var model = new BookModel {
-            Title = "ZIPファイルテスト",
-            Uuid = uuid,
-            Files = [new KintoneFile { FileKey = fileKey }]
-        };
-
-        var created = await KintoneTestHelper.CreateRecordsInChunksAsync(api, [model]);
-        var createdRecord = created!.First();
-
-        try {
-            var query = $"UUID = \"{uuid}\"";
-            var found = await api.FindByQueryAsync<BookModel>(query);
-            var results = KintoneResponseParser.ParseRecords<BookModel>(found);
-            var match = results.FirstOrDefault(b => b.ID == createdRecord.ID);
-
-            Assert.NotNull(match);
-            Assert.Single(match!.Files);
-
-            var uploadedFile = match.Files.First();
-            var downloadedBytes = await api.DownloadFileAsync(uploadedFile.FileKey);
-            Assert.NotNull(downloadedBytes);
-
-            var originalBytes = await File.ReadAllBytesAsync(filePath);
-            var originalHash = KintoneFileTestHelper.ComputeSha256Hash(originalBytes);
-            var downloadedHash = KintoneFileTestHelper.ComputeSha256Hash(downloadedBytes);
-            Assert.Equal(originalHash, downloadedHash);
-        } finally {
-            await KintoneTestHelper.DeleteRecordsInChunksAsync(api, [createdRecord]);
-        }
-    }
-    [Fact(DisplayName = "テキストファイルアップロードとダウンロードが正常に動作すること")]
-    public async Task UploadAndDownloadFile_WorksCorrectly() {
+    [Fact(DisplayName = "ZIPファイル（stream）のアップロードとダウンロードが正常に動作すること")]
+    public async Task UploadAndDownloadZipFileWithStreamWorksCorrectly() {
         var api = KintoneTestHelper.CreateApi();
         var uuid = Guid.NewGuid().ToString();
 
@@ -234,7 +194,7 @@ public class KintoneApiFileTests {
         }
     }
     [Fact(DisplayName = "Excelファイルのアップロードとダウンロードが正常に動作すること")]
-    public async Task UploadAndDownloadExcelFile_WorksCorrectly() {
+    public async Task UploadAndDownloadExcelFileWorksCorrectly() {
         // Arrange
         var api = KintoneTestHelper.CreateApi();
         var filePath = KintoneFileTestHelper.CreateSampleExcelFile();
@@ -280,7 +240,7 @@ public class KintoneApiFileTests {
         }
     }
     [Fact(DisplayName = "FileInfoベースのアップロード・ダウンロードが正常に動作すること")]
-    public async Task UploadAndDownloadFile_WithFileInfo_WorksCorrectly() {
+    public async Task UploadAndDownloadFileWithFileInfoWorksCorrectly() {
         var api = KintoneTestHelper.CreateApi();
         var uuid = Guid.NewGuid().ToString();
 
@@ -333,7 +293,7 @@ public class KintoneApiFileTests {
         }
     }
     [Fact(DisplayName = "ZIPファイルのアップロード・ダウンロードが正常に動作すること")]
-    public async Task UploadAndDownloadZipFile_WorksCorrectly() {
+    public async Task UploadAndDownloadZipFileWorksCorrectly() {
         var api = KintoneTestHelper.CreateApi();
         var uuid = Guid.NewGuid().ToString();
 

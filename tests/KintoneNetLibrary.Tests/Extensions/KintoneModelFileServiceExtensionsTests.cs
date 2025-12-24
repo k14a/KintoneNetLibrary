@@ -19,7 +19,7 @@ public class KintoneModelFileServiceExtensionsTests {
     }
 
     [Fact(DisplayName = "拡張メソッドUploadFilesAsyncがUploadとMapを正しく呼び出す")]
-    public async Task UploadFilesExtension_CallsUploadAndMapCorrectly() {
+    public async Task UploadFilesExtensionCallsUploadAndMapCorrectly() {
         // Arrange
         var model = new SampleModel();
         var files = new List<FileInfo> {
@@ -52,7 +52,7 @@ public class KintoneModelFileServiceExtensionsTests {
         mockService.Verify(s => s.MapUploadedFilesToModelAsync(model, files), Times.Once);
     }
     [Fact(DisplayName = "DownloadFilesAsyncはFileKeyありのKintoneFileのみ抽出してDownload呼び出す")]
-    public async Task DownloadFilesExtension_FiltersFilesAndCallsDownloadCorrectly() {
+    public async Task DownloadFilesExtensionFiltersFilesAndCallsDownloadCorrectly() {
         // Arrange
         var model = new SampleModel {
             Attachments = [

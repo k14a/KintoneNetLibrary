@@ -8,7 +8,7 @@ namespace KintoneNetLibrary.Tests.Helpers.Queries;
 
 public class KintoneQueryNullTests {
     [Fact]
-    public void IsNull_GeneratesCorrectQuery() {
+    public void IsNullGeneratesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
             .IsNull(x => x.Price)
             .Build();
@@ -16,7 +16,7 @@ public class KintoneQueryNullTests {
         Assert.Equal("Price = null", query);
     }
     [Fact]
-    public void IsNotNull_GeneratesCorrectQuery() {
+    public void IsNotNullGeneratesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
             .IsNotNull(x => x.Title)
             .Build();
@@ -24,12 +24,12 @@ public class KintoneQueryNullTests {
         Assert.Equal("Title != null", query);
     }
     [Fact]
-    public void IsNull_NullExpression_ThrowsException() {
+    public void IsNullNullExpressionThrowsException() {
         var query = new KintoneQuery<BookModel>();
         Assert.Throws<ArgumentNullException>(() => query.IsNull<string>(null!));
     }
     [Fact]
-    public void IsNotNull_NullExpression_ThrowsException() {
+    public void IsNotNullNullExpressionThrowsException() {
         var query = new KintoneQuery<BookModel>();
         Assert.Throws<ArgumentNullException>(() => query.IsNotNull<string>(null!));
     }
@@ -37,7 +37,7 @@ public class KintoneQueryNullTests {
 
 public class KintoneQueryIsNullStringFieldTests {
     [Fact]
-    public void IsNull_StringField_GeneratesCorrectQuery() {
+    public void IsNullStringFieldGeneratesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
             .IsNull("Title")
             .Build();
@@ -45,7 +45,7 @@ public class KintoneQueryIsNullStringFieldTests {
         Assert.Equal("Title = null", query);
     }
     [Fact]
-    public void IsNotNull_StringField_GeneratesCorrectQuery() {
+    public void IsNotNullStringFieldGeneratesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
             .IsNotNull("Title")
             .Build();
@@ -53,14 +53,14 @@ public class KintoneQueryIsNullStringFieldTests {
         Assert.Equal("Title != null", query);
     }
     [Fact]
-    public void IsNull_EmptyField_ThrowsException() {
+    public void IsNullEmptyFieldThrowsException() {
         var query = new KintoneQuery<BookModel>();
         var ex = Assert.Throws<ArgumentException>(() => query.IsNull(""));
 
         Assert.Contains("field", ex.Message);
     }
     [Fact]
-    public void IsNotNull_NullField_ThrowsException() {
+    public void IsNotNullNullFieldThrowsException() {
         var query = new KintoneQuery<BookModel>();
         var ex = Assert.Throws<ArgumentNullException>(() => query.IsNotNull(null!));
 

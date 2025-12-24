@@ -24,7 +24,7 @@ public class KintoneModelFileServiceTests {
     #region <<Test methods>>
     #region <<Upload methods>>
     [Fact(DisplayName = "UploadFileAsyncがFileInfoをアップロードし、KintoneFileをモデルに設定すること")]
-    public async Task UploadFileAsync_SetsKintoneFileOnModel() {
+    public async Task UploadFileAsyncSetsKintoneFileOnModel() {
         // Arrange
         var fileName = $"test_{Guid.NewGuid()}.txt";
         var filePath = Path.Combine(Path.GetTempPath(), fileName);
@@ -59,7 +59,7 @@ public class KintoneModelFileServiceTests {
         if (fileInfo.Exists) { fileInfo.Delete(); }
     }
     [Fact(DisplayName = "UploadFilesAsyncが複数FileInfoをアップロードし、KintoneFileリストをモデルに設定する")]
-    public async Task UploadFilesAsync_SetsMultipleKintoneFilesOnModel() {
+    public async Task UploadFilesAsyncSetsMultipleKintoneFilesOnModel() {
         // Arrange
         var tempDir = Path.GetTempPath();
         var filePaths = new[] {
@@ -98,20 +98,20 @@ public class KintoneModelFileServiceTests {
         }
     }
     [Fact(DisplayName = "UploadFileAsyncでnullモデルを渡すとArgumentNullExceptionが発行される")]
-    public async Task UploadFileAsync_ThrowsArgumentNullException_WhenModelIsNull() {
+    public async Task UploadFileAsyncThrowsArgumentNullExceptionWhenModelIsNull() {
         var service = new KintoneModelFileService<ValidFileModel>(this._mockRepo.Object, this._logger);
         await Assert.ThrowsAsync<ArgumentNullException>(() => service.UploadFileAsync(null!));
     }
     [Fact(DisplayName = "UploadFileAsyncでFileInfo/KintoneFileプロパティがないモデルを渡すとInvalidOperationExceptionが発行される")]
-    public async Task UploadFileAsync_ThrowsInvalidOperationException_WhenModelLacksRequiredProps() {
-        var logger = Mock.Of<ILogger<KintoneModelFileService<InvalidFileModel_NoProps>>>();
-        var service = new KintoneModelFileService<InvalidFileModel_NoProps>(this._mockRepo.Object, logger);
-        var model = new InvalidFileModel_NoProps { Dummy = "test" };
+    public async Task UploadFileAsyncThrowsInvalidOperationExceptionWhenModelLacksRequiredProps() {
+        var logger = Mock.Of<ILogger<KintoneModelFileService<InvalidFileModelNoProps>>>();
+        var service = new KintoneModelFileService<InvalidFileModelNoProps>(this._mockRepo.Object, logger);
+        var model = new InvalidFileModelNoProps { Dummy = "test" };
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => service.UploadFileAsync(model));
     }
     [Fact(DisplayName = "UploadFileAsyncで存在しないFileInfoを渡すとFileNotFoundExceptionが発行される")]
-    public async Task UploadFileAsync_ThrowsFileNotFoundException_WhenFileDoesNotExist() {
+    public async Task UploadFileAsyncThrowsFileNotFoundExceptionWhenFileDoesNotExist() {
         var service = new KintoneModelFileService<ValidFileModel>(this._mockRepo.Object, this._logger);
         var model = new ValidFileModel {
             LocalFile = new FileInfo(Path.Combine(Path.GetTempPath(), $"notfound_{Guid.NewGuid()}.txt")),
@@ -121,21 +121,21 @@ public class KintoneModelFileServiceTests {
         await Assert.ThrowsAsync<FileNotFoundException>(() => service.UploadFileAsync(model));
     }
     [Fact(DisplayName = "UploadFileAsync(model, file)でmodelがnullならArgumentNullException")]
-    public async Task UploadFileAsync_ThrowsArgumentNullException_WhenModelIsNull2() {
+    public async Task UploadFileAsyncThrowsArgumentNullExceptionWhenModelIsNull2() {
         var service = new KintoneModelFileService<ValidFileModel>(this._mockRepo.Object, this._logger);
         var dummyFile = new FileInfo("dummy.txt");
 
         await Assert.ThrowsAsync<ArgumentNullException>(() => service.UploadFileAsync(null!, dummyFile));
     }
     [Fact(DisplayName = "UploadFileAsync(model, file)でfileがnullならArgumentNullException")]
-    public async Task UploadFileAsync_ThrowsArgumentNullException_WhenFileIsNull() {
+    public async Task UploadFileAsyncThrowsArgumentNullExceptionWhenFileIsNull() {
         var service = new KintoneModelFileService<ValidFileModel>(this._mockRepo.Object, this._logger);
         var model = new ValidFileModel();
 
         await Assert.ThrowsAsync<ArgumentNullException>(() => service.UploadFileAsync(model, null!));
     }
     [Fact(DisplayName = "UploadFileAsync(model, file)でfileが存在しないならFileNotFoundException")]
-    public async Task UploadFileAsync_ThrowsFileNotFoundException_WhenFileDoesNotExist2() {
+    public async Task UploadFileAsyncThrowsFileNotFoundExceptionWhenFileDoesNotExist2() {
         var service = new KintoneModelFileService<ValidFileModel>(this._mockRepo.Object, this._logger);
         var model = new ValidFileModel();
         var nonexistentFile = new FileInfo(Path.Combine(Path.GetTempPath(), $"nofile_{Guid.NewGuid()}.txt"));
@@ -143,7 +143,7 @@ public class KintoneModelFileServiceTests {
         await Assert.ThrowsAsync<FileNotFoundException>(() => service.UploadFileAsync(model, nonexistentFile));
     }
     [Fact(DisplayName = "UploadFileAsync(model, file)で正常にアップロードされるとKintoneFileが返る")]
-    public async Task UploadFileAsync_ReturnsKintoneFile_WhenSuccessful() {
+    public async Task UploadFileAsyncReturnsKintoneFileWhenSuccessful() {
         var service = new KintoneModelFileService<ValidFileModel>(this._mockRepo.Object, this._logger);
         var model = new ValidFileModel();
         var tempFilePath = Path.GetTempFileName();
@@ -161,21 +161,21 @@ public class KintoneModelFileServiceTests {
         Assert.Equal(MimeTypes.GetMimeType(fileInfo.Name) ?? "application/octet-stream", result.ContentType);
     }
     [Fact(DisplayName = "MapUploadedFilesToModelAsyncでmodelがnullならArgumentNullException")]
-    public async Task MapUploadedFilesToModelAsync_ThrowsArgumentNullException_WhenModelIsNull() {
+    public async Task MapUploadedFilesToModelAsyncThrowsArgumentNullExceptionWhenModelIsNull() {
         var service = new KintoneModelFileService<TestModel>(Mock.Of<IKintoneRepository>(), this._logger2);
         var files = new List<FileInfo> { new FileInfo("dummy.txt") };
 
         await Assert.ThrowsAsync<ArgumentNullException>(() => service.MapUploadedFilesToModelAsync(null!, files));
     }
     [Fact(DisplayName = "MapUploadedFilesToModelAsyncでfilesがnullならArgumentNullException")]
-    public async Task MapUploadedFilesToModelAsync_ThrowsArgumentNullException_WhenFilesIsNull() {
+    public async Task MapUploadedFilesToModelAsyncThrowsArgumentNullExceptionWhenFilesIsNull() {
         var service = new KintoneModelFileService<TestModel>(Mock.Of<IKintoneRepository>(), this._logger2);
         var model = new TestModel();
 
         await Assert.ThrowsAsync<ArgumentNullException>(() => service.MapUploadedFilesToModelAsync(model, null!));
     }
     [Fact(DisplayName = "KintoneFileプロパティに一致するFileInfoがある場合、FileKeyが設定される")]
-    public async Task MapUploadedFilesToModelAsync_SetsFileKey_ForMatchingSingleFile() {
+    public async Task MapUploadedFilesToModelAsyncSetsFileKeyForMatchingSingleFile() {
         var service = new KintoneModelFileService<TestModel>(Mock.Of<IKintoneRepository>(), this._logger2);
         var file = new FileInfo("match.txt");
         var model = new TestModel {
@@ -187,7 +187,7 @@ public class KintoneModelFileServiceTests {
         Assert.Equal("[UPLOADED]", model.SingleFile?.FileKey);
     }
     [Fact(DisplayName = "KintoneFileリストに一致するFileInfoがある場合、各FileKeyが設定される")]
-    public async Task MapUploadedFilesToModelAsync_SetsFileKey_ForMatchingListFiles() {
+    public async Task MapUploadedFilesToModelAsyncSetsFileKeyForMatchingListFiles() {
         var service = new KintoneModelFileService<TestModel>(Mock.Of<IKintoneRepository>(), this._logger2);
         var files = new[] {
             new FileInfo("a.txt"),
@@ -209,7 +209,7 @@ public class KintoneModelFileServiceTests {
         Assert.Equal("already-set", model.FileList?[2].FileKey); // 変更されない
     }
     [Fact(DisplayName = "一致するファイルがない場合、FileKeyは変更されない")]
-    public async Task MapUploadedFilesToModelAsync_DoesNotSetFileKey_WhenNoMatch() {
+    public async Task MapUploadedFilesToModelAsyncDoesNotSetFileKeyWhenNoMatch() {
         var service = new KintoneModelFileService<TestModel>(Mock.Of<IKintoneRepository>(), this._logger2);
         var files = new[] { new FileInfo("x.txt") };
         var model = new TestModel {
@@ -227,7 +227,7 @@ public class KintoneModelFileServiceTests {
     #endregion
     #region <<Download methods>>
     [Fact(DisplayName = "DownloadFileAsyncでKintoneFileプロパティが存在しない場合はInvalidOperationException")]
-    public async Task DownloadFileAsync_ThrowsInvalidOperationException_WhenNoKintoneFileProp() {
+    public async Task DownloadFileAsyncThrowsInvalidOperationExceptionWhenNoKintoneFileProp() {
         var service = new KintoneModelFileService<NoFileModel>(Mock.Of<IKintoneRepository>(), Mock.Of<ILogger<KintoneModelFileService<NoFileModel>>>());
         var model = new NoFileModel();
 
@@ -236,7 +236,7 @@ public class KintoneModelFileServiceTests {
     [Theory(DisplayName = "DownloadFileAsyncでKintoneFileがnullまたはFileKeyが空ならArgumentException")]
     [InlineData(null)]
     [InlineData("")]
-    public async Task DownloadFileAsync_ThrowsArgumentException_WhenKintoneFileIsInvalid(string? fileKey) {
+    public async Task DownloadFileAsyncThrowsArgumentExceptionWhenKintoneFileIsInvalid(string? fileKey) {
         var service = new KintoneModelFileService<ValidFileModel>(this._mockRepo.Object, this._logger);
         var model = new ValidFileModel {
             UploadedFile = fileKey == null ? null : new KintoneFile { FileKey = fileKey, Name = "dummy.txt" }
@@ -245,7 +245,7 @@ public class KintoneModelFileServiceTests {
         await Assert.ThrowsAsync<ArgumentException>(() => service.DownloadFileAsync(model));
     }
     [Fact(DisplayName = "DownloadFileAsyncで正常にファイルが保存される")]
-    public async Task DownloadFileAsync_SavesFileSuccessfully() {
+    public async Task DownloadFileAsyncSavesFileSuccessfully() {
         var service = new KintoneModelFileService<ValidFileModel>(this._mockRepo.Object, this._logger);
         var model = new ValidFileModel {
             UploadedFile = new KintoneFile {
@@ -270,7 +270,7 @@ public class KintoneModelFileServiceTests {
         resultFile.Delete();
     }
     [Fact(DisplayName = "DownloadFilesAsyncでFileKeyが未設定のファイルはスキップされる")]
-    public async Task DownloadFilesAsync_SkipsFilesWithEmptyFileKey() {
+    public async Task DownloadFilesAsyncSkipsFilesWithEmptyFileKey() {
         var model = new ValidFileModel();
         var files = new[] {
             new KintoneFile { FileKey = null, Name = "skip1.txt" },
@@ -301,7 +301,7 @@ public class KintoneModelFileServiceTests {
             Times.Once);
     }
     [Fact(DisplayName = "DownloadFilesAsyncで正常なファイルはすべて保存される")]
-    public async Task DownloadFilesAsync_SavesValidFiles() {
+    public async Task DownloadFilesAsyncSavesValidFiles() {
         var model = new ValidFileModel();
         var file1 = new KintoneFile { FileKey = "key1", Name = $"file1_{Guid.NewGuid()}.txt" };
         var file2 = new KintoneFile { FileKey = "key2", Name = $"file2_{Guid.NewGuid()}.txt" };
@@ -322,7 +322,7 @@ public class KintoneModelFileServiceTests {
         }
     }
     [Fact(DisplayName = "DownloadFilesAsyncで一部ファイルのダウンロードに失敗しても他は保存される")]
-    public async Task DownloadFilesAsync_ContinuesOnDownloadError() {
+    public async Task DownloadFilesAsyncContinuesOnDownloadError() {
         var model = new ValidFileModel();
         var file1 = new KintoneFile { FileKey = "key1", Name = $"ok_{Guid.NewGuid()}.txt" };
         var file2 = new KintoneFile { FileKey = "key2", Name = $"fail_{Guid.NewGuid()}.txt" };
@@ -353,7 +353,7 @@ public class KintoneModelFileServiceTests {
     [Theory(DisplayName = "DownloadFileAsyncでFileKeyが未設定ならArgumentException")]
     [InlineData(null)]
     [InlineData("")]
-    public async Task DownloadFileAsync_ThrowsArgumentException_WhenFileKeyIsInvalid(string? fileKey) {
+    public async Task DownloadFileAsyncThrowsArgumentExceptionWhenFileKeyIsInvalid(string? fileKey) {
         var model = new ValidFileModel();
         var file = new KintoneFile { FileKey = fileKey, Name = "invalid.txt" };
 
@@ -365,7 +365,7 @@ public class KintoneModelFileServiceTests {
     }
 
     [Fact(DisplayName = "DownloadFileAsyncで正常なファイルは保存される")]
-    public async Task DownloadFileAsync_SavesValidFileSuccessfully() {
+    public async Task DownloadFileAsyncSavesValidFileSuccessfully() {
         var model = new ValidFileModel();
         var file = new KintoneFile {
             FileKey = "valid-key",
@@ -387,7 +387,7 @@ public class KintoneModelFileServiceTests {
     [Theory(DisplayName = "DownloadFileToPathAsyncでFileKeyが未設定ならArgumentException")]
     [InlineData(null)]
     [InlineData("")]
-    public async Task DownloadFileToPathAsync_ThrowsArgumentException_WhenFileKeyIsInvalid(string? fileKey) {
+    public async Task DownloadFileToPathAsyncThrowsArgumentExceptionWhenFileKeyIsInvalid(string? fileKey) {
         var model = new ValidFileModel();
         var file = new KintoneFile { FileKey = fileKey, Name = "invalid.txt" };
         var savePath = Path.Combine(Path.GetTempPath(), "dummy.txt");
@@ -399,7 +399,7 @@ public class KintoneModelFileServiceTests {
         Assert.Contains("FileKeyが未設定", ex.Message);
     }
     [Fact(DisplayName = "DownloadFileToPathAsyncで正常なファイルは指定パスに保存される")]
-    public async Task DownloadFileToPathAsync_SavesFileToSpecifiedPath() {
+    public async Task DownloadFileToPathAsyncSavesFileToSpecifiedPath() {
         var model = new ValidFileModel();
         var file = new KintoneFile {
             FileKey = "valid-key",
@@ -422,7 +422,7 @@ public class KintoneModelFileServiceTests {
         result.Delete(); // 後始末
     }
     [Fact(DisplayName = "overwrite=false, throwIfExists=true で既存ファイルがあると例外が発生する")]
-    public async Task DownloadFileToPathAsync_Throws_WhenFileExists_AndThrowIfExistsTrue() {
+    public async Task DownloadFileToPathAsyncThrowsWhenFileExistsAndThrowIfExistsTrue() {
         var model = new ValidFileModel();
         var file = new KintoneFile { FileKey = "key", Name = "conflict.txt" };
         var existing = CreateExistingFile("既存の内容");
@@ -439,7 +439,7 @@ public class KintoneModelFileServiceTests {
         existing.Delete();
     }
     [Fact(DisplayName = "overwrite=false, throwIfExists=false で既存ファイルは保持され、新しいファイルが別名で保存される")]
-    public async Task DownloadFileToPathAsync_SavesWithNewName_WhenFileExistsAndFlagsAreFalse() {
+    public async Task DownloadFileToPathAsyncSavesWithNewNameWhenFileExistsAndFlagsAreFalse() {
         var model = new ValidFileModel();
         var file = new KintoneFile { FileKey = "key", Name = "skip.txt" };
         var existing = CreateExistingFile("保持される内容");
@@ -464,7 +464,7 @@ public class KintoneModelFileServiceTests {
         File.Delete(result.FullName);
     }
     [Fact(DisplayName = "overwrite=true で既存ファイルは上書きされる")]
-    public async Task DownloadFileToPathAsync_OverwritesFile_WhenOverwriteIsTrue() {
+    public async Task DownloadFileToPathAsyncOverwritesFileWhenOverwriteIsTrue() {
         var model = new ValidFileModel();
         var file = new KintoneFile { FileKey = "key", Name = "overwrite.txt" };
         var existing = CreateExistingFile("古い内容");
@@ -504,7 +504,7 @@ public class ValidFileModel : KintoneModelBase<ValidFileModel> {
     public FileInfo? LocalFile { get; set; }
     public KintoneFile? UploadedFile { get; set; }
 }
-public class InvalidFileModel_NoProps : KintoneModelBase<InvalidFileModel_NoProps> {
+public class InvalidFileModelNoProps : KintoneModelBase<InvalidFileModelNoProps> {
     public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
     public override int AppID { get; init; } = 6669;
 

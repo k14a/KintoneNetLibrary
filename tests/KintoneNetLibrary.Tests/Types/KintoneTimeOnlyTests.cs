@@ -7,7 +7,7 @@ namespace KintoneNetLibrary.Tests.Types;
 
 public class KintoneTimeOnlyTests {
     [Fact]
-    public void Constructor_WithValidTimeOnly_SetsValueCorrectly() {
+    public void ConstructorWithValidTimeOnlySetsValueCorrectly() {
         var time = new TimeOnly(14, 30);
         var kto = new KintoneTimeOnly(time);
 
@@ -15,7 +15,7 @@ public class KintoneTimeOnlyTests {
     }
 
     [Fact]
-    public void Constructor_WithValidString_SetsValueCorrectly() {
+    public void ConstructorWithValidStringSetsValueCorrectly() {
         var raw = "14:30";
         var kto = new KintoneTimeOnly(raw, KintoneFieldType.Time);
 
@@ -23,21 +23,21 @@ public class KintoneTimeOnlyTests {
     }
 
     [Fact]
-    public void Constructor_WithInvalidString_SetsNullValue() {
+    public void ConstructorWithInvalidStringSetsNullValue() {
         var kto = new KintoneTimeOnly("invalid", KintoneFieldType.Time);
 
         Assert.Null(kto.Value);
     }
 
     [Fact]
-    public void ToString_ReturnsExpectedFormat() {
+    public void ToStringReturnsExpectedFormat() {
         var kto = new KintoneTimeOnly(new TimeOnly(8, 5));
 
         Assert.Equal("08:05", kto.ToString());
     }
 
     [Fact]
-    public void ImplicitConversion_FromTimeOnly_WorksCorrectly() {
+    public void ImplicitConversionFromTimeOnlyWorksCorrectly() {
         TimeOnly time = new(18, 45);
         KintoneTimeOnly kto = time;
 
@@ -45,7 +45,7 @@ public class KintoneTimeOnlyTests {
     }
 
     [Fact]
-    public void ImplicitConversion_ToTimeOnly_WorksCorrectly() {
+    public void ImplicitConversionToTimeOnlyWorksCorrectly() {
         var kto = new KintoneTimeOnly(new TimeOnly(6, 0));
         TimeOnly time = kto;
 
@@ -53,7 +53,7 @@ public class KintoneTimeOnlyTests {
     }
 
     [Fact]
-    public void ExplicitConversion_FromTimeSpan_WorksCorrectly() {
+    public void ExplicitConversionFromTimeSpanWorksCorrectly() {
         var span = new TimeSpan(15, 0, 0);
         var kto = (KintoneTimeOnly)span;
 
@@ -61,35 +61,35 @@ public class KintoneTimeOnlyTests {
     }
 
     [Fact]
-    public void ExplicitConversion_FromInvalidTimeSpan_Throws() {
+    public void ExplicitConversionFromInvalidTimeSpanThrows() {
         var span = new TimeSpan(25, 0, 0);
 
         Assert.Throws<ArgumentOutOfRangeException>(() => (KintoneTimeOnly)span);
     }
 
     [Fact]
-    public void ToJson_WithValue_ReturnsFormattedTime() {
+    public void ToJsonWithValueReturnsFormattedTime() {
         var kto = new KintoneTimeOnly(new TimeOnly(23, 59));
 
         Assert.Equal("23:59", kto.ToJson());
     }
 
     [Fact]
-    public void ToJson_WithoutValue_ReturnsNull() {
+    public void ToJsonWithoutValueReturnsNull() {
         var kto = new KintoneTimeOnly(null);
 
         Assert.Null(kto.ToJson());
     }
 
     [Fact]
-    public void Parse_ValidString_ReturnsCorrectValue() {
+    public void ParseValidStringReturnsCorrectValue() {
         var kto = KintoneTimeOnly.Parse("14:15");
 
         Assert.Equal(new TimeOnly(14, 15), kto.Value);
     }
 
     [Fact]
-    public void TryParse_ValidString_ReturnsTrueAndCorrectValue() {
+    public void TryParseValidStringReturnsTrueAndCorrectValue() {
         var success = KintoneTimeOnly.TryParse("07:45", out var kto);
 
         Assert.True(success);
@@ -97,7 +97,7 @@ public class KintoneTimeOnlyTests {
     }
 
     [Fact]
-    public void TryParse_InvalidString_ReturnsFalse() {
+    public void TryParseInvalidStringReturnsFalse() {
         var success = KintoneTimeOnly.TryParse("not-a-time", out var kto);
 
         Assert.False(success);

@@ -12,10 +12,10 @@ using Xunit;
 
 namespace KintoneNetLibrary.Tests.Api;
 
-public class KintoneApi_RequestValidationTests {
+public class KintoneApiRequestValidationTests {
     #region <<Test methods>>
     [Fact]
-    public async Task UploadFileAsync_SetsCorrectContentType_AndFieldName() {
+    public async Task UploadFileAsyncSetsCorrectContentTypeAndFieldName() {
         HttpRequestMessage? capturedRequest = null;
 
         var httpClient = KintoneHttpTestHelper.CreateMockHttpClient(request => {
@@ -51,7 +51,7 @@ public class KintoneApi_RequestValidationTests {
     }
 
     [Fact]
-    public async Task DownloadFileStreamAsync_ReturnsCorrectStreamContent() {
+    public async Task DownloadFileStreamAsyncReturnsCorrectStreamContent() {
         var dummyContent = "This is a file";
         var httpClient = KintoneHttpTestHelper.CreateMockHttpClient(request => {
             return new HttpResponseMessage(HttpStatusCode.OK) {

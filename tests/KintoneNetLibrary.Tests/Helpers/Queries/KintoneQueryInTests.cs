@@ -8,7 +8,7 @@ namespace KintoneNetLibrary.Tests.Helpers.Queries;
 
 public class KintoneQueryInTests {
     [Fact]
-    public void In_IntList_CreatesCorrectQuery() {
+    public void InIntListCreatesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
             .In(x => x.Price, [100, 200, 300])
             .Build();
@@ -16,7 +16,7 @@ public class KintoneQueryInTests {
         Assert.Equal("Price in (100, 200, 300)", query);
     }
     [Fact]
-    public void In_StringList_CreatesCorrectQuery() {
+    public void InStringListCreatesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
             .In(x => x.Title, ["C#", "Java", "Go"])
             .Build();
@@ -24,7 +24,7 @@ public class KintoneQueryInTests {
         Assert.Equal("Title in (\"C#\", \"Java\", \"Go\")", query);
     }
     [Fact]
-    public void In_EmptyList_ThrowsArgumentException() {
+    public void InEmptyListThrowsArgumentException() {
         var query = new KintoneQuery<BookModel>();
         var ex = Assert.Throws<ArgumentException>(() =>
             query.In(x => x.Title, []));
@@ -35,7 +35,7 @@ public class KintoneQueryInTests {
 
 public class KintoneQueryNotInTests {
     [Fact]
-    public void NotIn_IntList_CreatesCorrectQuery() {
+    public void NotInIntListCreatesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
             .NotIn(x => x.Price, [0, 1, 999])
             .Build();
@@ -43,7 +43,7 @@ public class KintoneQueryNotInTests {
         Assert.Equal("Price not in (0, 1, 999)", query);
     }
     [Fact]
-    public void NotIn_StringList_CreatesCorrectQuery() {
+    public void NotInStringListCreatesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
             .NotIn(x => x.Classification, new[] { "Horror", "Sci-Fi" })
             .Build();
@@ -54,7 +54,7 @@ public class KintoneQueryNotInTests {
 
 public class KintoneQueryInOverloadTests {
     [Fact]
-    public void In_IntParams_GeneratesCorrectQuery() {
+    public void InIntParamsGeneratesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
             .In(x => x.Price, 100, 200, 300)
             .Build();
@@ -62,7 +62,7 @@ public class KintoneQueryInOverloadTests {
         Assert.Equal("Price in (100, 200, 300)", query);
     }
     [Fact]
-    public void In_StringParams_GeneratesCorrectQuery() {
+    public void InStringParamsGeneratesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
             .In(x => x.Title, "A", "B", "C")
             .Build();
@@ -70,14 +70,14 @@ public class KintoneQueryInOverloadTests {
         Assert.Equal("Title in (\"A\", \"B\", \"C\")", query);
     }
     [Fact]
-    public void In_EmptyParams_ThrowsException() {
+    public void InEmptyParamsThrowsException() {
         var query = new KintoneQuery<BookModel>();
         var ex = Assert.Throws<ArgumentException>(() => query.In<int?>(x => x.Price /* nullable int */, new List<int?> { }));
 
         Assert.Contains("値のリストが空です", ex.Message);
     }
     [Fact]
-    public void In_NullParams_ThrowsException() {
+    public void InNullParamsThrowsException() {
         var query = new KintoneQuery<BookModel>();
         int?[]? values = null;
         var ex = Assert.Throws<ArgumentNullException>(() => query.In(x => x.Price, values!));
@@ -88,7 +88,7 @@ public class KintoneQueryInOverloadTests {
 
 public class KintoneQueryNotInOverloadTests {
     [Fact]
-    public void NotIn_IntParams_GeneratesCorrectQuery() {
+    public void NotInIntParamsGeneratesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
             .NotIn(x => x.Price, 100, 200, 300)
             .Build();
@@ -96,7 +96,7 @@ public class KintoneQueryNotInOverloadTests {
         Assert.Equal("Price not in (100, 200, 300)", query);
     }
     [Fact]
-    public void NotIn_StringParams_GeneratesCorrectQuery() {
+    public void NotInStringParamsGeneratesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
             .NotIn(x => x.Title, "A", "B", "C")
             .Build();
@@ -104,7 +104,7 @@ public class KintoneQueryNotInOverloadTests {
         Assert.Equal("Title not in (\"A\", \"B\", \"C\")", query);
     }
     [Fact]
-    public void NotIn_EmptyParams_ThrowsException() {
+    public void NotInEmptyParamsThrowsException() {
         var query = new KintoneQuery<BookModel>();
         var ex = Assert.Throws<ArgumentException>(() =>
             query.NotIn<int?>(x => x.Price, new int?[] { }));
@@ -112,7 +112,7 @@ public class KintoneQueryNotInOverloadTests {
         Assert.Contains("値のリストが空です", ex.Message);
     }
     [Fact]
-    public void NotIn_NullParams_ThrowsException() {
+    public void NotInNullParamsThrowsException() {
         var query = new KintoneQuery<BookModel>();
         string[]? values = null;
 

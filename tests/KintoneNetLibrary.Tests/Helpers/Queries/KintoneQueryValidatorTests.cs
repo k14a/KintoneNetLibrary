@@ -24,7 +24,7 @@ public class KintoneQueryValidatorTests {
     }
 
     [Fact]
-    public void ValidateLikeClause_ShouldWarnOnAlphaNumericOnly() {
+    public void ValidateLikeClauseShouldWarnOnAlphaNumericOnly() {
         // Arrange
         var warnings = new List<string>();
         var query = @"Title like ""abc123"" and UUID = ""xyz""";
@@ -37,7 +37,7 @@ public class KintoneQueryValidatorTests {
         warnings[0].Should().Contain("abc123");
     }
     [Fact]
-    public void ValidateLikeClause_ShouldNotWarnOnJapaneseOrSymbols() {
+    public void ValidateLikeClauseShouldNotWarnOnJapaneseOrSymbols() {
         // Arrange
         var warnings = new List<string>();
         var query = @"Title like ""タイトル123"" or Title like ""abc_123""";
@@ -49,7 +49,7 @@ public class KintoneQueryValidatorTests {
         warnings.Should().BeEmpty();
     }
     [Fact]
-    public void ValidateFieldCodes_ShouldThrowOnInvalidField() {
+    public void ValidateFieldCodesShouldThrowOnInvalidField() {
         // Arrange
         var query = @"Uuid = ""abc"" and InvalidField = ""123""";
 
@@ -60,7 +60,7 @@ public class KintoneQueryValidatorTests {
         act.Should().Throw<InvalidOperationException>().WithMessage("*InvalidField*");
     }
     [Fact]
-    public void ValidateFieldCodes_ShouldWarnOnInvalidField_WhenThrowOnErrorFalse() {
+    public void ValidateFieldCodesShouldWarnOnInvalidFieldWhenThrowOnErrorFalse() {
         // Arrange
         var warnings = new List<string>();
         var query = @"Title = ""abc"" and NGField = ""xxx""";
@@ -73,7 +73,7 @@ public class KintoneQueryValidatorTests {
             .Which.Should().Contain("NGField");
     }
     [Fact]
-    public void ValidateFieldCodes_ShouldNotWarnOrThrow_WhenFieldCodesAreValid() {
+    public void ValidateFieldCodesShouldNotWarnOrThrowWhenFieldCodesAreValid() {
         // Arrange
         var query = @"UUID = ""abc"" and Title = ""xyz""";
 
@@ -84,7 +84,7 @@ public class KintoneQueryValidatorTests {
         act.Should().NotThrow();
     }
     [Fact]
-    public void ValidateFieldCodes_ShouldIgnoreLiteralsAndKeywords() {
+    public void ValidateFieldCodesShouldIgnoreLiteralsAndKeywords() {
         // Arrange
         var query = @"UUID = ""abc"" and 100 > 10 order by Title desc";
 
