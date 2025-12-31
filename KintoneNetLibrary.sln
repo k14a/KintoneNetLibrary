@@ -3,11 +3,17 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36109.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KintoneNetLibrary", "KintoneNetLibrary.csproj", "{04669413-3284-4CE3-85D6-80182FC7D712}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KintoneNetLibrary", "src\KintoneNetLibrary\KintoneNetLibrary.csproj", "{04669413-3284-4CE3-85D6-80182FC7D712}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KintoneNetLibrary.Tests", "tests\KintoneNetLibrary.Tests\KintoneNetLibrary.Tests.csproj", "{38567E93-10F6-432B-BC56-E0957042CD43}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KintoneNetLibrary.CodeGen", "src\KintoneNetLibrary.CodeGen\KintoneNetLibrary.CodeGen.csproj", "{40719C75-BA8B-424E-9A0D-5CE5A18E939F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KintoneNetLibrary.CodeGen.Tests", "tests\KintoneNetLibrary.CodeGen.Tests\KintoneNetLibrary.CodeGen.Tests.csproj", "{509A5B7A-E382-44F1-9F32-C929A6E7FC3A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -43,12 +49,38 @@ Global
 		{38567E93-10F6-432B-BC56-E0957042CD43}.Release|x64.Build.0 = Release|Any CPU
 		{38567E93-10F6-432B-BC56-E0957042CD43}.Release|x86.ActiveCfg = Release|Any CPU
 		{38567E93-10F6-432B-BC56-E0957042CD43}.Release|x86.Build.0 = Release|Any CPU
+		{40719C75-BA8B-424E-9A0D-5CE5A18E939F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{40719C75-BA8B-424E-9A0D-5CE5A18E939F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{40719C75-BA8B-424E-9A0D-5CE5A18E939F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{40719C75-BA8B-424E-9A0D-5CE5A18E939F}.Debug|x64.Build.0 = Debug|Any CPU
+		{40719C75-BA8B-424E-9A0D-5CE5A18E939F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{40719C75-BA8B-424E-9A0D-5CE5A18E939F}.Debug|x86.Build.0 = Debug|Any CPU
+		{40719C75-BA8B-424E-9A0D-5CE5A18E939F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{40719C75-BA8B-424E-9A0D-5CE5A18E939F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{40719C75-BA8B-424E-9A0D-5CE5A18E939F}.Release|x64.ActiveCfg = Release|Any CPU
+		{40719C75-BA8B-424E-9A0D-5CE5A18E939F}.Release|x64.Build.0 = Release|Any CPU
+		{40719C75-BA8B-424E-9A0D-5CE5A18E939F}.Release|x86.ActiveCfg = Release|Any CPU
+		{40719C75-BA8B-424E-9A0D-5CE5A18E939F}.Release|x86.Build.0 = Release|Any CPU
+		{509A5B7A-E382-44F1-9F32-C929A6E7FC3A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{509A5B7A-E382-44F1-9F32-C929A6E7FC3A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{509A5B7A-E382-44F1-9F32-C929A6E7FC3A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{509A5B7A-E382-44F1-9F32-C929A6E7FC3A}.Debug|x64.Build.0 = Debug|Any CPU
+		{509A5B7A-E382-44F1-9F32-C929A6E7FC3A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{509A5B7A-E382-44F1-9F32-C929A6E7FC3A}.Debug|x86.Build.0 = Debug|Any CPU
+		{509A5B7A-E382-44F1-9F32-C929A6E7FC3A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{509A5B7A-E382-44F1-9F32-C929A6E7FC3A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{509A5B7A-E382-44F1-9F32-C929A6E7FC3A}.Release|x64.ActiveCfg = Release|Any CPU
+		{509A5B7A-E382-44F1-9F32-C929A6E7FC3A}.Release|x64.Build.0 = Release|Any CPU
+		{509A5B7A-E382-44F1-9F32-C929A6E7FC3A}.Release|x86.ActiveCfg = Release|Any CPU
+		{509A5B7A-E382-44F1-9F32-C929A6E7FC3A}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{38567E93-10F6-432B-BC56-E0957042CD43} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{40719C75-BA8B-424E-9A0D-5CE5A18E939F} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{509A5B7A-E382-44F1-9F32-C929A6E7FC3A} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8E7E9FC6-BE31-49E7-8CE3-501CD916CA33}
