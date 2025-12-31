@@ -5,8 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace KintoneNetLibrary.Infrastructure.Api;
 
-public abstract class BaseKintoneApi
-{
+public abstract class BaseKintoneApi {
     protected readonly KintoneAccessBase Access;
     protected readonly HttpClient HttpClient;
     protected readonly ILogger? Logger;
