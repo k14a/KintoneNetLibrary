@@ -7,6 +7,10 @@ using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.Infrastructure.Helpers;
 
+// コメントは日本語で記述
+/// <summary>
+/// Kintone リクエストビルダー
+/// </summary>
 public static class KintoneRequestBuilder {
     private static readonly JsonSerializerOptions _jsonOptions = DefaultJsonOptions.Default;
 
@@ -92,6 +96,16 @@ public static class KintoneRequestBuilder {
 
         return JsonSerializer.Serialize(deleteBody, _jsonOptions);
     }
+    /// <summary>
+    /// Kintone リクエスト URI を構築
+    /// </summary>
+    /// <param name="baseUri"></param>
+    /// <param name="path"></param>
+    /// <param name="appID"></param>
+    /// <param name="query"></param>
+    /// <param name="fieldCodes"></param>
+    /// <param name="additionalParams"></param>
+    /// <returns></returns>
     public static Uri BuildRequestUri(
         Uri baseUri,
         string path,
@@ -125,6 +139,15 @@ public static class KintoneRequestBuilder {
         builder.Query = string.Join("&", parameters);
         return builder.Uri;
     }
+    /// <summary>
+    /// Kintone 検索リクエスト URI を構築
+    /// </summary>
+    /// <param name="baseUri"></param>
+    /// <param name="path"></param>
+    /// <param name="appID"></param>
+    /// <param name="query"></param>
+    /// <param name="fieldCodes"></param>
+    /// <returns></returns>
     public static Uri BuildFindRequestUri(Uri baseUri, string path, int appID, string? query = null, IList<string>? fieldCodes = null) {
         var effectiveFields = EnsureMinimumFields(fieldCodes);
 
@@ -144,6 +167,11 @@ public static class KintoneRequestBuilder {
         builder.Query = string.Join("&", parameters);
         return builder.Uri;
     }
+    /// <summary>
+    /// 最低限必要なフィールドコードを確保
+    /// </summary>
+    /// <param name="fieldCodes"></param>
+    /// <returns></returns>
     internal static IList<string> EnsureMinimumFields(IList<string> fieldCodes) {
         var required = new[] { "$id", "$revision" };
         return fieldCodes != null && fieldCodes.Count > 0 ? required.Union(fieldCodes).Distinct().ToArray() : null;

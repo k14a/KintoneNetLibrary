@@ -9,6 +9,10 @@ using Microsoft.Extensions.Logging;
 
 namespace KintoneNetLibrary.Infrastructure.Api;
 
+// コメントは日本語で記述
+/// <summary>
+/// Kintone API のファイル操作に関する機能を提供します。
+/// </summary>
 public partial class KintoneApi {
     #region <<File upload>>
     /// <summary>
@@ -17,11 +21,22 @@ public partial class KintoneApi {
     public async Task<string> UploadFileAsync(Stream stream, string fileName) {
         return await this.UploadFileInternalAsync(stream, fileName, CancellationToken.None);
     }
-
+    /// <summary>
+    /// 任意のストリームを kintone にアップロードし、fileKey を返します。
+    /// </summary>
+    /// <param name="stream"></param>
+    /// <param name="fileName"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     public async Task<string> UploadFileAsync(Stream stream, string fileName, CancellationToken cancellationToken) {
         return await this.UploadFileInternalAsync(stream, fileName, cancellationToken);
     }
-
+    /// <summary>
+    /// 指定されたファイルを kintone にアップロードし、fileKey を返します。
+    /// </summary>
+    /// <param name="file"></param>
+    /// <returns></returns>
+    /// <exception cref="FileNotFoundException"></exception>
     public async Task<string> UploadFileAsync(FileInfo file) {
         if (!file.Exists) {
             throw new FileNotFoundException("指定されたファイルが存在しません。", file.FullName);
@@ -30,7 +45,15 @@ public partial class KintoneApi {
         using var stream = file.OpenRead();
         return await this.UploadFileAsync(stream, file.Name);
     }
-
+    /// <summary>
+    /// 指定されたファイルを kintone にアップロードし、fileKey を返します。
+    /// </summary>
+    /// <param name="stream"></param>
+    /// <param name="fileName"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    /// <exception cref="KintoneException"></exception>
     private async Task<string> UploadFileInternalAsync(Stream stream, string fileName, CancellationToken cancellationToken) {
         ArgumentNullException.ThrowIfNull(stream);
         fileName ??= "";
@@ -110,6 +133,13 @@ public partial class KintoneApi {
     #endregion
 
     #region <<File upload>>
+    /// <summary>
+    /// fileKey からファイルをダウンロードし、バイト配列として返します。
+    /// </summary>
+    /// <param name="fileKey"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
+    /// <exception cref="KintoneException"></exception>
     public async Task<byte[]> DownloadFileAsync(string fileKey) {
         ArgumentNullException.ThrowIfNull(fileKey);
         if (fileKey == string.Empty) {
@@ -194,7 +224,12 @@ public partial class KintoneApi {
 
         return await resp.Content.ReadAsStreamAsync();
     }
-
+    /// <summary>
+    /// fileKey からファイルをダウンロードし、指定されたファイルに保存します。
+    /// </summary>
+    /// <param name="fileKey"></param>
+    /// <param name="destination"></param>
+    /// <returns></returns>
     public async Task DownloadFileAsync(string fileKey, FileInfo destination) {
         var bytes = await this.DownloadFileAsync(fileKey);
         using var fs = destination.OpenWrite();
@@ -202,7 +237,13 @@ public partial class KintoneApi {
     }
     #endregion
 
+    /// <summary>
+    /// ファイルアップロード結果
+    /// </summary>
     private sealed class FileUploadResult {
+        /// <summary>
+        /// アップロードされたファイルの fileKey
+        /// </summary>
         [JsonPropertyName("fileKey")]
         public string FileKey { get; set; } = string.Empty;
     }

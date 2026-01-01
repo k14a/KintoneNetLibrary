@@ -8,6 +8,10 @@ using KintoneNetLibrary.Infrastructure.Helpers;
 
 namespace KintoneNetLibrary.Domain.Entities;
 
+/// <summary>
+/// Kintoneモデルの基本クラス（CRUD操作用）
+/// </summary>
+/// <typeparam name="TSelf"></typeparam>
 public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase where TSelf : KintoneModelBase<TSelf>, new() {
     /// <summary>
     /// CRUDサービスのインスタンス
@@ -523,5 +527,4 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
         var parameters = new object[] { source.Body, source.Parameters.ToArray() };
         return genericMethod.Invoke(null, parameters)!;
     }
-
 }

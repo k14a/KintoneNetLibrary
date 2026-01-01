@@ -5,15 +5,19 @@ using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.CodeGen.Application.Emitters;
 
-public class CSharpCodeEmitter : ICodeEmitter {
-    private readonly INameConverter _nameConverter;
-    private readonly ITypeMapper _typeMapper;
+/// <summary>
+/// C# コードエミッタ
+/// </summary>
+public class CSharpCodeEmitter(INameConverter nameConverter, ITypeMapper typeMapper) : ICodeEmitter {
+    private readonly INameConverter _nameConverter = nameConverter;
+    private readonly ITypeMapper _typeMapper = typeMapper;
 
-    public CSharpCodeEmitter(INameConverter nameConverter, ITypeMapper typeMapper) {
-        this._nameConverter = nameConverter;
-        this._typeMapper = typeMapper;
-    }
-
+    /// <summary>
+    /// コードを生成する
+    /// </summary>
+    /// <param name="metadata"></param>
+    /// <param name="options"></param>
+    /// <returns></returns>
     public string Emit(KintoneAppMetadata metadata, CodeEmitterOptions options) {
         var sb = new StringBuilder();
 
@@ -39,6 +43,13 @@ public class CSharpCodeEmitter : ICodeEmitter {
         return sb.ToString();
     }
 
+    /// <summary>
+    /// メインクラスを出力する
+    /// </summary>
+    /// <param name="sb"></param>
+    /// <param name="metadata"></param>
+    /// <param name="className"></param>
+    /// <param name="options"></param>
     private void EmitMainClass(StringBuilder sb, KintoneAppMetadata metadata, string className, CodeEmitterOptions options) {
         sb.AppendLine($"public {(options.UseRecord ? "record" : "class")} {className}");
         sb.AppendLine("{");
@@ -51,6 +62,12 @@ public class CSharpCodeEmitter : ICodeEmitter {
         sb.AppendLine();
     }
 
+    /// <summary>
+    /// サブテーブルクラスを出力する    
+    /// </summary>
+    /// <param name="sb"></param>
+    /// <param name="field"></param>
+    /// <param name="options"></param>
     private void EmitSubtableClass(StringBuilder sb, KintoneFieldMetadata field, CodeEmitterOptions options) {
         var className = this._nameConverter.ToClassName(field.Label, field.Code);
 
@@ -66,6 +83,12 @@ public class CSharpCodeEmitter : ICodeEmitter {
         sb.AppendLine();
     }
 
+    /// <summary>
+    /// プロパティを出力する
+    /// </summary>
+    /// <param name="sb"></param>
+    /// <param name="field"></param>
+    /// <param name="options"></param>
     private void EmitProperty(StringBuilder sb, KintoneFieldMetadata field, CodeEmitterOptions options) {
         var propName = this._nameConverter.ToPropertyName(field.Label, field.Code);
         var typeName = this._typeMapper.Map(field);

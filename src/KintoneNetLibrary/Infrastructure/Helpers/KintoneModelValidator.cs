@@ -3,7 +3,19 @@ using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.Infrastructure.Helpers;
 
+// コメントは日本語で記述
+/// <summary>
+/// Kintone モデルのバリデーションを行うヘルパークラス
+/// </summary>
 internal static class KintoneModelValidator {
+    /// <summary>
+    /// モデルの構造を検証します
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="model"></param>
+    /// <param name="errors"></param>
+    /// <param name="bulk"></param>
+    /// <returns></returns>
     public static bool TryValidateModelStructure<T>(T model, out List<string> errors, IList<T>? bulk = null)
         where T : KintoneModelBase<T>, new() {
         errors = [];
@@ -30,6 +42,12 @@ internal static class KintoneModelValidator {
 
         return errors.Count == 0;
     }
+    /// <summary>
+    /// モデルのキー整合性を検証します
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="model"></param>
+    /// <exception cref="InvalidOperationException"></exception>
     public static void ValidateKeyIntegrity<T>(T model) where T : KintoneModelBase<T>, new() {
         // 1. IsKey プロパティの重複チェック
         var keyProps = GetKeyProperties<T>();
@@ -53,6 +71,12 @@ internal static class KintoneModelValidator {
             );
         }
     }
+    /// <summary>
+    /// モデルのキー値の一意性を検証します
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="models"></param>
+    /// <exception cref="InvalidOperationException"></exception>
     public static void ValidateKeyValueUniqueness<T>(IList<T> models) where T : KintoneModelBase<T>, new() {
         var keyProp = GetKeyProperties<T>().FirstOrDefault();
 
@@ -71,6 +95,12 @@ internal static class KintoneModelValidator {
             throw new InvalidOperationException($"同じキー値が複数存在します: {string.Join(", ", duplicateKeys)}");
         }
     }
+    /// <summary>
+    /// リンクフィールドの値を検証します
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="model"></param>
+    /// <exception cref="InvalidOperationException"></exception>
     public static void ValidateLinkFields<T>(T model) where T : KintoneModelBase<T>, new() {
         var props = typeof(T).GetProperties();
 
@@ -107,6 +137,12 @@ internal static class KintoneModelValidator {
             }
         }
     }
+    /// <summary>
+    /// モデルの構造化フィールドを検証します
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="model"></param>
+    /// <exception cref="InvalidOperationException"></exception>
     public static void ValidateStructuredFields<T>(T model) where T : KintoneModelBase<T>, new() {
         var props = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
@@ -148,10 +184,20 @@ internal static class KintoneModelValidator {
         }
     }
 
+    /// <summary>
+    /// サブテーブル型のプロパティかどうかを判定します
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
     private static bool IsValidSubTableType(Type type) {
         return type.IsGenericType &&
                type.GetGenericTypeDefinition() == typeof(List<>);
     }
+    /// <summary>
+    /// モデルのキー属性付きプロパティを取得します
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
     private static List<PropertyInfo> GetKeyProperties<T>() {
         return typeof(T)
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)

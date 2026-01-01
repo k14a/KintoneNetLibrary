@@ -1,5 +1,8 @@
 namespace KintoneNetLibrary.Domain.Entities;
 
+/// <summary>
+/// Kintoneモデルの基本クラス（フック機能）
+/// </summary>
 public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase where TSelf : KintoneModelBase<TSelf>, new() {
     /// <summary>
     /// 登録前のフックを実行します。

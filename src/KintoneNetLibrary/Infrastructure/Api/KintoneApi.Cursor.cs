@@ -10,9 +10,18 @@ using KintoneNetLibrary.Infrastructure.Internal;
 
 namespace KintoneNetLibrary.Infrastructure.Api;
 
+// コメントは日本語で記述
+/// <summary>
+/// Kintone API のカーソル操作に関する機能を提供します。
+/// </summary>
 public partial class KintoneApi {
 
-    /* ---------- カーソル作成 ---------- */
+    /// <summary>
+    /// カーソルを作成します。
+    /// </summary>
+    /// <param name="body"></param>
+    /// <returns></returns>
+    /// <exception cref="KintoneException"></exception>
     public async Task<string> CreateCursorAsync(Dictionary<string, object> body) {
         using var request = new HttpRequestMessage(HttpMethod.Post, KintoneApiEndpoints.Cursor);
         request.Headers.Add("X-Cybozu-API-Token", this._access.ApiToken);
@@ -29,7 +38,12 @@ public partial class KintoneApi {
         return created?.Id ?? throw new KintoneException("Cursor ID が取得できませんでした。");
     }
 
-    /* ---------- 1ページ取得 ---------- */
+    /// <summary>
+    /// カーソルを取得します。
+    /// </summary>
+    /// <param name="cursorId"></param>
+    /// <returns></returns>
+    /// <exception cref="KintoneException"></exception>
     private async Task<string> FetchCursorAsync(string cursorId) {
         var endpoint = $"records/cursor.json?id={cursorId}";
         var requestUri = $"{this.GetBaseUri()}{endpoint}";
@@ -51,7 +65,12 @@ public partial class KintoneApi {
         return json;
     }
 
-    /* ---------- カーソル削除 ---------- */
+    /// <summary>
+    /// カーソルを削除します。
+    /// </summary>
+    /// <param name="json"></param>
+    /// <returns></returns>
+    /// <exception cref="KintoneException"></exception>
     public async Task<string> DeleteCursorJsonAsync(string json) {
         var request = new HttpRequestMessage(HttpMethod.Delete, $"{this.GetBaseUri()}{KintoneApiEndpoints.Cursor}") {
             Content = new StringContent(json, Encoding.UTF8, "application/json")
@@ -69,7 +88,11 @@ public partial class KintoneApi {
         return responseJson;
     }
 
-    /* ---------- 逐次ストリーム取得 ---------- */
+    /// <summary>
+    /// カーソルをストリームとして取得します。
+    /// </summary>
+    /// <param name="cursorId"></param>
+    /// <returns></returns>
     public async IAsyncEnumerable<string> StreamCursorAsync(string cursorId) {
         try {
             while (true) {
@@ -94,18 +117,30 @@ public partial class KintoneApi {
         }
     }
 
-    /* =========================================================
-       内部 DTO
-       ========================================================= */
+    /// <summary>
+    /// カーソル作成のレスポンス DTO
+    /// </summary>
     private sealed class CursorCreated {
+        /// <summary>
+        /// 作成したカーソル ID     
+        /// </summary>
         [JsonPropertyName("id")]
         public string Id { get; set; } = string.Empty;
     }
 
+    /// <summary>
+    /// カーソル取得のレスポンス DTO
+    /// </summary>
+    /// <typeparam name="TRecord"></typeparam>
     public sealed class CursorFetch<TRecord> {
+        /// <summary>
+        /// 取得したレコード一覧
+        /// </summary>
         [JsonPropertyName("records")]
         public IList<TRecord> Records { get; set; } = new List<TRecord>();
-
+        /// <summary>
+        /// カーソルの完了状態
+        /// </summary>
         [JsonPropertyName("done")]
         public bool Done { get; set; }
     }

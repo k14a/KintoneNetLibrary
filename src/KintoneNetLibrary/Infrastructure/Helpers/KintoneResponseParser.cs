@@ -6,8 +6,18 @@ using KintoneNetLibrary.Infrastructure.Converters;
 
 namespace KintoneNetLibrary.Infrastructure.Helpers;
 
+// コメントは日本語で記述
+/// <summary>
+/// Kintone のレスポンスを解析するためのヘルパークラス
+/// </summary>
 public static class KintoneResponseParser {
+    /// <summary>
+    /// DeleteRecordsAsync などのレスポンス JSON を解析するための内部クラス
+    /// </summary>
     private sealed class DeleteResponse {
+        /// <summary>
+        /// 削除されたレコードの ID のリスト
+        /// </summary>
         [JsonPropertyName("ids")]
         public List<string> IDs { get; set; } = [];
     }
@@ -32,6 +42,13 @@ public static class KintoneResponseParser {
 
         return originalRecords;
     }
+    /// <summary>
+    /// 単一レコードの JSON を解析してモデルに変換する
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="json"></param>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException"></exception>
     public static T ParseRecord<T>(string json) where T : KintoneModelBase<T>, new() {
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
@@ -44,6 +61,13 @@ public static class KintoneResponseParser {
         return JsonSerializer.Deserialize<T>(modelJson, KintoneJsonOptions.Default)!;
 
     }
+    /// <summary>
+    /// 複数レコードの JSON を解析してモデルのリストに変換する
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="json"></param>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException"></exception>
     public static IList<T> ParseRecords<T>(string json) where T : KintoneModelBase<T>, new() {
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;

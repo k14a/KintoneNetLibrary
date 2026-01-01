@@ -1,6 +1,12 @@
 namespace KintoneNetLibrary.Infrastructure.Helpers;
 
+/// <summary>
+/// MIMEタイプを扱うためのラッパークラス
+/// </summary>
 public static class MimeTypeWrapper {
+    /// <summary>
+    /// 許容されるContent-Typeのセット
+    /// </summary>
     private static readonly HashSet<string> AcceptableContentTypes = [
         "application/octet-stream",
         "text/plain",
@@ -13,6 +19,11 @@ public static class MimeTypeWrapper {
         "application/x-zip-compressed",
     ];
 
+    /// <summary>
+    /// 指定されたContent-Typeが許容されるかどうかを判定します
+    /// </summary>
+    /// <param name="contentType"></param>
+    /// <returns></returns>
     public static bool IsAcceptableContentType(string? contentType) {
         return contentType != null && AcceptableContentTypes.Contains(contentType);
     }

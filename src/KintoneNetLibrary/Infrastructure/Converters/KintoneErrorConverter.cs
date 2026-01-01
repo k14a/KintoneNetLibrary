@@ -3,7 +3,17 @@ using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.Infrastructure.Converters;
 
+// コメントは日本語で記述
+/// <summary>
+/// KintoneのエラーレスポンスをKintoneErrorオブジェクトに変換するコンバーター
+/// </summary>
 public static class KintoneErrorConverter {
+    /// <summary>
+    /// JSON文字列をKintoneErrorオブジェクトに変換する
+    /// </summary>
+    /// <param name="json"></param>
+    /// <returns></returns>
+    /// <exception cref="KintoneException"></exception>
     public static KintoneError Parse(string json) {
         try {
             var error = JsonSerializer.Deserialize<KintoneError>(json);

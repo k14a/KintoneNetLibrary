@@ -3,6 +3,10 @@ using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.Domain.Interfaces;
 
+// コメントは日本語で記述
+/// <summary>
+/// Kintone API ファクトリ インターフェイス
+/// </summary>
 public interface IKintoneApiFactory {
     /// <summary>
     /// KintoneModelBase のプロパティから API インスタンスを生成します。

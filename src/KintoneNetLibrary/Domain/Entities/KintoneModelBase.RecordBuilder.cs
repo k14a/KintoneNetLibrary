@@ -3,6 +3,9 @@ using KintoneNetLibrary.Domain.Interfaces;
 
 namespace KintoneNetLibrary.Domain.Entities;
 
+/// <summary>
+/// Kintoneモデル基底クラス（レコードビルダー機能）
+/// </summary>
 public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase where TSelf : KintoneModelBase<TSelf>, new() {
     // ----- レコード生成処理 -----
     /// <summary>
@@ -73,6 +76,10 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
         return record;
     }
 
+    /// <summary>
+    /// Kintoneのレコード更新用形式に変換する
+    /// </summary>
+    /// <returns></returns>
     public virtual IDictionary<string, object> ToKintoneUpdateRecord() {
         var record = this.ToKintoneRecord();
 
@@ -94,6 +101,11 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
 
         return record;
     }
+    /// <summary>
+    /// 更新キー用フィールドを取得する
+    /// </summary>
+    /// <param name="keyValue"></param>
+    /// <returns></returns>
     private (string? fieldCode, object? value) GetUpdateKeyField(out object? keyValue) {
         var keyProp = this.GetType().GetProperties().FirstOrDefault(p => p.GetCustomAttribute<KintoneItemAttribute>()?.IsKey == true);
 

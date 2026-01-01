@@ -5,6 +5,10 @@ using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.Infrastructure.Helpers;
 
+// コメントは日本語で記述
+/// <summary>
+/// Kintoneのクエリ文の妥当性を検証するためのヘルパークラス
+/// </summary>
 public static partial class KintoneQueryValidator {
     /// <summary>
     /// Kintoneのクエリ文に含まれる like 句が英数字リテラルのみで構成されている場合、警告ログを出力します。
@@ -33,6 +37,14 @@ public static partial class KintoneQueryValidator {
             }
         }
     }
+    /// <summary>
+    /// Kintoneのクエリ文に含まれるフィールドコードが、指定されたモデルTに定義されているか検証します。
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="query"></param>
+    /// <param name="throwOnError"></param>
+    /// <param name="onWarn"></param>
+    /// <exception cref="InvalidOperationException"></exception>
     public static void ValidateFieldCodes<T>(string query, bool throwOnError = true, Action<string> onWarn = null) {
         if (string.IsNullOrWhiteSpace(query)) {
             return;
@@ -62,7 +74,7 @@ public static partial class KintoneQueryValidator {
             .Where(candidate => !fieldCodes.Contains(candidate))
             .ToList();
 
-        if (notFound.Any()) {
+        if (notFound.Count != 0) {
             var message = $"[KintoneQueryValidator] クエリ内にKintoneモデルのFieldCodeに存在しないフィールドが含まれています: {string.Join(", ", notFound)}";
 
             if (throwOnError) {
@@ -79,8 +91,18 @@ public static partial class KintoneQueryValidator {
         "and", "or", "not", "in", "like", "contains", "is", "null", "true", "false", "limit", "offset", "order", "by", "asc", "desc"
     };
 
+    /// <summary>
+    /// 指定された単語がKintoneのクエリキーワードであるかを判定します。
+    /// </summary>
+    /// <param name="word"></param>
+    /// <returns></returns>
     private static bool IsKintoneQueryKeyword(string word) => KintoneKeywords.Contains(word);
 
+    /// <summary>
+    /// 指定された単語がリテラル値（数値リテラルまたはクォート済み文字列）であるかを判定します。
+    /// </summary>
+    /// <param name="word"></param>
+    /// <returns></returns>
     private static bool IsLiteralValue(string word) {
         // 数字リテラル・クォート済み文字列はここでは単純に除外（実装は要改善可能）
         return int.TryParse(word, out _) || double.TryParse(word, out _) || word.StartsWith("\"") || word.EndsWith("\"");

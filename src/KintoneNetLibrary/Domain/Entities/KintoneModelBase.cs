@@ -121,7 +121,7 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// </summary>
     /// <param name="direction">変換の方向（読み取りまたは送信）</param>
     /// <returns>変換情報の辞書</returns>
-    private IDictionary<string, string> GetNameConvertDic(NameConvertor.Direction direction) {
+    private Dictionary<string, string> GetNameConvertDic(NameConvertor.Direction direction) {
         return this.ConvertDictionary
             .Where(c => c.ConvertDirection == direction || c.ConvertDirection == NameConvertor.Direction.Both)
             .ToDictionary(

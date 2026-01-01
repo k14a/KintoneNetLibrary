@@ -1,5 +1,8 @@
 using KintoneNetLibrary.Domain.Entities;
 
-namespace KintoneNetLibrary.CodeGen.Application.Emitters;
+namespace KintoneNetLibrary.Domain.Entities;
 
+/// <summary>
+/// Kintoneのグループを表すエンティティクラス
+/// </summary>
 public class KintoneGroup : KintoneUser{}

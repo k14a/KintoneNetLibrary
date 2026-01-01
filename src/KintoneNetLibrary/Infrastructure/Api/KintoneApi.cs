@@ -10,6 +10,10 @@ using KintoneNetLibrary.Infrastructure.Converters;
 
 namespace KintoneNetLibrary.Infrastructure.Api;
 
+// コメントは日本語で記述
+/// <summary>
+/// Kintone API 基底クラス
+/// </summary>
 public partial class KintoneApi : BaseKintoneApi {
     #region <<Private values>>
     private readonly KintoneAccessBase _access;

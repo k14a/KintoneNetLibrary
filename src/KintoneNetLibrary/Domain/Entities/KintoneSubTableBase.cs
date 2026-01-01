@@ -4,7 +4,13 @@ using KintoneNetLibrary.Infrastructure.Converters;
 
 namespace KintoneNetLibrary.Domain.Entities;
 
+/// <summary>
+/// Kintoneサブテーブルの基底クラス
+/// </summary>
 public abstract class KintoneSubTableBase {
+    /// <summary>
+    /// サブテーブル行のID
+    /// </summary>
     public string ID { get; set; } = string.Empty;
 
     /// <summary>

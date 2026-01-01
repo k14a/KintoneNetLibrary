@@ -37,7 +37,7 @@ public class KintoneAccount {
     /// <summary>
     /// Kintone ゲストスペースID
     /// </summary>
-    public int GuestSpaceId { get; set; } = 0;
+    public int GuestSpaceId { get; set; }
 
     /// <summary>
     /// Kintone ログイン用URLを取得する

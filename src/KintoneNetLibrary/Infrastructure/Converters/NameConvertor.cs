@@ -4,8 +4,7 @@
 /// Kintone の項目名と C# 側のプロパティ名の変換ルール。
 /// 変換方向（Read, Send, Both）を指定して使用します。
 /// </summary>
-public class NameConvertor
-{
+public class NameConvertor {
     /// <summary>
     /// kintone 上の項目名
     /// </summary>
@@ -26,22 +25,45 @@ public class NameConvertor
     /// </summary>
     public enum Direction
     {
+        /// <summary>
+        /// 両方
+        /// </summary>
         Both,
+        /// <summary>
+        /// 読み取り専用
+        /// </summary>
         Read,
+        /// <summary>
+        /// 書き出し専用
+        /// </summary>
         Send
     }
 
+    /// <summary>
+    /// コンストラクタ
+    /// </summary>
     public NameConvertor() { }
 
-    public NameConvertor(string itemName, string propertyName, Direction direction = Direction.Both)
-    {
+    /// <summary>
+    /// コンストラクタ
+    /// </summary>
+    /// <param name="itemName"></param>
+    /// <param name="propertyName"></param>
+    /// <param name="direction"></param>
+    public NameConvertor(string itemName, string propertyName, Direction direction = Direction.Both) {
         this.ItemName = itemName;
         this.PropertyName = propertyName;
         this.ConvertDirection = direction;
     }
 
-    public static NameConvertor Create(string itemName, string propertyName, Direction direction = Direction.Both)
-    {
+    /// <summary>
+    /// ファクトリーメソッド
+    /// </summary>
+    /// <param name="itemName"></param>
+    /// <param name="propertyName"></param>
+    /// <param name="direction"></param>
+    /// <returns></returns>
+    public static NameConvertor Create(string itemName, string propertyName, Direction direction = Direction.Both) {
         return new NameConvertor(itemName, propertyName, direction);
     }
 }

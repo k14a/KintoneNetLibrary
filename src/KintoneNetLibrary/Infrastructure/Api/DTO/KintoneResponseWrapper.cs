@@ -1,11 +1,25 @@
 using KintoneNetLibrary.Domain.Entities;
 
-namespace KintoneNetLibrary.Infrastructure.Api.DTO {
-    public class KintoneResponseWrapper<T> where T : KintoneModelBase<T>, new() {
-        public T Record { get; set; } = new T();
-    }
+namespace KintoneNetLibrary.Infrastructure.Api.DTO; 
+// コメントは日本語で記述
+/// <summary>
+/// Kintoneのレスポンスをラップするクラス
+/// </summary>
+/// <typeparam name="T"></typeparam>
+public class KintoneResponseWrapper<T> where T : KintoneModelBase<T>, new() {
+    /// <summary>
+    /// Kintoneのレコードデータ
+    /// </summary>
+    public T Record { get; set; } = new T();
+}
 
-    public class KintoneResponseListWrapper<T> where T : KintoneModelBase<T>, new() {
-        public List<T> Records { get; set; } = [];
-    }
+/// <summary>
+/// Kintoneのレスポンスリストをラップするクラス
+/// </summary>
+/// <typeparam name="T"></typeparam>
+public class KintoneResponseListWrapper<T> where T : KintoneModelBase<T>, new() {
+    /// <summary>
+    /// Kintoneのレコードデータリスト
+    /// </summary>
+    public List<T> Records { get; set; } = [];
 }

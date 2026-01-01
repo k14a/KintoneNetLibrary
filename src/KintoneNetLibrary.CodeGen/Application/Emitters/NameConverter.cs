@@ -4,6 +4,9 @@ using KintoneNetLibrary.CodeGen.Application.Interfaces;
 
 namespace KintoneNetLibrary.CodeGen.Application.Emitters;
 
+/// <summary>
+/// 名前変換器
+/// </summary>
 public class NameConverter : INameConverter {
     private static readonly Dictionary<string, string> Dictionary = new() {
         { "顧客", "Customer" },
@@ -19,16 +22,34 @@ public class NameConverter : INameConverter {
         // 必要に応じて追加
     };
 
+    /// <summary>
+    /// クラス名に変換する
+    /// </summary>
+    /// <param name="label"></param>
+    /// <param name="code"></param>
+    /// <returns></returns>
     public string ToClassName(string label, string code) {
         var name = this.Convert(label, code);
         return MakeSafeIdentifier(name);
     }
 
+    /// <summary>
+    /// プロパティ名に変換する
+    /// </summary>
+    /// <param name="label"></param>
+    /// <param name="code"></param>
+    /// <returns></returns>
     public string ToPropertyName(string label, string code) {
         var name = this.Convert(label, code);
         return MakeSafeIdentifier(name);
     }
 
+    /// <summary>
+    /// 変換ロジック本体
+    /// </summary>
+    /// <param name="label"></param>
+    /// <param name="code"></param>
+    /// <returns></returns>
     private string Convert(string label, string code) {
         if(string.IsNullOrWhiteSpace(label)) {
             return ToPascalCase(code);
@@ -55,8 +76,18 @@ public class NameConverter : INameConverter {
         return ToPascalCase(code);
     }
 
+    /// <summary>
+    /// ASCII 文字列かどうか
+    /// </summary>
+    /// <param name="s"></param>
+    /// <returns></returns>
     private static bool IsAscii(string s) => s.All(c => c <= 127);
 
+    /// <summary>
+    /// PascalCase に変換する
+    /// </summary>
+    /// <param name="text"></param>
+    /// <returns></returns>
     private static string ToPascalCase(string text) {
         var parts = Regex.Split(text, @"[^A-Za-z0-9]+")
                          .Where(x => !string.IsNullOrWhiteSpace(x))
@@ -65,6 +96,11 @@ public class NameConverter : INameConverter {
         return string.Concat(parts);
     }
 
+    /// <summary>
+    /// 安全な識別子に変換する
+    /// </summary>
+    /// <param name="name"></param>
+    /// <returns></returns>
     private static string MakeSafeIdentifier(string name) {
         if (string.IsNullOrWhiteSpace(name)) { return "_"; }
 
@@ -77,6 +113,11 @@ public class NameConverter : INameConverter {
         return name;
     }
 
+    /// <summary>
+    /// C# キーワードかどうか
+    /// </summary>
+    /// <param name="name"></param>
+    /// <returns></returns>
     private static bool IsCSharpKeyword(string name) {
         return new[] {
             "class", "namespace", "public", "private", "protected",
@@ -84,6 +125,11 @@ public class NameConverter : INameConverter {
         }.Contains(name);
     }
 
+    /// <summary>
+    /// 簡易ローマ字変換
+    /// </summary>
+    /// <param name="text"></param>
+    /// <returns></returns>
     private static string ToRoman(string text) {
         // 簡易ローマ字変換（必要なら後で強化）
         var sb = new StringBuilder();

@@ -5,47 +5,33 @@ using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.Infrastructure.Helpers;
 
+// コメントは日本語で記述
+/// <summary>
+/// Kintoneのクエリ文字列を生成するためのExpressionVisitor
+/// </summary>
 public class KintoneExpressionVisitor : ExpressionVisitor {
     private readonly StringBuilder _queryBuilder = new();
+    /// <summary>
+    /// 日付時刻のタイムゾーン設定（デフォルトはローカルタイムゾーン）
+    /// </summary>
     public TimeZoneInfo TimeZone { get; set; } = TimeZoneInfo.Local;
 
+    /// <summary>
+    /// 指定された式からKintoneのクエリ文字列を生成します。
+    /// </summary>
+    /// <param name="expression"></param>
+    /// <returns></returns>
     public string ToQueryString(Expression expression) {
         this._queryBuilder.Clear();
         this.Visit(expression);
         return this._queryBuilder.ToString();
     }
 
-    // protected override Expression VisitBinary(BinaryExpression node) {
-    //     // 論理演算（AND/OR）なら再帰的に処理
-    //     if (node.NodeType == ExpressionType.AndAlso || node.NodeType == ExpressionType.OrElse) {
-    //         Visit(node.Left);
-    //         _queryBuilder.Append(node.NodeType == ExpressionType.AndAlso ? " and " : " or ");
-    //         Visit(node.Right);
-    //         return node;
-    //     }
-
-    //     var left = node.Left;
-    //     var right = node.Right;
-
-    //     // 左右の MemberExpression を抽出
-    //     bool isLeftMember = TryUnwrapMemberExpression(left, out var leftMember);
-    //     bool isRightMember = TryUnwrapMemberExpression(right, out var rightMember);
-
-    //     if (isLeftMember && !isRightMember) {
-    //         Visit(leftMember); // フィールド
-    //         _queryBuilder.Append(GetOperator(node.NodeType));
-    //         Visit(right); // 値
-    //     } else if (!isLeftMember && isRightMember) {
-    //         Visit(rightMember); // フィールド
-    //         _queryBuilder.Append(GetOperator(FlipOperator(node.NodeType)));
-    //         Visit(left); // 値
-    //     } else {
-    //         throw new NotSupportedException(
-    //             $"フィールドが左右どちらにも見つかりません。サポートされていない式構造です。\nLeft: {left}\nRight: {right}");
-    //     }
-
-    //     return node;
-    // }
+    /// <summary>
+    /// Convert 演算子を解除して中身の式を取得します。
+    /// </summary>
+    /// <param name="expr"></param>
+    /// <returns></returns>
     private Expression UnwrapConvert(Expression expr) {
         while (expr is UnaryExpression unary && expr.NodeType == ExpressionType.Convert) {
             expr = unary.Operand;
@@ -53,6 +39,12 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
         return expr;
     }
 
+    /// <summary>
+    /// バイナリ式を処理します。
+    /// </summary>
+    /// <param name="node"></param>
+    /// <returns></returns>
+    /// <exception cref="NotSupportedException"></exception>
     protected override Expression VisitBinary(BinaryExpression node) {
         // 論理演算（AND/OR）なら再帰的に処理
         if (node.NodeType == ExpressionType.AndAlso || node.NodeType == ExpressionType.OrElse) {
@@ -72,11 +64,11 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
 
         if (isLeftMember && !isRightMember) {
             this.Visit(leftMember); // フィールド
-            this._queryBuilder.Append(this.GetOperator(node.NodeType));
+            this._queryBuilder.Append(GetOperator(node.NodeType));
             this.Visit(right); // 値
         } else if (!isLeftMember && isRightMember) {
             this.Visit(rightMember); // フィールド
-            this._queryBuilder.Append(this.GetOperator(this.FlipOperator(node.NodeType)));
+            this._queryBuilder.Append(GetOperator(FlipOperator(node.NodeType)));
             this.Visit(left); // 値
         } else {
             throw new NotSupportedException(
@@ -86,6 +78,12 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
         return node;
     }
 
+    /// <summary>
+    /// MemberExpression をアンラップして取得します。
+    /// </summary>
+    /// <param name="expr"></param>
+    /// <param name="memberExpr"></param>
+    /// <returns></returns>
     private bool TryUnwrapMemberExpression(Expression expr, out MemberExpression? memberExpr) {
         memberExpr = null;
 
@@ -101,16 +99,12 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
         return false;
     }
 
-    // private bool IsModelMemberExpression(Expression expr) {
-    //     // Unary (e.g., Convert) unwrap
-    //     if (expr is UnaryExpression unary && unary.Operand is MemberExpression innerMember) {
-    //         expr = innerMember;
-    //     }
-
-    //     return expr is MemberExpression memberExpr &&
-    //            memberExpr.Expression is ParameterExpression;
-    // }
-
+    /// <summary>
+    /// メンバー式を処理します。
+    /// </summary>
+    /// <param name="node"></param>
+    /// <returns></returns>
+    /// <exception cref="NotSupportedException"></exception>
     protected override Expression VisitMember(MemberExpression node) {
         // x.ReleaseDate! のような UnaryExpression 経由の MemberAccess に対応
         if (node.Expression is ParameterExpression) {
@@ -137,6 +131,11 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
         throw new NotSupportedException($"未対応の式: {node}");
     }
 
+    /// <summary>
+    /// 定数式を処理します。
+    /// </summary>
+    /// <param name="node"></param>
+    /// <returns></returns>
     protected override Expression VisitConstant(ConstantExpression node) {
         if (node.Value == null) {
             this._queryBuilder.Append("null");
@@ -160,6 +159,12 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
 
         return node;
     }
+    /// <summary>
+    /// 新しい式を処理します。
+    /// </summary>
+    /// <param name="node"></param>
+    /// <returns></returns>
+    /// <exception cref="NotSupportedException"></exception>
     protected override Expression VisitNew(NewExpression node) {
         // コンストラクタ式を評価して値を取得
         var value = this.EvaluateExpression(node);
@@ -171,7 +176,11 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
 
         throw new NotSupportedException($"未対応のNew式: {node}");
     }
-
+    /// <summary>
+    /// メンバー名を取得します。
+    /// </summary>
+    /// <param name="node"></param>
+    /// <returns></returns>
     private string GetMemberName(MemberExpression node) {
         if (node.Expression is MemberExpression inner) {
             return $"{this.GetMemberName(inner)}.{node.Member.Name}";
@@ -179,7 +188,11 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
 
         return node.Member.Name;
     }
-
+    /// <summary>
+    /// 式を評価して値を取得します。
+    /// </summary>
+    /// <param name="expr"></param>
+    /// <returns></returns>
     private object? EvaluateExpression(Expression expr) {
         try {
             var lambda = Expression.Lambda(expr);
@@ -190,12 +203,14 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
             return null;
         }
     }
-
+    /// <summary>
+    /// メソッド呼び出し式を処理します。
+    /// </summary>
+    /// <param name="node"></param>
+    /// <returns></returns>
+    /// <exception cref="NotSupportedException"></exception>
     protected override Expression VisitMethodCall(MethodCallExpression node) {
         // string.Contains は禁止例（そのまま例外）
-        // if (node.Method.Name == nameof(string.Contains) && node.Object != null) {
-        //     throw new NotSupportedException("Kintoneの仕様上、like演算子は英数字での部分一致には対応していません。");
-        // }
         if (node.Method.Name == nameof(string.Contains) && node.Method.DeclaringType == typeof(string)) {
             throw new NotSupportedException("Kintoneの仕様上、like演算子は英数字での部分一致には対応していません。");
         }
@@ -275,6 +290,11 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
 
         return base.VisitMethodCall(node);
     }
+    /// <summary>
+    /// 新しい式を処理します。
+    /// </summary>
+    /// <param name="node"></param>
+    /// <returns></returns>
     protected override Expression VisitExtension(Expression node) {
         if (node is KintoneSpecialFieldExpression special) {
             this._queryBuilder.Append(special.FieldName);
@@ -283,7 +303,11 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
 
         return base.VisitExtension(node);
     }
-
+    /// <summary>
+    /// 値をフォーマットします。
+    /// </summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
     private string FormatValue(object? value) {
         return value switch {
             null => "null",
@@ -307,8 +331,13 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
                 throw new NotSupportedException($"Unsupported field expression type: {expr.GetType().Name}");
         }
     }
-
-    private string GetOperator(ExpressionType nodeType) => nodeType switch {
+    /// <summary>
+    /// 演算子に対応するKintoneクエリ文字列を取得します。
+    /// </summary>
+    /// <param name="nodeType"></param>
+    /// <returns></returns>
+    /// <exception cref="NotSupportedException"></exception>
+    private static string GetOperator(ExpressionType nodeType) => nodeType switch {
         ExpressionType.Equal => " = ",
         ExpressionType.NotEqual => " != ",
         ExpressionType.GreaterThan => " > ",
@@ -319,8 +348,12 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
         ExpressionType.OrElse => " or ",
         _ => throw new NotSupportedException($"未対応の演算子: {nodeType}")
     };
-
-    private ExpressionType FlipOperator(ExpressionType op) => op switch {
+    /// <summary>
+    /// 演算子を反転します。
+    /// </summary>
+    /// <param name="op"></param>
+    /// <returns></returns>
+    private static ExpressionType FlipOperator(ExpressionType op) => op switch {
         ExpressionType.GreaterThan => ExpressionType.LessThan,
         ExpressionType.GreaterThanOrEqual => ExpressionType.LessThanOrEqual,
         ExpressionType.LessThan => ExpressionType.GreaterThan,
@@ -330,13 +363,21 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
 
 }
 
-public class KintoneSpecialFieldExpression : Expression {
-    public string FieldName { get; }
+/// <summary>
+/// Kintoneの特殊フィールドを表す拡張式
+/// </summary>
+public class KintoneSpecialFieldExpression(string fieldName) : Expression {
+    /// <summary>
+    /// フィールド名
+    /// </summary>
+    public string FieldName { get; } = fieldName;
 
-    public KintoneSpecialFieldExpression(string fieldName) {
-        this.FieldName = fieldName;
-    }
-
+    /// <summary>
+    /// 式の種類を取得します。
+    /// </summary>
     public override ExpressionType NodeType => ExpressionType.Extension;
+    /// <summary>
+    /// 式の型を取得します。
+    /// </summary>
     public override Type Type => typeof(string);
 }

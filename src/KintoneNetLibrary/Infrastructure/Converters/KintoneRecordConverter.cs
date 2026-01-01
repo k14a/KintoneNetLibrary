@@ -5,7 +5,20 @@ using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.Infrastructure.Converters;
 
+// コメントは日本語で記述
+/// <summary>
+/// KintoneのレコードをC#のモデルに変換するためのJsonConverter
+/// </summary>
+/// <typeparam name="T"></typeparam>
 public class KintoneRecordConverter<T> : JsonConverter<T> where T : KintoneModelBase<T>, new() {
+    /// <summary>
+    /// KintoneのレコードJSONをC#のモデルに変換します
+    /// </summary>
+    /// <param name="reader"></param>
+    /// <param name="typeToConvert"></param>
+    /// <param name="options"></param>
+    /// <returns></returns>
+    /// <exception cref="JsonException"></exception>
     public override T? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
         using var jsonDoc = JsonDocument.ParseValue(ref reader);
         var root = jsonDoc.RootElement;
@@ -56,15 +69,37 @@ public class KintoneRecordConverter<T> : JsonConverter<T> where T : KintoneModel
         return model;
     }
 
+    /// <summary>
+    /// C#のモデルをKintoneのレコードJSONに変換します（未実装）
+    /// </summary>
+    /// <param name="writer"></param>
+    /// <param name="value"></param>
+    /// <param name="options"></param>
+    /// <exception cref="NotImplementedException"></exception>
     public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options) {
         throw new NotImplementedException("書き込みはまだ未実装です");
     }
 }
 
+/// <summary>
+/// KintoneRecordConverterのファクトリクラス
+/// </summary>
+/// <typeparam name="T"></typeparam>
 public class KintoneRecordConverterFactory<T> : JsonConverterFactory where T : KintoneModelBase<T>, new() {
+    /// <summary>
+    /// 指定された型が変換可能かどうかを判定します
+    /// </summary>
+    /// <param name="typeToConvert"></param>
+    /// <returns></returns>
     public override bool CanConvert(Type typeToConvert) {
         return typeof(T).IsAssignableFrom(typeToConvert);
     }
+    /// <summary>
+    /// 指定された型に対するJsonConverterを作成します
+    /// </summary>
+    /// <param name="typeToConvert"></param>
+    /// <param name="options"></param>
+    /// <returns></returns>
     public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options) {
         var converterType = typeof(KintoneRecordConverter<>).MakeGenericType(typeToConvert);
         return (JsonConverter?)Activator.CreateInstance(converterType);

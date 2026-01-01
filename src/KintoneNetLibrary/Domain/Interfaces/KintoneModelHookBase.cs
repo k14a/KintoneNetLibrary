@@ -1,7 +1,10 @@
 namespace KintoneNetLibrary.Domain.Entities
 {
-    public abstract class KintoneModelHookBase
-    {
+    // コメントは日本語で記述
+    /// <summary>
+    /// Kintoneモデルのフック基底クラス。
+    /// </summary>
+    public abstract class KintoneModelHookBase {
         /// <summary>
         /// レコード作成前に呼ばれるフック。
         /// 必要に応じてプロパティの補正や検証を実装可能。

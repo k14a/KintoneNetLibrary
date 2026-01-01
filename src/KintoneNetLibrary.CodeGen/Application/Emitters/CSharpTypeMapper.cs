@@ -3,7 +3,15 @@ using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.CodeGen.Application.Emitters;
 
+/// <summary>
+/// C# 型マッパー
+/// </summary>
 public class CSharpTypeMapper : ITypeMapper {
+    /// <summary>
+    /// Kintone フィールドを C# 型にマップする
+    /// </summary>
+    /// <param name="field"></param>
+    /// <returns></returns>
     public string Map(KintoneFieldMetadata field) {
         return field.Type switch {
             // 文字列系

@@ -2,6 +2,10 @@ namespace KintoneNetLibrary.Extensions;
 
 using KintoneNetLibrary.Domain.Entities;
 
+// コメントは日本語で記述
+/// <summary>
+/// KintoneDateTime 拡張メソッド群
+/// </summary>
 public static class KintoneDateTimeExtensions {
     /// <summary>
     /// KintoneDateTime を ISO 8601 の "yyyy-MM-ddTHH:mm" 形式で文字列化（Kintone仕様に準拠）

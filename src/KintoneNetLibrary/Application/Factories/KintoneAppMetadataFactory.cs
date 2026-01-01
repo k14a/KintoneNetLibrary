@@ -3,7 +3,17 @@ using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.Application.Factories;
 
+/// <summary>
+/// Kintoneアプリのメタデータを生成するファクトリクラス
+/// </summary>
 public static class KintoneAppMetadataFactory {
+    /// <summary>
+    /// Kintoneアプリのメタデータを生成する
+    /// </summary>
+    /// <param name="fieldsJson"></param>
+    /// <param name="layoutJson"></param>
+    /// <param name="appId"></param>
+    /// <returns></returns>
     public static KintoneAppMetadata Create(string fieldsJson, string layoutJson, int appId) {
         var fields = ParseFields(fieldsJson);
 
@@ -11,6 +21,11 @@ public static class KintoneAppMetadataFactory {
         return new KintoneAppMetadata { AppId = appId, Fields = fields };
     }
 
+    /// <summary>
+    /// フィールド情報をパースする
+    /// </summary>
+    /// <param name="fieldsJson"></param>
+    /// <returns></returns>
     private static List<KintoneFieldMetadata> ParseFields(string fieldsJson) {
         using var doc = JsonDocument.Parse(fieldsJson);
         var root = doc.RootElement;
@@ -25,6 +40,11 @@ public static class KintoneAppMetadataFactory {
         return result;
     }
 
+    /// <summary>
+    /// フィールド情報をパースする
+    /// </summary>
+    /// <param name="element"></param>
+    /// <returns></returns>
     private static KintoneFieldMetadata ParseField(JsonElement element) {
         var type = element.GetProperty("type").GetString()!;
         var code = element.GetProperty("code").GetString()!;
@@ -64,6 +84,11 @@ public static class KintoneAppMetadataFactory {
         };
     }
 
+    /// <summary>
+    /// フィールドタイプをパースする
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
     private static KintoneFieldType ParseFieldType(string type) {
         return type switch {
             "SINGLE_LINE_TEXT" => KintoneFieldType.SingleLineText,

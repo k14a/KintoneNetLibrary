@@ -2,6 +2,10 @@ using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.Extensions;
 
+// コメントは日本語で記述
+/// <summary>
+/// KintoneTimeOnly 拡張メソッド群
+/// </summary>
 public static class KintoneTimeOnlyExtensions {
     /// <summary>
     /// TimeSpan → KintoneTimeOnly に変換（00:00～23:59 のみ許可）

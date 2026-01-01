@@ -5,7 +5,14 @@ using KintoneNetLibrary.Infrastructure.Converters;
 
 namespace KintoneNetLibrary.Domain.Entities;
 
+/// <summary>
+/// Kintoneのレコードモデルの基底クラス（JSON読み込み機能）
+/// </summary>
 public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase where TSelf : KintoneModelBase<TSelf>, new() {
+    /// <summary>
+    /// JSON辞書からフィールド値を読み込み
+    /// </summary>
+    /// <param name="fieldMap"></param>
     public void LoadFromJsonDictionary(Dictionary<string, JsonElement> fieldMap) {
         // 特殊フィールド '$id' → RecordID にセット
         if (fieldMap.TryGetValue("$id", out var idElement)) {

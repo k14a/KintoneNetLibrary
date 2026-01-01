@@ -11,10 +11,18 @@ using KintoneNetLibrary.Infrastructure.Internal;
 
 namespace KintoneNetLibrary.Infrastructure.Api;
 
+// コメントは日本語で記述
+/// <summary>
+/// Kintone API の CRUD 操作を提供する部分クラス
+/// </summary>
 public partial class KintoneApi {
-    /*==========================================================
-      Create – 複数レコード一括登録
-      ==========================================================*/
+    /// <summary>
+    /// 複数レコードを一括登録します
+    /// </summary>
+    /// <param name="json"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
+    /// <exception cref="KintoneException"></exception>
     public async Task<string> CreateAsync(string json) {
         if (string.IsNullOrWhiteSpace(json)) {
             throw new ArgumentException("JSONデータが空です", nameof(json));
@@ -34,9 +42,14 @@ public partial class KintoneApi {
         return responseJson;
     }
 
-    /*==========================================================
-      Update – 複数レコード一括更新
-      ==========================================================*/
+    /// <summary>
+    /// 複数レコードを一括更新します
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="json"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
+    /// <exception cref="KintoneException"></exception>
     public async Task<string> UpdateAsync<T>(string json) where T : KintoneModelBase<T>, new() {
         if (string.IsNullOrWhiteSpace(json)) {
             throw new ArgumentException("更新対象JSONが空です", nameof(json));
@@ -56,9 +69,12 @@ public partial class KintoneApi {
         return responseJson;
     }
 
-    /*==========================================================
-      Delete – ID リストで一括削除
-      ==========================================================*/
+    /// <summary>
+    /// 複数レコードを一括削除します
+    /// </summary>
+    /// <param name="json"></param>
+    /// <returns></returns>
+    /// <exception cref="KintoneException"></exception>
     public async Task<string> DeleteAsync(string json) {
         var request = new HttpRequestMessage(HttpMethod.Delete, KintoneApiEndpoints.DeleteRecords) {
             Content = new StringContent(json, Encoding.UTF8, "application/json")

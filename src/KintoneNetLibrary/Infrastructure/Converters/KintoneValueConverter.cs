@@ -5,7 +5,19 @@ using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.Infrastructure.Converters;
 
+// コメントは日本語で記述
+/// <summary>
+/// Kintoneのフィールド値をC#の型に変換するためのユーティリティクラス
+/// </summary>
 public static class KintoneValueConverter {
+    /// <summary>
+    /// Kintoneのフィールド値をC#の型に変換します。
+    /// </summary>
+    /// <param name="valueElement"></param>
+    /// <param name="fieldType"></param>
+    /// <param name="targetType"></param>
+    /// <returns></returns>
+    /// <exception cref="NotSupportedException"></exception>
     public static object? ConvertToCSharp(JsonElement valueElement, KintoneFieldType fieldType, Type targetType) {
         if (valueElement.ValueKind == JsonValueKind.Null) {
             return null;
@@ -91,6 +103,12 @@ public static class KintoneValueConverter {
         };
     }
 
+    /// <summary>
+    /// Nullableな整数をパースします。
+    /// </summary>
+    /// <param name="valueElement"></param>
+    /// <returns></returns>
+    /// <exception cref="JsonException"></exception>
     private static int? ParseNullableInt(JsonElement valueElement) {
         return valueElement.ValueKind switch {
             JsonValueKind.Number => valueElement.GetInt32(),
@@ -98,6 +116,12 @@ public static class KintoneValueConverter {
             _ => throw new JsonException($"NUMBERに対して予期しないValueKindです: {valueElement.ValueKind}")
         };
     }
+    /// <summary>
+    /// 文字列からNullableな整数をパースします。
+    /// </summary>
+    /// <param name="str"></param>
+    /// <returns></returns>
+    /// <exception cref="JsonException"></exception>
     private static int? ParseIntFromString(string? str) {
         if (string.IsNullOrWhiteSpace(str)) { return null; }
         if (int.TryParse(str, out var result)) { return result; }
