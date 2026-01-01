@@ -3,7 +3,6 @@ using KintoneNetLibrary.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace KintoneNetLibrary.Application.UseCases.Services;
-
 /// <summary>
 /// Kintoneモデルのファイル操作を提供するサービスクラス。
 /// </summary>
@@ -65,6 +64,7 @@ public class KintoneModelFileService<T>(IKintoneRepository repository, ILogger<K
     /// </summary>
     /// <remarks>モデル内のFileInfoリストを使用して、複数のファイルをアップロードします。</remarks>
     /// <param name="model">アップロード対象のKintoneモデル</param>
+    /// <param name="file"></param>
     /// <returns>アップロードされたKintoneFileのリスト</returns>
     /// <exception cref="ArgumentNullException">modelがnullの場合にスローされます。</exception>
     /// <exception cref="InvalidOperationException">モデルにFileInfoとKintoneFileの両方のプロパティが必要です。</exception>

@@ -3,14 +3,13 @@ using KintoneNetLibrary.Extensions;
 using KintoneNetLibrary.Domain.Common;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Domain.Interfaces;
-using KintoneNetLibrary.Infrastructure.Api.DTO;
 using KintoneNetLibrary.Infrastructure.Helpers;
 using static KintoneNetLibrary.Domain.Common.KintoneConstants;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using KintoneNetLibrary.Application.Interfaces;
 
 namespace KintoneNetLibrary.Application.UseCases.Services;
-
 /// <summary>
 /// KintoneモデルのCRUD操作を提供するサービスクラスです。
 /// </summary>
@@ -18,20 +17,24 @@ namespace KintoneNetLibrary.Application.UseCases.Services;
 /// <param name="executionOptions"></param>
 /// <param name="jsonOptions"></param>
 /// <param name="logger"></param>
-public class KintoneModelCrudService( IKintoneRepository repository, IOptions<KintoneExecutionOptions>? executionOptions, JsonSerializerOptions? jsonOptions = null, ILogger<KintoneModelCrudService>? logger = null) : IKintoneModelCrudService {
+public class KintoneModelCrudService<T>(
+    IKintoneRepository repository,
+    IOptions<KintoneExecutionOptions>? executionOptions,
+    JsonSerializerOptions? jsonOptions = null,
+    ILogger<KintoneModelCrudService<T>>? logger = null) : IKintoneModelCrudService<T> where T : KintoneModelBase<T>, new() {
+
     private readonly IKintoneRepository _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-    private readonly ILogger<KintoneModelCrudService>? _logger = logger;
+    private readonly ILogger<IKintoneModelCrudService<T>>? _logger = logger;
     private readonly JsonSerializerOptions _jsonOptions = jsonOptions ?? DefaultJsonOptions.Default;
     private readonly KintoneExecutionOptions _execOptions = executionOptions?.Value ?? new KintoneExecutionOptions();
 
     /// <summary>
     /// Kintoneモデルのレコードを作成します。
     /// </summary>
-    /// <typeparam name="T"></typeparam>
     /// <param name="records"></param>
     /// <param name="enableSingleRetryOnError"></param>
     /// <returns></returns>
-    public async Task<KintoneWriteResult<T>> CreateAsync<T>(IList<T> records, bool enableSingleRetryOnError = false) where T : KintoneModelBase<T>, new() {
+    public async Task<KintoneWriteResult<T>> CreateAsync(IList<T> records, bool enableSingleRetryOnError = false) {
         try {
             this._logger?.LogInformation("CreateAsync() - Start");
 
@@ -65,11 +68,10 @@ public class KintoneModelCrudService( IKintoneRepository repository, IOptions<Ki
     /// <summary>
     /// 指定されたチャンクのレコードをKintoneアプリに作成します。
     /// </summary>
-    /// <typeparam name="T"></typeparam>
     /// <param name="chunk"></param>
     /// <param name="enableSingleRetryOnError"></param>
     /// <returns></returns>
-    private async Task<KintoneWriteResult<T>> CreateChunkAsync<T>(IList<T> chunk, bool enableSingleRetryOnError) where T : KintoneModelBase<T>, new() {
+    private async Task<KintoneWriteResult<T>> CreateChunkAsync(IList<T> chunk, bool enableSingleRetryOnError) {
         var result = new KintoneWriteResult<T>();
 
         try {
@@ -125,13 +127,12 @@ public class KintoneModelCrudService( IKintoneRepository repository, IOptions<Ki
     /// <summary>
     /// Kintoneモデルのレコードを検索します。
     /// </summary>
-    /// <typeparam name="T"></typeparam>
     /// <param name="ids"></param>
     /// <param name="query"></param>
     /// <param name="fieldCodes"></param>
     /// <returns></returns>
     /// <exception cref="KintoneException"></exception>
-    public async Task<IEnumerable<T>> FindAsync<T>(IList<string>? ids = null, string? query = null, IList<string>? fieldCodes = null) where T : KintoneModelBase<T>, new() {
+    public async Task<IEnumerable<T>> FindAsync(IList<string>? ids = null, string? query = null, IList<string>? fieldCodes = null) {
         try {
             this._logger?.LogInformation("FindAsync() - Start");
 
@@ -186,11 +187,10 @@ public class KintoneModelCrudService( IKintoneRepository repository, IOptions<Ki
     /// <summary>
     /// Kintoneモデルのレコードを更新します。
     /// </summary>
-    /// <typeparam name="T"></typeparam>
     /// <param name="records"></param>
     /// <param name="enableSingleRetryOnError"></param>
     /// <returns></returns>
-    public async Task<KintoneWriteResult<T>> UpdateAsync<T>(IList<T> records, bool enableSingleRetryOnError = false) where T : KintoneModelBase<T>, new() {
+    public async Task<KintoneWriteResult<T>> UpdateAsync(IList<T> records, bool enableSingleRetryOnError = false) {
         try {
             this._logger?.LogInformation("UpdateAsync() - Start");
 
@@ -222,11 +222,10 @@ public class KintoneModelCrudService( IKintoneRepository repository, IOptions<Ki
     /// <summary>
     /// 指定されたチャンクのレコードをKintoneアプリに更新します。
     /// </summary>
-    /// <typeparam name="T"></typeparam>
     /// <param name="chunk"></param>
     /// <param name="enableSingleRetryOnError"></param>
     /// <returns></returns>
-    private async Task<KintoneWriteResult<T>> UpdateChunkAsync<T>(IList<T> chunk, bool enableSingleRetryOnError) where T : KintoneModelBase<T>, new() {
+    private async Task<KintoneWriteResult<T>> UpdateChunkAsync(IList<T> chunk, bool enableSingleRetryOnError) {
         var result = new KintoneWriteResult<T>();
 
         try {
@@ -271,11 +270,10 @@ public class KintoneModelCrudService( IKintoneRepository repository, IOptions<Ki
     /// <summary>
     /// Kintoneモデルのレコードを削除します。
     /// </summary>
-    /// <typeparam name="T"></typeparam>
     /// <param name="ids"></param>
     /// <param name="validateExistence"></param>
     /// <returns></returns>
-    public async Task<KintoneDeleteResult> DeleteAsync<T>(IList<string> ids, bool validateExistence = true) where T : KintoneModelBase<T>, new() {
+    public async Task<KintoneDeleteResult> DeleteAsync(IList<string> ids, bool validateExistence = true) {
         var models = ids.Select(id => new T { RecordID = id }).ToList();
         return await this.DeleteAsync(models, validateExistence);
     }
@@ -283,11 +281,10 @@ public class KintoneModelCrudService( IKintoneRepository repository, IOptions<Ki
     /// <summary>
     /// Kintoneモデルのレコードを削除します。
     /// </summary>
-    /// <typeparam name="T"></typeparam>
     /// <param name="models"></param>
     /// <param name="validateExistence"></param>
     /// <returns></returns>
-    public async Task<KintoneDeleteResult> DeleteAsync<T>(IList<T> models, bool validateExistence = true) where T : KintoneModelBase<T>, new() {
+    public async Task<KintoneDeleteResult> DeleteAsync(IList<T> models, bool validateExistence = true) {
         try {
             this._logger?.LogInformation("DeleteAsync() - Start");
 
@@ -332,10 +329,9 @@ public class KintoneModelCrudService( IKintoneRepository repository, IOptions<Ki
     /// <summary>
     /// 指定されたチャンクのレコードをKintoneアプリから削除します。
     /// </summary>
-    /// <typeparam name="T"></typeparam>
     /// <param name="chunk"></param>
     /// <returns></returns>
-    private async Task<KintoneDeleteResult> DeleteChunkAsync<T>(IList<T> chunk) where T : KintoneModelBase<T>, new() {
+    private async Task<KintoneDeleteResult> DeleteChunkAsync(IList<T> chunk) {
         var result = new KintoneDeleteResult();
         var idList = chunk.Select(m => m.RecordID).Where(id => !string.IsNullOrWhiteSpace(id)).Select(id => id!).ToList();
 
@@ -364,22 +360,20 @@ public class KintoneModelCrudService( IKintoneRepository repository, IOptions<Ki
     /// <summary>
     /// 指定されたモデルのうち、Kintoneアプリに存在するものを取得します。
     /// </summary>
-    /// <typeparam name="T"></typeparam>
     /// <param name="models"></param>
     /// <returns></returns>
-    private async Task<IList<T>> PrepareValidatedTargets<T>(IList<T> models) where T : KintoneModelBase<T>, new() {
+    private async Task<IList<T>> PrepareValidatedTargets(IList<T> models) {
         var ids = models.Select(x => x.RecordID).ToList();
-        return (await this.FindAsync<T>(ids, fieldCodes: ["RecordID"])).ToList();
+        return (await this.FindAsync(ids, fieldCodes: ["RecordID"])).ToList();
     }
 
     /// <summary>
     /// 指定されたオリジナルリストに対して、見つからなかったレコードの削除失敗情報を収集します。
     /// </summary>
-    /// <typeparam name="T"></typeparam>
     /// <param name="original"></param>
     /// <param name="found"></param>
     /// <returns></returns>
-    private List<KintoneDeleteFailure> CollectNotFoundFailures<T>(IList<T> original, IList<T> found) where T : KintoneModelBase<T>, new() {
+    private List<KintoneDeleteFailure> CollectNotFoundFailures(IList<T> original, IList<T> found) {
         var foundIds = found.Select(x => x.RecordID).ToHashSet();
         return original
             .Where(x => !foundIds.Contains(x.RecordID))
@@ -393,11 +387,10 @@ public class KintoneModelCrudService( IKintoneRepository repository, IOptions<Ki
     /// <summary>
     /// Kintoneモデルのレコードを保存します。
     /// </summary>
-    /// <typeparam name="T"></typeparam>
     /// <param name="records"></param>
     /// <param name="enableSingleRetryOnError"></param>
     /// <returns></returns>
-    public async Task<KintoneWriteResult<T>> SaveAsync<T>(IList<T> records, bool enableSingleRetryOnError = false) where T : KintoneModelBase<T>, new() {
+    public async Task<KintoneWriteResult<T>> SaveAsync(IList<T> records, bool enableSingleRetryOnError = false) {
         try {
             this._logger?.LogInformation("SaveAsync() - Start");
 
@@ -427,12 +420,11 @@ public class KintoneModelCrudService( IKintoneRepository repository, IOptions<Ki
     /// <summary>
     /// Kintoneモデルのレコードを保存します。作成に失敗したレコードは更新として再試行されます。
     /// </summary>
-    /// <typeparam name="T"></typeparam>
     /// <param name="records"></param>
     /// <param name="enableSingleRetryOnError"></param>
     /// <param name="enableCreateToUpdateRetry"></param>
     /// <returns></returns>
-    public async Task<KintoneWriteResult<T>> SaveWithRetryAsync<T>(IList<T> records, bool enableSingleRetryOnError = false, bool enableCreateToUpdateRetry = true) where T : KintoneModelBase<T>, new() {
+    public async Task<KintoneWriteResult<T>> SaveWithRetryAsync(IList<T> records, bool enableSingleRetryOnError = false, bool enableCreateToUpdateRetry = true) {
         try {
             this._logger?.LogInformation("SaveWithRetryAsync() - Start");
 
@@ -489,11 +481,10 @@ public class KintoneModelCrudService( IKintoneRepository repository, IOptions<Ki
     /// <summary>
     /// レスポンスJSONを解析して更新されたレコードのリストを返します。
     /// </summary>
-    /// <typeparam name="T"></typeparam>
     /// <param name="records"></param>
     /// <param name="responseJson"></param>
     /// <returns></returns>
-    private static IList<T> ParseUpdatedRecords<T>(IList<T> records, string responseJson) where T : KintoneModelBase<T>, new() {
+    private static List<T> ParseUpdatedRecords(IList<T> records, string responseJson) {
         var indexResponse = KintoneRecordIndexesResponse.Parse(responseJson);
         var indexes = indexResponse.ToIndexes();
 
@@ -513,10 +504,9 @@ public class KintoneModelCrudService( IKintoneRepository repository, IOptions<Ki
     /// <summary>
     /// レコードを作成対象と更新対象に分割します。
     /// </summary>
-    /// <typeparam name="T"></typeparam>
     /// <param name="records"></param>
     /// <returns></returns>
-    private static (List<T> createTargets, List<T> updateTargets) SplitRecords<T>(IList<T> records) where T : KintoneModelBase<T>, new() {
+    private static (List<T> createTargets, List<T> updateTargets) SplitRecords(IList<T> records) {
         var createTargets = new List<T>();
         var updateTargets = new List<T>();
 

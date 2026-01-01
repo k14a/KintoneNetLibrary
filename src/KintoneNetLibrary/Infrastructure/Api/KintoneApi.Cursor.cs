@@ -7,6 +7,7 @@ using KintoneNetLibrary.Infrastructure.Converters;
 using Microsoft.Extensions.Logging;
 using static KintoneNetLibrary.Domain.Common.KintoneConstants;
 using KintoneNetLibrary.Infrastructure.Internal;
+using KintoneNetLibrary.Application.Interfaces;
 
 namespace KintoneNetLibrary.Infrastructure.Api;
 
@@ -14,7 +15,7 @@ namespace KintoneNetLibrary.Infrastructure.Api;
 /// <summary>
 /// Kintone API のカーソル操作に関する機能を提供します。
 /// </summary>
-public partial class KintoneApi {
+public partial class KintoneApi : BaseKintoneApi , IKintoneApi {
 
     /// <summary>
     /// カーソルを作成します。

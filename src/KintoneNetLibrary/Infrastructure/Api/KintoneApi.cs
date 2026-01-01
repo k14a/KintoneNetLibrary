@@ -7,14 +7,14 @@ using Microsoft.Extensions.Options;
 using KintoneNetLibrary.Domain.Common;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Infrastructure.Converters;
+using KintoneNetLibrary.Application.Interfaces;
 
 namespace KintoneNetLibrary.Infrastructure.Api;
-
 // コメントは日本語で記述
 /// <summary>
 /// Kintone API 基底クラス
 /// </summary>
-public partial class KintoneApi : BaseKintoneApi {
+public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
     #region <<Private values>>
     private readonly KintoneAccessBase _access;
     private readonly int _appID;

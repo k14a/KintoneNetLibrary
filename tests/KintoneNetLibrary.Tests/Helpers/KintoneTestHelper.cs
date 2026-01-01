@@ -60,7 +60,7 @@ public static class KintoneTestHelper {
         throw new TimeoutException($"Expected {expectedCount} records, but condition was not met after {maxRetry} retries.");
     }
 
-    public static KintoneModelCrudService CreateCrudService() {
+    public static KintoneModelCrudService<T> CreateCrudService<T>() where T : KintoneModelBase<T>, new() {
         var config = TestEnv.Settings;
         var options = new KintoneExecutionOptions { MaxConcurrency = 2 };
 
@@ -79,8 +79,8 @@ public static class KintoneTestHelper {
         var factory = new KintoneApiFactory(httpClient, apiLogger);
         var repository = new KintoneRepository(factory);
 
-        var serviceLogger = loggerFactory.CreateLogger<KintoneModelCrudService>();
-        return new KintoneModelCrudService(
+        var serviceLogger = loggerFactory.CreateLogger<KintoneModelCrudService<T>>();
+        return new KintoneModelCrudService<T>(
             repository,
             Options.Create(options),
             new JsonSerializerOptions(),

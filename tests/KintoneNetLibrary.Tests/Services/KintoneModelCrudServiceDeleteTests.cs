@@ -20,9 +20,9 @@ public class KintoneModelCrudServiceDeleteTests {
     public async Task DeleteAsyncShouldReturnEmptyResultWhenModelsIsEmpty() {
         // Arrange
         var mockRepo = new Mock<IKintoneRepository>();
-        var loggerMock = new Mock<ILogger<KintoneModelCrudService>>();
+        var loggerMock = new Mock<ILogger<KintoneModelCrudService<SampleModel>>>();
 
-        var service = new KintoneModelCrudService(
+        var service = new KintoneModelCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 2 }),
             KintoneJsonOptions.Default,
@@ -31,7 +31,7 @@ public class KintoneModelCrudServiceDeleteTests {
 
         var model = new SampleModel { RecordID = "123" };
         // Act
-        var result = await service.DeleteAsync<SampleModel>(models: []);
+        var result = await service.DeleteAsync(models: []);
 
         // Assert
         Assert.Empty(result.Succeeded);
@@ -58,7 +58,7 @@ public class KintoneModelCrudServiceDeleteTests {
     public async Task DeleteAsyncShouldDeleteOneModelWhenOneModelProvided() {
         // Arrange
         var mockRepo = new Mock<IKintoneRepository>();
-        var loggerMock = new Mock<ILogger<KintoneModelCrudService>>();
+        var loggerMock = new Mock<ILogger<KintoneModelCrudService<SampleModel>>>();
 
         var model = new SampleModel { RecordID = "123" };
         var models = new List<SampleModel> { model };
@@ -67,7 +67,7 @@ public class KintoneModelCrudServiceDeleteTests {
             .Setup(x => x.DeleteRecordsAsync(It.IsAny<IList<SampleModel>>()))
             .ReturnsAsync("");
 
-        var service = new KintoneModelCrudService(
+        var service = new KintoneModelCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 2 }),
             KintoneJsonOptions.Default,
@@ -82,7 +82,7 @@ public class KintoneModelCrudServiceDeleteTests {
         Assert.Contains("123", result.Succeeded);
         Assert.Empty(result.Failed);
 
-        mockRepo.Verify(x => x.DeleteRecordsAsync<SampleModel>(
+        mockRepo.Verify(x => x.DeleteRecordsAsync(
             It.Is<IList<SampleModel>>(list => list.Count == 1 && list[0].RecordID == "123")
         ), Times.Once);
 
@@ -99,8 +99,8 @@ public class KintoneModelCrudServiceDeleteTests {
         };
 
         var mockRepo = new Mock<IKintoneRepository>();
-        var loggerMock = new Mock<ILogger<KintoneModelCrudService>>();
-        var service = new KintoneModelCrudService(
+        var loggerMock = new Mock<ILogger<KintoneModelCrudService<SampleModel>>>();
+        var service = new KintoneModelCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 2 }),
             KintoneJsonOptions.Default,
@@ -111,7 +111,7 @@ public class KintoneModelCrudServiceDeleteTests {
         await service.DeleteAsync(models, false);
 
         // Assert
-        mockRepo.Verify(x => x.DeleteRecordsAsync<SampleModel>(
+        mockRepo.Verify(x => x.DeleteRecordsAsync(
             It.Is<IList<SampleModel>>(list =>
                 list.Count == 3 &&
                 list.Any(m => m.RecordID == "101") &&
@@ -131,8 +131,8 @@ public class KintoneModelCrudServiceDeleteTests {
     };
 
         var mockRepo = new Mock<IKintoneRepository>();
-        var loggerMock = new Mock<ILogger<KintoneModelCrudService>>();
-        var service = new KintoneModelCrudService(
+        var loggerMock = new Mock<ILogger<KintoneModelCrudService<SampleModel>>>();
+        var service = new KintoneModelCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 2 }),
             KintoneJsonOptions.Default,
@@ -143,7 +143,7 @@ public class KintoneModelCrudServiceDeleteTests {
         await service.DeleteAsync(models, false);
 
         // Assert
-        mockRepo.Verify(x => x.DeleteRecordsAsync<SampleModel>(
+        mockRepo.Verify(x => x.DeleteRecordsAsync(
             It.Is<IList<SampleModel>>(list =>
                 list.Count == 2 &&
                 list.All(m => m.RecordID != null) &&
@@ -171,8 +171,8 @@ public class KintoneModelCrudServiceDeleteTests {
             .ThrowsAsync(new KintoneException("Record not found"));
 
         // var service = new KintoneModelCrudService<SampleModel>(mockRepo.Object);
-        var loggerMock = new Mock<ILogger<KintoneModelCrudService>>();
-        var service = new KintoneModelCrudService(
+        var loggerMock = new Mock<ILogger<KintoneModelCrudService<SampleModel>>>();
+        var service = new KintoneModelCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 2 }),
             KintoneJsonOptions.Default,
@@ -227,8 +227,8 @@ public class KintoneModelCrudServiceDeleteTests {
         )).ReturnsAsync(KintoneRequestBuilder.BuildDeleteJson(new List<SampleModel> { new() { RecordID = invalidId } }));
 
 
-        var loggerMock = new Mock<ILogger<KintoneModelCrudService>>();
-        var service = new KintoneModelCrudService(
+        var loggerMock = new Mock<ILogger<KintoneModelCrudService<SampleModel>>>();
+        var service = new KintoneModelCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 2 }),
             KintoneJsonOptions.Default,
@@ -255,8 +255,8 @@ public class KintoneModelCrudServiceDeleteTests {
         var ids = new List<string> { "101", "102", "103" };
 
         var mockRepo = new Mock<IKintoneRepository>();
-        var loggerMock = new Mock<ILogger<KintoneModelCrudService>>();
-        var service = new KintoneModelCrudService(
+        var loggerMock = new Mock<ILogger<KintoneModelCrudService<SampleModel>>>();
+        var service = new KintoneModelCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 2 }),
             KintoneJsonOptions.Default,
@@ -264,10 +264,10 @@ public class KintoneModelCrudServiceDeleteTests {
         );
 
         // Act
-        await service.DeleteAsync<SampleModel>(ids, false);
+        await service.DeleteAsync(ids, false);
 
         // Assert
-        mockRepo.Verify(x => x.DeleteRecordsAsync<SampleModel>(
+        mockRepo.Verify(x => x.DeleteRecordsAsync(
             It.Is<IList<SampleModel>>(list =>
                 list.Count == 3 &&
                 list.Any(m => m.RecordID == "101") &&

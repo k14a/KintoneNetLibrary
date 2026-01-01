@@ -35,15 +35,15 @@ public class KintoneModelCrudServiceFindTests {
             .Setup(r => r.FindByIDAsync<SampleModel>(It.IsAny<SampleModel>(), testId))
             .ReturnsAsync(wrappedJson);
 
-        var service = new KintoneModelCrudService(
+        var service = new KintoneModelCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 2 }),
             new JsonSerializerOptions(),
-            NullLogger<KintoneModelCrudService>.Instance
+            NullLogger<KintoneModelCrudService<SampleModel>>.Instance
         );
 
         // Act
-        var result = await service.FindAsync<SampleModel>(ids: [testId]);
+        var result = await service.FindAsync(ids: [testId]);
 
         // Assert
         var single = Assert.Single(result);
@@ -73,15 +73,15 @@ public class KintoneModelCrudServiceFindTests {
             .Setup(r => r.FindByIDsAsync<SampleModel>(It.IsAny<SampleModel>(), testIds, null))
             .ReturnsAsync(wrappedJson);
 
-        var service = new KintoneModelCrudService(
+        var service = new KintoneModelCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 2 }),
             new JsonSerializerOptions(),
-            NullLogger<KintoneModelCrudService>.Instance
+            NullLogger<KintoneModelCrudService<SampleModel>>.Instance
         );
 
         // Act
-        var result = await service.FindAsync<SampleModel>(ids: testIds);
+        var result = await service.FindAsync(ids: testIds);
 
         // Assert
         Assert.Equal(2, result.Count());
@@ -117,15 +117,15 @@ public class KintoneModelCrudServiceFindTests {
             .Setup(r => r.FindByQueryAsync<SampleModel>(It.IsAny<SampleModel>(), query))
             .ReturnsAsync(wrappedJson);
 
-        var service = new KintoneModelCrudService(
+        var service = new KintoneModelCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 2 }),
             KintoneJsonOptions.Default,
-            NullLogger<KintoneModelCrudService>.Instance
+            NullLogger<KintoneModelCrudService<SampleModel>>.Instance
         );
 
         // Act
-        var result = await service.FindAsync<SampleModel>(query: query);
+        var result = await service.FindAsync(query: query);
 
         // Assert
         var single = Assert.Single(result);
@@ -147,16 +147,15 @@ public class KintoneModelCrudServiceFindTests {
             .Setup(r => r.FindByQueryAsync<SampleModel>(It.IsAny<SampleModel>(), query))
             .ReturnsAsync(emptyJson);
 
-        var service = new KintoneModelCrudService(
+        var service = new KintoneModelCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 2 }),
             KintoneJsonOptions.Default,
-            NullLogger<KintoneModelCrudService>.Instance
+            NullLogger<KintoneModelCrudService<SampleModel>>.Instance
         );
 
         // Act
-        var result = await service.FindAsync<SampleModel>(query: query);
-
+        var result = await service.FindAsync(query: query);
         // Assert
         Assert.Empty(result);
     }
@@ -185,16 +184,15 @@ public class KintoneModelCrudServiceFindTests {
             .Setup(r => r.FindByQueryAsync<SampleModel3>(It.IsAny<SampleModel3>(), query))
             .ReturnsAsync(sampleJson);
 
-        var service = new KintoneModelCrudService(
+        var service = new KintoneModelCrudService<SampleModel3>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 2 }),
             KintoneJsonOptions.Default,
-            NullLogger<KintoneModelCrudService>.Instance
+            NullLogger<KintoneModelCrudService<SampleModel3>>.Instance
         );
 
         // Act
-        var result = await service.FindAsync<SampleModel3>(query: query);
-
+        var result = await service.FindAsync(query: query);
         // Assert
         var list = result.ToList();
         Assert.Equal(2, list.Count);
@@ -222,16 +220,15 @@ public class KintoneModelCrudServiceFindTests {
             .Setup(r => r.FindAllAsync<SampleModel3>(It.IsAny<SampleModel3>(), It.IsAny<IList<string>?>()))
             .ReturnsAsync(allRecordsJson);
 
-        var service = new KintoneModelCrudService(
+        var service = new KintoneModelCrudService<SampleModel3>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 2 }),
             KintoneJsonOptions.Default,
-            NullLogger<KintoneModelCrudService>.Instance
+            NullLogger<KintoneModelCrudService<SampleModel3>>.Instance
         );
 
         // Act
-        var result = await service.FindAsync<SampleModel3>();
-
+        var result = await service.FindAsync();
         // Assert
         var list = result.ToList();
         Assert.Equal(2, list.Count);
@@ -241,7 +238,7 @@ public class KintoneModelCrudServiceFindTests {
     [Fact]
     public async Task FindAsyncWhenJsonExceptionThrownLogsErrorAndThrowsKintoneException() {
         // Arrange
-        var loggerMock = new Mock<ILogger<KintoneModelCrudService>>();
+        var loggerMock = new Mock<ILogger<KintoneModelCrudService<SampleModel>>>();
         var faultyJson = "{ invalid json }"; // 故意に壊れたJSON
 
         var mockRepo = new Mock<IKintoneRepository>();
@@ -249,7 +246,7 @@ public class KintoneModelCrudServiceFindTests {
             .Setup(r => r.FindByQueryAsync<SampleModel>(It.IsAny<SampleModel>(), It.IsAny<string>()))
             .ReturnsAsync(faultyJson);
 
-        var service = new KintoneModelCrudService(
+        var service = new KintoneModelCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 2 }),
             KintoneJsonOptions.Default,
@@ -258,7 +255,7 @@ public class KintoneModelCrudServiceFindTests {
 
         // Act & Assert
         var ex = await Assert.ThrowsAsync<KintoneException>(async () =>
-            await service.FindAsync<SampleModel>(query: "Title = \"Invalid\"")
+            await service.FindAsync(query: "Title = \"Invalid\"")
         );
 
         Assert.IsAssignableFrom<JsonException>(ex.InnerException);
@@ -283,7 +280,7 @@ public class KintoneModelCrudServiceFindTests {
     [Fact]
     public async Task FindAsyncWhenUnexpectedExceptionThrownLogsErrorAndThrowsKintoneException() {
         // Arrange
-        var loggerMock = new Mock<ILogger<KintoneModelCrudService>>();
+        var loggerMock = new Mock<ILogger<KintoneModelCrudService<SampleModel>>>();
 
         // 例外を強制的に発生させるためのパラメータを注入
         var ids = new List<string> { "1", "2" };
@@ -295,7 +292,7 @@ public class KintoneModelCrudServiceFindTests {
             .Throws(new InvalidOperationException("Simulated unexpected failure"));
 
         // service にモック注入
-        var service = new KintoneModelCrudService(
+        var service = new KintoneModelCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 2 }),
             KintoneJsonOptions.Default,
@@ -304,13 +301,13 @@ public class KintoneModelCrudServiceFindTests {
 
         // Act & Assert
         var ex = await Assert.ThrowsAsync<KintoneException>(() =>
-            service.FindAsync<SampleModel>(ids, query));
+            service.FindAsync(ids, query));
 
         Assert.Equal("An unexpected error occurred while retrieving Kintone records.", ex.Message);
         Assert.IsType<InvalidOperationException>(ex.InnerException);
 
         // Log の検証
-        TestLogHelper.VerifyLog<KintoneModelCrudService>(loggerMock, LogLevel.Error, $"Unexpected error occurred in FindAsync<{nameof(SampleModel)}>", Times.Once());
+        TestLogHelper.VerifyLog<KintoneModelCrudService<SampleModel>>(loggerMock, LogLevel.Error, $"Unexpected error occurred in FindAsync<{nameof(SampleModel)}>", Times.Once());
     }
 
     #endregion

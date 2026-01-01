@@ -8,13 +8,14 @@ using KintoneNetLibrary.Infrastructure.Helpers;
 using KintoneNetLibrary.Infrastructure.Internal;
 using static KintoneNetLibrary.Domain.Common.KintoneConstants;
 using KintoneNetLibrary.Domain.Common;
+using KintoneNetLibrary.Application.Interfaces;
 
 namespace KintoneNetLibrary.Infrastructure.Api;
 
 /// <summary>
 /// Kintone API - レコード取得
 /// </summary>
-public partial class KintoneApi {
+public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
     /// <summary>
     /// IDで単一レコードを取得
     /// </summary>

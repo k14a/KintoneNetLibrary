@@ -21,9 +21,9 @@ public class KintoneModelCrudServiceSaveTests {
         };
 
         var mockRepo = new Mock<IKintoneRepository>();
-        var mockLogger = new Mock<ILogger<KintoneModelCrudService>>();
+        var mockLogger = new Mock<ILogger<KintoneModelCrudService<SampleModel>>>();
 
-        var service = new KintoneModelCrudService(
+        var service = new KintoneModelCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions()),
             null,
@@ -63,9 +63,9 @@ public class KintoneModelCrudServiceSaveTests {
         };
 
         var mockRepo = new Mock<IKintoneRepository>();
-        var mockLogger = new Mock<ILogger<KintoneModelCrudService>>();
+        var mockLogger = new Mock<ILogger<KintoneModelCrudService<SampleModel>>>();
 
-        var service = new KintoneModelCrudService(
+        var service = new KintoneModelCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions()),
             null,
@@ -107,9 +107,9 @@ public class KintoneModelCrudServiceSaveTests {
         };
 
         var mockRepo = new Mock<IKintoneRepository>();
-        var mockLogger = new Mock<ILogger<KintoneModelCrudService>>();
+        var mockLogger = new Mock<ILogger<KintoneModelCrudService<SampleModel>>>();
 
-        var service = new KintoneModelCrudService(
+        var service = new KintoneModelCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions()),
             null,
@@ -135,9 +135,9 @@ public class KintoneModelCrudServiceSaveTests {
         var createModel = new SampleModel { RecordID = null, Revision = -1 };
 
         var mockRepo = new Mock<IKintoneRepository>();
-        var mockLogger = new Mock<ILogger<KintoneModelCrudService>>();
+        var mockLogger = new Mock<ILogger<KintoneModelCrudService<SampleModel>>>();
 
-        var service = new KintoneModelCrudService(
+        var service = new KintoneModelCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions()),
             null,
@@ -161,9 +161,9 @@ public class KintoneModelCrudServiceSaveTests {
         };
 
         var mockRepo = new Mock<IKintoneRepository>();
-        var mockLogger = new Mock<ILogger<KintoneModelCrudService>>();
+        var mockLogger = new Mock<ILogger<KintoneModelCrudService<SampleModel2>>>();
 
-        var service = new KintoneModelCrudService(
+        var service = new KintoneModelCrudService<SampleModel2>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions()),
             null,
@@ -192,11 +192,11 @@ public class KintoneModelCrudServiceSaveTests {
         mockRepo.Setup(r => r.UpdateRecordsAsync(It.IsAny<IList<SampleModel>>()))
             .ReturnsAsync("{\"ids\": [\"U999\"], \"revisions\": [\"8\"]}");
 
-        var service = new KintoneModelCrudService(
+        var service = new KintoneModelCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions()),
             null,
-            new Mock<ILogger<KintoneModelCrudService>>().Object
+            new Mock<ILogger<KintoneModelCrudService<SampleModel>>>().Object
         );
 
         var result = await service.SaveWithRetryAsync(new List<SampleModel> { model });

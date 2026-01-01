@@ -3,8 +3,7 @@ namespace KintoneNetLibrary.Application.Interfaces;
 /// <summary>
 /// Kintoneアプリのメタデータ取得APIインターフェース
 /// </summary>
-public interface IKintoneAppMetadataApi
-{
+public interface IKintoneAppMetadataApi {
     /// <summary>
     /// アプリのフィールド情報をJSON形式で取得する
     /// </summary>

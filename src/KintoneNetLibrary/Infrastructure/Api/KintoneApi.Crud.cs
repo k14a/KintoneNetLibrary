@@ -8,6 +8,7 @@ using KintoneNetLibrary.Infrastructure.Converters;
 using static KintoneNetLibrary.Domain.Common.KintoneConstants;
 using Microsoft.Extensions.Logging;
 using KintoneNetLibrary.Infrastructure.Internal;
+using KintoneNetLibrary.Application.Interfaces;
 
 namespace KintoneNetLibrary.Infrastructure.Api;
 
@@ -15,7 +16,7 @@ namespace KintoneNetLibrary.Infrastructure.Api;
 /// <summary>
 /// Kintone API の CRUD 操作を提供する部分クラス
 /// </summary>
-public partial class KintoneApi {
+public partial class KintoneApi : BaseKintoneApi , IKintoneApi {
     /// <summary>
     /// 複数レコードを一括登録します
     /// </summary>
