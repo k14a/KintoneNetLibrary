@@ -1,0 +1,9 @@
+namespace {{Namespace}}
+{
+    /// <summary>
+    /// {{Summary}}
+    /// </summary>
+    public class {{ClassName}} : KintoneEntityInfo
+    {
+    }
+}

@@ -1,104 +1,76 @@
 using System.Text;
 using KintoneNetLibrary.CodeGen.Application.Interfaces;
+using KintoneNetLibrary.CodeGen.Domain.Models;
 using KintoneNetLibrary.CodeGen.Domain.Options;
+using KintoneNetLibrary.CodeGen.Domain.Schemas;
 using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.CodeGen.Application.Emitters;
 
-/// <summary>
-/// C# コードエミッタ
-/// </summary>
-public class CSharpCodeEmitter(INameConverter nameConverter, ITypeMapper typeMapper) : ICodeEmitter {
-    private readonly INameConverter _nameConverter = nameConverter;
-    private readonly ITypeMapper _typeMapper = typeMapper;
+public class CSharpCodeEmitter(
+    INameConverter names,
+    ITypeMapper types,
+    IXmlCommentBuilder xml,
+    ISubtableEmitter subtableEmitter,
+    IHelperClassEmitter helperEmitter) : ICodeEmitter {
 
-    /// <summary>
-    /// コードを生成する
-    /// </summary>
-    /// <param name="metadata"></param>
-    /// <param name="options"></param>
-    /// <returns></returns>
-    public string Emit(KintoneAppMetadata metadata, CodeEmitterOptions options) {
-        var sb = new StringBuilder();
+    private readonly INameConverter _names = names;
+    private readonly ITypeMapper _types = types;
+    private readonly IXmlCommentBuilder _xml = xml;
+    private readonly ISubtableEmitter _subtableEmitter = subtableEmitter;
+    private readonly IHelperClassEmitter _helperEmitter = helperEmitter;
 
-        // nullable
-        if (options.NullableEnabled) {
-            sb.AppendLine("#nullable enable");
+    public GeneratedModelResult Emit(KintoneAppSchema schema, CodeEmitterOptions options) {
+        var result = new GeneratedModelResult {
+            // 1. メインモデル生成
+            MainModelCode = this.EmitMainModel(schema, options)
+        };
+
+        // 2. サブテーブル生成
+        foreach (var sub in schema.Subtables) {
+            result.SubtableModels.Add(
+                this._subtableEmitter.EmitSubtable(sub, options)
+            );
         }
+
+        // 3. pure モードなら補助クラス生成
+        if (!options.UseKintoneNetLibrary) {
+            result.HelperClasses.AddRange(
+                this._helperEmitter.EmitHelperClasses(options)
+            );
+        }
+
+        return result;
+    }
+    private string EmitMainModel(KintoneAppSchema schema, CodeEmitterOptions options) {
+        var sb = new StringBuilder();
 
         // namespace
         sb.AppendLine($"namespace {options.Namespace};");
         sb.AppendLine();
 
-        // メインクラス名（アプリ名は fields.json から取れないので AppId ベース）
-        var mainClassName = $"App{metadata.AppId}";
-
-        this.EmitMainClass(sb, metadata, mainClassName, options);
-
-        // サブテーブルクラス
-        foreach (var field in metadata.Fields.Where(f => f.Type == KintoneFieldType.SubTable)) {
-            this.EmitSubtableClass(sb, field, options);
-        }
-
-        return sb.ToString();
-    }
-
-    /// <summary>
-    /// メインクラスを出力する
-    /// </summary>
-    /// <param name="sb"></param>
-    /// <param name="metadata"></param>
-    /// <param name="className"></param>
-    /// <param name="options"></param>
-    private void EmitMainClass(StringBuilder sb, KintoneAppMetadata metadata, string className, CodeEmitterOptions options) {
-        sb.AppendLine($"public {(options.UseRecord ? "record" : "class")} {className}");
+        // class header
+        var className = options.MainClassName;
+        sb.AppendLine($"public partial class {className}");
         sb.AppendLine("{");
 
-        foreach (var field in metadata.Fields) {
+        // properties
+        foreach (var field in schema.Fields) {
             this.EmitProperty(sb, field, options);
         }
 
         sb.AppendLine("}");
-        sb.AppendLine();
+        return sb.ToString();
     }
+    private void EmitProperty(StringBuilder sb, KintoneFieldSchema field, CodeEmitterOptions options) {
+        var propName = this._names.ToPropertyName(field.Label, field.FieldCode);
+        var typeName = this._types.MapType(field, options.UseKintoneNetLibrary);
 
-    /// <summary>
-    /// サブテーブルクラスを出力する    
-    /// </summary>
-    /// <param name="sb"></param>
-    /// <param name="field"></param>
-    /// <param name="options"></param>
-    private void EmitSubtableClass(StringBuilder sb, KintoneFieldMetadata field, CodeEmitterOptions options) {
-        var className = this._nameConverter.ToClassName(field.Label, field.Code);
-
-        sb.AppendLine($"public {(options.UseRecord ? "record" : "class")} {className}");
-        sb.AppendLine("{");
-
-        foreach (var sub in field.SubFields!)
-        {
-            this.EmitProperty(sb, sub, options);
-        }
-
-        sb.AppendLine("}");
-        sb.AppendLine();
-    }
-
-    /// <summary>
-    /// プロパティを出力する
-    /// </summary>
-    /// <param name="sb"></param>
-    /// <param name="field"></param>
-    /// <param name="options"></param>
-    private void EmitProperty(StringBuilder sb, KintoneFieldMetadata field, CodeEmitterOptions options) {
-        var propName = this._nameConverter.ToPropertyName(field.Label, field.Code);
-        var typeName = this._typeMapper.Map(field);
-
-        // ★ サブテーブル型名の補正
-        if (field.Type == KintoneFieldType.SubTable) {
-            var className = this._nameConverter.ToClassName(field.Label, field.Code);
-            typeName = $"List<{className}>";
-        }
+        // XML コメント
+        var xml = this._xml.BuildForField(field);
+        sb.AppendLine(xml);
 
         sb.AppendLine($"    public {typeName} {propName} {{ get; set; }}");
+        sb.AppendLine();
     }
 }

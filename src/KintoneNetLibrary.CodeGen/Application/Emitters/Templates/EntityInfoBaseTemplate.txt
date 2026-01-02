@@ -1,0 +1,18 @@
+namespace {{Namespace}}
+{
+    /// <summary>
+    /// Kintone のユーザー/グループ/組織情報の共通基底クラス
+    /// </summary>
+    public abstract class KintoneEntityInfo
+    {
+        /// <summary>
+        /// コード（ユーザーコード、グループコード、組織コード）
+        /// </summary>
+        public string Code { get; set; }
+
+        /// <summary>
+        /// 表示名
+        /// </summary>
+        public string Name { get; set; }
+    }
+}

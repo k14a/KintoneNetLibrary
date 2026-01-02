@@ -1,3 +1,5 @@
+using KintoneNetLibrary.Domain.Entities;
+
 namespace KintoneNetLibrary.Application.Interfaces;
 
 /// <summary>
@@ -16,4 +18,5 @@ public interface IKintoneAppMetadataApi {
     /// <param name="appId"></param>
     /// <returns></returns>
     Task<string> GetLayoutJsonAsync(int appId);
+    Task<KintoneAppMetadata> GetAppMetadataAsync(int appId);
 }

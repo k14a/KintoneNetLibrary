@@ -1,27 +1,67 @@
 namespace KintoneNetLibrary.CodeGen.Domain.Options;
 
 /// <summary>
-/// コードエミッタオプション
+/// C# コード生成オプション
 /// </summary>
 public class CodeEmitterOptions {
+    // ================================
+    // 1. 基本設定
+    // ================================
+
     /// <summary>
-    /// 名前空間
+    /// 生成するクラスの名前空間
     /// </summary>
     public string Namespace { get; set; } = "KintoneModels";
     /// <summary>
-    /// レコード型を使用するかどうか
+    /// メインモデルのクラス名（App{Id} がデフォルト）
     /// </summary>
-    public bool UseRecord { get; set; } 
+    public string? MainClassName { get; set; }
+
+    // ================================
+    // 2. 生成スタイル設定
+    // ================================
+
     /// <summary>
-    /// 部分クラスを生成するかどうか
+    /// record を使用するか（false の場合は class）
+    /// </summary>
+    public bool UseRecord { get; set; } = false;
+
+    /// <summary>
+    /// partial class を生成するか
     /// </summary>
     public bool UsePartial { get; set; } = true;
+
     /// <summary>
-    /// 列挙型を生成するかどうか
-    /// </summary>
-    public bool GenerateEnums { get; set; }
-    /// <summary>
-    /// nullable を有効にするかどうか
+    /// #nullable enable を付与するか
     /// </summary>
     public bool NullableEnabled { get; set; } = true;
+
+    // ================================
+    // 3. モード設定（pure / library）
+    // ================================
+
+    /// <summary>
+    /// KintoneNetLibrary を使用するか（false の場合 pure モード）
+    /// </summary>
+    public bool UseKintoneNetLibrary { get; set; } = true;
+
+    // ================================
+    // 4. 拡張設定（将来のためのフラグ）
+    // ================================
+
+    /// <summary>
+    /// 選択肢フィールドを enum として生成するか
+    /// </summary>
+    public bool GenerateEnums { get; set; } = false;
+
+    /// <summary>
+    /// サブテーブルクラスを別ファイルに分割するか
+    /// </summary>
+    public bool SplitSubtableFiles { get; set; } = true;
+
+    /// <summary>
+    /// pure モードの補助クラス（UserInfo など）を別ファイルに分割するか
+    /// </summary>
+    public bool SplitHelperFiles { get; set; } = true;
+
 }
