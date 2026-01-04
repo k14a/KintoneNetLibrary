@@ -11,8 +11,8 @@ public class CSharpHelperClassEmitter : IHelperClassEmitter {
 
     public CSharpHelperClassEmitter() {
         // テンプレートは埋め込みリソース or ファイル読み込み
-        this._baseTemplate = File.ReadAllText("Templates/EntityInfoBaseTemplate.txt");
-        this._derivedTemplate = File.ReadAllText("Templates/EntityInfoDerivedTemplate.txt");
+        this._baseTemplate = ReadTemplate("EntityInfoBaseTemplate.txt");
+        this._derivedTemplate = ReadTemplate("EntityInfoDerivedTemplate.txt");
     }
 
     public IEnumerable<GeneratedHelperClass> EmitHelperClasses(CodeEmitterOptions options) {
@@ -46,5 +46,18 @@ public class CSharpHelperClassEmitter : IHelperClassEmitter {
             ClassName = className,
             Code = code
         };
+    }
+
+    private static string ReadTemplate(string fileName) {
+        var assembly = typeof(CSharpHelperClassEmitter).Assembly;
+        var resourceName = assembly
+            .GetManifestResourceNames()
+            .First(n => n.EndsWith(fileName));
+
+        using var stream = assembly.GetManifestResourceStream(resourceName)
+            ?? throw new InvalidOperationException($"Template not found: {fileName}");
+
+        using var reader = new StreamReader(stream, Encoding.UTF8);
+        return reader.ReadToEnd();
     }
 }

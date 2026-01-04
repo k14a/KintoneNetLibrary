@@ -44,8 +44,9 @@ public class KintoneAppMetadataApi(
     /// 指定したアプリのメタデータを取得します。
     /// </summary>
     /// <param name="appId"></param>
+    /// <param name="apiToken"></param>
     /// <returns></returns>
-    public async Task<KintoneAppMetadata> GetAppMetadataAsync(int appId) {
+    public async Task<KintoneAppMetadata> GetAppMetadataAsync(int appId, string apiToken) {
         var json = await this.GetFieldsJsonAsync(appId);
 
         using var doc = JsonDocument.Parse(json);
@@ -103,6 +104,7 @@ public class KintoneAppMetadataApi(
 
         return new KintoneAppMetadata {
             AppId = appId,
+            Revision = root.GetProperty("revision").GetInt32(),
             Fields = fields
         };
     }

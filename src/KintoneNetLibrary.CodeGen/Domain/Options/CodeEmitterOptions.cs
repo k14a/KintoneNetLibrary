@@ -36,6 +36,16 @@ public class CodeEmitterOptions {
     /// </summary>
     public bool NullableEnabled { get; set; } = true;
 
+    /// <summary>
+    /// 出力ディレクトリ
+    /// </summary>
+    public string OutputDirectory { get; set; } = ".";
+
+    /// <summary>
+    /// 既存ファイルを上書きするか
+    /// </summary>
+    public bool OverwriteExistingFiles { get; set; }
+
     // ================================
     // 3. モード設定（pure / library）
     // ================================
@@ -63,5 +73,24 @@ public class CodeEmitterOptions {
     /// pure モードの補助クラス（UserInfo など）を別ファイルに分割するか
     /// </summary>
     public bool SplitHelperFiles { get; set; } = true;
+
+    // ================================
+    // 補助メソッド（kmodel との連携を強化）
+    // ================================
+
+    /// <summary>
+    /// OutputDirectory を絶対パスに正規化する
+    /// </summary>
+    public void NormalizePaths() {
+        this.OutputDirectory = Path.GetFullPath(this.OutputDirectory);
+    }
+
+    /// <summary>
+    /// MainClassName が null の場合にデフォルト値を設定する
+    /// </summary>
+    public void EnsureDefaults(int appId) {
+        this.MainClassName ??= $"App{appId}";
+    }
+
 
 }

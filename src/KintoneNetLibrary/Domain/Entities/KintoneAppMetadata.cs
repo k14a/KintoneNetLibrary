@@ -9,6 +9,10 @@ public class KintoneAppMetadata {
     /// </summary>
     public int AppId { get; set; }
     /// <summary>
+    /// リビジョン番号を取得または設定します。
+    /// </summary>
+    public int Revision { get; set; }
+    /// <summary>
     /// フィールドのメタデータの一覧を取得または設定します。
     /// </summary>
     public IReadOnlyList<KintoneFieldMetadata> Fields { get; set; } = default!;

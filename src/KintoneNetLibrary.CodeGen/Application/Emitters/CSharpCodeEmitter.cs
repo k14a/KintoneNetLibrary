@@ -23,7 +23,8 @@ public class CSharpCodeEmitter(
     public GeneratedModelResult Emit(KintoneAppSchema schema, CodeEmitterOptions options) {
         var result = new GeneratedModelResult {
             // 1. メインモデル生成
-            MainModelCode = this.EmitMainModel(schema, options)
+            MainModelCode = this.EmitMainModel(schema, options),
+            Revision = schema.Revision
         };
 
         // 2. サブテーブル生成

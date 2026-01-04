@@ -18,4 +18,9 @@ public class GeneratedModelResult {
     /// pure モードで生成される補助クラス（UserInfo など）
     /// </summary>
     public List<GeneratedHelperClass> HelperClasses { get; set; } = [];
+
+    /// <summary>
+    /// Kintone アプリのフィールド定義のリビジョン番号
+    /// </summary>
+    public int Revision { get; set; }
 }

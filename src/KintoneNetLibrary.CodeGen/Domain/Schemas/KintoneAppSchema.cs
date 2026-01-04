@@ -15,6 +15,11 @@ public class KintoneAppSchema {
     public string AppName { get; set; } = string.Empty;
 
     /// <summary>
+    /// リビジョン番号
+    /// </summary>
+    public int Revision { get; set; }
+
+    /// <summary>
     /// 通常フィールド（サブテーブル以外）
     /// </summary>
     public List<KintoneFieldSchema> Fields { get; set; } = [];

@@ -18,5 +18,11 @@ public interface IKintoneAppMetadataApi {
     /// <param name="appId"></param>
     /// <returns></returns>
     Task<string> GetLayoutJsonAsync(int appId);
-    Task<KintoneAppMetadata> GetAppMetadataAsync(int appId);
+    /// <summary>
+    /// アプリのメタデータを取得する
+    /// </summary>
+    /// <param name="appId"></param>
+    /// <param name="apiToken"></param>
+    /// <returns></returns>
+    Task<KintoneAppMetadata> GetAppMetadataAsync(int appId, string apiToken);
 }
