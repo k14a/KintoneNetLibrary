@@ -5,7 +5,7 @@ namespace KintoneNetLibrary.Application.Interfaces;
 /// <summary>
 /// KintoneモデルのCRUD操作を提供するサービスインターフェイスです。
 /// </summary>
-public interface IKintoneModelCrudService<T> where T : KintoneModelBase<T>, new() {
+public interface IKintoneTypedCrudService<T> where T : KintoneModelBase<T>, new() {
     /// <summary>
     /// Kintoneモデルのレコードを作成します。
     /// </summary>

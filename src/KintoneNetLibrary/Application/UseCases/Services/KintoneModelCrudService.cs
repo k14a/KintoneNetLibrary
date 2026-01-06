@@ -21,10 +21,10 @@ public class KintoneModelCrudService<T>(
     IKintoneRepository repository,
     IOptions<KintoneExecutionOptions>? executionOptions,
     JsonSerializerOptions? jsonOptions = null,
-    ILogger<KintoneModelCrudService<T>>? logger = null) : IKintoneModelCrudService<T> where T : KintoneModelBase<T>, new() {
+    ILogger<KintoneModelCrudService<T>>? logger = null) : IKintoneTypedCrudService<T> where T : KintoneModelBase<T>, new() {
 
     private readonly IKintoneRepository _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-    private readonly ILogger<IKintoneModelCrudService<T>>? _logger = logger;
+    private readonly ILogger<IKintoneTypedCrudService<T>>? _logger = logger;
     private readonly JsonSerializerOptions _jsonOptions = jsonOptions ?? DefaultJsonOptions.Default;
     private readonly KintoneExecutionOptions _execOptions = executionOptions?.Value ?? new KintoneExecutionOptions();
 
