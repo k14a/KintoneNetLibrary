@@ -20,9 +20,9 @@ public class KintoneModelCrudServiceDeleteTests {
     public async Task DeleteAsyncShouldReturnEmptyResultWhenModelsIsEmpty() {
         // Arrange
         var mockRepo = new Mock<IKintoneRepository>();
-        var loggerMock = new Mock<ILogger<KintoneModelCrudService<SampleModel>>>();
+        var loggerMock = new Mock<ILogger<KintoneTypedCrudService<SampleModel>>>();
 
-        var service = new KintoneModelCrudService<SampleModel>(
+        var service = new KintoneTypedCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 2 }),
             KintoneJsonOptions.Default,
@@ -58,7 +58,7 @@ public class KintoneModelCrudServiceDeleteTests {
     public async Task DeleteAsyncShouldDeleteOneModelWhenOneModelProvided() {
         // Arrange
         var mockRepo = new Mock<IKintoneRepository>();
-        var loggerMock = new Mock<ILogger<KintoneModelCrudService<SampleModel>>>();
+        var loggerMock = new Mock<ILogger<KintoneTypedCrudService<SampleModel>>>();
 
         var model = new SampleModel { RecordID = "123" };
         var models = new List<SampleModel> { model };
@@ -67,7 +67,7 @@ public class KintoneModelCrudServiceDeleteTests {
             .Setup(x => x.DeleteRecordsAsync(It.IsAny<IList<SampleModel>>()))
             .ReturnsAsync("");
 
-        var service = new KintoneModelCrudService<SampleModel>(
+        var service = new KintoneTypedCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 2 }),
             KintoneJsonOptions.Default,
@@ -99,8 +99,8 @@ public class KintoneModelCrudServiceDeleteTests {
         };
 
         var mockRepo = new Mock<IKintoneRepository>();
-        var loggerMock = new Mock<ILogger<KintoneModelCrudService<SampleModel>>>();
-        var service = new KintoneModelCrudService<SampleModel>(
+        var loggerMock = new Mock<ILogger<KintoneTypedCrudService<SampleModel>>>();
+        var service = new KintoneTypedCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 2 }),
             KintoneJsonOptions.Default,
@@ -131,8 +131,8 @@ public class KintoneModelCrudServiceDeleteTests {
     };
 
         var mockRepo = new Mock<IKintoneRepository>();
-        var loggerMock = new Mock<ILogger<KintoneModelCrudService<SampleModel>>>();
-        var service = new KintoneModelCrudService<SampleModel>(
+        var loggerMock = new Mock<ILogger<KintoneTypedCrudService<SampleModel>>>();
+        var service = new KintoneTypedCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 2 }),
             KintoneJsonOptions.Default,
@@ -171,8 +171,8 @@ public class KintoneModelCrudServiceDeleteTests {
             .ThrowsAsync(new KintoneException("Record not found"));
 
         // var service = new KintoneModelCrudService<SampleModel>(mockRepo.Object);
-        var loggerMock = new Mock<ILogger<KintoneModelCrudService<SampleModel>>>();
-        var service = new KintoneModelCrudService<SampleModel>(
+        var loggerMock = new Mock<ILogger<KintoneTypedCrudService<SampleModel>>>();
+        var service = new KintoneTypedCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 2 }),
             KintoneJsonOptions.Default,
@@ -227,8 +227,8 @@ public class KintoneModelCrudServiceDeleteTests {
         )).ReturnsAsync(KintoneRequestBuilder.BuildDeleteJson(new List<SampleModel> { new() { RecordID = invalidId } }));
 
 
-        var loggerMock = new Mock<ILogger<KintoneModelCrudService<SampleModel>>>();
-        var service = new KintoneModelCrudService<SampleModel>(
+        var loggerMock = new Mock<ILogger<KintoneTypedCrudService<SampleModel>>>();
+        var service = new KintoneTypedCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 2 }),
             KintoneJsonOptions.Default,
@@ -255,8 +255,8 @@ public class KintoneModelCrudServiceDeleteTests {
         var ids = new List<string> { "101", "102", "103" };
 
         var mockRepo = new Mock<IKintoneRepository>();
-        var loggerMock = new Mock<ILogger<KintoneModelCrudService<SampleModel>>>();
-        var service = new KintoneModelCrudService<SampleModel>(
+        var loggerMock = new Mock<ILogger<KintoneTypedCrudService<SampleModel>>>();
+        var service = new KintoneTypedCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 2 }),
             KintoneJsonOptions.Default,

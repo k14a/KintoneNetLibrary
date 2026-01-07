@@ -1,71 +1,65 @@
 using System.Reflection;
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using KintoneNetLibrary.Domain.Common;
 using KintoneNetLibrary.Domain.Entities;
-using KintoneNetLibrary.Domain.Interfaces;
+using KintoneNetLibrary.Utils;
 
 namespace KintoneNetLibrary.Extensions;
 
-// コメントは日本語で記述
 /// <summary>
-/// KintoneModelBaseのファイル操作に関する拡張メソッドを提供します。
+/// KintoneModelBaseの拡張メソッドを提供するクラス
 /// </summary>
-public static class KintoneModelFileExtensions {
+public static class KintoneModelBaseExtensions {
     /// <summary>
-    /// モデルに関連付けられたファイルをダウンロードします。
+    /// KintoneModelBaseオブジェクトをKintoneのJSON形式にシリアライズします
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <param name="model"></param>
-    /// <param name="fileService"></param>
-    /// <param name="targetDirectory"></param>
-    /// <param name="overwrite"></param>
-    /// <param name="throwIfExists"></param>
+    /// <param name="escapeUnicode"></param>
+    /// <param name="indented"></param>
     /// <returns></returns>
-    public static async Task<IEnumerable<FileInfo>> DownloadFilesAsync<T>(this T model, IKintoneModelFileService<T> fileService, string? targetDirectory = null, bool overwrite = true, bool throwIfExists = false) where T : KintoneModelBase<T>, new() {
-        var type = typeof(T);
-        var props = type.GetProperties();
+    public static string ToKintoneJson<T>(this T model, bool escapeUnicode = true, bool indented = false) where T : KintoneModelBase<T>, new() {
+        var props = typeof(T)
+            .GetProperties()
+            .Select(p => new {
+                Prop = p,
+                Attr = p.GetCustomAttribute<KintoneItemAttribute>()
+            })
+            .Where(p => p.Attr != null && p.Attr.IsToJson);
 
-        // 1. 属性ベースで探索
-        var attributeFiles = props
-            .Where(p => p.GetCustomAttributes(typeof(KintoneItemAttribute), true)
-                .OfType<KintoneItemAttribute>()
-                .Any(attr => attr.FieldType == KintoneFieldType.File))
-            .SelectMany(p => ExtractFiles(p, model));
+        var dict = new Dictionary<string, object?>();
 
-        // 2. 属性がない場合は型ベースで探索
-        var fallbackFiles = props
-            .Where(p => typeof(KintoneFile).IsAssignableFrom(p.PropertyType) ||
-                        typeof(IEnumerable<KintoneFile>).IsAssignableFrom(p.PropertyType))
-            .Where(p => !p.IsDefined(typeof(KintoneItemAttribute), true))
-            .SelectMany(p => ExtractFiles(p, model));
+        foreach (var item in props) {
+            var value = item.Prop.GetValue(model);
+            dict[item.Prop.Name] = value;
+        }
 
-        var kintoneFiles = attributeFiles.Concat(fallbackFiles).Where(f => !string.IsNullOrEmpty(f.FileKey));
-        return await fileService.DownloadFilesAsync(model, kintoneFiles, targetDirectory, overwrite, throwIfExists);
+        var options = JsonOptionsUtil.Clone(DefaultJsonOptions.Default, writeIndented: indented);
+        if (!escapeUnicode) {
+            options.Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
+        }
+        return JsonSerializer.Serialize(dict, options);
     }
     /// <summary>
-    /// モデルに関連付けられたファイルをアップロードします。
+    /// KintoneModelBaseオブジェクトのコレクションをKintoneのJSON配列形式にシリアライズします
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    /// <param name="model"></param>
-    /// <param name="fileService"></param>
-    /// <param name="files"></param>
+    /// <param name="models"></param>
+    /// <param name="escapeUnicode"></param>
+    /// <param name="indented"></param>
     /// <returns></returns>
-    public static async Task<IEnumerable<KintoneFile>> UploadFilesAsync<T>(this T model, IKintoneModelFileService<T> fileService, IEnumerable<FileInfo> files) where T : KintoneModelBase<T>, new() {
-        var uploaded = await fileService.UploadFilesAsync(model, files);
-        await fileService.MapUploadedFilesToModelAsync(model, files);
-        return uploaded;
+    public static string ToKintoneJsonArray<T>(this IEnumerable<T> models, bool escapeUnicode = true, bool indented = false) where T : KintoneModelBase<T>, new() {
+        var list = models.Select(m => JsonSerializer.Deserialize<Dictionary<string, object?>>(
+            m.ToKintoneJson(),
+            DefaultJsonOptions.Default
+        ));
+
+        var options = JsonOptionsUtil.Clone(DefaultJsonOptions.Default, writeIndented: indented);
+        if (!escapeUnicode) {
+            options.Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
+        }
+        return JsonSerializer.Serialize(list, options);
     }
-    /// <summary>
-    /// プロパティからKintoneFileオブジェクトを抽出します。
-    /// </summary>
-    /// <param name="prop"></param>
-    /// <param name="model"></param>
-    /// <returns></returns>
-    private static IEnumerable<KintoneFile> ExtractFiles(PropertyInfo prop, object model) {
-        var value = prop.GetValue(model);
-        return value switch {
-            KintoneFile file => [file],
-            IEnumerable<KintoneFile> files => files,
-            _ => []
-        };
-    }
+
 }
-

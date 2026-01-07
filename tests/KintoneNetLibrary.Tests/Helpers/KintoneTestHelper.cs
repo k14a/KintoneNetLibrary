@@ -16,7 +16,14 @@ using Microsoft.Extensions.Options;
 
 namespace KintoneNetLibrary.Tests.Helpers;
 
+/// <summary>
+/// Kintoneテスト用ヘルパークラス
+/// </summary>
 public static class KintoneTestHelper {
+    /// <summary>
+    /// KintoneApiインスタンスを作成します
+    /// </summary>
+    /// <returns></returns>
     public static KintoneApi CreateApi() {
         var cfg = TestEnv.Settings;
         var cli = new HttpClient {
@@ -26,6 +33,13 @@ public static class KintoneTestHelper {
         return new KintoneApi(access, cfg.AppID, cli);
     }
 
+    /// <summary>
+    /// 指定されたモデルのレコードをチャンクに分割して作成します
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="api"></param>
+    /// <param name="models"></param>
+    /// <returns></returns>
     public static async Task<IList<T>> CreateRecordsInChunksAsync<T>(KintoneApi api, IList<T> models) where T : KintoneModelBase<T>, new() {
         var allCreated = new List<T>();
         foreach (var chunk in models.Chunk(KintoneConstants.KintoneLimit)) {
@@ -38,6 +52,14 @@ public static class KintoneTestHelper {
         return allCreated;
     }
 
+    /// <summary>
+    /// 指定されたモデルのレコードをチャンクに分割して削除します
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="api"></param>
+    /// <param name="models"></param>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException"></exception>
     public static async Task DeleteRecordsInChunksAsync<T>(KintoneApi api, IList<T> models) where T : KintoneModelBase<T>, new() {
         foreach (var chunk in models.Chunk(KintoneConstants.KintoneDeleteLimit)) {
             var deleteJson = KintoneRequestBuilder.BuildDeleteJson(chunk);
@@ -45,6 +67,17 @@ public static class KintoneTestHelper {
         }
     }
 
+    /// <summary>
+    /// 指定されたクエリでレコード数が期待値に達するまで待機します
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="api"></param>
+    /// <param name="query"></param>
+    /// <param name="expectedCount"></param>
+    /// <param name="maxRetry"></param>
+    /// <param name="delayMilliseconds"></param>
+    /// <returns></returns>
+    /// <exception cref="TimeoutException"></exception>
     public static async Task<IList<T>> WaitForExpectedRecordCountAsync<T>(KintoneApi api, string query, int expectedCount, int maxRetry = 6, int delayMilliseconds = 500) where T : KintoneModelBase<T>, new() {
         for (int retry = 0; retry < maxRetry; retry++) {
             var foundJson = await api.FindByQueryAsync<T>(query);
@@ -60,7 +93,12 @@ public static class KintoneTestHelper {
         throw new TimeoutException($"Expected {expectedCount} records, but condition was not met after {maxRetry} retries.");
     }
 
-    public static KintoneModelCrudService<T> CreateCrudService<T>() where T : KintoneModelBase<T>, new() {
+    /// <summary>
+    /// KintoneTypedCrudServiceインスタンスを作成します
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
+    public static KintoneTypedCrudService<T> CreateCrudService<T>() where T : KintoneModelBase<T>, new() {
         var config = TestEnv.Settings;
         var options = new KintoneExecutionOptions { MaxConcurrency = 2 };
 
@@ -79,13 +117,12 @@ public static class KintoneTestHelper {
         var factory = new KintoneApiFactory(httpClient, apiLogger);
         var repository = new KintoneRepository(factory);
 
-        var serviceLogger = loggerFactory.CreateLogger<KintoneModelCrudService<T>>();
-        return new KintoneModelCrudService<T>(
+        var serviceLogger = loggerFactory.CreateLogger<KintoneTypedCrudService<T>>();
+        return new KintoneTypedCrudService<T>(
             repository,
             Options.Create(options),
             new JsonSerializerOptions(),
             serviceLogger
         );
     }
-
 }

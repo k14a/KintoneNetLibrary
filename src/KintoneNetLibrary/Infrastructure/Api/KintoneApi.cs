@@ -82,7 +82,7 @@ public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
         int appID,
         HttpClient? httpClient = null,
         ILogger<KintoneApi>? logger = null,
-        JsonSerializerOptions? jsonOptions = null) : base(access, httpClient ?? new HttpClient(), logger){
+        JsonSerializerOptions? jsonOptions = null) : base(access, httpClient ?? new HttpClient(), logger) {
 
         ArgumentNullException.ThrowIfNull(access);
 

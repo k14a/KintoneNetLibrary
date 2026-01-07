@@ -31,7 +31,8 @@ public static class JsonOptionsUtil {
             ReferenceHandler = source.ReferenceHandler,
             TypeInfoResolver = source.TypeInfoResolver,
             UnknownTypeHandling = source.UnknownTypeHandling,
-            WriteIndented = writeIndented
+            WriteIndented = writeIndented,
+            // NOTE: 新しいプロパティが追加された場合はここに追記すること
         };
     }
 }

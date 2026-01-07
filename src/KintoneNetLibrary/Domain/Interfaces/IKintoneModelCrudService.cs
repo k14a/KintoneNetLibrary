@@ -49,7 +49,7 @@ public interface IKintoneModelCrudService {
     /// <returns></returns>
     Task<IEnumerable<T>> FindAsync<T>(IList<string>? ids = null, string? query = null, IList<string>? fieldCodes = null) where T : KintoneModelBase<T>, new();
     /// <summary>
-    /// レコードを保存します（存在しない場合は作成、存在する場合は更新） 
+    /// レコードを保存します（存在しない場合は作成、存在する場合は更新）
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <param name="records"></param>

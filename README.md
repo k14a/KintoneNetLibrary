@@ -22,7 +22,7 @@
 
 - **選べる API スタイル（利用者レベルに応じた 3 段階）**
   - 初心者向け：モデル継承（`KintoneModelBase`）
-  - 中級者向け：`KintoneModelCrudService<T>` を使用するサービス層
+  - 中級者向け：`KintoneTypedCrudService<T>` を使用するサービス層
   - 上級者向け：低レベル API（`KintoneApi`）を直接利用
 
 ### 利用スタイルのサンプル
@@ -42,7 +42,7 @@ var record = await model.FindByIDAsync(100);
 - 中級者向け：KintoneModelCrudService
 
 ```csharp
-var service = provider.GetRequiredService<KintoneModelCrudService<CustomerModel>>();
+var service = provider.GetRequiredService<KintoneTypedCrudService<CustomerModel>>();
 var list = await service.FindAsync(x => x.Status == "Active");
 ```
 
@@ -103,7 +103,7 @@ services.AddKintone(options =>
     options.ApiToken = configuration["Kintone:ApiToken"];
 });
 
-services.AddScoped<KintoneModelCrudService<CustomerModel>>();
+services.AddScoped<KintoneTypedCrudService<CustomerModel>>();
 ```
 
 ### DIを使用しない最小例
@@ -172,10 +172,42 @@ var bulkRequests = items.Select(i => i.ToRecordRequest()).ToList();
 var bulkResult = await api.Record.BulkAsync(appId, bulkRequests);
 ```
 
-### 5.6 DI を使った利用例
+### 5.6 DI 登録例
 
 ```csharp
-var crud = serviceProvider.GetRequiredService<KintoneModelCrudService<CustomerModel>>();
+public static IServiceCollection AddKintoneConfig(this IServiceCollection services) {
+    // 設定の初期化(Domain Model の static プロパティに設定をセットする)
+    services.AddSingleton<FileCheckRecipeConfigInitializer>();
+    // ApiFactoryの登録
+    services.AddScoped<IKintoneApiFactory, KintoneApiFactory>();
+    // Repositoryの登録
+    services.AddScoped<IKintoneRepository, KintoneRepository>();
+    // CRUD Serviceの登録(非ジェネリック版 → static api用)
+    services.AddScoped<IKintoneModelCrudService, KintoneModelCrudService>();
+    // CRUD Serviceの登録(ジェネリック版 → 型付き CRUD)
+    services.AddScoped(typeof(IKintoneTypedCrudService<>), typeof(KintoneTypedCrudService<>));
+    return services;
+}
+```
+### 5.7 Staticメソッドで使用するプロパティの設定方法
+
+```csharp
+public static IHost InitializeKintoneConfig(this IHost host) {
+    // Initializerのコンストラクタを実行し、
+    // Domainモデルのstaticプロパティに設定を注入する
+    host.Services.GetRequiredService<Initializer>();
+    return host;
+}
+```
+
+#### 補足
+Find系メソッド（FindByQueryAsyncなど）は static メソッドのため、DI から設定を受け取れません。
+そのため、アプリ起動時に Domain Model の static プロパティへ設定を注入する初期化処理が必要です。
+
+### 5.8 DI を使った利用例
+
+```csharp
+var crud = serviceProvider.GetRequiredService<KintoneTypedCrudService<CustomerModel>>();
 var active = await crud.FindAsync(x => x.Status == "Active");
 ```
 

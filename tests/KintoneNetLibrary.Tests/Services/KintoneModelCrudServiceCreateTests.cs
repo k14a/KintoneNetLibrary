@@ -32,11 +32,11 @@ public class KintoneModelCrudServiceCreateTests {
                 return JsonSerializer.Serialize(new { ids, revisions });
             });
 
-        var service = new KintoneModelCrudService<SampleModel>(
+        var service = new KintoneTypedCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 2 }),
             new JsonSerializerOptions(),
-            NullLogger<KintoneModelCrudService<SampleModel>>.Instance
+            NullLogger<KintoneTypedCrudService<SampleModel>>.Instance
         );
 
         // Act
@@ -58,11 +58,11 @@ public class KintoneModelCrudServiceCreateTests {
         mockRepo.Setup(r => r.CreateRecordsAsync(It.IsAny<IList<SampleModel>>()))
             .ThrowsAsync(new Exception("Simulated failure"));
 
-        var service = new KintoneModelCrudService<SampleModel>(
+        var service = new KintoneTypedCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 1 }),
             null,
-            NullLogger<KintoneModelCrudService<SampleModel>>.Instance
+            NullLogger<KintoneTypedCrudService<SampleModel>>.Instance
         );
 
         // Act
@@ -83,11 +83,11 @@ public class KintoneModelCrudServiceCreateTests {
                 Error = new KintoneError { Code = "KINTONE_ERROR", Message = "Invalid data" }
             });
 
-        var service = new KintoneModelCrudService<SampleModel>(
+        var service = new KintoneTypedCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 1 }),
             null,
-            NullLogger<KintoneModelCrudService<SampleModel>>.Instance
+            NullLogger<KintoneTypedCrudService<SampleModel>>.Instance
         );
 
         var result = await service.CreateAsync(testRecords, enableSingleRetryOnError: false);
@@ -122,11 +122,11 @@ public class KintoneModelCrudServiceCreateTests {
                 return json;
             });
 
-        var service = new KintoneModelCrudService<SampleModel>(
+        var service = new KintoneTypedCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 1 }),
             null,
-            NullLogger<KintoneModelCrudService<SampleModel>>.Instance
+            NullLogger<KintoneTypedCrudService<SampleModel>>.Instance
         );
 
         var result = await service.CreateAsync(testRecords, enableSingleRetryOnError: true);
@@ -167,11 +167,11 @@ public class KintoneModelCrudServiceCreateTests {
                 return json;
             });
 
-        var service = new KintoneModelCrudService<SampleModel>(
+        var service = new KintoneTypedCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 1 }),
             null,
-            NullLogger<KintoneModelCrudService<SampleModel>>.Instance
+            NullLogger<KintoneTypedCrudService<SampleModel>>.Instance
         );
 
         // Act
@@ -196,11 +196,11 @@ public class KintoneModelCrudServiceCreateTests {
                 revisions = new[] { "1" }
             }));
 
-        var service = new KintoneModelCrudService<SampleModel>(
+        var service = new KintoneTypedCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 1 }),
             null,
-            NullLogger<KintoneModelCrudService<SampleModel>>.Instance
+            NullLogger<KintoneTypedCrudService<SampleModel>>.Instance
         );
 
         // await Assert.ThrowsAsync<KintoneException>(async () => await service.CreateAsync(testRecords));
@@ -222,11 +222,11 @@ public class KintoneModelCrudServiceCreateTests {
                 revisions = new[] { "revX" } // パース不能な文字列
             }));
 
-        var service = new KintoneModelCrudService<SampleModel>(
+        var service = new KintoneTypedCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions { }),
             null,
-            NullLogger<KintoneModelCrudService<SampleModel>>.Instance
+            NullLogger<KintoneTypedCrudService<SampleModel>>.Instance
         );
 
         var result = await service.CreateAsync(testRecords);
@@ -251,11 +251,11 @@ public class KintoneModelCrudServiceCreateTests {
                 revisions = new[] { "1", "1", "1" }
             }));
 
-        var service = new KintoneModelCrudService<SampleModel>(
+        var service = new KintoneTypedCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions { }),
             null,
-            NullLogger<KintoneModelCrudService<SampleModel>>.Instance
+            NullLogger<KintoneTypedCrudService<SampleModel>>.Instance
         );
 
         // Act
@@ -283,11 +283,11 @@ public class KintoneModelCrudServiceCreateTests {
         mockRepo.Setup(r => r.CreateRecordsAsync<SampleModel>(It.IsAny<IList<SampleModel>>()))
             .ReturnsAsync("{\"ids\":"); // 壊れたJSON構造
 
-        var service = new KintoneModelCrudService<SampleModel>(
+        var service = new KintoneTypedCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 1 }),
             null,
-            NullLogger<KintoneModelCrudService<SampleModel>>.Instance
+            NullLogger<KintoneTypedCrudService<SampleModel>>.Instance
         );
 
         // Act
@@ -320,11 +320,11 @@ public class KintoneModelCrudServiceCreateTests {
                 Error = new KintoneError { Code = "ERROR_SINGLE", Message = "Invalid record" }
             });
 
-        var service = new KintoneModelCrudService<SampleModel>(
+        var service = new KintoneTypedCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions { MaxConcurrency = 1 }),
             null,
-            NullLogger<KintoneModelCrudService<SampleModel>>.Instance
+            NullLogger<KintoneTypedCrudService<SampleModel>>.Instance
         );
 
         // Act
@@ -349,9 +349,9 @@ public class KintoneModelCrudServiceCreateTests {
         mockRepo.Setup(r => r.CreateRecordsAsync<SampleModel>(It.IsAny<IList<SampleModel>>()))
             .ThrowsAsync(new KintoneException("Bulk insert error"));
 
-        var mockLogger = new Mock<ILogger<KintoneModelCrudService<SampleModel>>>();
+        var mockLogger = new Mock<ILogger<KintoneTypedCrudService<SampleModel>>>();
 
-        var service = new KintoneModelCrudService<SampleModel>(
+        var service = new KintoneTypedCrudService<SampleModel>(
             mockRepo.Object,
             Options.Create(new KintoneExecutionOptions { }),
             null,

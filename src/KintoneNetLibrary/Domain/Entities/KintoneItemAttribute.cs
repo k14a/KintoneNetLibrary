@@ -8,8 +8,16 @@
 /// <param name="isUpload"></param>
 /// <param name="isKey"></param>
 /// <param name="fieldType"></param>
+/// <param name="isToJson"></param>
 [AttributeUsage(AttributeTargets.Property, Inherited = true, AllowMultiple = false)]
-public class KintoneItemAttribute(string fieldCode = "", KintoneFieldType fieldType = KintoneFieldType.Unknown, object? initialValue = null, bool isUpload = true, bool isKey = false) : Attribute {
+public class KintoneItemAttribute(
+    string fieldCode = "",
+    KintoneFieldType fieldType = KintoneFieldType.Unknown,
+    object? initialValue = null,
+    bool isUpload = true,
+    bool isKey = false,
+    bool isToJson = true) : Attribute {
+
     /// <summary>
     /// Kintoneフィールドコード
     /// </summary>
@@ -35,5 +43,8 @@ public class KintoneItemAttribute(string fieldCode = "", KintoneFieldType fieldT
     /// プロパティがサブテーブルかどうか
     /// </summary>
     public bool IsSubTable => this.FieldType == KintoneFieldType.SubTable;
-
+    /// <summary>
+    /// プロパティをKintoneのJSON形式にシリアライズするかどうか
+    /// </summary>
+    public bool IsToJson { get; set; } = isToJson;
 }

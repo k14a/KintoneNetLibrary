@@ -1,7 +1,4 @@
-﻿using System.Reflection;
-using System.Text.Json.Serialization;
-using KintoneNetLibrary.Domain.Access;
-using KintoneNetLibrary.Domain.Entities;
+﻿using System.Text.Json.Serialization;
 using KintoneNetLibrary.Infrastructure.Converters;
 
 namespace KintoneNetLibrary.Domain.Entities;
@@ -15,16 +12,14 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// 接続情報（APIトークン・パスワード認証など）
     /// <remarks>アクセスの種類によりApiTokenAccessまたはUserPasswordAccessクラスを使用してください。</remarks>
     /// </summary>
-    [JsonIgnore]
-    [KintoneItem(isUpload: false)]
+    [KintoneItem(isUpload: false, isToJson: false)]
     public abstract KintoneAccessBase Access { get; init; }
 
     /// <summary>
     /// Kintoneアカウント情報の取得
     /// <remarks>Kintoneアカウント情報は、APIトークンアクセスやユーザーパスワードアクセスの情報を基に生成されます。</remarks>
     /// </summary>
-    [JsonIgnore]
-    [KintoneItem(isUpload: false)]
+    [KintoneItem(isUpload: false, isToJson: false)]
     public KintoneAccount Account => this.Access.ToKintoneAccount();
 
     /// <summary>
