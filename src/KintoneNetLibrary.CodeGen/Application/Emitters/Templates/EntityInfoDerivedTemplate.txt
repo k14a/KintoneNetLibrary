@@ -3,7 +3,5 @@ namespace {{Namespace}}
     /// <summary>
     /// {{Summary}}
     /// </summary>
-    public class {{ClassName}} : KintoneEntityInfo
-    {
-    }
+    public class {{ClassName}} : KintoneEntityInfo { }
 }

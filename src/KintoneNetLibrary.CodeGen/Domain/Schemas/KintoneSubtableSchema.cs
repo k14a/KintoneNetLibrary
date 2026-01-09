@@ -3,7 +3,7 @@ namespace KintoneNetLibrary.CodeGen.Domain.Schemas;
 /// <summary>
 /// Kintone サブテーブルスキーマ
 /// </summary>
-public class KintoneSubtableSchema {
+public class KintoneSubTableSchema {
     /// <summary>
     /// サブテーブルのフィールドコード（例: "book_details"）
     /// </summary>

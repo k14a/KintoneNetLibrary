@@ -21,6 +21,16 @@ public class NameConverter : INameConverter {
         { "名", "Name" },
         // 必要に応じて追加
     };
+    private static readonly Dictionary<string, (string PropertyName, string CsType)> SystemFields = new() {
+        ["作成者"] = ("Creator", "KintoneUser"),
+        ["更新者"] = ("Modifier", "KintoneUser"),
+        ["作成日時"] = ("CreatedTime", "DateTime"),
+        ["更新日時"] = ("UpdatedTime", "DateTime"),
+        ["ステータス"] = ("Status", "string"),
+        ["カテゴリー"] = ("Category", "string"),
+        ["作業者"] = ("Assignee", "KintoneUser"),
+    };
+
 
     /// <summary>
     /// クラス名に変換する
@@ -45,21 +55,25 @@ public class NameConverter : INameConverter {
     /// <param name="code"></param>
     /// <returns></returns>
     private string Convert(string label, string code) {
+        var baseName = string.IsNullOrWhiteSpace(code) ? label : code;
+        if (SystemFields.TryGetValue(baseName, out var systemField)) { return systemField.PropertyName; }
+
         // 0. フィールドコードを安全化 → PascalCase（最優先）
-        var safeCode = SanitizeFieldCode(code);
+        var safeCode = SanitizeFieldCode(baseName);
         var codeName = ToPascalCase(safeCode);
 
         // 1. ラベルが空 → code fallback
-        if (string.IsNullOrWhiteSpace(label)) { return codeName; }
+        // if (string.IsNullOrWhiteSpace(label)) { return codeName; }
 
         // 2. ラベルが ASCII → そのまま PascalCase
-        if (IsAscii(label)) { return ToPascalCase(label); }
+        if (IsAscii(codeName)) { return ToPascalCase(codeName); }
+
 
         // 3. 日本語辞書で完全一致 → 英語化
-        if (Dictionary.TryGetValue(label, out var mapped)) { return mapped; }
+        if (Dictionary.TryGetValue(codeName, out var mapped)) { return mapped; }
 
         // 4. ローマ字変換（簡易）
-        var roman = ToRoman(label);
+        var roman = ToRoman(codeName);
         if (!string.IsNullOrWhiteSpace(roman)) { return ToPascalCase(roman); }
 
         // 5. 最後の fallback → code
@@ -152,7 +166,7 @@ public class NameConverter : INameConverter {
         if (string.IsNullOrEmpty(text)) { return string.Empty; }
 
         var sb = new StringBuilder();
-    
+
         // 変換マップの定義（2文字の拗音を先に定義する）
         var map = new Dictionary<string, string> {
             // 拗音（2文字）
@@ -179,7 +193,7 @@ public class NameConverter : INameConverter {
             {"や", "ya"}, {"ゆ", "yu"},  {"よ", "yo"},
             {"ら", "ra"}, {"り", "ri"},  {"る", "ru"},  {"れ", "re"}, {"ろ", "ro"},
             {"わ", "wa"}, {"を", "wo"},  {"ん", "n"},
-        
+
             // 濁音・半濁音
             {"が", "ga"}, {"ぎ", "gi"}, {"ぐ", "gu"}, {"げ", "ge"}, {"ご", "go"},
             {"ざ", "za"}, {"じ", "ji"}, {"ず", "zu"}, {"ぜ", "ze"}, {"ぞ", "zo"},
@@ -200,7 +214,7 @@ public class NameConverter : INameConverter {
                 // 2. 「っ」の処理（次の文字の最初の子音を重ねる）
                 // 次の文字を1文字チェックして、そのローマ字の先頭を重ねる
                 if (map.TryGetValue(text.Substring(i + 1, 1), out var next)) {
-                    sb.Append(next[0]); 
+                    sb.Append(next[0]);
                 }
             } else if (map.TryGetValue(text[i].ToString(), out var singleChar)) {
                 // 3. 通常の1文字チェック

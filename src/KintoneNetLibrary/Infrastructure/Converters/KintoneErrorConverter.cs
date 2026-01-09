@@ -16,12 +16,7 @@ public static class KintoneErrorConverter {
     /// <exception cref="KintoneException"></exception>
     public static KintoneError Parse(string json) {
         try {
-            var error = JsonSerializer.Deserialize<KintoneError>(json);
-
-            if (error == null) {
-                throw new KintoneException("Error response is null.");
-            }
-
+            var error = JsonSerializer.Deserialize<KintoneError>(json) ?? throw new KintoneException("Error response is null.");
             if (string.IsNullOrWhiteSpace(error.Message)) {
                 // 補足情報を付加して例外化
                 throw new KintoneException($"Invalid error structure: missing 'message' field. Raw response: {json}");

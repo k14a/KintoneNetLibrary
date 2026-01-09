@@ -1,0 +1,23 @@
+namespace {{Namespace}}
+{
+    /// <summary>
+    /// Kintone のファイル情報クラス
+    /// </summary>
+    public class KintoneFileInfo
+    {
+        /// <summary>
+        /// ファイルキー
+        /// </summary>
+        public string FileKey { get; set; }
+
+        /// <summary>
+        /// ファイル名
+        /// </summary>
+        public string Name { get; set; }
+
+        /// <summary>
+        /// ファイルサイズ
+        /// </summary>
+        public int Size { get; set; }
+    }
+}

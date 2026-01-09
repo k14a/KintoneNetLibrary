@@ -12,7 +12,7 @@ public class GeneratedModelResult {
     /// <summary>
     /// サブテーブル行クラスの生成結果一覧
     /// </summary>
-    public List<GeneratedSubtableModel> SubtableModels { get; set; } = [];
+    public List<GeneratedSubTableModel> SubTableModels { get; set; } = [];
 
     /// <summary>
     /// pure モードで生成される補助クラス（UserInfo など）

@@ -3,6 +3,7 @@ using KintoneNetLibrary.Application.Interfaces;
 using KintoneNetLibrary.Infrastructure.Internal;
 using KintoneNetLibrary.Domain.Entities;
 using System.Text.Json;
+using KintoneNetLibrary.Domain.Converters;
 
 namespace KintoneNetLibrary.Infrastructure.Api;
 
@@ -20,6 +21,12 @@ public class KintoneAppMetadataApi(
     KintoneAccessBase access,
     HttpClient httpClient,
     ILogger<KintoneAppMetadataApi>? logger = null) : BaseKintoneApi(access, httpClient, logger), IKintoneAppMetadataApi {
+
+    /// <summary>
+    /// スキップするフィールドタイプのセット
+    /// </summary>
+    private static readonly HashSet<string> _skippedFieldTypes = new(StringComparer.OrdinalIgnoreCase) { "GROUP", "SPACER", "HR" };
+
     /// <summary>
     /// 指定したアプリのフィールド情報をJSON形式で取得します。
     /// </summary>
@@ -72,11 +79,13 @@ public class KintoneAppMetadataApi(
                 foreach (var sf in subFieldsJson.EnumerateObject()) {
                     var sfCode = sf.Name;
                     var sfValue = sf.Value;
+                    var sfType = sfValue.GetProperty("type").GetString()!;
+                    if (!KintoneFieldTypeMapper.TryConvert(sfType, out var fieldType)) { continue; }
 
                     subFields.Add(new KintoneFieldMetadata {
                         Code = sfCode,
                         Label = sfValue.GetProperty("label").GetString() ?? sfCode,
-                        Type = Enum.Parse<KintoneFieldType>(sfValue.GetProperty("type").GetString()!),
+                        Type = fieldType,
                         Required = sfValue.TryGetProperty("required", out var req) && req.GetBoolean(),
                         Options = ExtractOptions(sfValue)
                     });
@@ -92,19 +101,24 @@ public class KintoneAppMetadataApi(
 
             } else {
                 // 通常フィールド
+                if (!KintoneFieldTypeMapper.TryConvert(type, out var fieldType)) { continue; }
+
                 fields.Add(new KintoneFieldMetadata {
                     Code = code,
                     Label = label,
-                    Type = Enum.Parse<KintoneFieldType>(type),
+                    Type = fieldType,
                     Required = field.TryGetProperty("required", out var req) && req.GetBoolean(),
                     Options = ExtractOptions(field)
                 });
             }
         }
 
+        var revisionString = root.GetProperty("revision").GetString();
+        if (!int.TryParse(revisionString, out var revision)) { revision = 0; }
+
         return new KintoneAppMetadata {
             AppId = appId,
-            Revision = root.GetProperty("revision").GetInt32(),
+            Revision = revision,
             Fields = fields
         };
     }

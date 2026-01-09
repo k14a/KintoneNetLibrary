@@ -8,11 +8,13 @@ namespace KintoneNetLibrary.CodeGen.Application.Emitters;
 public class CSharpHelperClassEmitter : IHelperClassEmitter {
     private readonly string _baseTemplate;
     private readonly string _derivedTemplate;
+    private readonly string _fileInfoTemplate;
 
     public CSharpHelperClassEmitter() {
         // テンプレートは埋め込みリソース or ファイル読み込み
         this._baseTemplate = ReadTemplate("EntityInfoBaseTemplate.txt");
         this._derivedTemplate = ReadTemplate("EntityInfoDerivedTemplate.txt");
+        this._fileInfoTemplate = ReadTemplate("EntityFileInfoTemplate.txt");
     }
 
     public IEnumerable<GeneratedHelperClass> EmitHelperClasses(CodeEmitterOptions options) {
@@ -24,20 +26,23 @@ public class CSharpHelperClassEmitter : IHelperClassEmitter {
             },
 
             // 2. UserInfo
-            this.EmitDerived("UserInfo", "ユーザー情報", options),
+            this.EmitFromTemplate(this._derivedTemplate, "UserInfo", "ユーザー情報", options),
 
             // 3. GroupInfo
-            this.EmitDerived("GroupInfo", "グループ情報", options),
+            this.EmitFromTemplate(this._derivedTemplate, "GroupInfo", "グループ情報", options),
 
             // 4. OrganizationInfo
-            this.EmitDerived("OrganizationInfo", "組織情報", options)
+            this.EmitFromTemplate(this._derivedTemplate, "OrganizationInfo", "組織情報", options),
+
+            // 5. FileInfo
+            this.EmitFromTemplate(this._fileInfoTemplate, "FileInfo", "ファイル情報", options)
         };
 
         return list;
     }
 
-    private GeneratedHelperClass EmitDerived(string className, string summary, CodeEmitterOptions options) {
-        var code = this._derivedTemplate
+    private GeneratedHelperClass EmitFromTemplate(string template, string className, string summary, CodeEmitterOptions options) {
+        var code = template
             .Replace("{{Namespace}}", options.Namespace)
             .Replace("{{ClassName}}", className)
             .Replace("{{Summary}}", summary);

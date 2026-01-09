@@ -1,5 +1,6 @@
 using KintoneNetLibrary.CodeGen.Application.Interfaces;
 using KintoneNetLibrary.CodeGen.Domain.Schemas;
+using KintoneNetLibrary.Domain.Converters;
 using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.CodeGen.Application.Emitters;
@@ -52,14 +53,15 @@ public class CSharpTypeMapper : ITypeMapper {
         };
     }
 
-    public string MapType(KintoneFieldSchema field, bool useLibrary, string subtableClassName = "") {
+    public string MapType(KintoneFieldSchema field, bool useKintoneNetLibrary, string subTableClassName = "") {
         if (field.FieldType == KintoneFieldType.SubTable) {
-            return $"List<{subtableClassName}>";
+            return $"List<{subTableClassName}>";
         }
 
-        return useLibrary ? this.MapLibrary(field) : this.MapPure(field);
+        return useKintoneNetLibrary ? this.MapLibrary(field) : this.MapPure(field);
     }
     private string MapLibrary(KintoneFieldSchema field) {
+        // KintoneFieldTypeMapper.TryConvert(field.FieldType., out var fieldType);
         return field.FieldType switch {
             KintoneFieldType.SingleLineText => "string",
             KintoneFieldType.MultiLineText => "string",
@@ -86,6 +88,13 @@ public class CSharpTypeMapper : ITypeMapper {
             KintoneFieldType.LinkUrl => "string",
             KintoneFieldType.LinkTelephone => "string",
             KintoneFieldType.LinkEmail => "string",
+
+            KintoneFieldType.Creator => "KintoneUser",
+            KintoneFieldType.Modifier => "KintoneUser",
+            KintoneFieldType.CreatedTime => "KintoneDateTime",
+            KintoneFieldType.UpdatedTime => "KintoneDateTime",
+            KintoneFieldType.Status => "string",
+            KintoneFieldType.Category => "string",
 
             _ => "string",
         };
@@ -123,4 +132,3 @@ public class CSharpTypeMapper : ITypeMapper {
         };
     }
 }
-  

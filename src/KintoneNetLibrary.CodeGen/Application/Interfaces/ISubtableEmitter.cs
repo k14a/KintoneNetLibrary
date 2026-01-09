@@ -4,6 +4,6 @@ using KintoneNetLibrary.CodeGen.Domain.Schemas;
 
 namespace KintoneNetLibrary.CodeGen.Application.Interfaces;
 
-public interface ISubtableEmitter {
-    GeneratedSubtableModel EmitSubtable(KintoneSubtableSchema subtable, CodeEmitterOptions options);
+public interface ISubTableEmitter {
+    GeneratedSubTableModel EmitSubTable(string name, KintoneSubTableSchema subTable, CodeEmitterOptions options);
 }

@@ -1,11 +1,9 @@
 using Microsoft.Extensions.Logging;
 using KintoneNetLibrary.CodeGen.Application.Interfaces;
 using KintoneNetLibrary.CodeGen.Domain.Schemas;
-using KintoneNetLibrary.Application.Interfaces;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Domain.Access;
 using KintoneNetLibrary.Infrastructure.Api;
-using System.Collections.Specialized;
 
 namespace KintoneNetLibrary.CodeGen.Application.Services;
 
@@ -17,7 +15,7 @@ public class SchemaProvider(IHttpClientFactory httpClientFactory, ILogger<Schema
     public async Task<KintoneAppSchema> GetSchemaAsync(int appId, string apiToken) {
         this._logger.LogInformation("Fetching metadata for AppId: {appId}", appId);
 
-        if(this._domain is null) { throw new ArgumentNullException(nameof(this._domain)); }
+        if (this._domain is null) { throw new ArgumentNullException("domainが設定されていません。"); }
 
         var access = new ApiTokenAccess(this._domain, apiToken);
         var httpClient = this._httpClientFactory.CreateClient();
@@ -32,9 +30,7 @@ public class SchemaProvider(IHttpClientFactory httpClientFactory, ILogger<Schema
         return schema;
     }
 
-    public void SetDomain(string subDomain) {
-        this._domain = $"https://{subDomain}.cybozu.com";
-    }
+    public void SetDomain(string subDomain) => this._domain = $"{subDomain}.cybozu.com";
 
     public Task<KintoneAppMetadata> GetMetadataAsync(int appId, string apiToken) {
         throw new NotImplementedException();
@@ -44,15 +40,25 @@ public class SchemaProvider(IHttpClientFactory httpClientFactory, ILogger<Schema
         return new KintoneAppSchema {
             AppId = metadata.AppId,
             Revision = metadata.Revision,
-            // AppName = metadata.AppName,
-            Fields = metadata.Fields.Select(f => new KintoneFieldSchema {
+            Fields = metadata.Fields.Where(f => f.Type != KintoneFieldType.SubTable).Select(f => new KintoneFieldSchema {
                 FieldCode = f.Code,
                 Label = f.Label,
                 FieldType = f.Type,
                 Required = f.Required,
-                // NoLabel = f.NoLabel,
                 Options = f.Options == null ? [] : [.. f.Options], // ドロップダウンなど
                 // 必要に応じて追加
+            }).ToList(),
+            SubTables = metadata.Fields.Where(st => st.Type == KintoneFieldType.SubTable).Select(st => new KintoneSubTableSchema {
+                FieldCode = st.Code,
+                Label = st.Label,
+                Fields = st.SubFields!.Select(sf => new KintoneFieldSchema {
+                    FieldCode = sf.Code,
+                    Label = sf.Label,
+                    FieldType = sf.Type,
+                    Required = sf.Required,
+                    Options = sf.Options == null ? [] : [.. sf.Options], // ドロップダウンなど
+                    // 必要に応じて追加
+                }).ToList()
             }).ToList()
         };
     }

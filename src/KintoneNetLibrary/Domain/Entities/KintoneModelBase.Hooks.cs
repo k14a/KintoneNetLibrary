@@ -18,7 +18,7 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// 更新前のフックを実行します。
     /// </summary>
     public virtual async Task RunBeforeUpdateHookAsync() => await this.OnBeforeUpdateAsync();
-    
+
     /// <summary>
     /// 更新後のフックを実行します。
     /// </summary>
@@ -28,7 +28,7 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// 削除前のフックを実行します。
     /// </summary>
     public virtual async Task RunBeforeDeleteHookAsync() => await this.OnBeforeDeleteAsync();
-    
+
     /// <summary>
     /// 削除後のフックを実行します。
     /// </summary>

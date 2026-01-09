@@ -27,5 +27,5 @@ public class KintoneAppSchema {
     /// <summary>
     /// サブテーブル一覧
     /// </summary>
-    public List<KintoneSubtableSchema> Subtables { get; set; } = [];
+    public List<KintoneSubTableSchema> SubTables { get; set; } = [];
 }

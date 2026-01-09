@@ -51,14 +51,13 @@ public class XmlCommentBuilder : IXmlCommentBuilder {
     /// <summary>
     /// サブテーブル用 XML コメントを生成する
     /// </summary>
-    public string BuildForSubtable(KintoneSubtableSchema subtable)
-    {
+    public string BuildForSubTable(KintoneSubTableSchema subTable) {
         var sb = new StringBuilder();
 
         sb.AppendLine("/// <summary>");
 
-        if (!string.IsNullOrWhiteSpace(subtable.Label)) {
-            sb.AppendLine($"/// サブテーブル: {Escape(subtable.Label)}");
+        if (!string.IsNullOrWhiteSpace(subTable.Label)) {
+            sb.AppendLine($"/// サブテーブル: {Escape(subTable.Label)}");
         } else {
             sb.AppendLine("/// サブテーブル");
         }
@@ -71,8 +70,7 @@ public class XmlCommentBuilder : IXmlCommentBuilder {
     /// <summary>
     /// XML コメント内で不正な文字をエスケープ
     /// </summary>
-    private static string Escape(string text)
-    {
+    private static string Escape(string text) {
         return text
             .Replace("&", "&amp;")
             .Replace("<", "&lt;")

@@ -11,5 +11,5 @@ public interface IXmlCommentBuilder {
     /// <summary>
     /// サブテーブル用 XML コメントを生成する
     /// </summary>
-    string BuildForSubtable(KintoneSubtableSchema subtable);
+    string BuildForSubTable(KintoneSubTableSchema subTable);
 }
