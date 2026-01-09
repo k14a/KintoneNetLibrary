@@ -15,13 +15,7 @@ public class SchemaProvider(IHttpClientFactory httpClientFactory, ILogger<Schema
     public async Task<KintoneAppSchema> GetSchemaAsync(int appId, string apiToken) {
         this._logger.LogInformation("Fetching metadata for AppId: {appId}", appId);
 
-        if (this._domain is null) { throw new ArgumentNullException("domainが設定されていません。"); }
-
-        var access = new ApiTokenAccess(this._domain, apiToken);
-        var httpClient = this._httpClientFactory.CreateClient();
-        var metaApi = new KintoneAppMetadataApi(access, httpClient);
-
-        var metadata = await metaApi.GetAppMetadataAsync(appId, apiToken);
+        var metadata = await this.GetMetadataAsync(appId, apiToken);
         this._logger.LogInformation("Metadata fetched. Converting to schema...");
 
         var schema = this.ConvertMetadataToSchema(metadata);
@@ -30,11 +24,20 @@ public class SchemaProvider(IHttpClientFactory httpClientFactory, ILogger<Schema
         return schema;
     }
 
-    public void SetDomain(string subDomain) => this._domain = $"{subDomain}.cybozu.com";
+    public async Task<KintoneAppMetadata> GetMetadataAsync(int appId, string apiToken) {
+        if (this._domain is null) {
+            var message = "domainが設定されていません。";
+            throw new ArgumentNullException(message);
+        }
 
-    public Task<KintoneAppMetadata> GetMetadataAsync(int appId, string apiToken) {
-        throw new NotImplementedException();
+        var access = new ApiTokenAccess(this._domain, apiToken);
+        var httpClient = this._httpClientFactory.CreateClient();
+        var metaApi = new KintoneAppMetadataApi(access, httpClient);
+
+        return await metaApi.GetAppMetadataAsync(appId, apiToken);
     }
+
+    public void SetDomain(string subDomain) => this._domain = $"{subDomain}.cybozu.com";
 
     private KintoneAppSchema ConvertMetadataToSchema(KintoneAppMetadata metadata) {
         return new KintoneAppSchema {
