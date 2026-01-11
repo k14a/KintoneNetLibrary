@@ -53,6 +53,13 @@ public class CSharpTypeMapper : ITypeMapper {
         };
     }
 
+    /// <summary>
+    /// Kintone フィールドを C# 型にマップする
+    /// </summary>
+    /// <param name="field"></param>
+    /// <param name="useKintoneNetLibrary"></param>
+    /// <param name="subTableClassName"></param>
+    /// <returns></returns>
     public string MapType(KintoneFieldSchema field, bool useKintoneNetLibrary, string subTableClassName = "") {
         if (field.FieldType == KintoneFieldType.SubTable) {
             return $"List<{subTableClassName}>";
@@ -60,6 +67,12 @@ public class CSharpTypeMapper : ITypeMapper {
 
         return useKintoneNetLibrary ? this.MapLibrary(field) : this.MapPure(field);
     }
+
+    /// <summary>
+    /// KintoneNetLibrary 型マッピング
+    /// </summary>
+    /// <param name="field"></param>
+    /// <returns></returns>
     private string MapLibrary(KintoneFieldSchema field) {
         // KintoneFieldTypeMapper.TryConvert(field.FieldType., out var fieldType);
         return field.FieldType switch {
@@ -99,6 +112,12 @@ public class CSharpTypeMapper : ITypeMapper {
             _ => "string",
         };
     }
+
+    /// <summary>
+    /// 純粋な C# 型マッピング
+    /// </summary>
+    /// <param name="field"></param>
+    /// <returns></returns>
     private string MapPure(KintoneFieldSchema field) {
         return field.FieldType switch {
             KintoneFieldType.SingleLineText => "string",

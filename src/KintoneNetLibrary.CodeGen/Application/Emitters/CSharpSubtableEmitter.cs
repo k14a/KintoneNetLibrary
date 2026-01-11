@@ -6,6 +6,12 @@ using KintoneNetLibrary.CodeGen.Domain.Schemas;
 
 namespace KintoneNetLibrary.CodeGen.Application.Emitters;
 
+/// <summary>
+/// C# サブテーブルエミッター
+/// </summary>
+/// <param name="names"></param>
+/// <param name="types"></param>
+/// <param name="xml"></param>
 public class CSharpSubTableEmitter(
     INameConverter names,
     ITypeMapper types,
@@ -14,7 +20,15 @@ public class CSharpSubTableEmitter(
     private readonly INameConverter _names = names;
     private readonly ITypeMapper _types = types;
     private readonly IXmlCommentBuilder _xml = xml;
+    private readonly HashSet<string> _generatedClassNames = [];
 
+    /// <summary>
+    /// サブテーブルモデルを生成する
+    /// </summary>
+    /// <param name="name"></param>
+    /// <param name="subTable"></param>
+    /// <param name="options"></param>
+    /// <returns></returns>
     public GeneratedSubTableModel EmitSubTable(string name, KintoneSubTableSchema subTable, CodeEmitterOptions options) {
         var sb = new StringBuilder();
 
@@ -25,6 +39,8 @@ public class CSharpSubTableEmitter(
         sb.AppendLine();
 
         // class name
+        name = this._names.ToClassName(name, string.Empty);
+        name = this.MakeUniqueClassName(name);
         var className = $"SubTable{name}";
 
         // XML コメント（サブテーブル用）
@@ -48,15 +64,42 @@ public class CSharpSubTableEmitter(
         };
     }
 
+    /// <summary>
+    /// 一意なクラス名を生成する
+    /// </summary>
+    /// <param name="baseName"></param>
+    /// <returns></returns>
+    private string MakeUniqueClassName(string baseName) {
+        var className = baseName;
+        var index = 1;
+        while (this._generatedClassNames.Contains(className)) {
+            className = $"{baseName}{index}";
+            index++;
+        }
+        this._generatedClassNames.Add(className);
+        return className;
+    }
+
+    /// <summary>
+    /// using セクションを出力する
+    /// </summary>
+    /// <param name="sb"></param>
+    /// <param name="options"></param>
     private void EmitUsingSection(StringBuilder sb, CodeEmitterOptions options) {
         sb.AppendLine("using System;");
         if (options.UseKintoneNetLibrary) {
             sb.AppendLine("using KintoneNetLibrary.Domain.Entities;");
             sb.AppendLine("using KintoneNetLibrary.Domain.Access;");
-            sb.AppendLine("using KintoneNetLibrary.Domain.Attributes;");
         }
         sb.AppendLine();
     }
+
+    /// <summary>
+    /// クラス名を出力する
+    /// </summary>
+    /// <param name="sb"></param>
+    /// <param name="className"></param>
+    /// <param name="options"></param>
     private void EmitClassName(StringBuilder sb, string className, CodeEmitterOptions options) {
         sb.Append($"public partial class {className}");
         if (options.UseKintoneNetLibrary) {
@@ -64,6 +107,13 @@ public class CSharpSubTableEmitter(
         }
         sb.AppendLine();
     }
+
+    /// <summary>
+    /// プロパティを出力する
+    /// </summary>
+    /// <param name="sb"></param>
+    /// <param name="field"></param>
+    /// <param name="options"></param>
     private void EmitProperty(StringBuilder sb, KintoneFieldSchema field, CodeEmitterOptions options) {
         var propName = this._names.ToPropertyName(field.Label, field.FieldCode);
         var typeName = this._types.MapType(field, options.UseKintoneNetLibrary);
@@ -71,7 +121,22 @@ public class CSharpSubTableEmitter(
         // XML コメント
         sb.AppendLine(this._xml.BuildForField(field));
 
+        // KintoneItemAttribute
+        this.EmitAttributes(sb, field, options);
+
         sb.AppendLine($"    public {typeName} {propName} {{ get; set; }}");
         sb.AppendLine();
+    }
+
+    /// <summary>
+    /// 属性を出力する
+    /// </summary>
+    /// <param name="sb"></param>
+    /// <param name="field"></param>
+    /// <param name="options"></param>
+    private void EmitAttributes(StringBuilder sb, KintoneFieldSchema field, CodeEmitterOptions options) {
+        if (options.UseKintoneNetLibrary) {
+            sb.AppendLine($"    [KintoneItem(FieldCode = \"{field.FieldCode}\")]");
+        }
     }
 }

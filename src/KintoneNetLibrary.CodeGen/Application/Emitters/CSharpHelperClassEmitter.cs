@@ -5,11 +5,17 @@ using KintoneNetLibrary.CodeGen.Domain.Options;
 
 namespace KintoneNetLibrary.CodeGen.Application.Emitters;
 
+/// <summary>
+/// C# ヘルパークラスエミッター
+/// </summary>
 public class CSharpHelperClassEmitter : IHelperClassEmitter {
     private readonly string _baseTemplate;
     private readonly string _derivedTemplate;
     private readonly string _fileInfoTemplate;
 
+    /// <summary>
+    /// コンストラクター
+    /// </summary>
     public CSharpHelperClassEmitter() {
         // テンプレートは埋め込みリソース or ファイル読み込み
         this._baseTemplate = ReadTemplate("EntityInfoBaseTemplate.txt");
@@ -17,6 +23,11 @@ public class CSharpHelperClassEmitter : IHelperClassEmitter {
         this._fileInfoTemplate = ReadTemplate("EntityFileInfoTemplate.txt");
     }
 
+    /// <summary>
+    /// ヘルパークラス群を生成する
+    /// </summary>
+    /// <param name="options"></param>
+    /// <returns></returns>
     public IEnumerable<GeneratedHelperClass> EmitHelperClasses(CodeEmitterOptions options) {
         var list = new List<GeneratedHelperClass> {
             // 1. Base クラス
@@ -41,6 +52,14 @@ public class CSharpHelperClassEmitter : IHelperClassEmitter {
         return list;
     }
 
+    /// <summary>
+    /// テンプレートからヘルパークラスを生成する
+    /// </summary>
+    /// <param name="template"></param>
+    /// <param name="className"></param>
+    /// <param name="summary"></param>
+    /// <param name="options"></param>
+    /// <returns></returns>
     private GeneratedHelperClass EmitFromTemplate(string template, string className, string summary, CodeEmitterOptions options) {
         var code = template
             .Replace("{{Namespace}}", options.Namespace)
@@ -53,6 +72,12 @@ public class CSharpHelperClassEmitter : IHelperClassEmitter {
         };
     }
 
+    /// <summary>
+    /// テンプレートを読み込む
+    /// </summary>
+    /// <param name="fileName"></param>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException"></exception>
     private static string ReadTemplate(string fileName) {
         var assembly = typeof(CSharpHelperClassEmitter).Assembly;
         var resourceName = assembly

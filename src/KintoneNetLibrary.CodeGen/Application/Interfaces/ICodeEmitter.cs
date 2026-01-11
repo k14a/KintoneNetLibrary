@@ -8,5 +8,11 @@ namespace KintoneNetLibrary.CodeGen.Application.Interfaces;
 /// コードエミッタインターフェース
 /// </summary>
 public interface ICodeEmitter {
+    /// <summary>
+    /// コードを生成する
+    /// </summary>
+    /// <param name="schema"></param>
+    /// <param name="options"></param>
+    /// <returns></returns>
     GeneratedModelResult Emit(KintoneAppSchema schema, CodeEmitterOptions options);
 }

@@ -1,7 +1,7 @@
 namespace KintoneNetLibrary.CodeGen.Application.Interfaces;
 
 /// <summary>
-/// 
+/// 名前変換インターフェース
 /// </summary>
 public interface INameConverter {
     /// <summary>

@@ -47,11 +47,21 @@ public class CSharpCodeEmitter(
         "assignee"
     };
 
+    /// <summary>
+    /// システムフィールドかどうかを判定する
+    /// </summary>
+    /// <param name="field"></param>
+    /// <returns></returns>
     private static bool IsSystemField(KintoneFieldSchema field) {
         return SystemFieldCodes.Contains(field.FieldCode);
     }
 
-
+    /// <summary>
+    /// Kintone アプリスキーマから C# コードを生成する
+    /// </summary>
+    /// <param name="schema"></param>
+    /// <param name="options"></param>
+    /// <returns></returns>
     public GeneratedModelResult Emit(KintoneAppSchema schema, CodeEmitterOptions options) {
         var result = new GeneratedModelResult {
             // 1. メインモデル生成
@@ -75,6 +85,13 @@ public class CSharpCodeEmitter(
 
         return result;
     }
+
+    /// <summary>
+    /// メインモデルを生成する
+    /// </summary>
+    /// <param name="schema"></param>
+    /// <param name="options"></param>
+    /// <returns></returns>
     private string EmitMainModel(KintoneAppSchema schema, CodeEmitterOptions options) {
         var sb = new StringBuilder();
 
@@ -103,15 +120,27 @@ public class CSharpCodeEmitter(
         sb.AppendLine("}");
         return sb.ToString();
     }
+
+    /// <summary>
+    /// using セクションを出力する
+    /// </summary>
+    /// <param name="sb"></param>
+    /// <param name="options"></param>
     private void EmitUsingSection(StringBuilder sb, CodeEmitterOptions options) {
         sb.AppendLine("using System;");
         if (options.UseKintoneNetLibrary) {
             sb.AppendLine("using KintoneNetLibrary.Domain.Entities;");
             sb.AppendLine("using KintoneNetLibrary.Domain.Access;");
-            sb.AppendLine("using KintoneNetLibrary.Domain.Attributes;");
         }
         sb.AppendLine();
     }
+
+    /// <summary>
+    /// クラス名を出力する
+    /// </summary>
+    /// <param name="sb"></param>
+    /// <param name="schema"></param>
+    /// <param name="options"></param>
     private void EmitClassName(StringBuilder sb, KintoneAppSchema schema, CodeEmitterOptions options) {
         var className = options.MainClassName;
         sb.Append($"public partial class {className}");
@@ -120,6 +149,13 @@ public class CSharpCodeEmitter(
         }
         sb.AppendLine();
     }
+
+    /// <summary>
+    /// プロパティを出力する
+    /// </summary>
+    /// <param name="sb"></param>
+    /// <param name="field"></param>
+    /// <param name="options"></param>
     private void EmitProperty(StringBuilder sb, KintoneFieldSchema field, CodeEmitterOptions options) {
         var propName = this._names.ToPropertyName(field.Label, field.FieldCode);
         var typeName = this._types.MapType(field, options.UseKintoneNetLibrary);
@@ -135,6 +171,13 @@ public class CSharpCodeEmitter(
         sb.AppendLine($"    public {typeName} {propName} {{ get; set; }}");
         sb.AppendLine();
     }
+
+    /// <summary>
+    /// サブテーブルを出力する
+    /// </summary>
+    /// <param name="sb"></param>
+    /// <param name="schema"></param>
+    /// <param name="options"></param>
     private void EmitSubTables(StringBuilder sb, KintoneSubTableSchema schema, CodeEmitterOptions options) {
         var propName = this._names.ToPropertyName(schema.Label, schema.FieldCode);
         var classNameSub = this._names.ToClassName(schema.Label, schema.FieldCode);
@@ -151,6 +194,13 @@ public class CSharpCodeEmitter(
         sb.AppendLine($"    public List<SubTable{classNameSub}> {propName} {{ get; set; }}");
         sb.AppendLine();
     }
+
+    /// <summary>
+    /// 属性を出力する
+    /// </summary>
+    /// <param name="sb"></param>
+    /// <param name="field"></param>
+    /// <param name="options"></param>
     private void EmitAttributes(StringBuilder sb, KintoneFieldSchema field, CodeEmitterOptions options) {
         if (options.UseKintoneNetLibrary) {
             sb.AppendLine($"    [KintoneItem(FieldCode = \"{field.FieldCode}\")]");

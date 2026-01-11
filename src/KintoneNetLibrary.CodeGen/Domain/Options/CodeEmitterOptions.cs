@@ -67,7 +67,7 @@ public class CodeEmitterOptions {
     /// <summary>
     /// サブテーブルクラスを別ファイルに分割するか
     /// </summary>
-    public bool SplitSubtableFiles { get; set; } = true;
+    public bool SplitSubTableFiles { get; set; } = true;
 
     /// <summary>
     /// pure モードの補助クラス（UserInfo など）を別ファイルに分割するか
@@ -91,6 +91,4 @@ public class CodeEmitterOptions {
     public void EnsureDefaults(int appId) {
         this.MainClassName ??= $"App{appId}";
     }
-
-
 }
