@@ -2,26 +2,22 @@ using System.Text;
 using KintoneNetLibrary.CodeGen.Application.Interfaces;
 using KintoneNetLibrary.CodeGen.Domain.Models;
 using KintoneNetLibrary.CodeGen.Domain.Options;
+using Microsoft.Extensions.Logging;
 
 namespace KintoneNetLibrary.CodeGen.Application.Emitters;
 
 /// <summary>
 /// C# ヘルパークラスエミッター
 /// </summary>
-public class CSharpHelperClassEmitter : IHelperClassEmitter {
-    private readonly string _baseTemplate;
-    private readonly string _derivedTemplate;
-    private readonly string _fileInfoTemplate;
-
-    /// <summary>
-    /// コンストラクター
-    /// </summary>
-    public CSharpHelperClassEmitter() {
-        // テンプレートは埋め込みリソース or ファイル読み込み
-        this._baseTemplate = ReadTemplate("EntityInfoBaseTemplate.txt");
-        this._derivedTemplate = ReadTemplate("EntityInfoDerivedTemplate.txt");
-        this._fileInfoTemplate = ReadTemplate("EntityFileInfoTemplate.txt");
-    }
+/// <remarks>
+/// コンストラクター
+/// </remarks>
+/// <param name="logger"></param>
+public class CSharpHelperClassEmitter(ILogger<CSharpHelperClassEmitter> logger) : IHelperClassEmitter {
+    private readonly string _baseTemplate = ReadTemplate("EntityInfoBaseTemplate.txt");
+    private readonly string _derivedTemplate = ReadTemplate("EntityInfoDerivedTemplate.txt");
+    private readonly string _fileInfoTemplate = ReadTemplate("EntityFileInfoTemplate.txt");
+    private readonly ILogger<CSharpHelperClassEmitter> _logger = logger;
 
     /// <summary>
     /// ヘルパークラス群を生成する

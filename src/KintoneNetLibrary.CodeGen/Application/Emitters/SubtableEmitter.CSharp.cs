@@ -3,6 +3,7 @@ using KintoneNetLibrary.CodeGen.Application.Interfaces;
 using KintoneNetLibrary.CodeGen.Domain.Models;
 using KintoneNetLibrary.CodeGen.Domain.Options;
 using KintoneNetLibrary.CodeGen.Domain.Schemas;
+using Microsoft.Extensions.Logging;
 
 namespace KintoneNetLibrary.CodeGen.Application.Emitters;
 
@@ -15,11 +16,13 @@ namespace KintoneNetLibrary.CodeGen.Application.Emitters;
 public class CSharpSubTableEmitter(
     INameConverter names,
     ITypeMapper types,
-    IXmlCommentBuilder xml) : ISubTableEmitter {
+    IXmlCommentBuilder xml,
+    ILogger<CSharpSubTableEmitter> logger) : ISubTableEmitter {
 
     private readonly INameConverter _names = names;
     private readonly ITypeMapper _types = types;
     private readonly IXmlCommentBuilder _xml = xml;
+    private readonly ILogger<CSharpSubTableEmitter> _logger = logger;
     private readonly HashSet<string> _generatedClassNames = [];
 
     /// <summary>

@@ -4,7 +4,7 @@ using Xunit;
 namespace KintoneNetLibrary.CodeGen.Tests;
 
 public class NameConverterTests {
-    private readonly NameConverter _converter = new();
+    private readonly CSharpNameConverter _converter = new();
 
     [Fact]
     public void ToPropertyNameJapaneseLabelUsesDictionary() {

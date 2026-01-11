@@ -8,7 +8,7 @@ using Xunit;
 namespace KintoneNetLibrary.CodeGen.Tests;
 
 public class CSharpCodeEmitterRecordTests {
-    private readonly INameConverter _converter = new NameConverter();
+    private readonly INameConverter _converter = new CSharpNameConverter();
     private readonly ITypeMapper _mapper = new CSharpTypeMapper();
 
     [Fact]
