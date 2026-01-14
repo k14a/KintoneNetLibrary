@@ -11,21 +11,21 @@ namespace KintoneNetLibrary.CodeGen.Application.Emitters;
 /// <summary>
 /// C# コードエミッター
 /// </summary>
-/// <param name="names"></param>
-/// <param name="types"></param>
+/// <param name="converter"></param>
+/// <param name="mapper"></param>
 /// <param name="xml"></param>
 /// <param name="subTableEmitter"></param>
 /// <param name="helperEmitter"></param>
 public class CSharpCodeEmitter(
-    INameConverter names,
-    ITypeMapper types,
+    INameConverter converter,
+    ITypeMapper mapper,
     IXmlCommentBuilder xml,
     ISubTableEmitter subTableEmitter,
     IHelperClassEmitter helperEmitter,
     ILogger<CSharpCodeEmitter> logger) : ICodeEmitter {
 
-    private readonly INameConverter _names = names;
-    private readonly ITypeMapper _types = types;
+    private readonly INameConverter _converter = converter;
+    private readonly ITypeMapper _mapper = mapper;
     private readonly IXmlCommentBuilder _xml = xml;
     private readonly ISubTableEmitter _subTableEmitter = subTableEmitter;
     private readonly IHelperClassEmitter _helperEmitter = helperEmitter;
@@ -160,8 +160,8 @@ public class CSharpCodeEmitter(
     /// <param name="field"></param>
     /// <param name="options"></param>
     private void EmitProperty(StringBuilder sb, KintoneFieldSchema field, CodeEmitterOptions options) {
-        var propName = this._names.ToPropertyName(field.Label, field.FieldCode);
-        var typeName = this._types.MapType(field, options.UseKintoneNetLibrary);
+        var propName = this._converter.ToPropertyName(field.Label, field.FieldCode);
+        var typeName = this._mapper.MapType(field, options.UseKintoneNetLibrary);
 
         // 変換失敗（"_"）を検知
         if (propName == "_") {
@@ -194,8 +194,8 @@ public class CSharpCodeEmitter(
     /// <param name="schema"></param>
     /// <param name="options"></param>
     private void EmitSubTables(StringBuilder sb, KintoneSubTableSchema schema, CodeEmitterOptions options) {
-        var propName = this._names.ToPropertyName(schema.Label, schema.FieldCode);
-        var classNameSub = this._names.ToClassName(schema.Label, schema.FieldCode);
+        var propName = this._converter.ToPropertyName(schema.Label, schema.FieldCode);
+        var classNameSub = this._converter.ToClassName(schema.Label, schema.FieldCode);
 
         // XML コメント
         sb.AppendLine(this._xml.BuildForSubTable(schema));

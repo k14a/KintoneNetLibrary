@@ -32,7 +32,7 @@ public static class KintoneValueConverter {
             return (targetType, fieldType) switch {
                 // --- KintoneDateTime 型への変換 ---
                 (Type t, KintoneFieldType.DateTime) when t == typeof(KintoneDateTime) => new KintoneDateTime(str, KintoneFieldType.DateTime),
-                (Type t, KintoneFieldType.Date) when t == typeof(KintoneDateTime) => new KintoneDateTime(str, KintoneFieldType.Date),
+                (Type t, KintoneFieldType.Date) when t == typeof(KintoneDateOnly) => new KintoneDateOnly(str),
                 (Type t, KintoneFieldType.Time) when t == typeof(KintoneTimeOnly) => new KintoneTimeOnly(str, KintoneFieldType.Time),
 
                 // --- DateTime 型（従来互換） ---
@@ -80,6 +80,8 @@ public static class KintoneValueConverter {
             (Type t, JsonValueKind.Number) when t == typeof(decimal) => valueElement.TryGetDecimal(out var d) ? d : 0m,
             (Type t, JsonValueKind.Number) when t == typeof(decimal?) => valueElement.TryGetDecimal(out var d) ? d : null,
             (Type t, JsonValueKind.Object) when t == typeof(KintoneUser) => JsonSerializer.Deserialize<KintoneUser>(valueElement.GetRawText()),
+            (Type t, JsonValueKind.Object) when t == typeof(KintoneGroup) => JsonSerializer.Deserialize<KintoneGroup>(valueElement.GetRawText()),
+            (Type t, JsonValueKind.Object) when t == typeof(KintoneOrganization) => JsonSerializer.Deserialize<KintoneOrganization>(valueElement.GetRawText()),
             (Type t, JsonValueKind.Array) when IsStringListType(t) => valueElement.EnumerateArray().Select(e => e.GetString()!).ToList(),
             (Type t, JsonValueKind.Array) when typeof(IList<KintoneFile>).IsAssignableFrom(t) =>
                 valueElement.EnumerateArray()

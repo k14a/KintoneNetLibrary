@@ -162,7 +162,7 @@ public class CSharpNameConverter : INameConverter {
     /// </summary>
     /// <param name="text"></param>
     /// <returns></returns>
-    private static string ToRoman(string text) {
+    internal static string ToRoman(string text) {
         if (string.IsNullOrEmpty(text)) { return string.Empty; }
 
         var sb = new StringBuilder();

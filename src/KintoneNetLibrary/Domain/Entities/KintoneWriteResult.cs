@@ -15,8 +15,8 @@ namespace KintoneNetLibrary.Domain.Entities;
 /// <typeparam name="T"></typeparam>
 public class KintoneWriteResult<T> where T : KintoneModelBase<T>, new() {
     /// <summary>
-    /// 正常に書き込みが完了したレコードの一覧     
-    /// </summary>
+    /// 正常に書き込みが完了したレコードの一覧
+    /// /// </summary>
     public IList<T> Succeeded { get; init; } = [];
     /// <summary>
     /// 書き込みに失敗したレコードの一覧

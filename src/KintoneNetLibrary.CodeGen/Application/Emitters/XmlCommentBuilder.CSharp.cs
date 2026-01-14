@@ -9,8 +9,8 @@ namespace KintoneNetLibrary.CodeGen.Application.Emitters;
 /// <summary>
 /// XML コメント生成
 /// </summary>
-public class CSharpXmlCommentBuilder(ILogger<CSharpXmlCommentBuilder>logger) : IXmlCommentBuilder {
-    private readonly ILogger<CSharpXmlCommentBuilder> _logger=logger;
+public class CSharpXmlCommentBuilder(ILogger<CSharpXmlCommentBuilder> logger) : IXmlCommentBuilder {
+    private readonly ILogger<CSharpXmlCommentBuilder> _logger = logger;
     /// <summary>
     /// フィールド用 XML コメントを生成する
     /// </summary>

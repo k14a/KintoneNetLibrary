@@ -24,10 +24,10 @@ public class CSharpTypeMapper : ITypeMapper {
             // 数値
             KintoneFieldType.Number => "decimal?",
 
-            // 日付・日時 → KintoneDateTime
-            KintoneFieldType.Date => "KintoneDateTime",
+            // 日付 → KintoneDateOnly
+            KintoneFieldType.Date => "KintoneDateOnly",
+            // 日時 → KintoneDateTime
             KintoneFieldType.DateTime => "KintoneDateTime",
-
             // 時刻 → KintoneTimeOnly
             KintoneFieldType.Time => "KintoneTimeOnly",
 
@@ -74,7 +74,6 @@ public class CSharpTypeMapper : ITypeMapper {
     /// <param name="field"></param>
     /// <returns></returns>
     private string MapLibrary(KintoneFieldSchema field) {
-        // KintoneFieldTypeMapper.TryConvert(field.FieldType., out var fieldType);
         return field.FieldType switch {
             KintoneFieldType.SingleLineText => "string",
             KintoneFieldType.MultiLineText => "string",
@@ -84,7 +83,7 @@ public class CSharpTypeMapper : ITypeMapper {
 
             KintoneFieldType.Calc => "string",
 
-            KintoneFieldType.Date => "KintoneDateTime",
+            KintoneFieldType.Date => "KintoneDateOnly",
             KintoneFieldType.DateTime => "KintoneDateTime",
             KintoneFieldType.Time => "KintoneTimeOnly",
             KintoneFieldType.CheckBox => "List<string>",
