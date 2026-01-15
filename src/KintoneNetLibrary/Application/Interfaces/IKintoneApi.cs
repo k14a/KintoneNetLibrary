@@ -77,8 +77,9 @@ public interface IKintoneApi {
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <param name="queryStr"></param>
+    /// <param name="fieldCodes"></param>
     /// <returns></returns>
-    Task<string?> FindByQueryAsync<T>(string queryStr) where T : KintoneModelBase<T>, new();
+    Task<string?> FindByQueryAsync<T>(string queryStr, IList<string>? fieldCodes = null) where T : KintoneModelBase<T>, new();
 
     /// <summary>
     /// クエリ文字列で検索（Raw）
@@ -163,7 +164,7 @@ public interface IKintoneApi {
     Task<byte[]> DownloadFileAsync(string fileKey);
 
     /// <summary>
-    /// ファイルをストリームでダウンロードします 
+    /// ファイルをストリームでダウンロードします
     /// </summary>
     /// <param name="fileKey"></param>
     /// <returns></returns>
@@ -197,4 +198,9 @@ public interface IKintoneApi {
     /// <param name="cursorId"></param>
     /// <returns></returns>
     IAsyncEnumerable<string> StreamCursorAsync(string cursorId);
+
+    /// <summary>
+    /// カーソルページサイズ
+    /// </summary>
+    int CursorPageSize { get; set; }
 }

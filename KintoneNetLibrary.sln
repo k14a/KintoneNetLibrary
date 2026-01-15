@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KintoneNetLibrary.CodeGen",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KintoneNetLibrary.CodeGen.Tests", "tests\KintoneNetLibrary.CodeGen.Tests\KintoneNetLibrary.CodeGen.Tests.csproj", "{509A5B7A-E382-44F1-9F32-C929A6E7FC3A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KintoneNetLibrary.Backup", "src\KintoneNetLibrary.Backup\KintoneNetLibrary.Backup.csproj", "{99331BDC-9D38-4198-A9CB-C966512D339B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -73,6 +75,18 @@ Global
 		{509A5B7A-E382-44F1-9F32-C929A6E7FC3A}.Release|x64.Build.0 = Release|Any CPU
 		{509A5B7A-E382-44F1-9F32-C929A6E7FC3A}.Release|x86.ActiveCfg = Release|Any CPU
 		{509A5B7A-E382-44F1-9F32-C929A6E7FC3A}.Release|x86.Build.0 = Release|Any CPU
+		{99331BDC-9D38-4198-A9CB-C966512D339B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{99331BDC-9D38-4198-A9CB-C966512D339B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{99331BDC-9D38-4198-A9CB-C966512D339B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{99331BDC-9D38-4198-A9CB-C966512D339B}.Debug|x64.Build.0 = Debug|Any CPU
+		{99331BDC-9D38-4198-A9CB-C966512D339B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{99331BDC-9D38-4198-A9CB-C966512D339B}.Debug|x86.Build.0 = Debug|Any CPU
+		{99331BDC-9D38-4198-A9CB-C966512D339B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{99331BDC-9D38-4198-A9CB-C966512D339B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{99331BDC-9D38-4198-A9CB-C966512D339B}.Release|x64.ActiveCfg = Release|Any CPU
+		{99331BDC-9D38-4198-A9CB-C966512D339B}.Release|x64.Build.0 = Release|Any CPU
+		{99331BDC-9D38-4198-A9CB-C966512D339B}.Release|x86.ActiveCfg = Release|Any CPU
+		{99331BDC-9D38-4198-A9CB-C966512D339B}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -81,6 +95,7 @@ Global
 		{38567E93-10F6-432B-BC56-E0957042CD43} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{40719C75-BA8B-424E-9A0D-5CE5A18E939F} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{509A5B7A-E382-44F1-9F32-C929A6E7FC3A} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{99331BDC-9D38-4198-A9CB-C966512D339B} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8E7E9FC6-BE31-49E7-8CE3-501CD916CA33}

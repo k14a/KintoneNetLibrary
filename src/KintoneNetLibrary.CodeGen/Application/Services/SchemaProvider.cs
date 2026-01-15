@@ -92,4 +92,8 @@ public class SchemaProvider(IHttpClientFactory httpClientFactory, ILogger<Schema
             })]
         };
     }
+
+    public Task<IReadOnlyList<KintoneMetadataDiff>> CompareAsync(KintoneAppMetadata backupSchema, string subDomain, int appId, string apiToken) {
+        throw new NotImplementedException();
+    }
 }

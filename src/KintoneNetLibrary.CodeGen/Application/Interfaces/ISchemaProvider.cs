@@ -26,4 +26,10 @@ public interface ISchemaProvider {
     /// <param name="apiToken"></param>
     /// <returns></returns>
     Task<KintoneAppMetadata> GetMetadataAsync(int appId, string apiToken);
+    Task<IReadOnlyList<KintoneMetadataDiff>> CompareAsync(
+        KintoneAppMetadata backupSchema,
+        string subDomain,
+        int appId,
+        string apiToken
+    );
 }

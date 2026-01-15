@@ -113,11 +113,12 @@ public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <param name="queryStr"></param>
+    /// <param name="fieldCodes"></param>
     /// <returns></returns>
-    public async Task<string?> FindByQueryAsync<T>(string queryStr) where T : KintoneModelBase<T>, new() {
+    public async Task<string?> FindByQueryAsync<T>(string queryStr, IList<string>? fieldCodes = null) where T : KintoneModelBase<T>, new() {
         KintoneQueryValidator.ValidateLikeClause(queryStr, msg => this._logger?.LogWarning(msg));
         var query = new KintoneQuery<T>().SetQuery(queryStr);
-        return await this.FindBaseJsonAsync(query);
+        return await this.FindBaseJsonAsync(query, fieldCodes: fieldCodes);
     }
 
     /// <summary>
@@ -158,7 +159,7 @@ public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
 
             // 実データ件数がKintoneの制限（通常100件）を超える場合はカーソル API に切り替える
             if (countResult.TotalCount > KintoneLimit) {
-                return await this.CursorFetchAllJsonAsync<T>(query.Build());
+                return await this.CursorFetchAllJsonAsync<T>(query.Build(), fieldCodes);
             }
         }
 
@@ -167,7 +168,8 @@ public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
             this.GetBaseUri(),
             KintoneApiEndpoints.GetRecords,
             this._appID,
-            query.Build());
+            query.Build(),
+            fieldCodes);
 
         using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
         this.SetHeaders(request);
@@ -187,11 +189,12 @@ public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <param name="query"></param>
+    /// <param name="fieldCodes"></param>
     /// <returns></returns>
-    private async Task<string> CursorFetchAllJsonAsync<T>(string query) where T : KintoneModelBase<T>, new() {
+    private async Task<string> CursorFetchAllJsonAsync<T>(string query, IList<string>? fieldCodes = null) where T : KintoneModelBase<T>, new() {
         var cursorRequest = new Dictionary<string, object> {
             ["app"] = this._appID,
-            ["fields"] = typeof(T).GetKintoneFieldCodes(),
+            ["fields"] = fieldCodes ?? typeof(T).GetKintoneFieldCodes(),
             ["size"] = this.CursorPageSize,
         };
         if (!string.IsNullOrEmpty(query)) {
