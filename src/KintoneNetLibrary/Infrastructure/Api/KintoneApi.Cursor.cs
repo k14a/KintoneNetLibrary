@@ -15,7 +15,7 @@ namespace KintoneNetLibrary.Infrastructure.Api;
 /// <summary>
 /// Kintone API のカーソル操作に関する機能を提供します。
 /// </summary>
-public partial class KintoneApi : BaseKintoneApi , IKintoneApi {
+public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
 
     /// <summary>
     /// カーソルを作成します。
@@ -123,7 +123,7 @@ public partial class KintoneApi : BaseKintoneApi , IKintoneApi {
     /// </summary>
     private sealed class CursorCreated {
         /// <summary>
-        /// 作成したカーソル ID     
+        /// 作成したカーソル ID
         /// </summary>
         [JsonPropertyName("id")]
         public string Id { get; set; } = string.Empty;
