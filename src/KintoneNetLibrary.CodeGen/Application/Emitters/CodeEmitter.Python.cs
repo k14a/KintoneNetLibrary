@@ -1,19 +1,25 @@
 using System.Text;
 using KintoneNetLibrary.CodeGen.Application.Interfaces;
+using KintoneNetLibrary.CodeGen.Domain.Enums;
 using KintoneNetLibrary.CodeGen.Domain.Models;
 using KintoneNetLibrary.CodeGen.Domain.Options;
 using KintoneNetLibrary.CodeGen.Domain.Schemas;
+using Microsoft.Extensions.Logging;
 
 namespace KintoneNetLibrary.CodeGen.Application.Emitters;
 
 /// <summary>
 /// Python コードエミッタ
 /// </summary>
-/// <param name="converter"></param>
-/// <param name="mapper"></param>
-public class PythonCodeEmitter(INameConverter converter, PythonTypeMapper mapper) : ICodeEmitter {
-    private readonly INameConverter _converter = converter;
-    private readonly PythonTypeMapper _mapper = mapper;
+/// <param name="converterFactory"></param>
+/// <param name="mapperFactory"></param>
+public class PythonCodeEmitter(
+    INameConverterFactory converterFactory,
+    ITypeMapperFactory mapperFactory,
+    ILogger<PythonCodeEmitter>? logger = null) : ICodeEmitter {
+    private readonly INameConverter _converter = converterFactory.Create(GenerateLanguages.Python);
+    private readonly ITypeMapper _mapper = mapperFactory.Create(GenerateLanguages.Python);
+    private readonly ILogger<PythonCodeEmitter>?_logger = logger;
 
     public GeneratedModelResult Emit(KintoneAppSchema schema, CodeEmitterOptions options) {
         var sb = new StringBuilder();

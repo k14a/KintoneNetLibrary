@@ -6,6 +6,7 @@ using KintoneNetLibrary.CodeGen.Application.Interfaces;
 using KintoneNetLibrary.Domain.Access;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Infrastructure.Api;
+using static KintoneNetLibrary.Domain.Common.KintoneConstants;
 using Microsoft.Extensions.Logging;
 
 namespace KintoneNetLibrary.Backup.Services;
@@ -183,12 +184,10 @@ public sealed class RestoreService {
         this._logger?.LogInformation("削除対象レコード数: {Count}", idList.Count);
 
         // 2) 100件ずつ削除
-        const int batchSize = 100;
-
-        for (int i = 0; i < idList.Count; i += batchSize) {
+        for (int i = 0; i < idList.Count; i += KintoneDeleteLimit) {
             var batch = idList
                 .Skip(i)
-                .Take(batchSize)
+                .Take(KintoneDeleteLimit)
                 .ToArray();
 
             var deleteJson = new JsonObject {

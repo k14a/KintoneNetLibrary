@@ -11,25 +11,25 @@ namespace KintoneNetLibrary.CodeGen.Application.Emitters;
 /// <summary>
 /// C# コードエミッター
 /// </summary>
-/// <param name="converter"></param>
-/// <param name="mapper"></param>
+/// <param name="converterFactory"></param>
+/// <param name="mapperFactory"></param>
 /// <param name="xml"></param>
 /// <param name="subTableEmitter"></param>
 /// <param name="helperEmitter"></param>
 public class CSharpCodeEmitter(
-    INameConverter converter,
-    ITypeMapper mapper,
+    INameConverterFactory converterFactory,
+    ITypeMapperFactory mapperFactory,
     IXmlCommentBuilder xml,
     ISubTableEmitter subTableEmitter,
     IHelperClassEmitter helperEmitter,
-    ILogger<CSharpCodeEmitter> logger) : ICodeEmitter {
+    ILogger<CSharpCodeEmitter>? logger = null) : ICodeEmitter {
 
-    private readonly INameConverter _converter = converter;
-    private readonly ITypeMapper _mapper = mapper;
+    private readonly INameConverter _converter = converterFactory.Create(Domain.Enums.GenerateLanguages.CSharp);
+    private readonly ITypeMapper _mapper = mapperFactory.Create(Domain.Enums.GenerateLanguages.CSharp);
     private readonly IXmlCommentBuilder _xml = xml;
     private readonly ISubTableEmitter _subTableEmitter = subTableEmitter;
     private readonly IHelperClassEmitter _helperEmitter = helperEmitter;
-    private readonly ILogger<CSharpCodeEmitter> _logger = logger;
+    private readonly ILogger<CSharpCodeEmitter>? _logger = logger;
 
     private static readonly HashSet<string> SystemFieldCodes = new(StringComparer.OrdinalIgnoreCase) {
         "レコード番号",
