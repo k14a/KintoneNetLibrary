@@ -129,7 +129,6 @@ public sealed class RestoreService {
 
         var diffs = await this._schemaProvider.CompareAsync(
             backupSchema!,
-            this._options.SubDomain,
             this._options.AppID,
             this._options.ApiToken
         );
