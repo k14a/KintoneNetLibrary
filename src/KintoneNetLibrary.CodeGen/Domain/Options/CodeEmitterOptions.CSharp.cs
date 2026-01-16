@@ -29,4 +29,14 @@ public class CSharpEmitterOptions : CodeEmitterOptions {
     /// </summary>
     public bool UseKintoneNetLibrary { get; set; } = true;
 
+    public override string FileExtension => ".cs";
+
+    public override string CommentPrefix => "//";
+
+    public void EnsureDefaults(int appId) {
+        base.EnsureDefaults(appId);
+
+        // C# 固有のデフォルトが必要ならここに追加
+        this.Namespace ??= "KintoneModels";
+    }
 }

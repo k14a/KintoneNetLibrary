@@ -3,7 +3,7 @@ namespace KintoneNetLibrary.CodeGen.Domain.Options;
 /// <summary>
 /// コード生成オプション(共通)
 /// </summary>
-public class CodeEmitterOptions {
+public abstract class CodeEmitterOptions {
     /// <summary>
     /// メインモデルのクラス名（App{Id} がデフォルト）
     /// </summary>
@@ -28,4 +28,20 @@ public class CodeEmitterOptions {
     /// 生成ファイルの先頭に出力するコメント
     /// </summary>
     public string? HeaderComment { get; set; }
+
+    // 言語固有
+    /// <summary>
+    /// 出力ファイル拡張子
+    /// </summary>
+    public abstract string FileExtension { get; }
+
+    /// <summary>
+    /// 言語ごとのコメント文字列
+    /// </summary>
+    public abstract string CommentPrefix { get; }
+
+    public void EnsureDefaults(int appId) {
+        // MainClassName が null の場合は App{Id}
+        this.MainClassName ??= $"App{appId}";
+    }
 }

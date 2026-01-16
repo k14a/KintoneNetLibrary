@@ -13,4 +13,14 @@ public class PythonEmitterOptions : CodeEmitterOptions {
     /// type hint を付与するか
     /// </summary>
     public bool UseTypeHint { get; set; } = true;
+
+    public override string FileExtension => ".py";
+
+    public override string CommentPrefix => "#";
+
+    public void EnsureDefaults(int appId) {
+        base.EnsureDefaults(appId);
+
+        this.ModuleName ??= "kintone_models";
+    }
 }
