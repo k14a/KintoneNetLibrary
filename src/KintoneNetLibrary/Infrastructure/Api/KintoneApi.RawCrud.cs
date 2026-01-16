@@ -7,6 +7,9 @@ using Microsoft.Extensions.Logging;
 
 namespace KintoneNetLibrary.Infrastructure.Api;
 
+/// <summary>
+/// レコード一括登録・更新・削除（Raw）
+/// </summary>
 public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
     /// <summary>
     /// 複数レコードを一括登録します（Raw）
@@ -34,7 +37,7 @@ public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
         var response = await this._httpClient.PutAsync(KintoneApiEndpoints.UpdateRecords, content);
         var responseJson = await response.Content.ReadAsStringAsync();
 
-        this._logger?.LogDebug("Received response: {Response}", responseJson);
+        this._logger?.LogTrace("Received response: {Response}", responseJson);
 
         if (!response.IsSuccessStatusCode) {
             throw new KintoneException(KintoneErrorConverter.Parse(responseJson));

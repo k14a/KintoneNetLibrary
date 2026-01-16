@@ -39,6 +39,6 @@ public class KintoneFieldSchema {
     /// <summary>
     /// サブテーブルの場合は true
     /// </summary>
-    public bool IsSubtable => this.FieldType == KintoneFieldType.SubTable;
+    public bool IsSubTable => this.FieldType == KintoneFieldType.SubTable;
 }
 

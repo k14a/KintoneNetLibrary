@@ -9,6 +9,9 @@ using static KintoneNetLibrary.Domain.Common.KintoneConstants;
 
 namespace KintoneNetLibrary.Infrastructure.Api;
 
+/// <summary>
+/// レコード取得（Raw）
+/// </summary>
 public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
     /// <summary>
     /// IDで単一レコードを取得（Raw）

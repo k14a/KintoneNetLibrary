@@ -4,8 +4,9 @@ using KintoneNetLibrary.CodeGen.Domain.Schemas;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Domain.Access;
 using KintoneNetLibrary.Infrastructure.Api;
+using KintoneNetLibrary.Domain.Enums;
 
-namespace KintoneNetLibrary.CodeGen.Application.Services;
+namespace KintoneNetLibrary.CodeGen.Infrastructure.Services;
 
 /// <summary>
 /// スキーマプロバイダーサービス
@@ -93,7 +94,60 @@ public class SchemaProvider(IHttpClientFactory httpClientFactory, ILogger<Schema
         };
     }
 
-    public Task<IReadOnlyList<KintoneMetadataDiff>> CompareAsync(KintoneAppMetadata backupSchema, string subDomain, int appId, string apiToken) {
-        throw new NotImplementedException();
+    /// <summary>
+    /// 指定されたバックアップスキーマと現在のスキーマを比較し、差分を取得します。
+    /// </summary>
+    /// <param name="backupSchema"></param>
+    /// <param name="subDomain"></param>
+    /// <param name="appId"></param>
+    /// <param name="apiToken"></param>
+    /// <returns></returns>
+    public async Task<IReadOnlyList<KintoneMetadataDiff>> CompareAsync(KintoneAppMetadata backupSchema, int appId, string apiToken) {
+        ArgumentNullException.ThrowIfNull(backupSchema);
+
+        // 最新メタデータ取得
+        var latest = await this.GetMetadataAsync(appId, apiToken);
+        var diffs = new List<KintoneMetadataDiff>();
+
+        // -----------------------------
+        // 追加されたフィールド
+        // -----------------------------
+        foreach (var f in latest.Fields.Where(f => backupSchema.Fields.All(pf => pf.Code != f.Code))) {
+            diffs.Add(new KintoneMetadataDiff { DiffType = KintoneMetadataDiffTypes.Added, After = f });
+        }
+
+        // -----------------------------
+        // 削除されたフィールド
+        // -----------------------------
+        foreach (var f in backupSchema.Fields.Where(f => latest.Fields.All(lf => lf.Code != f.Code))) {
+            diffs.Add(new KintoneMetadataDiff { DiffType = KintoneMetadataDiffTypes.Removed, Before = f });
+        }
+
+        // -----------------------------
+        // 変更されたフィールド
+        // -----------------------------
+        foreach (var latestField in latest.Fields) {
+            var prevField = backupSchema.Fields.FirstOrDefault(pf => pf.Code == latestField.Code);
+            if (prevField == null) { continue; }
+
+            var changedProps = new List<string>();
+
+            if (prevField.Type != latestField.Type) { changedProps.Add(nameof(prevField.Type)); }
+            if (prevField.Label != latestField.Label) { changedProps.Add(nameof(prevField.Label)); }
+            if (prevField.Required != latestField.Required) { changedProps.Add(nameof(prevField.Required)); }
+            if (!Enumerable.SequenceEqual(prevField.Options ?? [], latestField.Options ?? [])) { changedProps.Add(nameof(prevField.Options)); }
+            if (changedProps.Count > 0) {
+                diffs.Add(new KintoneMetadataDiff {
+                    DiffType = KintoneMetadataDiffTypes.Changed,
+                    Before = prevField,
+                    After = latestField,
+                    ChangedProperties = changedProps,
+                    BeforeRevision = backupSchema.Revision,
+                    AfterRevision = latest.Revision
+                });
+            }
+        }
+
+        return diffs;
     }
 }

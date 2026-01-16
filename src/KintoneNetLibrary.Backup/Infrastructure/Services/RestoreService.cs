@@ -1,22 +1,33 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Microsoft.Extensions.Logging;
 using KintoneNetLibrary.Application.Interfaces;
-using KintoneNetLibrary.Backup.Models;
 using KintoneNetLibrary.CodeGen.Application.Interfaces;
 using KintoneNetLibrary.Domain.Access;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Infrastructure.Api;
+using KintoneNetLibrary.Backup.Application.DTOs;
+using KintoneNetLibrary.Backup.Domain.Enums;
 using static KintoneNetLibrary.Domain.Common.KintoneConstants;
-using Microsoft.Extensions.Logging;
 
-namespace KintoneNetLibrary.Backup.Services;
+namespace KintoneNetLibrary.Backup.Infrastructure.Services;
 
+/// <summary>
+/// リストアサービス
+/// </summary>
 public sealed class RestoreService {
     private readonly RestoreOptions _options;
     private readonly IKintoneApi _api;
     private readonly ISchemaProvider _schemaProvider;
     private readonly ILogger? _logger;
 
+    /// <summary>
+    /// コンストラクタ
+    /// </summary>
+    /// <param name="options"></param>
+    /// <param name="schemaProvider"></param>
+    /// <param name="httpClient"></param>
+    /// <param name="logger"></param>
     public RestoreService(
         RestoreOptions options,
         ISchemaProvider schemaProvider,
@@ -37,6 +48,11 @@ public sealed class RestoreService {
         this._api = new KintoneApi(access: access, appID: options.AppID, httpClient: httpClient);
     }
 
+    /// <summary>
+    /// リストアを実行します
+    /// </summary>
+    /// <returns></returns>
+    /// <exception cref="NotSupportedException"></exception>
     public async Task RunRestoreAsync() {
         this._logger?.LogInformation("Restore 開始: App={App}", this._options.AppID);
 
@@ -54,14 +70,14 @@ public sealed class RestoreService {
 
         // 5) レコード復元
         switch (this._options.Mode) {
-            case Enums.RestoreMode.FullReplace:
+            case RestoreMode.FullReplace:
                 await this.DeleteAllRecordsAsync();
                 await this.RestoreRecordsCreateAllAsync(backup);
                 break;
-            case Enums.RestoreMode.Upsert:
+            case RestoreMode.Upsert:
                 await this.RestoreRecordsUpsertAsync(backup);
                 break;
-            case Enums.RestoreMode.Merge:
+            case RestoreMode.Merge:
                 await this.RestoreRecordsCreateOnlyAsync(backup);
                 break;
             default:
@@ -76,11 +92,20 @@ public sealed class RestoreService {
         this._logger?.LogInformation("Restore 完了");
     }
 
+    /// <summary>
+    /// バックアップ JSON を読み込みます
+    /// </summary>
+    /// <returns></returns>
     private async Task<JsonNode> LoadBackupJsonAsync() {
         var json = await File.ReadAllTextAsync(this._options.BackupJsonPath);
         return JsonNode.Parse(json)!;
     }
 
+    /// <summary>
+    /// フィールドスキーマを読み込みます
+    /// </summary>
+    /// <param name="metadata"></param>
+    /// <returns></returns>
     private async Task<JsonNode> LoadFieldSchemaAsync(JsonNode metadata) {
         var dir = Path.GetDirectoryName(_options.BackupJsonPath)!;
         var schemaFile = metadata["fieldSchemaFile"]!.ToString();
@@ -88,6 +113,12 @@ public sealed class RestoreService {
         return JsonNode.Parse(json)!;
     }
 
+    /// <summary>
+    /// スキーマを検証します
+    /// </summary>
+    /// <param name="backupSchemaJson"></param>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException"></exception>
     private async Task ValidateSchemaAsync(JsonNode backupSchemaJson) {
         if (this._options.Force) {
             this._logger?.LogWarning("Force オプションによりスキーマチェックをスキップします");
@@ -114,6 +145,11 @@ public sealed class RestoreService {
         this._logger?.LogInformation("スキーマ一致: 復元を続行します");
     }
 
+    /// <summary>
+    /// FullReplace モードでレコード復元を実行します
+    /// </summary>
+    /// <param name="backupJson"></param>
+    /// <returns></returns>
     private async Task RestoreRecordsCreateAllAsync(JsonNode backupJson) {
         this._logger?.LogInformation("FullReplace モードでレコード復元を開始します…");
 
@@ -142,18 +178,10 @@ public sealed class RestoreService {
         this._logger?.LogInformation("FullReplace モードでのレコード復元が完了しました");
     }
 
-    private async Task RestoreRecordsAsync(JsonElement backup) {
-        this._logger?.LogInformation("レコード復元を開始します…");
-
-        var records = backup.GetProperty("records");
-
-        // 一括登録
-        var json = JsonSerializer.Serialize(new { records });
-        await this._api.RawCreateAsync(json);
-
-        this._logger?.LogInformation("レコード復元完了");
-    }
-
+    /// <summary>
+    /// 既存レコードを全削除します
+    /// </summary>
+    /// <returns></returns>
     private async Task DeleteAllRecordsAsync() {
         this._logger?.LogInformation("既存レコードの削除を開始します…");
 
@@ -207,6 +235,12 @@ public sealed class RestoreService {
         this._logger?.LogInformation("既存レコードの削除が完了しました");
     }
 
+    /// <summary>
+    /// 添付ファイル復元を実行します
+    /// </summary>
+    /// <param name="backupJson"></param>
+    /// <param name="metadataJson"></param>
+    /// <returns></returns>
     private async Task RestoreFilesAsync(JsonNode backupJson, JsonNode metadataJson) {
         this._logger?.LogInformation("添付ファイル復元を開始します…");
 
@@ -279,6 +313,11 @@ public sealed class RestoreService {
         this._logger?.LogInformation("添付ファイル復元が完了しました");
     }
 
+    /// <summary>
+    /// Upsert モードでレコード復元を実行します
+    /// </summary>
+    /// <param name="backupJson"></param>
+    /// <returns></returns>
     private async Task RestoreRecordsUpsertAsync(JsonNode backupJson) {
         this._logger?.LogInformation("Upsert モードでレコード復元を開始します…");
 
@@ -311,6 +350,11 @@ public sealed class RestoreService {
         this._logger?.LogInformation("Upsert モードでのレコード復元が完了しました");
     }
 
+    /// <summary>
+    /// Merge モードでレコード追加を実行します
+    /// </summary>
+    /// <param name="backupJson"></param>
+    /// <returns></returns>
     private async Task RestoreRecordsCreateOnlyAsync(JsonNode backupJson) {
         this._logger?.LogInformation("Merge モードでレコード追加を開始します…");
 
@@ -335,6 +379,11 @@ public sealed class RestoreService {
         this._logger?.LogInformation("Merge モードでのレコード追加が完了しました");
     }
 
+    /// <summary>
+    /// レコードの存在確認を行います
+    /// </summary>
+    /// <param name="recordId"></param>
+    /// <returns></returns>
     private async Task<bool> RecordExistsAsync(string recordId) {
         var query = $"レコード番号 = {recordId}";
         var json = await this._api.RawFindByQueryAsync(query, fieldCodes: new[] { "レコード番号" });
@@ -347,6 +396,12 @@ public sealed class RestoreService {
         return count > 0;
     }
 
+    /// <summary>
+    /// レコードを更新します
+    /// </summary>
+    /// <param name="recordId"></param>
+    /// <param name="record"></param>
+    /// <returns></returns>
     private async Task UpdateRecordAsync(string recordId, JsonObject record) {
         this._logger?.LogInformation("レコード更新: ID={RecordId}", recordId);
 
@@ -358,6 +413,11 @@ public sealed class RestoreService {
         await this._api.RawUpdateAsync(updateJson.ToJsonString());
     }
 
+    /// <summary>
+    /// レコードを新規作成します
+    /// </summary>
+    /// <param name="record"></param>
+    /// <returns></returns>
     private async Task CreateRecordAsync(JsonObject record) {
         this._logger?.LogInformation("レコード新規作成");
 

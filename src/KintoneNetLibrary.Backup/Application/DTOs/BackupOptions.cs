@@ -1,18 +1,37 @@
-namespace KintoneNetLibrary.Backup.Models;
+namespace KintoneNetLibrary.Backup.Application.DTOs;
 
 public sealed class BackupOptions {
-    // ===== 必須 =====
+    /// <summary>
+    /// Kintone サブドメイン(必須)
+    /// </summary>
     public required string SubDomain { get; init; }
+    /// <summary>
+    /// アプリID(必須)
+    /// </summary>
     public required int AppID { get; init; }
+    /// <summary>
+    /// APIトークン(必須)
+    /// </summary>
     public required string ApiToken { get; init; }
+    /// <summary>
+    /// 出力先パス(必須)
+    /// </summary>
     public required string OutputPath { get; init; }
 
-    // ===== オプション =====
+    /// <summary>
+    /// クエリ文字列
+    /// NULL の場合、全レコードを取得します
+    /// </summary>
     public string? Query { get; init; }
+    /// <summary>
+    /// 取得するフィールドコードのリスト
+    /// null の場合は全フィールドを取得します
+    /// </summary>
     public IList<string>? FieldCodes { get; init; }
 
     /// <summary>
     /// 添付ファイルをダウンロードするかどうか
+    /// false の場合、添付ファイルフィールドは空のまま取得されます
     /// </summary>
     public bool DownloadFiles { get; init; } = true;
 
@@ -23,6 +42,7 @@ public sealed class BackupOptions {
 
     /// <summary>
     /// 既存ファイルを上書きするかどうか
+    /// false の場合、既存ファイルが存在するときはスキップします
     /// </summary>
     public bool Overwrite { get; init; } = false;
 

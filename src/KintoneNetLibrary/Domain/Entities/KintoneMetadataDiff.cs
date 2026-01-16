@@ -9,7 +9,7 @@ public class KintoneMetadataDiff {
     /// <summary>
     /// 変更内容
     /// </summary>
-    public KintoneDiffTypes DiffType { get; set; }
+    public KintoneMetadataDiffTypes DiffType { get; set; }
     /// <summary>
     /// 変更前(Addedの場合はnull)
     /// </summary>

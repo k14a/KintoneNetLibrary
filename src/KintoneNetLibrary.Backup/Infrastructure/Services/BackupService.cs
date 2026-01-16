@@ -1,21 +1,29 @@
 using System.Text.Json;
 using KintoneNetLibrary.Application.Interfaces;
-using KintoneNetLibrary.Backup.Models;
+using KintoneNetLibrary.Backup.Application.DTOs;
 using KintoneNetLibrary.CodeGen.Application.Interfaces;
-using KintoneNetLibrary.CodeGen.Application.Services;
 using KintoneNetLibrary.Domain.Access;
 using KintoneNetLibrary.Infrastructure.Api;
 using Microsoft.Extensions.Logging;
 
-namespace KintoneNetLibrary.Backup.Services;
+namespace KintoneNetLibrary.Backup.Infrastructure.Services;
 
+/// <summary>
+/// バックアップサービス
+/// </summary>
 public sealed class BackupService {
     private readonly BackupOptions _options;
     private readonly IKintoneApi _api;
     private readonly ISchemaProvider _schemaProvider;
-    private readonly IKintoneAppMetadataApi _metaApi;
     private readonly ILogger<BackupService>? _logger;
 
+    /// <summary>
+    /// コンストラクタ
+    /// </summary>
+    /// <param name="options"></param>
+    /// <param name="schemaProvider"></param>
+    /// <param name="httpClient"></param>
+    /// <param name="logger"></param>
     public BackupService(BackupOptions options, ISchemaProvider schemaProvider, HttpClient? httpClient = null, ILogger<BackupService>? logger = null) {
         ArgumentNullException.ThrowIfNull(options);
 
@@ -65,6 +73,10 @@ public sealed class BackupService {
         this._logger?.LogInformation("バックアップ完了");
     }
 
+    /// <summary>
+    /// レコードを取得します
+    /// </summary>
+    /// <returns></returns>
     private async Task<string> FetchRecordsAsync() {
         if (!string.IsNullOrWhiteSpace(this._options.Query)) {
             return await this._api.RawFindByQueryAsync(
@@ -78,6 +90,12 @@ public sealed class BackupService {
         ) ?? "{}";
     }
 
+    /// <summary>
+    /// JSON を保存します
+    /// </summary>
+    /// <param name="json"></param>
+    /// <returns></returns>
+    /// <exception cref="IOException"></exception>
     private async Task SaveJsonAsync(string json) {
         Directory.CreateDirectory(Path.GetDirectoryName(this._options.OutputPath)!);
 
@@ -89,6 +107,11 @@ public sealed class BackupService {
         this._logger?.LogInformation("JSON を保存しました: {Path}", this._options.OutputPath);
     }
 
+    /// <summary>
+    /// 添付ファイルをダウンロードします
+    /// </summary>
+    /// <param name="json"></param>
+    /// <returns></returns>
     private async Task DownloadFilesAsync(string json) {
         this._logger?.LogInformation("添付ファイルのダウンロードを開始します");
 
@@ -142,6 +165,10 @@ public sealed class BackupService {
         this._logger?.LogInformation("添付ファイルのダウンロードが完了しました");
     }
 
+    /// <summary>
+    /// フィールドスキーマを保存します
+    /// </summary>
+    /// <returns></returns>
     private async Task SaveFieldSchemaAsync() {
         if (!this._options.IncludeFieldSchema) {
             this._logger?.LogInformation("フィールドスキーマのバックアップはスキップされました");

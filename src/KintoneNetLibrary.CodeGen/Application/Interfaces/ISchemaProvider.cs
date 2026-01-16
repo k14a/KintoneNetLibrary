@@ -26,10 +26,13 @@ public interface ISchemaProvider {
     /// <param name="apiToken"></param>
     /// <returns></returns>
     Task<KintoneAppMetadata> GetMetadataAsync(int appId, string apiToken);
-    Task<IReadOnlyList<KintoneMetadataDiff>> CompareAsync(
-        KintoneAppMetadata backupSchema,
-        string subDomain,
-        int appId,
-        string apiToken
-    );
+    /// <summary>
+    /// 指定されたバックアップスキーマと現在のスキーマを比較し、差分を取得します。
+    /// </summary>
+    /// <param name="backupSchema"></param>
+    /// <param name="subDomain"></param>
+    /// <param name="appId"></param>
+    /// <param name="apiToken"></param>
+    /// <returns></returns>
+    Task<IReadOnlyList<KintoneMetadataDiff>> CompareAsync(KintoneAppMetadata backupSchema, int appId, string apiToken);
 }

@@ -1,9 +1,9 @@
 using System.Text;
 using KintoneNetLibrary.CodeGen.Application.Interfaces;
+using KintoneNetLibrary.CodeGen.Domain.Enums;
 using KintoneNetLibrary.CodeGen.Domain.Models;
 using KintoneNetLibrary.CodeGen.Domain.Options;
 using KintoneNetLibrary.CodeGen.Domain.Schemas;
-using KintoneNetLibrary.Domain.Entities;
 using Microsoft.Extensions.Logging;
 
 namespace KintoneNetLibrary.CodeGen.Application.Emitters;
@@ -24,8 +24,8 @@ public class CSharpCodeEmitter(
     IHelperClassEmitter helperEmitter,
     ILogger<CSharpCodeEmitter>? logger = null) : ICodeEmitter {
 
-    private readonly INameConverter _converter = converterFactory.Create(Domain.Enums.GenerateLanguages.CSharp);
-    private readonly ITypeMapper _mapper = mapperFactory.Create(Domain.Enums.GenerateLanguages.CSharp);
+    private readonly INameConverter _converter = converterFactory.Create(GenerateLanguages.CSharp);
+    private readonly ITypeMapper _mapper = mapperFactory.Create(GenerateLanguages.CSharp);
     private readonly IXmlCommentBuilder _xml = xml;
     private readonly ISubTableEmitter _subTableEmitter = subTableEmitter;
     private readonly IHelperClassEmitter _helperEmitter = helperEmitter;
@@ -51,6 +51,11 @@ public class CSharpCodeEmitter(
     };
 
     /// <summary>
+    /// 対応する生成言語
+    /// </summary>
+    public GenerateLanguages Language => GenerateLanguages.CSharp;
+
+    /// <summary>
     /// システムフィールドかどうかを判定する
     /// </summary>
     /// <param name="field"></param>
@@ -66,23 +71,24 @@ public class CSharpCodeEmitter(
     /// <param name="options"></param>
     /// <returns></returns>
     public GeneratedModelResult Emit(KintoneAppSchema schema, CodeEmitterOptions options) {
+        var csOptions = (CSharpEmitterOptions)options;
         var result = new GeneratedModelResult {
             // 1. メインモデル生成
-            MainModelCode = this.EmitMainModel(schema, options),
+            MainModelCode = this.EmitMainModel(schema, csOptions),
             Revision = schema.Revision
         };
 
         // 2. サブテーブル生成
         foreach (var sub in schema.SubTables) {
             result.SubTableModels.Add(
-                this._subTableEmitter.EmitSubTable(sub.FieldCode, sub, options)
+                this._subTableEmitter.EmitSubTable(sub.FieldCode, sub, csOptions)
             );
         }
 
         // 3. pure モードなら補助クラス生成
-        if (!options.UseKintoneNetLibrary) {
+        if (!csOptions.UseKintoneNetLibrary) {
             result.HelperClasses.AddRange(
-                this._helperEmitter.EmitHelperClasses(options)
+                this._helperEmitter.EmitHelperClasses(csOptions)
             );
         }
 
@@ -95,8 +101,11 @@ public class CSharpCodeEmitter(
     /// <param name="schema"></param>
     /// <param name="options"></param>
     /// <returns></returns>
-    private string EmitMainModel(KintoneAppSchema schema, CodeEmitterOptions options) {
+    private string EmitMainModel(KintoneAppSchema schema, CSharpEmitterOptions options) {
         var sb = new StringBuilder();
+
+        // ヘッダーコメント
+        this.EmitHeaderComment(sb, schema, options);
 
         // using セクション
         this.EmitUsingSection(sb, options);
@@ -125,11 +134,26 @@ public class CSharpCodeEmitter(
     }
 
     /// <summary>
+    /// ヘッダーコメントを出力する
+    /// </summary>
+    /// <param name="sb"></param>
+    /// <param name="schema"></param>
+    /// <param name="options"></param>
+    private void EmitHeaderComment(StringBuilder sb, KintoneAppSchema schema, CSharpEmitterOptions options) {
+        if (!string.IsNullOrWhiteSpace(options.HeaderComment)) {
+            sb.AppendLine($"// {options.HeaderComment}");
+            sb.AppendLine($"// AppId: {schema.AppId}");
+            sb.AppendLine($"// Revision: {schema.Revision}");
+            sb.AppendLine();
+        }
+    }
+
+    /// <summary>
     /// using セクションを出力する
     /// </summary>
     /// <param name="sb"></param>
     /// <param name="options"></param>
-    private void EmitUsingSection(StringBuilder sb, CodeEmitterOptions options) {
+    private void EmitUsingSection(StringBuilder sb, CSharpEmitterOptions options) {
         sb.AppendLine("using System;");
         if (options.UseKintoneNetLibrary) {
             sb.AppendLine("using KintoneNetLibrary.Domain.Entities;");
@@ -144,9 +168,11 @@ public class CSharpCodeEmitter(
     /// <param name="sb"></param>
     /// <param name="schema"></param>
     /// <param name="options"></param>
-    private void EmitClassName(StringBuilder sb, KintoneAppSchema schema, CodeEmitterOptions options) {
+    private void EmitClassName(StringBuilder sb, KintoneAppSchema schema, CSharpEmitterOptions options) {
         var className = options.MainClassName;
-        sb.Append($"public partial class {className}");
+        var keyword = options.UseRecord ? "Record" : "class";
+        var partial = options.UsePartial ? "partial " : "";
+        sb.Append($"public {partial}{keyword} {className}");
         if (options.UseKintoneNetLibrary) {
             sb.Append(" : KintoneModelBase<" + className + ">");
         }
@@ -159,7 +185,7 @@ public class CSharpCodeEmitter(
     /// <param name="sb"></param>
     /// <param name="field"></param>
     /// <param name="options"></param>
-    private void EmitProperty(StringBuilder sb, KintoneFieldSchema field, CodeEmitterOptions options) {
+    private void EmitProperty(StringBuilder sb, KintoneFieldSchema field, CSharpEmitterOptions options) {
         var propName = this._converter.ToPropertyName(field.Label, field.FieldCode);
         var typeName = this._mapper.MapType(field, options.UseKintoneNetLibrary);
 
@@ -193,7 +219,7 @@ public class CSharpCodeEmitter(
     /// <param name="sb"></param>
     /// <param name="schema"></param>
     /// <param name="options"></param>
-    private void EmitSubTables(StringBuilder sb, KintoneSubTableSchema schema, CodeEmitterOptions options) {
+    private void EmitSubTables(StringBuilder sb, KintoneSubTableSchema schema, CSharpEmitterOptions options) {
         var propName = this._converter.ToPropertyName(schema.Label, schema.FieldCode);
         var classNameSub = this._converter.ToClassName(schema.Label, schema.FieldCode);
 
@@ -216,7 +242,7 @@ public class CSharpCodeEmitter(
     /// <param name="sb"></param>
     /// <param name="field"></param>
     /// <param name="options"></param>
-    private void EmitAttributes(StringBuilder sb, KintoneFieldSchema field, CodeEmitterOptions options) {
+    private void EmitAttributes(StringBuilder sb, KintoneFieldSchema field, CSharpEmitterOptions options) {
         if (options.UseKintoneNetLibrary) {
             sb.AppendLine($"    [KintoneItem(FieldCode = \"{field.FieldCode}\")]");
         }

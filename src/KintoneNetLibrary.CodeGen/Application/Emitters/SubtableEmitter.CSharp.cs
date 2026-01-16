@@ -32,7 +32,7 @@ public class CSharpSubTableEmitter(
     /// <param name="subTable"></param>
     /// <param name="options"></param>
     /// <returns></returns>
-    public GeneratedSubTableModel EmitSubTable(string name, KintoneSubTableSchema subTable, CodeEmitterOptions options) {
+    public GeneratedSubTableModel EmitSubTable(string name, KintoneSubTableSchema subTable, CSharpEmitterOptions options) {
         var sb = new StringBuilder();
 
         this.EmitUsingSection(sb, options);
@@ -88,7 +88,7 @@ public class CSharpSubTableEmitter(
     /// </summary>
     /// <param name="sb"></param>
     /// <param name="options"></param>
-    private void EmitUsingSection(StringBuilder sb, CodeEmitterOptions options) {
+    private void EmitUsingSection(StringBuilder sb, CSharpEmitterOptions options) {
         sb.AppendLine("using System;");
         if (options.UseKintoneNetLibrary) {
             sb.AppendLine("using KintoneNetLibrary.Domain.Entities;");
@@ -103,7 +103,7 @@ public class CSharpSubTableEmitter(
     /// <param name="sb"></param>
     /// <param name="className"></param>
     /// <param name="options"></param>
-    private void EmitClassName(StringBuilder sb, string className, CodeEmitterOptions options) {
+    private void EmitClassName(StringBuilder sb, string className, CSharpEmitterOptions options) {
         sb.Append($"public partial class {className}");
         if (options.UseKintoneNetLibrary) {
             sb.Append(" : KintoneSubTableBase");
@@ -117,7 +117,7 @@ public class CSharpSubTableEmitter(
     /// <param name="sb"></param>
     /// <param name="field"></param>
     /// <param name="options"></param>
-    private void EmitProperty(StringBuilder sb, KintoneFieldSchema field, CodeEmitterOptions options) {
+    private void EmitProperty(StringBuilder sb, KintoneFieldSchema field, CSharpEmitterOptions options) {
         var propName = this._names.ToPropertyName(field.Label, field.FieldCode);
         var typeName = this._types.MapType(field, options.UseKintoneNetLibrary);
 
@@ -137,7 +137,7 @@ public class CSharpSubTableEmitter(
     /// <param name="sb"></param>
     /// <param name="field"></param>
     /// <param name="options"></param>
-    private void EmitAttributes(StringBuilder sb, KintoneFieldSchema field, CodeEmitterOptions options) {
+    private void EmitAttributes(StringBuilder sb, KintoneFieldSchema field, CSharpEmitterOptions options) {
         if (options.UseKintoneNetLibrary) {
             sb.AppendLine($"    [KintoneItem(FieldCode = \"{field.FieldCode}\")]");
         }

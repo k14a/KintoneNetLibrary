@@ -15,5 +15,5 @@ public interface ISubTableEmitter {
     /// <param name="subTable"></param>
     /// <param name="options"></param>
     /// <returns></returns>
-    GeneratedSubTableModel EmitSubTable(string name, KintoneSubTableSchema subTable, CodeEmitterOptions options);
+    GeneratedSubTableModel EmitSubTable(string name, KintoneSubTableSchema subTable, CSharpEmitterOptions options);
 }

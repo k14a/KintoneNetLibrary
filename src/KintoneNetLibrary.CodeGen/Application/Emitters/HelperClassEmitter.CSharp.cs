@@ -25,24 +25,26 @@ public class CSharpHelperClassEmitter(ILogger<CSharpHelperClassEmitter> logger) 
     /// <param name="options"></param>
     /// <returns></returns>
     public IEnumerable<GeneratedHelperClass> EmitHelperClasses(CodeEmitterOptions options) {
+        var helperOptions = options as CSharpEmitterOptions
+            ?? throw new InvalidOperationException("Invalid options type.");
         var list = new List<GeneratedHelperClass> {
             // 1. Base クラス
             new() {
                 ClassName = "KintoneEntityInfo",
-                Code = this._baseTemplate.Replace("{{Namespace}}", options.Namespace)
+                Code = this._baseTemplate.Replace("{{Namespace}}", helperOptions.Namespace)
             },
 
             // 2. UserInfo
-            this.EmitFromTemplate(this._derivedTemplate, "UserInfo", "ユーザー情報", options),
+            this.EmitFromTemplate(this._derivedTemplate, "UserInfo", "ユーザー情報", helperOptions),
 
             // 3. GroupInfo
-            this.EmitFromTemplate(this._derivedTemplate, "GroupInfo", "グループ情報", options),
+            this.EmitFromTemplate(this._derivedTemplate, "GroupInfo", "グループ情報", helperOptions),
 
             // 4. OrganizationInfo
-            this.EmitFromTemplate(this._derivedTemplate, "OrganizationInfo", "組織情報", options),
+            this.EmitFromTemplate(this._derivedTemplate, "OrganizationInfo", "組織情報", helperOptions),
 
             // 5. FileInfo
-            this.EmitFromTemplate(this._fileInfoTemplate, "FileInfo", "ファイル情報", options)
+            this.EmitFromTemplate(this._fileInfoTemplate, "FileInfo", "ファイル情報", helperOptions)
         };
 
         return list;
@@ -56,7 +58,7 @@ public class CSharpHelperClassEmitter(ILogger<CSharpHelperClassEmitter> logger) 
     /// <param name="summary"></param>
     /// <param name="options"></param>
     /// <returns></returns>
-    private GeneratedHelperClass EmitFromTemplate(string template, string className, string summary, CodeEmitterOptions options) {
+    private GeneratedHelperClass EmitFromTemplate(string template, string className, string summary, CSharpEmitterOptions options) {
         var code = template
             .Replace("{{Namespace}}", options.Namespace)
             .Replace("{{ClassName}}", className)
