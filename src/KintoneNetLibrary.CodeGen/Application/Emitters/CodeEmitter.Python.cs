@@ -4,6 +4,7 @@ using KintoneNetLibrary.CodeGen.Domain.Enums;
 using KintoneNetLibrary.CodeGen.Domain.Models;
 using KintoneNetLibrary.CodeGen.Domain.Options;
 using KintoneNetLibrary.CodeGen.Domain.Schemas;
+using KintoneNetLibrary.CodeGen.Domain.Services;
 using Microsoft.Extensions.Logging;
 
 namespace KintoneNetLibrary.CodeGen.Application.Emitters;
@@ -66,23 +67,25 @@ public class PythonCodeEmitter(
     /// <param name="schema"></param>
     /// <param name="options"></param>
     private void EmitMainClass(StringBuilder sb, KintoneAppSchema schema, PythonEmitterOptions options) {
-        var className = this._converter.ToClassName(schema.AppName, "");
+        var className = this._converter.ToClassName(schema.AppName, schema.AppId.ToString());
+
+        sb.AppendLine("@dataclass");
         sb.AppendLine($"class {className}:");
 
-        if (schema.Fields.Count == 0) {
+        var fields = schema.Fields.Where(f => !SystemFieldService.IsSystemField(f));
+
+        if (!fields.Any()) {
             sb.AppendLine("    pass");
             sb.AppendLine();
             return;
         }
 
-        foreach (var field in schema.Fields) {
+        foreach (var field in fields) {
             var propName = this._converter.ToPropertyName(field.Label, field.FieldCode);
             var typeName = this._mapper.MapType(field, options.UseTypeHint);
 
-            sb.AppendLine($"    {propName}: {typeName}");
+            this.EmitField(sb, field, typeName, propName);
         }
-
-        sb.AppendLine();
     }
 
     /// <summary>
@@ -92,14 +95,12 @@ public class PythonCodeEmitter(
     /// <param name="subTable"></param>
     /// <param name="options"></param>
     private void EmitSubTable(StringBuilder sb, KintoneSubTableSchema subTable, PythonEmitterOptions options) {
-        var className = this._converter.ToClassName(
-            string.IsNullOrWhiteSpace(subTable.Label) ? subTable.FieldCode : subTable.Label,
-            subTable.FieldCode
-        );
+        var className = this._converter.ToClassName(subTable.Label, subTable.FieldCode);
 
+        sb.AppendLine("@dataclass");
         sb.AppendLine($"class SubTable{className}:");
 
-        if (subTable.Fields.Count == 0) {
+        if (!subTable.Fields.Any()) {
             sb.AppendLine("    pass");
             sb.AppendLine();
             return;
@@ -107,11 +108,39 @@ public class PythonCodeEmitter(
 
         foreach (var field in subTable.Fields) {
             var propName = this._converter.ToPropertyName(field.Label, field.FieldCode);
-            var typeName = this._mapper.MapType(field, options.UseTypeHint);
+            var typeName = this._mapper.MapType(field, options.UseTypeHint, $"SubTable{className}");
 
-            sb.AppendLine($"    {propName}: {typeName}");
+            this.EmitField(sb, field, typeName, propName);
+        }
+    }
+    /// <summary>
+    /// フィールドを出力する
+    /// </summary>
+    /// <param name="sb"></param>
+    /// <param name="field"></param>
+    /// <param name="typeName"></param>
+    /// <param name="propName"></param>
+    private void EmitField(StringBuilder sb, KintoneFieldSchema field, string typeName, string propName) {
+        // コメント
+        sb.AppendLine($"    # Label: {field.Label}");
+        sb.AppendLine($"    # FieldCode: {field.FieldCode}");
+
+        if (field.Options?.Any() == true) {
+            var opts = string.Join(", ", field.Options.Select(o => $"\"{o}\""));
+            sb.AppendLine($"    # Options: [{opts}]");
         }
 
+        // 変換失敗
+        if (propName == "__INVALID_FIELD_NAME__") {
+            sb.AppendLine("    # TODO: フィールド名を変換できませんでした。手動で修正してください。");
+            sb.AppendLine($"    {propName}: {typeName}");
+            sb.AppendLine();
+            return;
+        }
+
+        // 通常フィールド
+        sb.AppendLine($"    {propName}: {typeName}");
         sb.AppendLine();
     }
+
 }

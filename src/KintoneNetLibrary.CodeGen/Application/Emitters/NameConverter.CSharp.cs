@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.RegularExpressions;
+using KintoneNetLibrary.Extensions;
 using KintoneNetLibrary.CodeGen.Application.Interfaces;
 
 namespace KintoneNetLibrary.CodeGen.Application.Emitters;
@@ -60,21 +61,21 @@ public class CSharpNameConverter : INameConverter {
 
         // 0. フィールドコードを安全化 → PascalCase（最優先）
         var safeCode = SanitizeFieldCode(baseName);
-        var codeName = ToPascalCase(safeCode);
+        var codeName = safeCode.ToPascalCase();
 
         // 1. ラベルが空 → code fallback
         // if (string.IsNullOrWhiteSpace(label)) { return codeName; }
 
         // 2. ラベルが ASCII → そのまま PascalCase
-        if (IsAscii(codeName)) { return ToPascalCase(codeName); }
+        if (codeName.IsAscii()) { return codeName.ToPascalCase(); }
 
 
         // 3. 日本語辞書で完全一致 → 英語化
         if (Dictionary.TryGetValue(codeName, out var mapped)) { return mapped; }
 
         // 4. ローマ字変換（簡易）
-        var roman = ToRoman(codeName);
-        if (!string.IsNullOrWhiteSpace(roman)) { return ToPascalCase(roman); }
+        var roman = codeName.ToRoman();
+        if (!string.IsNullOrWhiteSpace(roman)) { return roman.ToPascalCase(); }
 
         // 5. 最後の fallback → code
         return codeName;
@@ -105,6 +106,7 @@ public class CSharpNameConverter : INameConverter {
     /// </summary>
     /// <param name="s"></param>
     /// <returns></returns>
+    [Obsolete("Use KintoneNetLibrary.Extensions.StringExtensions.IsAscii instead")]
     private static bool IsAscii(string s) => s.All(c => c <= 127);
 
     /// <summary>
@@ -112,6 +114,7 @@ public class CSharpNameConverter : INameConverter {
     /// </summary>
     /// <param name="text"></param>
     /// <returns></returns>
+    [Obsolete("Use KintoneNetLibrary.Extensions.StringExtensions.ToPascalCase instead")]
     private static string ToPascalCase(string text) {
         var parts = Regex.Split(text, @"[^A-Za-z0-9]+")
                          .Where(x => !string.IsNullOrWhiteSpace(x))
@@ -162,6 +165,7 @@ public class CSharpNameConverter : INameConverter {
     /// </summary>
     /// <param name="text"></param>
     /// <returns></returns>
+    [Obsolete("Use KintoneNetLibrary.Extensions.StringExtensions.ToRoman instead")]
     internal static string ToRoman(string text) {
         if (string.IsNullOrEmpty(text)) { return string.Empty; }
 

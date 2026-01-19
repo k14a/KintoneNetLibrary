@@ -4,6 +4,7 @@ using KintoneNetLibrary.CodeGen.Domain.Enums;
 using KintoneNetLibrary.CodeGen.Domain.Models;
 using KintoneNetLibrary.CodeGen.Domain.Options;
 using KintoneNetLibrary.CodeGen.Domain.Schemas;
+using KintoneNetLibrary.CodeGen.Domain.Services;
 using Microsoft.Extensions.Logging;
 
 namespace KintoneNetLibrary.CodeGen.Application.Emitters;
@@ -31,6 +32,7 @@ public class CSharpCodeEmitter(
     private readonly IHelperClassEmitter _helperEmitter = helperEmitter;
     private readonly ILogger<CSharpCodeEmitter>? _logger = logger;
 
+    [Obsolete("Use SystemFieldService.IsSystemField instead")]
     private static readonly HashSet<string> SystemFieldCodes = new(StringComparer.OrdinalIgnoreCase) {
         "レコード番号",
         "record_id",
@@ -60,6 +62,7 @@ public class CSharpCodeEmitter(
     /// </summary>
     /// <param name="field"></param>
     /// <returns></returns>
+    [Obsolete("Use SystemFieldService.IsSystemField instead")]
     private static bool IsSystemField(KintoneFieldSchema field) {
         return SystemFieldCodes.Contains(field.FieldCode);
     }
@@ -121,7 +124,7 @@ public class CSharpCodeEmitter(
         // properties
         foreach (var field in schema.Fields) {
             // システムフィールドはスキップ
-            if (options.UseKintoneNetLibrary && IsSystemField(field)) { continue; }
+            if (options.UseKintoneNetLibrary && SystemFieldService.IsSystemField(field)) { continue; }
             this.EmitProperty(sb, field, options);
         }
 
