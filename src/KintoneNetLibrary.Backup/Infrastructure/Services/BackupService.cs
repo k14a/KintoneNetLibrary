@@ -1,6 +1,7 @@
 using System.Text.Json;
 using KintoneNetLibrary.Application.Interfaces;
 using KintoneNetLibrary.Backup.Application.DTOs;
+using KintoneNetLibrary.Backup.Application.Interfaces;
 using KintoneNetLibrary.CodeGen.Application.Interfaces;
 using KintoneNetLibrary.Domain.Access;
 using KintoneNetLibrary.Infrastructure.Api;
@@ -11,7 +12,7 @@ namespace KintoneNetLibrary.Backup.Infrastructure.Services;
 /// <summary>
 /// バックアップサービス
 /// </summary>
-public sealed class BackupService {
+public sealed class BackupService : IBackupService {
     private readonly BackupOptions _options;
     private readonly IKintoneApi _api;
     private readonly ISchemaProvider _schemaProvider;
@@ -24,7 +25,12 @@ public sealed class BackupService {
     /// <param name="schemaProvider"></param>
     /// <param name="httpClient"></param>
     /// <param name="logger"></param>
-    public BackupService(BackupOptions options, ISchemaProvider schemaProvider, HttpClient? httpClient = null, ILogger<BackupService>? logger = null) {
+    public BackupService(
+        BackupOptions options,
+        ISchemaProvider schemaProvider,
+        HttpClient? httpClient = null,
+        ILogger<BackupService>? logger = null) {
+
         ArgumentNullException.ThrowIfNull(options);
 
         this._options = options;
@@ -63,28 +69,58 @@ public sealed class BackupService {
             var json = await this.FetchRecordsAsync();
 
             // 2) JSON 保存
-            await this.SaveJsonAsync(json);
+            var jsonResult = await this.SaveJsonAsync(json);
+            if (jsonResult) {
+                result.JsonSaved = true;
+            } else {
+                // 上書き禁止などのスキップ
+                var message = "JSON 保存がスキップされました";
+                this._logger?.LogWarning("{message}", message);
+                result.JsonSaved = false;
+                result.Skipped.Add(message);
+            }
 
             // 3) フィールドスキーマ保存
-            await this.SaveFieldSchemaAsync();
+            var schemaResult = await this.SaveFieldSchemaAsync();
+            if (schemaResult) {
+                result.SchemaSaved = true;
+            } else {
+                // 上書き禁止などのスキップ
+                var message = "フィールドスキーマ保存がスキップされました";
+                this._logger?.LogWarning("{message}", message);
+                result.SchemaSaved = false;
+                result.Skipped.Add(message);
+            }
 
             // 4) 添付ファイルダウンロード
             if (this._options.DownloadFiles) {
-                await this.DownloadFilesAsync(json);
+                var (success, fail) = await this.DownloadFilesWithResultAsync(json);
+                result.FileDownloadedCount = success;
+                result.FileFailedCount = fail;
+
+                if (fail > 0) {
+                    result.Warnings.Add($"{fail} 件の添付ファイルのダウンロードに失敗しました");
+                }
             }
 
             this._logger?.LogInformation("バックアップ完了");
-            return result;
 
         } catch (Exception ex) {
-            this._logger?.LogError(ex, "バックアップ中にエラーが発生しました");
+            this._logger?.LogError(ex, "バックアップ中に致命的エラーが発生しました");
             result.Success = false;
             result.ErrorMessages.Add(ex.Message);
-            return result;
 
         } finally {
+            // 成功判定（致命的エラーがなければ true）
+            if (result.Success) {
+                // ファイル失敗があれば部分成功
+                result.Success = result.FileFailedCount == 0;
+            }
+
             this._logger?.LogInformation("バックアップ処理が終了しました");
         }
+
+        return result;
     }
 
     /// <summary>
@@ -110,23 +146,23 @@ public sealed class BackupService {
     /// <param name="json"></param>
     /// <returns></returns>
     /// <exception cref="IOException"></exception>
-    private async Task SaveJsonAsync(string json) {
+    private async Task<bool> SaveJsonAsync(string json) {
         Directory.CreateDirectory(Path.GetDirectoryName(this._options.OutputPath)!);
 
         if (File.Exists(this._options.OutputPath) && !this._options.Overwrite) {
-            throw new IOException($"出力先ファイルが既に存在します: {this._options.OutputPath}");
+            this._logger?.LogWarning("出力先ファイルが既に存在するためスキップされました: {Path}", this._options.OutputPath);
+            return false;
         }
 
         await File.WriteAllTextAsync(this._options.OutputPath, json);
         this._logger?.LogInformation("JSON を保存しました: {Path}", this._options.OutputPath);
+        return true;
     }
 
-    /// <summary>
-    /// 添付ファイルをダウンロードします
-    /// </summary>
-    /// <param name="json"></param>
-    /// <returns></returns>
-    private async Task DownloadFilesAsync(string json) {
+    private async Task<(int success, int fail)> DownloadFilesWithResultAsync(string json) {
+        int success = 0;
+        int fail = 0;
+
         this._logger?.LogInformation("添付ファイルのダウンロードを開始します");
 
         using var doc = JsonDocument.Parse(json);
@@ -134,17 +170,16 @@ public sealed class BackupService {
 
         if (!root.TryGetProperty("records", out var records)) {
             this._logger?.LogWarning("records が見つからないため、添付ファイルのダウンロードをスキップします");
-            return;
+            return (0, 0);
         }
 
         var filesRoot = Path.Combine(Path.GetDirectoryName(this._options.OutputPath)!, "files");
         Directory.CreateDirectory(filesRoot);
 
         foreach (var record in records.EnumerateArray()) {
-            // レコードIDを取得
             var recordId = record.TryGetProperty("レコード番号", out var idField)
                 ? idField.GetProperty("value").GetString()
-                : Guid.NewGuid().ToString(); // fallback
+                : Guid.NewGuid().ToString();
 
             var recordDir = Path.Combine(filesRoot, recordId!);
             Directory.CreateDirectory(recordDir);
@@ -157,18 +192,21 @@ public sealed class BackupService {
                         var fileKey = fileInfo.GetProperty("fileKey").GetString();
                         var fileName = fileInfo.GetProperty("name").GetString();
 
-                        if (string.IsNullOrEmpty(fileKey) || string.IsNullOrEmpty(fileName)) { continue; }
+                        if (string.IsNullOrEmpty(fileKey) || string.IsNullOrEmpty(fileName)) {
+                            continue;
+                        }
 
                         var savePath = Path.Combine(recordDir, fileName);
-
-                        this._logger?.LogInformation("Downloading file: {FileName}", fileName);
 
                         try {
                             var bytes = await this._api.DownloadFileAsync(fileKey);
                             await File.WriteAllBytesAsync(savePath, bytes);
 
+                            success++;
                             this._logger?.LogInformation("Saved: {Path}", savePath);
+
                         } catch (Exception ex) {
+                            fail++;
                             this._logger?.LogError(ex, "ファイルのダウンロードに失敗しました: fileKey={FileKey}", fileKey);
                         }
                     }
@@ -177,52 +215,56 @@ public sealed class BackupService {
         }
 
         this._logger?.LogInformation("添付ファイルのダウンロードが完了しました");
+
+        return (success, fail);
     }
 
     /// <summary>
     /// フィールドスキーマを保存します
     /// </summary>
     /// <returns></returns>
-    private async Task SaveFieldSchemaAsync() {
+    private async Task<bool> SaveFieldSchemaAsync() {
         if (!this._options.IncludeFieldSchema) {
             this._logger?.LogInformation("フィールドスキーマのバックアップはスキップされました");
-            return;
+            return false;
         }
 
         this._logger?.LogInformation("フィールドスキーマを取得しています…");
 
-        try {
-            // 1. スキーマ取得
-            var metadata = await this._schemaProvider.GetMetadataAsync(this._options.AppID, this._options.ApiToken);
+        // 1. スキーマ取得
+        var metadata = await this._schemaProvider.GetMetadataAsync(this._options.AppID, this._options.ApiToken);
 
-            // 2. JSON シリアライズ
-            var json = JsonSerializer.Serialize(
-                metadata,
-                new JsonSerializerOptions {
-                    WriteIndented = true,
-                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-                }
-            );
-
-            // 3. 保存先パス
-            var dir = Path.GetDirectoryName(this._options.OutputPath)!;
-            Directory.CreateDirectory(dir);
-
-            var filePath = Path.Combine(dir, this._options.FieldSchemaFileName);
-
-            // 4. 上書きチェック
-            if (File.Exists(filePath) && !this._options.Overwrite) {
-                this._logger?.LogWarning("fields.json が既に存在するためスキップされました: {Path}", filePath);
-                return;
+        // 2. JSON シリアライズ
+        var json = JsonSerializer.Serialize(
+            metadata,
+            new JsonSerializerOptions {
+                WriteIndented = true,
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
             }
+        );
 
+        // 3. 保存先パス
+        var dir = Path.GetDirectoryName(this._options.OutputPath)!;
+        Directory.CreateDirectory(dir);
+
+        var filePath = Path.Combine(dir, this._options.FieldSchemaFileName);
+
+        // 4. 上書きチェック
+        if (File.Exists(filePath) && !this._options.Overwrite) {
+            this._logger?.LogWarning("fields.json が既に存在するためスキップされました: {Path}", filePath);
+            return false;
+        }
+
+        try {
             // 5. 書き込み
             await File.WriteAllTextAsync(filePath, json);
-
             this._logger?.LogInformation("フィールドスキーマを保存しました: {Path}", filePath);
+            return true;
+
         } catch (Exception ex) {
             this._logger?.LogError(ex, "フィールドスキーマの取得に失敗しました");
-            throw;
+            // throw;
+            return false;
         }
     }
 
