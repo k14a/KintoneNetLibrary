@@ -63,7 +63,7 @@ public class PythonNameConverter : INameConverter {
         }
 
         // プロパティ名を特定できない場合はエラーを出すためのinvalid nameを返す
-        return "__INVALID_FIELD_NAME__";
+        return "INVALID_FIELD_NAME";
     }
 
     /// <summary>
