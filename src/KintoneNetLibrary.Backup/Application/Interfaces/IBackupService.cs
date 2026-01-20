@@ -1,3 +1,5 @@
+using KintoneNetLibrary.Backup.Application.DTOs;
+
 namespace KintoneNetLibrary.Backup.Application.Interfaces;
 
 /// <summary>
@@ -7,5 +9,5 @@ public interface IBackupService {
     /// <summary>
     /// バックアップを実行します
     /// </summary>
-    Task RunBackupAsync();
+    Task<BackupResult> RunBackupAsync();
 }

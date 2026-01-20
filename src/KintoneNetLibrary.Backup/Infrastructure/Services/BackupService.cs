@@ -53,24 +53,38 @@ public sealed class BackupService {
     /// <summary>
     /// バックアップを実行します
     /// </summary>
-    public async Task RunBackupAsync() {
-        this._logger?.LogInformation("バックアップ開始: App={App}", this._options.AppID);
+    public async Task<BackupResult> RunBackupAsync() {
+        var result = new BackupResult();
 
-        // 1) レコード取得
-        var json = await this.FetchRecordsAsync();
+        try {
+            this._logger?.LogInformation("バックアップ開始: App={App}", this._options.AppID);
 
-        // 2) JSON 保存
-        await this.SaveJsonAsync(json);
+            // 1) レコード取得
+            var json = await this.FetchRecordsAsync();
 
-        // 3) フィールドスキーマ保存
-        await this.SaveFieldSchemaAsync();
+            // 2) JSON 保存
+            await this.SaveJsonAsync(json);
 
-        // 4) 添付ファイルダウンロード
-        if (this._options.DownloadFiles) {
-            await this.DownloadFilesAsync(json);
+            // 3) フィールドスキーマ保存
+            await this.SaveFieldSchemaAsync();
+
+            // 4) 添付ファイルダウンロード
+            if (this._options.DownloadFiles) {
+                await this.DownloadFilesAsync(json);
+            }
+
+            this._logger?.LogInformation("バックアップ完了");
+            return result;
+
+        } catch (Exception ex) {
+            this._logger?.LogError(ex, "バックアップ中にエラーが発生しました");
+            result.Success = false;
+            result.ErrorMessages.Add(ex.Message);
+            return result;
+
+        } finally {
+            this._logger?.LogInformation("バックアップ処理が終了しました");
         }
-
-        this._logger?.LogInformation("バックアップ完了");
     }
 
     /// <summary>
