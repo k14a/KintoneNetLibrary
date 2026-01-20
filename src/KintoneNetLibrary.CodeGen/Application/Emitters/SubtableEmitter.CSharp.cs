@@ -1,5 +1,6 @@
 using System.Text;
 using KintoneNetLibrary.CodeGen.Application.Interfaces;
+using KintoneNetLibrary.CodeGen.Domain.Enums;
 using KintoneNetLibrary.CodeGen.Domain.Models;
 using KintoneNetLibrary.CodeGen.Domain.Options;
 using KintoneNetLibrary.CodeGen.Domain.Schemas;
@@ -10,17 +11,17 @@ namespace KintoneNetLibrary.CodeGen.Application.Emitters;
 /// <summary>
 /// C# サブテーブルエミッター
 /// </summary>
-/// <param name="names"></param>
-/// <param name="types"></param>
+/// <param name="converterFactory"></param>
+/// <param name="mapperFactory"></param>
 /// <param name="xml"></param>
 public class CSharpSubTableEmitter(
-    INameConverter names,
-    ITypeMapper types,
+    INameConverterFactory converterFactory,
+    ITypeMapperFactory mapperFactory,
     IXmlCommentBuilder xml,
     ILogger<CSharpSubTableEmitter> logger) : ISubTableEmitter {
 
-    private readonly INameConverter _names = names;
-    private readonly ITypeMapper _types = types;
+    private readonly INameConverter _converter = converterFactory.Create(GenerateLanguages.CSharp);
+    private readonly ITypeMapper _types = mapperFactory.Create(GenerateLanguages.CSharp);
     private readonly IXmlCommentBuilder _xml = xml;
     private readonly ILogger<CSharpSubTableEmitter> _logger = logger;
     private readonly HashSet<string> _generatedClassNames = [];
@@ -42,7 +43,7 @@ public class CSharpSubTableEmitter(
         sb.AppendLine();
 
         // class name
-        name = this._names.ToClassName(name, string.Empty);
+        name = this._converter.ToClassName(name, string.Empty);
         name = this.MakeUniqueClassName(name);
         var className = $"SubTable{name}";
 
@@ -118,7 +119,7 @@ public class CSharpSubTableEmitter(
     /// <param name="field"></param>
     /// <param name="options"></param>
     private void EmitProperty(StringBuilder sb, KintoneFieldSchema field, CSharpEmitterOptions options) {
-        var propName = this._names.ToPropertyName(field.Label, field.FieldCode);
+        var propName = this._converter.ToPropertyName(field.Label, field.FieldCode);
         var typeName = this._types.MapType(field, options.UseKintoneNetLibrary);
 
         // XML コメント
