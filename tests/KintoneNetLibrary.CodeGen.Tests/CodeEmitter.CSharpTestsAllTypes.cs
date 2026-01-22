@@ -18,27 +18,27 @@ public class CSharpCodeEmitterAllTypesTests {
         var metadata = new KintoneAppMetadata {
             AppId = 3,
             Fields = new List<KintoneFieldMetadata> {
-                new() { Code = "text", Label = "テキスト", Type = KintoneFieldType.SingleLineText },
-                new() { Code = "number", Label = "数量", Type = KintoneFieldType.Number },
-                new() { Code = "date", Label = "日付", Type = KintoneFieldType.Date },
-                new() { Code = "datetime", Label = "日時", Type = KintoneFieldType.DateTime },
-                new() { Code = "time", Label = "時間", Type = KintoneFieldType.Time },
-                new() { Code = "checkbox", Label = "チェック", Type = KintoneFieldType.CheckBox },
-                new() { Code = "multi", Label = "選択肢", Type = KintoneFieldType.MultiSelect },
-                new() { Code = "file", Label = "添付ファイル", Type = KintoneFieldType.File },
-                new() { Code = "user", Label = "担当者", Type = KintoneFieldType.UserSelect },
-                new() { Code = "group", Label = "グループ", Type = KintoneFieldType.GroupSelect },
-                new() { Code = "org", Label = "組織", Type = KintoneFieldType.OrganizationSelect },
+                new() { FieldCode = "text", FieldLabel = "テキスト", FieldType = KintoneFieldType.SingleLineText },
+                new() { FieldCode = "number", FieldLabel = "数量", FieldType = KintoneFieldType.Number },
+                new() { FieldCode = "date", FieldLabel = "日付", FieldType = KintoneFieldType.Date },
+                new() { FieldCode = "datetime", FieldLabel = "日時", FieldType = KintoneFieldType.DateTime },
+                new() { FieldCode = "time", FieldLabel = "時間", FieldType = KintoneFieldType.Time },
+                new() { FieldCode = "checkbox", FieldLabel = "チェック", FieldType = KintoneFieldType.CheckBox },
+                new() { FieldCode = "multi", FieldLabel = "選択肢", FieldType = KintoneFieldType.MultiSelect },
+                new() { FieldCode = "file", FieldLabel = "添付ファイル", FieldType = KintoneFieldType.File },
+                new() { FieldCode = "user", FieldLabel = "担当者", FieldType = KintoneFieldType.UserSelect },
+                new() { FieldCode = "group", FieldLabel = "グループ", FieldType = KintoneFieldType.GroupSelect },
+                new() { FieldCode = "org", FieldLabel = "組織", FieldType = KintoneFieldType.OrganizationSelect },
 
                 // サブテーブル
                 new() {
-                    Code = "details",
-                    Label = "明細",
-                    Type = KintoneFieldType.SubTable,
+                    FieldCode = "details",
+                    FieldLabel = "明細",
+                    FieldType = KintoneFieldType.SubTable,
                     SubFields = new List<KintoneFieldMetadata> {
-                        new() { Code = "item", Label = "商品名", Type = KintoneFieldType.SingleLineText },
-                        new() { Code = "qty", Label = "数量", Type = KintoneFieldType.Number },
-                        new() { Code = "price", Label = "単価", Type = KintoneFieldType.Number }
+                        new() { FieldCode = "item", FieldLabel = "商品名", FieldType = KintoneFieldType.SingleLineText },
+                        new() { FieldCode = "qty", FieldLabel = "数量", FieldType = KintoneFieldType.Number },
+                        new() { FieldCode = "price", FieldLabel = "単価", FieldType = KintoneFieldType.Number }
                     }
                 }
             }

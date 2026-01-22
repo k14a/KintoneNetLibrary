@@ -18,10 +18,10 @@ public class CSharpCodeEmitterNullableTests {
         var metadata = new KintoneAppMetadata {
             AppId = 4,
             Fields = new List<KintoneFieldMetadata> {
-                new() { Code = "text", Label = "テキスト", Type = KintoneFieldType.SingleLineText },
-                new() { Code = "number", Label = "数量", Type = KintoneFieldType.Number },
-                new() { Code = "date", Label = "日付", Type = KintoneFieldType.Date },
-                new() { Code = "file", Label = "添付", Type = KintoneFieldType.File }
+                new() { FieldCode = "text", FieldLabel = "テキスト", FieldType = KintoneFieldType.SingleLineText },
+                new() { FieldCode = "number", FieldLabel = "数量", FieldType = KintoneFieldType.Number },
+                new() { FieldCode = "date", FieldLabel = "日付", FieldType = KintoneFieldType.Date },
+                new() { FieldCode = "file", FieldLabel = "添付", FieldType = KintoneFieldType.File }
             }
         };
 

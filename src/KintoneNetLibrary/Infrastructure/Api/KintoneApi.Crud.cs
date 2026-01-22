@@ -16,7 +16,7 @@ namespace KintoneNetLibrary.Infrastructure.Api;
 /// <summary>
 /// Kintone API の CRUD 操作を提供する部分クラス
 /// </summary>
-public partial class KintoneApi : BaseKintoneApi , IKintoneApi {
+public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
     /// <summary>
     /// 複数レコードを一括登録します
     /// </summary>

@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using KintoneNetLibrary.Domain.Entities;
+using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Domain.Enums;
 
 namespace KintoneNetLibrary.Domain.Access;

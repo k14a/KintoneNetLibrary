@@ -1,4 +1,6 @@
-﻿namespace KintoneNetLibrary.Domain.Entities;
+﻿using KintoneNetLibrary.Domain.Enums;
+
+namespace KintoneNetLibrary.Domain.Entities;
 
 /// <summary>
 /// Constructor

@@ -2,6 +2,7 @@ using KintoneNetLibrary.CodeGen.Application.Interfaces;
 using KintoneNetLibrary.CodeGen.Domain.Schemas;
 using KintoneNetLibrary.Domain.Converters;
 using KintoneNetLibrary.Domain.Entities;
+using KintoneNetLibrary.Domain.Enums;
 
 namespace KintoneNetLibrary.CodeGen.Application.Emitters;
 
@@ -15,7 +16,7 @@ public class CSharpTypeMapper : ITypeMapper {
     /// <param name="field"></param>
     /// <returns></returns>
     public string Map(KintoneFieldMetadata field) {
-        return field.Type switch {
+        return field.FieldType switch {
             // 文字列系
             KintoneFieldType.SingleLineText => "string",
             KintoneFieldType.MultiLineText => "string",
@@ -46,7 +47,7 @@ public class CSharpTypeMapper : ITypeMapper {
             KintoneFieldType.OrganizationSelect => "List<KintoneOrganization>",
 
             // サブテーブル → List<クラス名>
-            KintoneFieldType.SubTable => $"List<{field.Code}>",
+            KintoneFieldType.SubTable => $"List<{field.FieldCode}>",
 
             // fallback
             _ => "string"

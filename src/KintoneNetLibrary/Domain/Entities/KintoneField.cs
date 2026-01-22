@@ -31,7 +31,7 @@ public class KintoneField {
     public KintoneField() { }
 
     /// <summary>
-    /// KintoneFieldのコンストラクタ    
+    /// KintoneFieldのコンストラクタ
     /// このコンストラクタは、フィールドのタイプと値を指定して初期化します。
     /// </summary>
     public KintoneField(string type, object value) {

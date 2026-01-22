@@ -25,8 +25,8 @@ public partial class KintoneQuery<T> where T : KintoneModelBase<T>, new() {
         this._conditions.Add($"{field} = null");
 
         return this;
-    } 
-    
+    }
+
     /// <summary>
     /// フィールドが null であるかを確認します。
     /// </summary>

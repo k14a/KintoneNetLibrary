@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Domain.Enums;
 
 namespace KintoneNetLibrary.Domain.Entities;

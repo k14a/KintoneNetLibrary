@@ -1,5 +1,6 @@
 using System.Text.Json;
 using KintoneNetLibrary.Domain.Entities;
+using KintoneNetLibrary.Domain.Enums;
 
 namespace KintoneNetLibrary.Application.Factories;
 
@@ -61,9 +62,9 @@ public static class KintoneAppMetadataFactory {
             }
 
             return new KintoneFieldMetadata {
-                Code = code,
-                Label = label,
-                Type = KintoneFieldType.SubTable,
+                FieldCode = code,
+                FieldLabel = label,
+                FieldType = KintoneFieldType.SubTable,
                 Required = required,
                 SubFields = fields
             };
@@ -76,9 +77,9 @@ public static class KintoneAppMetadataFactory {
         }
 
         return new KintoneFieldMetadata {
-            Code = code,
-            Label = label,
-            Type = ParseFieldType(type),
+            FieldCode = code,
+            FieldLabel = label,
+            FieldType = ParseFieldType(type),
             Required = required,
             Options = options
         };

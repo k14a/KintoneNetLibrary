@@ -71,21 +71,21 @@ public class SchemaProvider(IHttpClientFactory httpClientFactory, ILogger<Schema
         return new KintoneAppSchema {
             AppId = metadata.AppId,
             Revision = metadata.Revision,
-            Fields = [.. metadata.Fields.Where(f => f.Type != KintoneFieldType.SubTable).Select(f => new KintoneFieldSchema {
-                FieldCode = f.Code,
-                Label = f.Label,
-                FieldType = f.Type,
+            Fields = [.. metadata.Fields.Where(f => f.FieldType != KintoneFieldType.SubTable).Select(f => new KintoneFieldSchema {
+                FieldCode = f.FieldCode,
+                Label = f.FieldLabel,
+                FieldType = f.FieldType,
                 Required = f.Required,
                 Options = f.Options == null ? [] : [.. f.Options], // ドロップダウンなど
                 // 必要に応じて追加
             })],
-            SubTables = [.. metadata.Fields.Where(st => st.Type == KintoneFieldType.SubTable).Select(st => new KintoneSubTableSchema {
-                FieldCode = st.Code,
-                Label = st.Label,
+            SubTables = [.. metadata.Fields.Where(st => st.FieldType == KintoneFieldType.SubTable).Select(st => new KintoneSubTableSchema {
+                FieldCode = st.FieldCode,
+                Label = st.FieldLabel,
                 Fields = [.. st.SubFields!.Select(sf => new KintoneFieldSchema {
-                    FieldCode = sf.Code,
-                    Label = sf.Label,
-                    FieldType = sf.Type,
+                    FieldCode = sf.FieldCode,
+                    Label = sf.FieldLabel,
+                    FieldType = sf.FieldType,
                     Required = sf.Required,
                     Options = sf.Options == null ? [] : [.. sf.Options], // ドロップダウンなど
                     // 必要に応じて追加
@@ -112,14 +112,14 @@ public class SchemaProvider(IHttpClientFactory httpClientFactory, ILogger<Schema
         // -----------------------------
         // 追加されたフィールド
         // -----------------------------
-        foreach (var f in latest.Fields.Where(f => backupSchema.Fields.All(pf => pf.Code != f.Code))) {
+        foreach (var f in latest.Fields.Where(f => backupSchema.Fields.All(pf => pf.FieldCode != f.FieldCode))) {
             diffs.Add(new KintoneMetadataDiff { DiffType = KintoneMetadataDiffTypes.Added, After = f });
         }
 
         // -----------------------------
         // 削除されたフィールド
         // -----------------------------
-        foreach (var f in backupSchema.Fields.Where(f => latest.Fields.All(lf => lf.Code != f.Code))) {
+        foreach (var f in backupSchema.Fields.Where(f => latest.Fields.All(lf => lf.FieldCode != f.FieldCode))) {
             diffs.Add(new KintoneMetadataDiff { DiffType = KintoneMetadataDiffTypes.Removed, Before = f });
         }
 
@@ -127,13 +127,13 @@ public class SchemaProvider(IHttpClientFactory httpClientFactory, ILogger<Schema
         // 変更されたフィールド
         // -----------------------------
         foreach (var latestField in latest.Fields) {
-            var prevField = backupSchema.Fields.FirstOrDefault(pf => pf.Code == latestField.Code);
+            var prevField = backupSchema.Fields.FirstOrDefault(pf => pf.FieldCode == latestField.FieldCode);
             if (prevField == null) { continue; }
 
             var changedProps = new List<string>();
 
-            if (prevField.Type != latestField.Type) { changedProps.Add(nameof(prevField.Type)); }
-            if (prevField.Label != latestField.Label) { changedProps.Add(nameof(prevField.Label)); }
+            if (prevField.FieldType != latestField.FieldType) { changedProps.Add(nameof(prevField.FieldType)); }
+            if (prevField.FieldLabel != latestField.FieldLabel) { changedProps.Add(nameof(prevField.FieldLabel)); }
             if (prevField.Required != latestField.Required) { changedProps.Add(nameof(prevField.Required)); }
             if (!Enumerable.SequenceEqual(prevField.Options ?? [], latestField.Options ?? [])) { changedProps.Add(nameof(prevField.Options)); }
             if (changedProps.Count > 0) {

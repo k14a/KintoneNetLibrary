@@ -9,77 +9,77 @@ public class TypeMapperTests {
 
     [Fact]
     public void MapSingleLineTextReturnsString() {
-        var field = new KintoneFieldMetadata { Type = KintoneFieldType.SingleLineText };
+        var field = new KintoneFieldMetadata { FieldType = KintoneFieldType.SingleLineText };
         var result = this._mapper.Map(field);
         Assert.Equal("string", result);
     }
 
     [Fact]
     public void MapNumberReturnsDecimalNullable() {
-        var field = new KintoneFieldMetadata { Type = KintoneFieldType.Number };
+        var field = new KintoneFieldMetadata { FieldType = KintoneFieldType.Number };
         var result = this._mapper.Map(field);
         Assert.Equal("decimal?", result);
     }
 
     [Fact]
     public void MapDateReturnsKintoneDateTime() {
-        var field = new KintoneFieldMetadata { Type = KintoneFieldType.Date };
+        var field = new KintoneFieldMetadata { FieldType = KintoneFieldType.Date };
         var result = this._mapper.Map(field);
         Assert.Equal("KintoneDateTime", result);
     }
 
     [Fact]
     public void MapDateTimeReturnsKintoneDateTime() {
-        var field = new KintoneFieldMetadata { Type = KintoneFieldType.DateTime };
+        var field = new KintoneFieldMetadata { FieldType = KintoneFieldType.DateTime };
         var result = this._mapper.Map(field);
         Assert.Equal("KintoneDateTime", result);
     }
 
     [Fact]
     public void MapTimeReturnsKintoneTimeOnly() {
-        var field = new KintoneFieldMetadata { Type = KintoneFieldType.Time };
+        var field = new KintoneFieldMetadata { FieldType = KintoneFieldType.Time };
         var result = this._mapper.Map(field);
         Assert.Equal("KintoneTimeOnly", result);
     }
 
     [Fact]
     public void MapCheckBoxReturnsListOfString() {
-        var field = new KintoneFieldMetadata { Type = KintoneFieldType.CheckBox };
+        var field = new KintoneFieldMetadata { FieldType = KintoneFieldType.CheckBox };
         var result = this._mapper.Map(field);
         Assert.Equal("List<string>", result);
     }
 
     [Fact]
     public void MapMultiSelectReturnsListOfString() {
-        var field = new KintoneFieldMetadata { Type = KintoneFieldType.MultiSelect };
+        var field = new KintoneFieldMetadata { FieldType = KintoneFieldType.MultiSelect };
         var result = this._mapper.Map(field);
         Assert.Equal("List<string>", result);
     }
 
     [Fact]
     public void MapFileReturnsListOfKintoneFile() {
-        var field = new KintoneFieldMetadata { Type = KintoneFieldType.File };
+        var field = new KintoneFieldMetadata { FieldType = KintoneFieldType.File };
         var result = this._mapper.Map(field);
         Assert.Equal("List<KintoneFile>", result);
     }
 
     [Fact]
     public void MapUserSelectReturnsListOfKintoneUser() {
-        var field = new KintoneFieldMetadata { Type = KintoneFieldType.UserSelect };
+        var field = new KintoneFieldMetadata { FieldType = KintoneFieldType.UserSelect };
         var result = this._mapper.Map(field);
         Assert.Equal("List<KintoneUser>", result);
     }
 
     [Fact]
     public void MapGroupSelectReturnsListOfKintoneGroup() {
-        var field = new KintoneFieldMetadata { Type = KintoneFieldType.GroupSelect };
+        var field = new KintoneFieldMetadata { FieldType = KintoneFieldType.GroupSelect };
         var result = this._mapper.Map(field);
         Assert.Equal("List<KintoneGroup>", result);
     }
 
     [Fact]
     public void MapOrganizationSelectReturnsListOfKintoneOrganization() {
-        var field = new KintoneFieldMetadata { Type = KintoneFieldType.OrganizationSelect };
+        var field = new KintoneFieldMetadata { FieldType = KintoneFieldType.OrganizationSelect };
         var result = this._mapper.Map(field);
         Assert.Equal("List<KintoneOrganization>", result);
     }

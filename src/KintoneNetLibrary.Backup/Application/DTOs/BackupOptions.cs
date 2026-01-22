@@ -16,7 +16,7 @@ public sealed class BackupOptions {
     /// <summary>
     /// 出力先パス(必須)
     /// </summary>
-    public required string OutputPath { get; init; }
+    public required DirectoryInfo OutputPath { get; init; }
 
     /// <summary>
     /// クエリ文字列
@@ -55,5 +55,6 @@ public sealed class BackupOptions {
     /// フィールドスキーマのファイル名
     /// </summary>
     public string FieldSchemaFileName { get; init; } = "fields.json";
-
+    public bool Pretty { get; set; } = false;
+    public bool EscapeUnicode { get; set; } = true;
 }

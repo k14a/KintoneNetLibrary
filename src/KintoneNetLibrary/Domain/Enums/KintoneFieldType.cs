@@ -1,4 +1,4 @@
-﻿namespace KintoneNetLibrary.Domain.Entities;
+﻿namespace KintoneNetLibrary.Domain.Enums;
 
 /// <summary>
 /// Kintone レコードの基本タイプ定義

@@ -6,6 +6,7 @@ using KintoneNetLibrary.CodeGen.Domain.Options;
 using KintoneNetLibrary.CodeGen.Domain.Schemas;
 using KintoneNetLibrary.CodeGen.Domain.Services;
 using KintoneNetLibrary.Domain.Entities;
+using KintoneNetLibrary.Domain.Enums;
 using Microsoft.Extensions.Logging;
 
 namespace KintoneNetLibrary.CodeGen.Application.Emitters;

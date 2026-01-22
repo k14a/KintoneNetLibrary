@@ -1,5 +1,4 @@
-namespace KintoneNetLibrary.Domain.Entities
-{
+namespace KintoneNetLibrary.Domain.Entities {
     // コメントは日本語で記述
     /// <summary>
     /// Kintoneモデルのフック基底クラス。
@@ -24,7 +23,7 @@ namespace KintoneNetLibrary.Domain.Entities
         /// レコード更新後に呼ばれるフック。
         /// ロギングなどの事後処理に使用可能。
         /// </summary>
-        public virtual Task OnAfterUpdateAsync()=> Task.CompletedTask;
+        public virtual Task OnAfterUpdateAsync() => Task.CompletedTask;
         /// <summary>
         /// レコード削除前に呼ばれるフック。
         /// 削除確認や関連データ処理に使用可能。
@@ -34,6 +33,6 @@ namespace KintoneNetLibrary.Domain.Entities
         /// レコード削除後に呼ばれるフック。
         /// ログ出力や通知処理に使用可能。
         /// </summary>
-        public virtual Task OnAfterDeleteAsync() =>Task.CompletedTask;
+        public virtual Task OnAfterDeleteAsync() => Task.CompletedTask;
     }
 }

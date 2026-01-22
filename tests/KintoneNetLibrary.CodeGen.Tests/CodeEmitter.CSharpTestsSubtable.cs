@@ -19,29 +19,29 @@ public class CSharpCodeEmitterSubtableTests {
             AppId = 2,
             Fields = new List<KintoneFieldMetadata> {
                 new() {
-                    Code = "customer_name",
-                    Label = "顧客名",
-                    Type = KintoneFieldType.SingleLineText
+                    FieldCode = "customer_name",
+                    FieldLabel = "顧客名",
+                    FieldType = KintoneFieldType.SingleLineText
                 },
                 new() {
-                    Code = "order_items",
-                    Label = "明細",
-                    Type = KintoneFieldType.SubTable,
+                    FieldCode = "order_items",
+                    FieldLabel = "明細",
+                    FieldType = KintoneFieldType.SubTable,
                     SubFields = new List<KintoneFieldMetadata> {
                         new() {
-                            Code = "item_name",
-                            Label = "商品名",
-                            Type = KintoneFieldType.SingleLineText
+                            FieldCode = "item_name",
+                            FieldLabel = "商品名",
+                            FieldType = KintoneFieldType.SingleLineText
                         },
                         new() {
-                            Code = "quantity",
-                            Label = "数量",
-                            Type = KintoneFieldType.Number
+                            FieldCode = "quantity",
+                            FieldLabel = "数量",
+                            FieldType = KintoneFieldType.Number
                         },
                         new() {
-                            Code = "unit_price",
-                            Label = "単価",
-                            Type = KintoneFieldType.Number
+                            FieldCode = "unit_price",
+                            FieldLabel = "単価",
+                            FieldType = KintoneFieldType.Number
                         }
                     }
                 }

@@ -7,8 +7,7 @@ namespace KintoneNetLibrary.Domain.Entities;
 /// Kintoneのレコード群を表すクラス
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public class KintoneRecords<T>
-{
+public class KintoneRecords<T> {
     /// <summary>
     /// アプリのID
     /// </summary>

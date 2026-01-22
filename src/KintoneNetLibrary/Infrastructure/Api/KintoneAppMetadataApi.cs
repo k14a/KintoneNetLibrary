@@ -4,6 +4,7 @@ using KintoneNetLibrary.Infrastructure.Internal;
 using KintoneNetLibrary.Domain.Entities;
 using System.Text.Json;
 using KintoneNetLibrary.Domain.Converters;
+using KintoneNetLibrary.Domain.Enums;
 
 namespace KintoneNetLibrary.Infrastructure.Api;
 
@@ -69,6 +70,7 @@ public class KintoneAppMetadataApi(
 
             var type = field.GetProperty("type").GetString()!;
             var label = field.GetProperty("label").GetString() ?? code;
+            var OriginalFieldType = field.GetProperty("type").GetString()!;
 
             if (type == "SUBTABLE") {
                 // サブテーブル
@@ -83,18 +85,22 @@ public class KintoneAppMetadataApi(
                     if (!KintoneFieldTypeMapper.TryConvert(sfType, out var fieldType)) { continue; }
 
                     subFields.Add(new KintoneFieldMetadata {
-                        Code = sfCode,
-                        Label = sfValue.GetProperty("label").GetString() ?? sfCode,
-                        Type = fieldType,
+                        FieldCode = sfCode,
+                        FieldLabel = sfValue.GetProperty("label").GetString() ?? sfCode,
+                        FieldType = fieldType,
+                        FieldTypeName = fieldType.ToString(),
+                        OriginalFieldType = sfType,
                         Required = sfValue.TryGetProperty("required", out var req) && req.GetBoolean(),
                         Options = ExtractOptions(sfValue)
                     });
                 }
 
                 fields.Add(new KintoneFieldMetadata {
-                    Code = code,
-                    Label = label,
-                    Type = KintoneFieldType.SubTable,
+                    FieldCode = code,
+                    FieldLabel = label,
+                    FieldType = KintoneFieldType.SubTable,
+                    FieldTypeName = KintoneFieldType.SubTable.ToString(),
+                    OriginalFieldType = type,
                     Required = false,
                     SubFields = subFields
                 });
@@ -104,9 +110,11 @@ public class KintoneAppMetadataApi(
                 if (!KintoneFieldTypeMapper.TryConvert(type, out var fieldType)) { continue; }
 
                 fields.Add(new KintoneFieldMetadata {
-                    Code = code,
-                    Label = label,
-                    Type = fieldType,
+                    FieldCode = code,
+                    FieldLabel = label,
+                    FieldType = fieldType,
+                    FieldTypeName = fieldType.ToString(),
+                    OriginalFieldType = type,
                     Required = field.TryGetProperty("required", out var req) && req.GetBoolean(),
                     Options = ExtractOptions(field)
                 });
@@ -131,6 +139,6 @@ public class KintoneAppMetadataApi(
     private static IReadOnlyList<string>? ExtractOptions(JsonElement field) {
         if (!field.TryGetProperty("options", out var optionsJson)) { return null; }
 
-        return [.. optionsJson.EnumerateObject().Select(o => o.Value.GetProperty("label").GetString()!)];
+        return [.. optionsJson.EnumerateObject().OrderBy(o => o.Value.GetProperty("label").GetString()!).Select(o => o.Value.GetProperty("label").GetString()!)];
     }
 }

@@ -1,6 +1,7 @@
 using KintoneNetLibrary.CodeGen.Application.Interfaces;
 using KintoneNetLibrary.CodeGen.Domain.Schemas;
 using KintoneNetLibrary.Domain.Entities;
+using KintoneNetLibrary.Domain.Enums;
 
 namespace KintoneNetLibrary.CodeGen.Application.Emitters;
 

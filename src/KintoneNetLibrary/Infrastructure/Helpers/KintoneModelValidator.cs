@@ -1,5 +1,6 @@
 using System.Reflection;
 using KintoneNetLibrary.Domain.Entities;
+using KintoneNetLibrary.Domain.Enums;
 
 namespace KintoneNetLibrary.Infrastructure.Helpers;
 

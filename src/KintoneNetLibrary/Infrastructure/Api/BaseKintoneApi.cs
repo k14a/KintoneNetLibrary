@@ -29,7 +29,7 @@ public abstract class BaseKintoneApi {
     /// <param name="access"></param>
     /// <param name="httpClient"></param>
     /// <param name="logger"></param>
-    protected BaseKintoneApi( KintoneAccessBase access, HttpClient httpClient, ILogger? logger = null) {
+    protected BaseKintoneApi(KintoneAccessBase access, HttpClient httpClient, ILogger? logger = null) {
         this.Access = access;
         this.HttpClient = httpClient;
         this.Logger = logger;

@@ -21,7 +21,7 @@ public partial class KintoneQuery<T> where T : KintoneModelBase<T>, new() {
         this._orderBys.Add($"{GetFieldName(keySelector)} asc");
         return this;
     }
-    
+
     /// <summary>
     /// ソート条件を追加します。
     /// </summary>
@@ -38,7 +38,7 @@ public partial class KintoneQuery<T> where T : KintoneModelBase<T>, new() {
         this._orderBys.Add($"{GetFieldName(keySelector)} desc");
         return this;
     }
-    
+
     /// <summary>
     /// 既存のソート条件に追加します。
     /// </summary>
@@ -54,7 +54,7 @@ public partial class KintoneQuery<T> where T : KintoneModelBase<T>, new() {
         this._orderBys.Add($"{GetFieldName(keySelector)} asc");
         return this;
     }
-    
+
     /// <summary>
     /// 既存のソート条件に追加します。
     /// </summary>

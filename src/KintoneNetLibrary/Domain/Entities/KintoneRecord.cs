@@ -5,8 +5,7 @@ namespace KintoneNetLibrary.Domain.Entities;
 /// <summary>
 /// Kintoneのレコードを表すクラス
 /// </summary>
-public class KintoneRecord
-{
+public class KintoneRecord {
     /// <summary>
     /// レコードのフィールドを表す辞書
     /// </summary>

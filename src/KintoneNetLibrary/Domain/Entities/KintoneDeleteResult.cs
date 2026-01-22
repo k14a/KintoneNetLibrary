@@ -5,7 +5,7 @@ using KintoneNetLibrary.Domain.Interfaces;
 using KintoneNetLibrary.Utils;
 using KintoneNetLibrary.Domain.Common;
 
-namespace KintoneNetLibrary.Domain.Entities; 
+namespace KintoneNetLibrary.Domain.Entities;
 
 /// <summary>
 /// Kintone削除APIのレスポンス結果を表すクラス

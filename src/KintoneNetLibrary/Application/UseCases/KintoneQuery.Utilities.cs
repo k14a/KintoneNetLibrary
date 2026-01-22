@@ -20,7 +20,7 @@ public partial class KintoneQuery<T> where T : KintoneModelBase<T>, new() {
         this._limit = limit;
         return this;
     }
-    
+
     /// <summary>
     /// クエリの結果のオフセットを設定します。
     /// </summary>
@@ -141,7 +141,7 @@ public partial class KintoneQuery<T> where T : KintoneModelBase<T>, new() {
     /// <exception cref="ArgumentNullException">keySelector が null の場合にスローされます。</exception>
     /// <exception cref="ArgumentException">keySelector が有効なフィールドを指定していない場合にスローされます。</exception>
     private string BuildOrderBy() => this._orderBys.Count == 0 ? string.Empty : "order by " + string.Join(", ", this._orderBys);
-    
+
     /// <summary>
     /// 既存のソート条件に追加します。
     /// </summary>
@@ -160,7 +160,7 @@ public partial class KintoneQuery<T> where T : KintoneModelBase<T>, new() {
     /// 数値型や日付型、文字列、真偽値フィールドでのみ使用可能な型のセットです。
     /// </summary>
     private static readonly HashSet<Type> SupportedTypesForComparison = new HashSet<Type>(BaseSupportedTypes);
-    
+
     /// <summary>
     /// 数値型や日付型、文字列、真偽値フィールドでのみ使用可能な型のセットです。
     /// </summary>

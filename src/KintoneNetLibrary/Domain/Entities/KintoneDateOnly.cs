@@ -1,3 +1,4 @@
+using KintoneNetLibrary.Domain.Enums;
 using KintoneNetLibrary.Domain.Interfaces;
 
 namespace KintoneNetLibrary.Domain.Entities;

@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using KintoneNetLibrary.Domain.Enums;
 using KintoneNetLibrary.Domain.Interfaces;
 
 namespace KintoneNetLibrary.Domain.Entities;
@@ -192,7 +193,7 @@ public class KintoneDateTime : IKintoneFieldConverter {
             return false;
         }
     }
-    
+
     /// <summary>
     /// KintoneDateTimeをDateTimeに変換
     /// </summary>

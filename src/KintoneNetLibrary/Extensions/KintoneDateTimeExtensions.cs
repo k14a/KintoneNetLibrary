@@ -1,6 +1,7 @@
 namespace KintoneNetLibrary.Extensions;
 
 using KintoneNetLibrary.Domain.Entities;
+using KintoneNetLibrary.Domain.Enums;
 
 // コメントは日本語で記述
 /// <summary>

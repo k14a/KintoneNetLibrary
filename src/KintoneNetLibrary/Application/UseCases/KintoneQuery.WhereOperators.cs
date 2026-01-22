@@ -115,5 +115,5 @@ public partial class KintoneQuery<T> where T : KintoneModelBase<T>, new() {
         return this;
     }
     #endregion
-    
+
 }

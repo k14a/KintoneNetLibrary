@@ -183,9 +183,7 @@ public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
     /// <param name="query"></param>
     /// <param name="fieldCodes"></param>
     /// <returns></returns>
-    private async Task<string> RawCursorFetchAllJsonAsync(
-        string query,
-        IList<string>? fieldCodes = null) {
+    private async Task<string> RawCursorFetchAllJsonAsync(string query, IList<string>? fieldCodes = null) {
         var cursorRequest = new Dictionary<string, object> {
             ["app"] = this._appID,
             ["size"] = this.CursorPageSize,

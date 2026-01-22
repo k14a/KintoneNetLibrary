@@ -18,8 +18,8 @@ public class CSharpCodeEmitterTests {
         var metadata = new KintoneAppMetadata {
             AppId = 1,
             Fields = [
-                new() { Code = "customer_name", Label = "顧客名", Type = KintoneFieldType.SingleLineText },
-                new() { Code = "order_date", Label = "日付", Type = KintoneFieldType.Date }
+                new() { FieldCode = "customer_name", FieldLabel = "顧客名", FieldType = KintoneFieldType.SingleLineText },
+                new() { FieldCode = "order_date", FieldLabel = "日付", FieldType = KintoneFieldType.Date }
             ]
         };
 

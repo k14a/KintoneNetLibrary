@@ -1,13 +1,14 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using Microsoft.Extensions.Logging;
 using KintoneNetLibrary.Application.Interfaces;
+using KintoneNetLibrary.Backup.Application.DTOs;
+using KintoneNetLibrary.Backup.Application.Interfaces;
+using KintoneNetLibrary.Backup.Domain.Enums;
 using KintoneNetLibrary.CodeGen.Application.Interfaces;
 using KintoneNetLibrary.Domain.Access;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Infrastructure.Api;
-using KintoneNetLibrary.Backup.Application.DTOs;
-using KintoneNetLibrary.Backup.Domain.Enums;
+using Microsoft.Extensions.Logging;
 using static KintoneNetLibrary.Domain.Common.KintoneConstants;
 
 namespace KintoneNetLibrary.Backup.Infrastructure.Services;
@@ -15,37 +16,30 @@ namespace KintoneNetLibrary.Backup.Infrastructure.Services;
 /// <summary>
 /// リストアサービス
 /// </summary>
-public sealed class RestoreService {
-    private readonly RestoreOptions _options;
-    private readonly IKintoneApi _api;
-    private readonly ISchemaProvider _schemaProvider;
-    private readonly ILogger? _logger;
+/// <remarks>
+/// コンストラクタ
+/// </remarks>
+/// <param name="schemaProvider"></param>
+/// <param name="httpClient"></param>
+/// <param name="logger"></param>
+public sealed class RestoreService(ISchemaProvider schemaProvider, HttpClient? httpClient = null, ILogger<RestoreService>? logger = null) : IRestoreService {
+    private IKintoneApi? _api;
+    private readonly ISchemaProvider _schemaProvider = schemaProvider;
+    private HttpClient? _httpClient = httpClient;
+    private readonly ILogger? _logger = logger;
+    private readonly RestoreResult _result = new();
+    public RestoreOptions Options { get; set; } = default!;
 
-    /// <summary>
-    /// コンストラクタ
-    /// </summary>
-    /// <param name="options"></param>
-    /// <param name="schemaProvider"></param>
-    /// <param name="httpClient"></param>
-    /// <param name="logger"></param>
-    public RestoreService(
-        RestoreOptions options,
-        ISchemaProvider schemaProvider,
-        HttpClient? httpClient = null,
-        ILogger<RestoreService>? logger = null) {
-        ArgumentNullException.ThrowIfNull(options);
+    private void EnsureApiInitialized() {
+        if (this._api != null) { return; }
+        ArgumentNullException.ThrowIfNull(this.Options);
+        var access = new ApiTokenAccess(this.Options.SubDomain, this.Options.ApiToken);
 
-        this._options = options;
-        this._logger = logger;
-        this._schemaProvider = schemaProvider;
-
-        var access = new ApiTokenAccess(options.SubDomain, options.ApiToken);
-
-        httpClient ??= new HttpClient {
-            BaseAddress = new Uri($"https://{options.SubDomain}/k/v1/")
+        this._httpClient ??= new HttpClient {
+            BaseAddress = new Uri($"https://{this.Options.SubDomain}/k/v1/")
         };
 
-        this._api = new KintoneApi(access: access, appID: options.AppID, httpClient: httpClient);
+        this._api = new KintoneApi(access: access, appID: this.Options.AppID, httpClient: this._httpClient);
     }
 
     /// <summary>
@@ -53,43 +47,55 @@ public sealed class RestoreService {
     /// </summary>
     /// <returns></returns>
     /// <exception cref="NotSupportedException"></exception>
-    public async Task RunRestoreAsync() {
-        this._logger?.LogInformation("Restore 開始: App={App}", this._options.AppID);
+    public async Task<RestoreResult> RunRestoreAsync() {
+        this._logger?.LogInformation("リストア 開始: App={App}", this.Options.AppID);
+        this.EnsureApiInitialized();
 
-        // 1) backup.json 読み込み
-        var backup = await this.LoadBackupJsonAsync();
+        try {
+            // 1) backup.json 読み込み
+            var backup = await this.LoadBackupJsonAsync();
 
-        // 2) metadata 読み込み
-        var metadata = backup["metadata"]!;
+            // 2) metadata 読み込み
+            var metadata = backup["metadata"]!;
 
-        // 3) fields.json 読み込み
-        var schema = await this.LoadFieldSchemaAsync(metadata);
+            // 3) fields.json 読み込み
+            var schema = await this.LoadFieldSchemaAsync(metadata);
 
-        // 4) 現在のスキーマと比較
-        await this.ValidateSchemaAsync(schema);
+            // 4) 現在のスキーマと比較
+            await this.ValidateSchemaAsync(schema);
 
-        // 5) レコード復元
-        switch (this._options.Mode) {
-            case RestoreMode.FullReplace:
-                await this.DeleteAllRecordsAsync();
-                await this.RestoreRecordsCreateAllAsync(backup);
-                break;
-            case RestoreMode.Upsert:
-                await this.RestoreRecordsUpsertAsync(backup);
-                break;
-            case RestoreMode.Merge:
-                await this.RestoreRecordsCreateOnlyAsync(backup);
-                break;
-            default:
-                throw new NotSupportedException($"Unsupported RestoreMode: {this._options.Mode}");
+            // 5) レコード復元
+            switch (this.Options.Mode) {
+                case RestoreMode.FullReplace:
+                    await this.DeleteAllRecordsAsync();
+                    await this.RestoreRecordsCreateAllAsync(backup);
+                    break;
+                case RestoreMode.Upsert:
+                    await this.RestoreRecordsUpsertAsync(backup);
+                    break;
+                case RestoreMode.Merge:
+                    await this.RestoreRecordsCreateOnlyAsync(backup);
+                    break;
+                default:
+                    throw new NotSupportedException($"Unsupported RestoreMode: {this.Options.Mode}");
+            }
+
+            // 6) 添付ファイル復元
+            if (this.Options.RestoreFiles) {
+                await this.RestoreFilesAsync(backup, metadata);
+            }
+
+            return this._result;
+
+        } catch (Exception ex) {
+            this._logger?.LogError(ex, "リストア 中にエラーが発生しました");
+            this._result.Success = false;
+            this._result.Errors.Add(ex.Message);
+            return this._result;
+
+        } finally {
+            this._logger?.LogInformation("リストア 完了");
         }
-
-        // 6) 添付ファイル復元
-        if (this._options.RestoreFiles) {
-            await this.RestoreFilesAsync(backup, metadata);
-        }
-
-        this._logger?.LogInformation("Restore 完了");
     }
 
     /// <summary>
@@ -97,7 +103,7 @@ public sealed class RestoreService {
     /// </summary>
     /// <returns></returns>
     private async Task<JsonNode> LoadBackupJsonAsync() {
-        var json = await File.ReadAllTextAsync(this._options.BackupJsonPath);
+        var json = await File.ReadAllTextAsync(this.Options.BackupJsonPath);
         return JsonNode.Parse(json)!;
     }
 
@@ -107,7 +113,7 @@ public sealed class RestoreService {
     /// <param name="metadata"></param>
     /// <returns></returns>
     private async Task<JsonNode> LoadFieldSchemaAsync(JsonNode metadata) {
-        var dir = Path.GetDirectoryName(_options.BackupJsonPath)!;
+        var dir = Path.GetDirectoryName(this.Options.BackupJsonPath)!;
         var schemaFile = metadata["fieldSchemaFile"]!.ToString();
         var json = await File.ReadAllTextAsync(Path.Combine(dir, schemaFile));
         return JsonNode.Parse(json)!;
@@ -120,7 +126,7 @@ public sealed class RestoreService {
     /// <returns></returns>
     /// <exception cref="InvalidOperationException"></exception>
     private async Task ValidateSchemaAsync(JsonNode backupSchemaJson) {
-        if (this._options.Force) {
+        if (this.Options.Force) {
             this._logger?.LogWarning("Force オプションによりスキーマチェックをスキップします");
             return;
         }
@@ -129,8 +135,8 @@ public sealed class RestoreService {
 
         var diffs = await this._schemaProvider.CompareAsync(
             backupSchema!,
-            this._options.AppID,
-            this._options.ApiToken
+            this.Options.AppID,
+            this.Options.ApiToken
         );
 
         if (diffs.Count > 0) {
@@ -169,6 +175,8 @@ public sealed class RestoreService {
         try {
             await this._api.RawCreateAsync(createJson.ToJsonString());
             this._logger?.LogInformation("{Count} 件のレコードを新規作成しました", records.Count);
+            this._result.AddedRecords = records.Count;
+
         } catch (Exception ex) {
             this._logger?.LogError(ex, "レコードの一括作成中にエラーが発生しました");
             throw;
@@ -224,6 +232,7 @@ public sealed class RestoreService {
             try {
                 await this._api.RawDeleteAsync(deleteJson.ToJsonString());
                 this._logger?.LogInformation("{Count} 件のレコードを削除しました", batch.Length);
+                this._result.DeletedRecords += batch.Length;
 
             } catch (Exception ex) {
                 this._logger?.LogError(ex, "レコード削除中にエラーが発生しました（ID: {Ids}）", string.Join(",", batch));
@@ -231,7 +240,7 @@ public sealed class RestoreService {
             }
         }
 
-        this._logger?.LogInformation("既存レコードの削除が完了しました");
+        this._logger?.LogInformation("既存レコードの削除が完了しました({Count}件)", this._result.DeletedRecords);
     }
 
     /// <summary>
@@ -246,7 +255,7 @@ public sealed class RestoreService {
         var records = backupJson["records"]!.AsArray();
 
         var filesRoot = Path.Combine(
-            Path.GetDirectoryName(this._options.BackupJsonPath)!,
+            Path.GetDirectoryName(this.Options.BackupJsonPath)!,
             metadataJson["fileDirectory"]!.ToString()
         );
 
@@ -295,6 +304,7 @@ public sealed class RestoreService {
 
                     // JSON の fileKey を置き換える
                     fileInfo["fileKey"] = newFileKey;
+                    this._result.UploadedFiles++;
                 }
             }
 
@@ -309,7 +319,7 @@ public sealed class RestoreService {
             this._logger?.LogInformation("レコード {RecordId} の添付ファイルを更新しました", recordId);
         }
 
-        this._logger?.LogInformation("添付ファイル復元が完了しました");
+        this._logger?.LogInformation("添付ファイル復元が完了しました({Count}件)", this._result.UploadedFiles);
     }
 
     /// <summary>
@@ -323,9 +333,7 @@ public sealed class RestoreService {
         var records = backupJson["records"]!.AsArray();
 
         foreach (var recordNode in records) {
-            if (recordNode is not JsonObject record) {
-                continue;
-            }
+            if (recordNode is not JsonObject record) { continue; }
 
             // レコード番号を取得
             var recordId = record["レコード番号"]?["value"]?.ToString();
@@ -341,8 +349,11 @@ public sealed class RestoreService {
 
             if (exists) {
                 await this.UpdateRecordAsync(recordId, record);
+                this._result.UpdatedRecords++;
+
             } else {
                 await this.CreateRecordAsync(record);
+                this._result.AddedRecords++;
             }
         }
 
@@ -370,6 +381,8 @@ public sealed class RestoreService {
         try {
             await this._api.RawCreateAsync(createJson.ToJsonString());
             this._logger?.LogInformation("{Count} 件のレコードを追加しました", records.Count);
+            this._result.AddedRecords = records.Count;
+
         } catch (Exception ex) {
             this._logger?.LogError(ex, "レコード追加中にエラーが発生しました");
             throw;

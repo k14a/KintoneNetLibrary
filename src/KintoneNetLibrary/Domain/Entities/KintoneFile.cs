@@ -4,8 +4,7 @@
 /// Kintoneのファイルを表すクラス
 /// このクラスは、Kintoneのファイルのコンテンツタイプ、ファイルキー、名前、サイズを保持します。
 /// </summary>
-public class KintoneFile
-{
+public class KintoneFile {
     /// <summary>
     /// ファイルのコンテンツタイプ  
     /// このプロパティは、KintoneのファイルのMIMEタイプを表します。

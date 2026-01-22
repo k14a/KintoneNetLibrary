@@ -1,3 +1,5 @@
+using KintoneNetLibrary.Backup.Application.DTOs;
+
 namespace KintoneNetLibrary.Backup.Application.Interfaces;
 
 /// <summary>
@@ -7,5 +9,6 @@ public interface IRestoreService {
     /// <summary>
     /// リストアを実行します
     /// </summary>
-    Task RunRestoreAsync();
+    Task<RestoreResult> RunRestoreAsync();
+    RestoreOptions Options { get; set; }
 }

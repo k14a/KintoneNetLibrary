@@ -1,3 +1,5 @@
+using KintoneNetLibrary.Domain.Enums;
+
 namespace KintoneNetLibrary.Domain.Entities;
 
 /// <summary>
@@ -7,15 +9,23 @@ public class KintoneFieldMetadata {
     /// <summary>
     /// フィールドコード
     /// </summary>
-    public string Code { get; set; } = default!;
+    public string FieldCode { get; set; } = default!;
     /// <summary>
     /// フィールドラベル
     /// </summary>
-    public string Label { get; set; } = default!;
+    public string FieldLabel { get; set; } = default!;
     /// <summary>
     /// フィールドタイプ
     /// </summary>
-    public KintoneFieldType Type { get; set; }
+    public KintoneFieldType FieldType { get; set; }
+    /// <summary>
+    /// フィールドタイプ名
+    /// </summary>
+    public string FieldTypeName { get; set; } = default!;
+    /// <summary>
+    /// Kintone上のフィールドタイプ
+    /// </summary>
+    public string OriginalFieldType { get; set; } = default!;
     /// <summary>
     /// 必須フィールドかどうか
     /// </summary>

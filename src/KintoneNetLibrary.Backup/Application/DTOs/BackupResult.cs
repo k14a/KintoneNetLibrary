@@ -1,11 +1,13 @@
+using KintoneNetLibrary.Backup.Application.Interfaces;
+
 namespace KintoneNetLibrary.Backup.Application.DTOs;
 
-public sealed class BackupResult {
+public sealed class BackupResult : IOperationResult {
     /// <summary>
     /// バックアップ全体が成功したかどうか。
     /// 致命的エラーがなければ true。
     /// </summary>
-    public bool Success { get; set; }
+    public bool Success { get; set; } = true;
 
     /// <summary>
     /// JSON レコードの保存に成功したか。
@@ -16,6 +18,11 @@ public sealed class BackupResult {
     /// フィールドスキーマの保存に成功したか。
     /// </summary>
     public bool SchemaSaved { get; set; }
+
+    /// <summary>
+    /// 保存したレコード数。
+    /// </summary>
+    public int RecordCount { get; set; }
 
     /// <summary>
     /// 添付ファイルのダウンロード成功数。
@@ -40,7 +47,7 @@ public sealed class BackupResult {
     /// <summary>
     /// 致命的エラー（例外メッセージ）。
     /// </summary>
-    public List<string> ErrorMessages { get; set; } = [];
+    public List<string> Errors { get; set; } = [];
 
     /// <summary>
     /// 成功だが警告あり、などを判定しやすくするための便利プロパティ。
@@ -51,4 +58,8 @@ public sealed class BackupResult {
     /// 部分成功かどうか（Success が true だが警告あり）。
     /// </summary>
     public bool IsPartialSuccess => this.Success && this.HasWarnings;
+
+    IReadOnlyList<string> IOperationResult.Warnings => this.Warnings;
+
+    IReadOnlyList<string> IOperationResult.Errors => this.Errors;
 }

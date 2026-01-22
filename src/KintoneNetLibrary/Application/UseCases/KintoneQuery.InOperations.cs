@@ -56,7 +56,7 @@ public partial class KintoneQuery<T> where T : KintoneModelBase<T>, new() {
     public KintoneQuery<T> NotIn<TValue>(Expression<Func<T, TValue>> fieldSelector, IEnumerable<TValue> values) {
         return this.AddInCondition(fieldSelector, values, negate: true);
     }
-    
+
     /// <summary>
     /// フィールドの値が指定された値のリストに含まれないかを確認します。
     /// </summary>
