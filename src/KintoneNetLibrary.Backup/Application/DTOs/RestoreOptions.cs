@@ -1,4 +1,5 @@
 using KintoneNetLibrary.Backup.Domain.Enums;
+using KintoneNetLibrary.Domain.Common;
 
 namespace KintoneNetLibrary.Backup.Application.DTOs;
 
@@ -21,7 +22,7 @@ public sealed class RestoreOptions {
     /// <summary>
     /// バックアップJSONファイルのパス(必須)
     /// </summary>
-    public required string BackupJsonPath { get; init; }
+    public required DirectoryInfo BackupRootPath { get; init; }
 
     /// <summary>
     /// リストアモード
@@ -36,4 +37,16 @@ public sealed class RestoreOptions {
     /// スキーマ差異があっても強制復元するかどうか
     /// </summary>
     public bool Force { get; init; } = false;
+    /// <summary>
+    /// ドライランモードかどうか
+    /// </summary>
+    public bool DryRun { get; init; } = false;
+    /// <summary>
+    /// バリデーションのみ実行するかどうか
+    /// </summary>
+    public bool ValidateOnly { get; init; } = false;
+    /// <summary>
+    /// バッチサイズ
+    /// </summary>
+    public int BatchSize { get; init; } = KintoneConstants.KintoneLimit;
 }
