@@ -7,5 +7,7 @@ public class BackupManifest {
     public int FileFieldCount { get; set; }
     public int FileCount { get; set; }
     public DateTime BackupAt { get; set; }
+    public int Parts { get; set; }
+    public int SplitSize { get; set; }
     public object Options { get; set; } = default!;
 }

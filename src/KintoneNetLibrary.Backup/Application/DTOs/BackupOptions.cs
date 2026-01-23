@@ -16,7 +16,7 @@ public sealed class BackupOptions {
     /// <summary>
     /// 出力先パス(必須)
     /// </summary>
-    public required DirectoryInfo OutputPath { get; init; }
+    public required DirectoryInfo OutputPath { get; set; }
 
     /// <summary>
     /// クエリ文字列
@@ -55,6 +55,19 @@ public sealed class BackupOptions {
     /// フィールドスキーマのファイル名
     /// </summary>
     public string FieldSchemaFileName { get; init; } = "fields.json";
+
+    /// <summary>
+    /// JSONファイルの整形出力を行うかどうか
+    /// </summary>
     public bool Pretty { get; set; } = false;
+
+    /// <summary>
+    /// JSONファイルのUnicodeエスケープを行うかどうか
+    /// </summary>
     public bool EscapeUnicode { get; set; } = true;
+
+    /// <summary>
+    /// データファイルを分割するレコード数
+    /// </summary>
+    public int SplitSize { get; set; } = 1000;
 }

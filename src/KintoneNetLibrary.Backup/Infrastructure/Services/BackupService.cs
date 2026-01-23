@@ -1,3 +1,5 @@
+using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using KintoneNetLibrary.Application.Interfaces;
 using KintoneNetLibrary.Backup.Application.DTOs;
@@ -65,6 +67,26 @@ public sealed class BackupService(ISchemaProvider schemaProvider, HttpClient? ht
         try {
             this._logger?.LogInformation("バックアップ開始: App={App}", this.Options.AppID);
 
+            // 0) 出力ディレクトリを作成
+            var appIdFolder = $"AppID{this.Options.AppID:D6}";
+            var timestampFolder = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss");
+            var backupRoot = Path.Combine(this.Options.OutputPath.FullName, appIdFolder, timestampFolder);
+
+            // Override == falseの場合は既存チェック
+            if (!this.Options.Overwrite && Directory.Exists(backupRoot)) {
+                var message = $"バックアップ先ディレクトリが既に存在するため、バックアップを中止しました: {backupRoot}";
+                this._logger?.LogError("{message}", message);
+                throw new IOException(message);
+            }
+
+            // ディレクトリ作成
+            Directory.CreateDirectory(backupRoot);
+            Directory.CreateDirectory(Path.Combine(backupRoot, "data"));
+            Directory.CreateDirectory(Path.Combine(backupRoot, "files"));
+
+            // BackupService内でOutputPathを書き換え
+            this.Options.OutputPath = new DirectoryInfo(backupRoot);
+
             // 1) レコード取得
             var json = await this.FetchRecordsAsync();
 
@@ -78,18 +100,10 @@ public sealed class BackupService(ISchemaProvider schemaProvider, HttpClient? ht
                 }
             }
 
-            // 2) JSON 保存
-            var jsonFileName = $"app_{this.Options.AppID}_backup_{DateTime.UtcNow:yyyyMMdd_HHmmss}.json";
-            var jsonResult = await this.SaveJsonAsync(json, jsonFileName);
-            if (jsonResult) {
-                result.JsonSaved = true;
-            } else {
-                // 上書き禁止などのスキップ
-                var message = "JSON 保存がスキップされました";
-                this._logger?.LogWarning("{message}", message);
-                result.JsonSaved = false;
-                result.Skipped.Add(message);
-            }
+            // 2) JSON 分割保存
+            var parts = await this.SaveSplitJsonFilesAsync(json);
+            result.Parts = parts;
+            result.SplitSize = this.Options.SplitSize;
 
             // 3) フィールドスキーマ取得
             this._schemaProvider.SetDomain(this.Options.SubDomain);
@@ -159,23 +173,76 @@ public sealed class BackupService(ISchemaProvider schemaProvider, HttpClient? ht
     }
 
     /// <summary>
+    /// JSON を分割保存します
+    /// </summary>
+    /// <param name="json"></param>
+    /// <returns></returns>
+    private async Task<int> SaveSplitJsonFilesAsync(string json) {
+        using var doc = JsonDocument.Parse(json);
+        var records = doc.RootElement.GetProperty("records").EnumerateArray().ToList();
+
+        var chunks = records
+            .Select((record, index) => new { record, index })
+            .GroupBy(x => x.index / this.Options.SplitSize)
+            .Select(g => g.Select(x => x.record).ToList())
+            .ToList();
+
+        int partIndex = 1;
+
+        foreach (var chunk in chunks) {
+            var fileName = $"part-{partIndex:D4}.json";
+
+            using var stream = new MemoryStream();
+            using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions {
+                Indented = this.Options.Pretty,
+                Encoder = this.Options.EscapeUnicode ? JavaScriptEncoder.Default : JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            })) {
+                writer.WriteStartObject();
+                writer.WritePropertyName("records");
+                writer.WriteStartArray();
+
+                foreach (var record in chunk) {
+                    record.WriteTo(writer);
+                }
+
+                writer.WriteEndArray();
+                writer.WriteEndObject();
+            }
+
+            var jsonText = Encoding.UTF8.GetString(stream.ToArray());
+            await this.SaveJsonAsync(jsonText, fileName, "data");
+
+            partIndex++;
+        }
+
+        return chunks.Count;
+    }
+
+    /// <summary>
     /// JSON を保存します
     /// </summary>
     /// <param name="json"></param>
     /// <returns></returns>
     /// <exception cref="IOException"></exception>
-    private async Task<bool> SaveJsonAsync(string json, string fileName) {
+    private async Task<bool> SaveJsonAsync(string json, string fileName, string? directory = null) {
         if (!this.Options.OutputPath.Exists) {
             this.Options.OutputPath.Create();
         }
 
-        if (File.Exists(Path.Combine(this.Options.OutputPath.FullName, fileName)) && !this.Options.Overwrite) {
-            this._logger?.LogWarning("出力先ファイルが既に存在するためスキップされました: {Path}", Path.Combine(this.Options.OutputPath.FullName, fileName));
+        // data ディレクトリを作成
+        var dataDir = Path.Combine(this.Options.OutputPath.FullName, directory ?? "");
+        Directory.CreateDirectory(dataDir);
+
+        // 保存先パス
+        var path = Path.Combine(dataDir, fileName);
+
+        if (File.Exists(path) && !this.Options.Overwrite) {
+            this._logger?.LogWarning("出力先ファイルが既に存在するためスキップされました: {Path}", path);
             return false;
         }
 
-        await File.WriteAllTextAsync(Path.Combine(this.Options.OutputPath.FullName, fileName), json);
-        this._logger?.LogInformation("JSON を保存しました: {Path}", Path.Combine(this.Options.OutputPath.FullName, fileName));
+        await File.WriteAllTextAsync(path, json);
+        this._logger?.LogInformation("JSON を保存しました: {Path}", path);
         return true;
     }
 
@@ -255,6 +322,8 @@ public sealed class BackupService(ISchemaProvider schemaProvider, HttpClient? ht
             RecordCount = result.RecordCount,
             FileFieldCount = metadata.Fields.Count(f => f.FieldType == KintoneFieldType.File),
             FileCount = result.FileDownloadedCount,
+            Parts = result.Parts,
+            SplitSize = this.Options.SplitSize,
             Options = new {
                 this.Options.IncludeFieldSchema,
                 this.Options.DownloadFiles,

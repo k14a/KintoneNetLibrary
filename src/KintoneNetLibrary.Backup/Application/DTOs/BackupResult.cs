@@ -62,4 +62,7 @@ public sealed class BackupResult : IOperationResult {
     IReadOnlyList<string> IOperationResult.Warnings => this.Warnings;
 
     IReadOnlyList<string> IOperationResult.Errors => this.Errors;
+
+    public int Parts { get; set; }
+    public int SplitSize { get; set; }
 }
