@@ -6,7 +6,6 @@ using KintoneNetLibrary.Backup.Application.Interfaces;
 using KintoneNetLibrary.Backup.Domain.Enums;
 using KintoneNetLibrary.CodeGen.Application.Interfaces;
 using KintoneNetLibrary.Domain.Access;
-using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Infrastructure.Api;
 using Microsoft.Extensions.Logging;
 using static KintoneNetLibrary.Domain.Common.KintoneConstants;
@@ -53,85 +52,51 @@ public sealed class RestoreService(ISchemaProvider schemaProvider, IKintoneAppMe
         this.EnsureApiInitialized();
 
         try {
+            // 0) DryRun モード確認
+            if (this.Options.DryRun) {
+                this._logger?.LogWarning("DryRun モードで実行します。Kintone への書き込みは行われません。");
+            }
+
             // 1) バックアップディレクトリ検証
             var manifest = await this.LoadManifestAsync();
             var schema = await this.LoadFieldSchemaAsync();
             this.ValidateBackupDirectory(manifest);
 
-            // 2) スキーマ検証(Force オプションが false の場合)
+            // 2) スキーマ検証（Force=false の場合）
             if (!this.Options.Force) {
                 await this.ValidateSchemaAsync(schema);
             }
 
             // 3) RestoreMode に応じた前処理
-            switch (this.Options.Mode) {
-                case RestoreMode.FullReplace:
-                    await this.DeleteAllRecordsAsync();
-                    break;
-                case RestoreMode.Merge:
-                    // 既存レコードは保持、新規のみ追加
-                    break;
-                case RestoreMode.Upsert:
-                    // $id が存在する場合は更新、存在しない場合は追加
-                    break;
+            if (this.Options.Mode == RestoreMode.FullReplace) {
+                await this.DeleteAllRecordsAsync();
             }
 
             // 4) data/part-xxxx.json を順次読み込み、レコード復元
             var partFiles = this.GetPartFiles(manifest.Parts);
+            int partIndex = 1;
 
             foreach (var partFile in partFiles) {
+                this._logger?.LogInformation("パート {Index}/{Total} を処理中: {File}",
+                    partIndex, manifest.Parts, partFile);
+
                 var records = await this.LoadPartRecordsAsync(partFile);
 
-                // 4-1) 添付ファイルの fileKey を更新
                 if (this.Options.RestoreFiles) {
-                    await this.ReplaceFileKeysAsync(records);
+                    records = await this.ReplaceFileKeysAsync(records);
                 }
 
-                // 4-2) レコード復元
                 await this.RestoreRecordsAsync(records);
+
+                partIndex++;
             }
 
             // 5) 結果を返す
             this._result.Success = true;
             return this._result;
 
-            // // 1) backup.json 読み込み
-            // var backup = await this.LoadBackupJsonAsync();
-
-            // // 2) metadata 読み込み
-            // var metadata = backup["metadata"]!;
-
-            // // 3) fields.json 読み込み
-            // var schema = await this.LoadFieldSchemaAsync(metadata);
-
-            // // 4) 現在のスキーマと比較
-            // await this.ValidateSchemaAsync(schema);
-
-            // // 5) レコード復元
-            // switch (this.Options.Mode) {
-            //     case RestoreMode.FullReplace:
-            //         await this.DeleteAllRecordsAsync();
-            //         await this.RestoreRecordsCreateAllAsync(backup);
-            //         break;
-            //     case RestoreMode.Upsert:
-            //         await this.RestoreRecordsUpsertAsync(backup);
-            //         break;
-            //     case RestoreMode.Merge:
-            //         await this.RestoreRecordsCreateOnlyAsync(backup);
-            //         break;
-            //     default:
-            //         throw new NotSupportedException($"Unsupported RestoreMode: {this.Options.Mode}");
-            // }
-
-            // // 6) 添付ファイル復元
-            // if (this.Options.RestoreFiles) {
-            //     await this.RestoreFilesAsync(backup, metadata);
-            // }
-
-            // return this._result;
-
         } catch (Exception ex) {
-            this._logger?.LogError(ex, "リストア 中にエラーが発生しました");
+            this._logger?.LogError(ex, "リストア中にエラーが発生しました");
             this._result.Success = false;
             this._result.Errors.Add(ex.Message);
             return this._result;
@@ -145,14 +110,31 @@ public sealed class RestoreService(ISchemaProvider schemaProvider, IKintoneAppMe
     /// manifest.json を読み込みます
     /// </summary>
     /// <returns></returns>
-    /// <exception cref="NotImplementedException"></exception>
+    /// <exception cref="FileNotFoundException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
     private async Task<BackupManifest> LoadManifestAsync() {
         var path = Path.Combine(this.Options.BackupRootPath.FullName, "manifest.json");
+
         if (!File.Exists(path)) {
-            throw new FileNotFoundException("manifest.json が見つかりません", path);
+            throw new FileNotFoundException($"manifest.json が見つかりません: {path}");
         }
-        var json = await File.ReadAllTextAsync(path);
-        return JsonSerializer.Deserialize<BackupManifest>(json)!;
+
+        using var stream = File.OpenRead(path);
+        var manifest = await JsonSerializer.DeserializeAsync<BackupManifest>(
+            stream,
+            new JsonSerializerOptions {
+                PropertyNameCaseInsensitive = true
+            }
+        ) ?? throw new InvalidOperationException("manifest.json の読み込みに失敗しました。");
+
+        this._logger?.LogInformation(
+            "manifest.json 読み込み完了: Records={RecordCount}, Parts={Parts}, SplitSize={SplitSize}",
+            manifest.RecordCount,
+            manifest.Parts,
+            manifest.SplitSize
+        );
+
+        return manifest;
     }
 
     /// <summary>
@@ -160,13 +142,13 @@ public sealed class RestoreService(ISchemaProvider schemaProvider, IKintoneAppMe
     /// </summary>
     /// <returns></returns>
     /// <exception cref="FileNotFoundException"></exception>
-    private async Task<JsonElement> LoadFieldSchemaAsync() {
+    private async Task<JsonNode> LoadFieldSchemaAsync() {
         var path = Path.Combine(this.Options.BackupRootPath.FullName, "fields.json");
         if (!File.Exists(path)) {
             throw new FileNotFoundException("fields.json が見つかりません", path);
         }
         var json = await File.ReadAllTextAsync(path);
-        return JsonDocument.Parse(json).RootElement;
+        return JsonNode.Parse(json)!;
     }
 
     /// <summary>
@@ -192,10 +174,26 @@ public sealed class RestoreService(ISchemaProvider schemaProvider, IKintoneAppMe
     /// </summary>
     /// <param name="path"></param>
     /// <returns></returns>
-    private async Task<List<JsonElement>> LoadPartRecordsAsync(string path) {
-        var json = await File.ReadAllTextAsync(path);
-        using var doc = JsonDocument.Parse(json);
-        return [.. doc.RootElement.GetProperty("records").EnumerateArray()];
+    private async Task<List<JsonNode>> LoadPartRecordsAsync(string partFilePath) {
+        if (!File.Exists(partFilePath)) {
+            throw new FileNotFoundException($"分割ファイルが見つかりません: {partFilePath}");
+        }
+
+        using var stream = File.OpenRead(partFilePath);
+        var doc = await JsonNode.ParseAsync(stream) ?? throw new InvalidOperationException($"分割ファイルの JSON パースに失敗しました: {partFilePath}");
+        var recordsNode = (doc["records"]?.AsArray()) ?? throw new InvalidOperationException($"records 配列が存在しません: {partFilePath}");
+        var list = new List<JsonNode>(recordsNode.Count);
+
+        foreach (var record in recordsNode) {
+            if (record is null) {
+                continue;
+            }
+
+            // JsonNode をそのまま保持（fileKey 差し替えで編集可能）
+            list.Add(record.DeepClone());
+        }
+
+        return list;
     }
 
     /// <summary>
@@ -204,22 +202,29 @@ public sealed class RestoreService(ISchemaProvider schemaProvider, IKintoneAppMe
     /// <param name="records"></param>
     /// <returns></returns>
     /// <exception cref="InvalidOperationException"></exception>
-    private async Task<List<JsonNode>> ReplaceFileKeysAsync(List<JsonElement> records) {
-        var updatedRecords = new List<JsonNode>();
+    private async Task<List<JsonNode>> ReplaceFileKeysAsync(List<JsonNode> records) {
+        if (this.Options.DryRun) {
+            foreach (var record in records) {
+                var recordId = record["$id"]?["value"]?.ToString();
+                this._logger?.LogInformation("DryRun: レコード {RecordId} の添付ファイル fileKey を差し替える予定です", recordId);
+            }
 
-        foreach (var record in records) {
-            // JsonElement → JsonNode に変換
-            var node = JsonNode.Parse(record.GetRawText())!.AsObject();
+            return records;
+        }
 
-            // レコード番号 ($id) を取得
-            var recordId = (node["$id"]?["value"]?.ToString()) ?? throw new InvalidOperationException("レコードに $id が存在しません。");
+        var updatedRecords = new List<JsonNode>(records.Count);
+
+        foreach (var recordNode in records) {
+            var node = recordNode.AsObject();
+
+            var recordId = node["$id"]?["value"]?.ToString()
+                ?? throw new InvalidOperationException("レコードに $id が存在しません。");
 
             foreach (var field in node) {
-                var fieldCode = field.Key; // FILE フィールドのコード
+                var fieldCode = field.Key;
                 var fieldObj = field.Value?.AsObject();
                 if (fieldObj is null) { continue; }
 
-                // FILE フィールドのみ対象
                 if (fieldObj["type"]?.ToString() != "FILE") { continue; }
 
                 var fileArray = fieldObj["value"]?.AsArray();
@@ -227,10 +232,8 @@ public sealed class RestoreService(ISchemaProvider schemaProvider, IKintoneAppMe
 
                 for (int i = 0; i < fileArray.Count; i++) {
                     var fileNode = fileArray[i]!.AsObject();
-
                     var fileName = fileNode["name"]!.ToString();
 
-                    // 新しい構造に対応したローカルパス
                     var localPath = Path.Combine(
                         this.Options.BackupRootPath.FullName,
                         "files",
@@ -239,18 +242,16 @@ public sealed class RestoreService(ISchemaProvider schemaProvider, IKintoneAppMe
                         fileName
                     );
 
-                    // 新しい fileKey を取得
                     var fi = new FileInfo(localPath);
-                    var newFileKey = await this._api.UploadFileAsync(fi.OpenRead(), fileName);
 
-                    // JSON を書き換え
+                    using var fs = fi.OpenRead();
+                    var newFileKey = await this._api!.UploadFileAsync(fs, fileName);
+
                     fileNode["fileKey"] = newFileKey;
                 }
             }
-
             updatedRecords.Add(node);
         }
-
         return updatedRecords;
     }
 
@@ -282,6 +283,26 @@ public sealed class RestoreService(ISchemaProvider schemaProvider, IKintoneAppMe
     /// <param name="skipExisting"></param>
     /// <returns></returns>
     private async Task RestoreRecordsCreateOnlyAsync(List<JsonNode> records, bool skipExisting = false) {
+        if (this.Options.DryRun) {
+            int count = 0;
+
+            foreach (var record in records) {
+                var id = record["$id"]?["value"]?.ToString();
+
+                if (skipExisting && id is not null) {
+                    this._logger?.LogInformation("DryRun: 既存レコード {Id} はスキップされます", id);
+                    continue;
+                }
+
+                this._logger?.LogInformation("DryRun: 新規作成予定のレコード: $id={Id}", id);
+                count++;
+            }
+
+            this._logger?.LogInformation("DryRun: 新規作成予定件数 = {Count}", count);
+            this._result.AddedRecords += count;
+            return;
+        }
+
         var batch = new List<JsonNode>(this.Options.BatchSize);
 
         foreach (var record in records) {
@@ -309,7 +330,35 @@ public sealed class RestoreService(ISchemaProvider schemaProvider, IKintoneAppMe
         }
     }
 
+    /// <summary>
+    /// レコードを一括アップサートします
+    /// </summary>
+    /// <param name="records"></param>
+    /// <returns></returns>
     private async Task RestoreRecordsUpsertAsync(List<JsonNode> records) {
+        if (this.Options.DryRun) {
+            int postCount = 0;
+            int putCount = 0;
+
+            foreach (var record in records) {
+                var id = record["$id"]?["value"]?.ToString();
+
+                if (id is null) {
+                    this._logger?.LogInformation("DryRun: 新規作成予定のレコード");
+                    postCount++;
+                } else {
+                    this._logger?.LogInformation("DryRun: 更新予定のレコード: $id={Id}", id);
+                    putCount++;
+                }
+            }
+
+            this._logger?.LogInformation("DryRun: POST（新規）予定 = {Post}, PUT（更新）予定 = {Put}", postCount, putCount);
+
+            this._result.AddedRecords += postCount;
+            this._result.UpdatedRecords += putCount;
+            return;
+        }
+
         var postBatch = new List<JsonNode>(this.Options.BatchSize);
         var putBatch = new List<JsonNode>(this.Options.BatchSize);
 
@@ -387,6 +436,12 @@ public sealed class RestoreService(ISchemaProvider schemaProvider, IKintoneAppMe
         this._result.UpdatedRecords += batch.Count;
     }
 
+    /// <summary>
+    /// バックアップディレクトリの妥当性を検証します
+    /// </summary>
+    /// <param name="manifest"></param>
+    /// <exception cref="DirectoryNotFoundException"></exception>
+    /// <exception cref="FileNotFoundException"></exception>
     private void ValidateBackupDirectory(BackupManifest manifest) {
         var root = this.Options.BackupRootPath;
 
@@ -443,32 +498,42 @@ public sealed class RestoreService(ISchemaProvider schemaProvider, IKintoneAppMe
         this._logger?.LogInformation("バックアップディレクトリ検証 OK");
     }
 
-    private async Task ValidateSchemaAsync(JsonElement backupSchema) {
+    /// <summary>
+    /// スキーマ検証を実行します
+    /// </summary>
+    /// <param name="backupSchema"></param>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    private async Task ValidateSchemaAsync(JsonNode backupSchema) {
         if (this.Options.Force) {
             this._logger?.LogWarning("Force オプションが指定されているため、スキーマ検証をスキップします");
             return;
         }
 
         // リストア先アプリのスキーマを取得
-        var currentSchema = await this._metadataApi.GetAppMetadataAsync(this.Options.AppID, this.Options.ApiToken);
+        var currentSchema = await this._metadataApi.GetAppMetadataAsync(
+            this.Options.AppID,
+            this.Options.ApiToken
+        );
 
-        // バックアップ側のフィールド一覧
-        var backupFields = backupSchema.GetProperty("properties").EnumerateObject();
+        // バックアップ側のフィールド一覧を取得
+        var properties = backupSchema["properties"]?.AsObject()
+            ?? throw new InvalidOperationException("fields.json に 'properties' が存在しません。");
 
-        foreach (var backupField in backupFields) {
-            var fieldCode = backupField.Name;
-            var backupFieldObj = backupField.Value;
+        foreach (var kv in properties) {
+            var fieldCode = kv.Key;
+            var backupFieldObj = kv.Value!.AsObject();
 
             // リストア先にフィールドが存在するか
-            if (!currentSchema.Properties.TryGetProperty(fieldCode, out var currentFieldObj)) {
-                throw new InvalidOperationException(
+            var currentField = currentSchema.Fields.FirstOrDefault(f => f.FieldCode == fieldCode) ?? throw new InvalidOperationException(
                     $"リストア先アプリにフィールド '{fieldCode}' が存在しません。"
                 );
-            }
 
             // フィールドタイプの一致チェック
-            var backupType = backupFieldObj.GetProperty("type").GetString();
-            var currentType = currentFieldObj.GetProperty("type").GetString();
+            var backupType = backupFieldObj["type"]?.ToString()
+                ?? throw new InvalidOperationException($"fields.json の '{fieldCode}' に type がありません。");
+
+            var currentType = currentField.OriginalFieldType;
 
             if (!string.Equals(backupType, currentType, StringComparison.OrdinalIgnoreCase)) {
                 throw new InvalidOperationException(
@@ -476,11 +541,8 @@ public sealed class RestoreService(ISchemaProvider schemaProvider, IKintoneAppMe
                 );
             }
 
-            // FILE フィールドの場合は特別扱い（構造が複雑なため）
-            if (backupType == "FILE") {
-                // FILE フィールドは型一致だけで十分
-                continue;
-            }
+            // FILE フィールドは型一致だけで十分
+            if (backupType == "FILE") { continue; }
 
             // 追加の型固有チェックが必要ならここに追加可能
         }
@@ -488,78 +550,20 @@ public sealed class RestoreService(ISchemaProvider schemaProvider, IKintoneAppMe
         this._logger?.LogInformation("スキーマ検証 OK: バックアップのフィールドはすべてリストア先に存在します");
     }
 
-    // /// <summary>
-    // /// スキーマを検証します
-    // /// </summary>
-    // /// <param name="backupSchemaJson"></param>
-    // /// <returns></returns>
-    // /// <exception cref="InvalidOperationException"></exception>
-    // private async Task ValidateSchemaAsync(JsonNode backupSchemaJson) {
-    //     if (this.Options.Force) {
-    //         this._logger?.LogWarning("Force オプションによりスキーマチェックをスキップします");
-    //         return;
-    //     }
-
-    //     var backupSchema = JsonSerializer.Deserialize<KintoneAppMetadata>(backupSchemaJson);
-
-    //     var diffs = await this._schemaProvider.CompareAsync(
-    //         backupSchema!,
-    //         this.Options.AppID,
-    //         this.Options.ApiToken
-    //     );
-
-    //     if (diffs.Count > 0) {
-    //         this._logger?.LogError("スキーマ差分が検出されました。復元を中止します。");
-    //         foreach (var diff in diffs) {
-    //             this._logger?.LogError(diff.ToString());
-    //         }
-    //         throw new InvalidOperationException("スキーマが一致しません。");
-    //     }
-
-    //     this._logger?.LogInformation("スキーマ一致: 復元を続行します");
-    // }
-
-
-
-
-
-
-
-    /// <summary>
-    /// バックアップ JSON を読み込みます
-    /// </summary>
-    /// <returns></returns>
-    private async Task<JsonNode> LoadBackupJsonAsync() {
-        var json = await File.ReadAllTextAsync(this.Options.BackupJsonPath);
-        return JsonNode.Parse(json)!;
-    }
-
-    /// <summary>
-    /// フィールドスキーマを読み込みます
-    /// </summary>
-    /// <param name="metadata"></param>
-    /// <returns></returns>
-    private async Task<JsonNode> LoadFieldSchemaAsync(JsonNode metadata) {
-        var dir = Path.GetDirectoryName(this.Options.BackupJsonPath)!;
-        var schemaFile = metadata["fieldSchemaFile"]!.ToString();
-        var json = await File.ReadAllTextAsync(Path.Combine(dir, schemaFile));
-        return JsonNode.Parse(json)!;
-    }
-
-
-
     /// <summary>
     /// 既存レコードを全削除します
     /// </summary>
     /// <returns></returns>
     private async Task DeleteAllRecordsAsync() {
+        if (this.Options.DryRun) {
+            this._logger?.LogWarning("DryRun: 全レコード削除が実行される予定です（実際には削除されません）");
+            return;
+        }
+
         this._logger?.LogInformation("既存レコードの削除を開始します…");
 
-        // 1) まず全レコードの ID を取得する
-        var idList = new List<string>();
-
-        // RawFindAllAsync を使って全件取得（ID のみ）
-        var json = await this._api.RawFindAllAsync(fieldCodes: new[] { "レコード番号" });
+        // 1) $id のみを取得
+        var json = await this._api!.RawFindAllAsync(fieldCodes: ["$id"]);
 
         if (json is null) {
             this._logger?.LogWarning("レコードが取得できませんでした。削除をスキップします。");
@@ -569,8 +573,10 @@ public sealed class RestoreService(ISchemaProvider schemaProvider, IKintoneAppMe
         var root = JsonNode.Parse(json)!;
         var records = root["records"]!.AsArray();
 
+        var idList = new List<string>(records.Count);
+
         foreach (var record in records) {
-            var id = record?["レコード番号"]?["value"]?.ToString();
+            var id = record?["$id"]?["value"]?.ToString();
             if (id is not null) { idList.Add(id); }
         }
 
@@ -593,7 +599,7 @@ public sealed class RestoreService(ISchemaProvider schemaProvider, IKintoneAppMe
             };
 
             try {
-                await this._api.RawDeleteAsync(deleteJson.ToJsonString());
+                await this._api!.RawDeleteAsync(deleteJson.ToJsonString());
                 this._logger?.LogInformation("{Count} 件のレコードを削除しました", batch.Length);
                 this._result.DeletedRecords += batch.Length;
 
@@ -605,165 +611,4 @@ public sealed class RestoreService(ISchemaProvider schemaProvider, IKintoneAppMe
 
         this._logger?.LogInformation("既存レコードの削除が完了しました({Count}件)", this._result.DeletedRecords);
     }
-
-    /// <summary>
-    /// 添付ファイル復元を実行します
-    /// </summary>
-    /// <param name="backupJson"></param>
-    /// <param name="metadataJson"></param>
-    /// <returns></returns>
-    private async Task RestoreFilesAsync(JsonNode backupJson, JsonNode metadataJson) {
-        this._logger?.LogInformation("添付ファイル復元を開始します…");
-
-        var records = backupJson["records"]!.AsArray();
-
-        var filesRoot = Path.Combine(
-            Path.GetDirectoryName(this.Options.BackupJsonPath)!,
-            metadataJson["fileDirectory"]!.ToString()
-        );
-
-        foreach (var recordNode in records) {
-            if (recordNode is not JsonObject record) { continue; }
-
-            // レコード番号を取得
-            var recordId = record["レコード番号"]?["value"]?.ToString();
-            if (recordId is null) {
-                this._logger?.LogWarning("レコード番号が見つからないレコードがありました。スキップします。");
-                continue;
-            }
-
-            var recordDir = Path.Combine(filesRoot, recordId);
-            if (!Directory.Exists(recordDir)) {
-                this._logger?.LogInformation("レコード {RecordId} に添付ファイルはありません", recordId);
-                continue;
-            }
-
-            // FILE フィールドを探す
-            foreach (var field in record) {
-                if (field.Value is not JsonObject fieldObj) { continue; }
-
-                if (fieldObj["type"]?.ToString() != "FILE") { continue; }
-
-                if (fieldObj["value"] is not JsonArray fileArray) { continue; }
-
-                for (int i = 0; i < fileArray.Count; i++) {
-                    if (fileArray[i] is not JsonObject fileInfo) { continue; }
-
-                    var fileName = fileInfo["name"]?.ToString();
-                    if (fileName is null) { continue; }
-
-                    var localPath = Path.Combine(recordDir, fileName);
-
-                    if (!File.Exists(localPath)) {
-                        this._logger?.LogWarning("ファイルが見つかりません: {Path}", localPath);
-                        continue;
-                    }
-
-                    this._logger?.LogInformation("Uploading file: {FileName}", fileName);
-
-                    // 新しい fileKey を取得
-                    var fi = new FileInfo(localPath);
-                    var newFileKey = await this._api.UploadFileAsync(fi.OpenRead(), fileName);
-
-                    // JSON の fileKey を置き換える
-                    fileInfo["fileKey"] = newFileKey;
-                    this._result.UploadedFiles++;
-                }
-            }
-
-            // レコードを RawUpdateAsync で更新
-            var updateJson = new JsonObject {
-                ["id"] = recordId,
-                ["record"] = record
-            };
-
-            await this._api.RawUpdateAsync(updateJson.ToJsonString());
-
-            this._logger?.LogInformation("レコード {RecordId} の添付ファイルを更新しました", recordId);
-        }
-
-        this._logger?.LogInformation("添付ファイル復元が完了しました({Count}件)", this._result.UploadedFiles);
-    }
-
-
-    /// <summary>
-    /// Merge モードでレコード追加を実行します
-    /// </summary>
-    /// <param name="backupJson"></param>
-    /// <returns></returns>
-    private async Task RestoreRecordsCreateOnlyAsync(JsonNode backupJson) {
-        this._logger?.LogInformation("Merge モードでレコード追加を開始します…");
-
-        var records = backupJson["records"]!.AsArray();
-
-        if (records.Count == 0) {
-            this._logger?.LogWarning("バックアップにレコードが含まれていません。追加をスキップします。");
-            return;
-        }
-
-        // RawCreateAsync に渡す JSON を構築
-        var createJson = new JsonObject { ["records"] = records };
-
-        try {
-            await this._api.RawCreateAsync(createJson.ToJsonString());
-            this._logger?.LogInformation("{Count} 件のレコードを追加しました", records.Count);
-            this._result.AddedRecords = records.Count;
-
-        } catch (Exception ex) {
-            this._logger?.LogError(ex, "レコード追加中にエラーが発生しました");
-            throw;
-        }
-
-        this._logger?.LogInformation("Merge モードでのレコード追加が完了しました");
-    }
-
-    /// <summary>
-    /// レコードの存在確認を行います
-    /// </summary>
-    /// <param name="recordId"></param>
-    /// <returns></returns>
-    private async Task<bool> RecordExistsAsync(string recordId) {
-        var query = $"レコード番号 = {recordId}";
-        var json = await this._api.RawFindByQueryAsync(query, fieldCodes: new[] { "レコード番号" });
-
-        if (json is null) { return false; }
-
-        var root = JsonNode.Parse(json)!;
-        var count = root["records"]!.AsArray().Count;
-
-        return count > 0;
-    }
-
-    /// <summary>
-    /// レコードを更新します
-    /// </summary>
-    /// <param name="recordId"></param>
-    /// <param name="record"></param>
-    /// <returns></returns>
-    private async Task UpdateRecordAsync(string recordId, JsonObject record) {
-        this._logger?.LogInformation("レコード更新: ID={RecordId}", recordId);
-
-        var updateJson = new JsonObject {
-            ["id"] = recordId,
-            ["record"] = record
-        };
-
-        await this._api.RawUpdateAsync(updateJson.ToJsonString());
-    }
-
-    /// <summary>
-    /// レコードを新規作成します
-    /// </summary>
-    /// <param name="record"></param>
-    /// <returns></returns>
-    private async Task CreateRecordAsync(JsonObject record) {
-        this._logger?.LogInformation("レコード新規作成");
-
-        var createJson = new JsonObject {
-            ["record"] = record
-        };
-
-        await this._api.RawCreateAsync(createJson.ToJsonString());
-    }
-
 }

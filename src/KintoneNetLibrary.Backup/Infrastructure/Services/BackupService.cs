@@ -161,13 +161,13 @@ public sealed class BackupService(ISchemaProvider schemaProvider, HttpClient? ht
     /// <returns></returns>
     private async Task<string> FetchRecordsAsync() {
         if (!string.IsNullOrWhiteSpace(this.Options.Query)) {
-            return await this._api.RawFindByQueryAsync(
+            return await this._api!.RawFindByQueryAsync(
                 this.Options.Query!,
                 fieldCodes: this.Options.FieldCodes
             ) ?? "{}";
         }
 
-        return await this._api.RawFindAllAsync(
+        return await this._api!.RawFindAllAsync(
             fieldCodes: this.Options.FieldCodes
         ) ?? "{}";
     }
@@ -246,6 +246,11 @@ public sealed class BackupService(ISchemaProvider schemaProvider, HttpClient? ht
         return true;
     }
 
+    /// <summary>
+    /// 添付ファイルをダウンロードします
+    /// </summary>
+    /// <param name="json"></param>
+    /// <returns></returns>
     private async Task<(int success, int fail)> DownloadFilesWithResultAsync(string json) {
         int success = 0;
         int fail = 0;
@@ -288,7 +293,7 @@ public sealed class BackupService(ISchemaProvider schemaProvider, HttpClient? ht
                         var savePath = Path.Combine(fieldDir, fileName);
 
                         try {
-                            var bytes = await this._api.DownloadFileAsync(fileKey);
+                            var bytes = await this._api!.DownloadFileAsync(fileKey);
                             await File.WriteAllBytesAsync(savePath, bytes);
 
                             success++;
