@@ -6,6 +6,7 @@ using KintoneNetLibrary.Backup.Application.Interfaces;
 using KintoneNetLibrary.Backup.Domain.Enums;
 using KintoneNetLibrary.CodeGen.Application.Interfaces;
 using KintoneNetLibrary.Domain.Access;
+using KintoneNetLibrary.Domain.Converters;
 using KintoneNetLibrary.Infrastructure.Api;
 using Microsoft.Extensions.Logging;
 using static KintoneNetLibrary.Domain.Common.KintoneConstants;
@@ -21,14 +22,28 @@ namespace KintoneNetLibrary.Backup.Infrastructure.Services;
 /// <param name="schemaProvider"></param>
 /// <param name="httpClient"></param>
 /// <param name="logger"></param>
-public sealed class RestoreService(ISchemaProvider schemaProvider, IKintoneAppMetadataApi metadataApi, HttpClient? httpClient = null, ILogger<RestoreService>? logger = null) : IRestoreService {
+public sealed class RestoreService(
+    ISchemaProvider schemaProvider,
+    IKintoneAccessFactory accessFactory,
+    // IKintoneAppMetadataApi metadataApi,
+    HttpClient? httpClient = null,
+    ILogger<RestoreService>? logger = null) : IRestoreService {
+
     private IKintoneApi? _api;
-    private readonly IKintoneAppMetadataApi _metadataApi = metadataApi;
+    // private readonly IKintoneAppMetadataApi _metadataApi = metadataApi;
+    private readonly IKintoneAccessFactory _accessFactory = accessFactory;
     private readonly ISchemaProvider _schemaProvider = schemaProvider;
     private HttpClient? _httpClient = httpClient;
     private readonly ILogger? _logger = logger;
     private readonly RestoreResult _result = new();
     public RestoreOptions Options { get; set; } = default!;
+    private static readonly HashSet<string> _readonlyFieldTypes = new() {
+        "CREATOR",
+        "MODIFIER",
+        "CREATED_TIME",
+        "UPDATED_TIME",
+        "RECORD_NUMBER",
+    };
 
     private void EnsureApiInitialized() {
         if (this._api != null) { return; }
@@ -36,7 +51,7 @@ public sealed class RestoreService(ISchemaProvider schemaProvider, IKintoneAppMe
         var access = new ApiTokenAccess(this.Options.SubDomain, this.Options.ApiToken);
 
         this._httpClient ??= new HttpClient {
-            BaseAddress = new Uri($"https://{this.Options.SubDomain}/k/v1/")
+            BaseAddress = new Uri($"https://{access.Domain}/k/v1/")
         };
 
         this._api = new KintoneApi(access: access, appID: this.Options.AppID, httpClient: this._httpClient);
@@ -82,9 +97,8 @@ public sealed class RestoreService(ISchemaProvider schemaProvider, IKintoneAppMe
 
                 var records = await this.LoadPartRecordsAsync(partFile);
 
-                if (this.Options.RestoreFiles) {
-                    records = await this.ReplaceFileKeysAsync(records);
-                }
+                // 添付ファイルの処理
+                records = await this.ReplaceFileKeysAsync(records);
 
                 await this.RestoreRecordsAsync(records);
 
@@ -230,6 +244,12 @@ public sealed class RestoreService(ISchemaProvider schemaProvider, IKintoneAppMe
                 var fileArray = fieldObj["value"]?.AsArray();
                 if (fileArray is null) { continue; }
 
+                if (!this.Options.RestoreFiles) {
+                    // Options.RestoreFiles が false の場合、空配列にする
+                    fieldObj["value"] = new JsonArray();
+                    continue;
+                }
+
                 for (int i = 0; i < fileArray.Count; i++) {
                     var fileNode = fileArray[i]!.AsObject();
                     var fileName = fileNode["name"]!.ToString();
@@ -314,10 +334,13 @@ public sealed class RestoreService(ISchemaProvider schemaProvider, IKintoneAppMe
             }
 
             // $id と $revision を削除して新規作成にする
-            record.AsObject().Remove("$id");
-            record.AsObject().Remove("$revision");
+            var newRecord = record.AsObject();
+            newRecord.Remove("$id");
+            newRecord.Remove("$revision");
+            this.RemoveRecordIdFields(newRecord);
+            this.RemoveReadonlyFields(newRecord);
 
-            batch.Add(record);
+            batch.Add(newRecord);
 
             // バッチサイズに達したら一括登録
             if (batch.Count >= this.Options.BatchSize) {
@@ -370,6 +393,9 @@ public sealed class RestoreService(ISchemaProvider schemaProvider, IKintoneAppMe
                 var newRecord = record.DeepClone().AsObject();
                 newRecord.Remove("$id");
                 newRecord.Remove("$revision");
+                this.RemoveRecordIdFields(newRecord);
+                this.RemoveReadonlyFields(newRecord);
+
                 postBatch.Add(newRecord);
                 if (postBatch.Count >= this.Options.BatchSize) {
                     await this.InsertBatchAsync(postBatch);
@@ -378,7 +404,11 @@ public sealed class RestoreService(ISchemaProvider schemaProvider, IKintoneAppMe
             } else {
                 // PUT(更新)
                 var updateRecord = record.DeepClone().AsObject();
+                updateRecord.Remove("$id");
                 updateRecord.Remove("$revision");
+
+                this.RemoveRecordIdFields(updateRecord);
+                this.RemoveReadonlyFields(updateRecord);
 
                 var wrapper = new JsonObject {
                     ["id"] = id,
@@ -402,6 +432,47 @@ public sealed class RestoreService(ISchemaProvider schemaProvider, IKintoneAppMe
         }
     }
 
+    private void RemoveRecordIdFields(JsonObject obj) {
+        // $id を削除
+        obj.Remove("$id");
+
+        // サブテーブルの行 ID を削除
+        foreach (var kv in obj.ToList()) {
+            if (kv.Value is JsonObject childObj) {
+                // SUBTABLE の場合
+                if (childObj["type"]?.ToString() == "SUBTABLE") {
+                    var rows = childObj["value"]?.AsArray();
+                    if (rows != null) {
+                        foreach (var row in rows) {
+                            var rowObj = row!.AsObject();
+                            rowObj.Remove("id"); // ★ 行 ID 削除
+                            this.RemoveRecordIdFields(rowObj["value"]!.AsObject());
+                        }
+                    }
+                } else {
+                    this.RemoveRecordIdFields(childObj);
+                }
+            }
+        }
+    }
+
+    private void RemoveReadonlyFields(JsonObject record) {
+        var toRemove = new List<string>();
+
+        foreach (var kv in record.ToList()) {
+            if (kv.Value is not JsonObject fieldObj) { continue; }
+
+            var type = fieldObj["type"]?.ToString();
+            if (type != null && _readonlyFieldTypes.Contains(type)) {
+                toRemove.Add(kv.Key);
+            }
+        }
+
+        foreach (var key in toRemove) {
+            record.Remove(key);
+        }
+    }
+
     /// <summary>
     /// レコードを一括登録します
     /// </summary>
@@ -411,6 +482,7 @@ public sealed class RestoreService(ISchemaProvider schemaProvider, IKintoneAppMe
         if (batch.Count == 0) { return; }
 
         var root = new JsonObject {
+            ["app"] = this.Options.AppID,
             ["records"] = new JsonArray(batch.ToArray())
         };
 
@@ -428,6 +500,7 @@ public sealed class RestoreService(ISchemaProvider schemaProvider, IKintoneAppMe
         if (batch.Count == 0) { return; }
 
         var root = new JsonObject {
+            ["app"] = this.Options.AppID,
             ["records"] = new JsonArray(batch.ToArray())
         };
 
@@ -511,7 +584,9 @@ public sealed class RestoreService(ISchemaProvider schemaProvider, IKintoneAppMe
         }
 
         // リストア先アプリのスキーマを取得
-        var currentSchema = await this._metadataApi.GetAppMetadataAsync(
+        var access = this._accessFactory.CreateApiTokenAccess(this.Options.SubDomain, this.Options.ApiToken);
+        var metadataApi = new KintoneAppMetadataApi(access, this._httpClient!, this._logger as ILogger<KintoneAppMetadataApi>);
+        var currentSchema = await metadataApi.GetAppMetadataAsync(
             this.Options.AppID,
             this.Options.ApiToken
         );
@@ -524,14 +599,16 @@ public sealed class RestoreService(ISchemaProvider schemaProvider, IKintoneAppMe
             var fieldCode = kv.Key;
             var backupFieldObj = kv.Value!.AsObject();
 
-            // リストア先にフィールドが存在するか
-            var currentField = currentSchema.Fields.FirstOrDefault(f => f.FieldCode == fieldCode) ?? throw new InvalidOperationException(
-                    $"リストア先アプリにフィールド '{fieldCode}' が存在しません。"
-                );
-
             // フィールドタイプの一致チェック
             var backupType = backupFieldObj["type"]?.ToString()
                 ?? throw new InvalidOperationException($"fields.json の '{fieldCode}' に type がありません。");
+
+            // リストアリストアで扱わなすすｓすｋすスキップ
+            if (!KintoneFieldTypeMapper.TryConvert(backupType, out _)) { continue; }
+
+            // リストア先にフィールドが存在するか
+            var currentField = currentSchema.Fields.FirstOrDefault(f => f.FieldCode == fieldCode)
+                ?? throw new InvalidOperationException($"リストア先アプリにフィールド '{fieldCode}' が存在しません。");
 
             var currentType = currentField.OriginalFieldType;
 
@@ -592,9 +669,11 @@ public sealed class RestoreService(ISchemaProvider schemaProvider, IKintoneAppMe
             var batch = idList
                 .Skip(i)
                 .Take(KintoneDeleteLimit)
+                .Select(int.Parse)
                 .ToArray();
 
             var deleteJson = new JsonObject {
+                ["app"] = this.Options.AppID,
                 ["ids"] = new JsonArray(batch.Select(id => JsonValue.Create(id)).ToArray())
             };
 

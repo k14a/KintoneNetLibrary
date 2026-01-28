@@ -43,6 +43,7 @@ public static class KintoneFieldTypeMapper {
             ["STATUS_ASSIGNEE"] = KintoneFieldType.StatusAssignee,
             ["CATEGORY"] = KintoneFieldType.Category,
             ["MULTI_SELECT"] = KintoneFieldType.MultiSelect,
+            ["RECORD_NUMBER"] = KintoneFieldType.RecordNumber,
             ["REVISION"] = KintoneFieldType.Revision,
             ["CREATOR"] = KintoneFieldType.Creator,
             ["MODIFIER"] = KintoneFieldType.Modifier,

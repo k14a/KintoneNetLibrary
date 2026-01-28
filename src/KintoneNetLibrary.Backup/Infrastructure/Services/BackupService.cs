@@ -22,9 +22,15 @@ namespace KintoneNetLibrary.Backup.Infrastructure.Services;
 /// <param name="schemaProvider"></param>
 /// <param name="httpClient"></param>
 /// <param name="logger"></param>
-public sealed class BackupService(ISchemaProvider schemaProvider, HttpClient? httpClient = null, ILogger<BackupService>? logger = null) : IBackupService {
+public sealed class BackupService(
+    ISchemaProvider schemaProvider,
+    IKintoneAccessFactory _accessFactory,
+    HttpClient? httpClient = null,
+    ILogger<BackupService>? logger = null) : IBackupService {
+
     private IKintoneApi? _api;
     private readonly ISchemaProvider _schemaProvider = schemaProvider;
+    private readonly IKintoneAccessFactory _accessFactory = _accessFactory;
     private HttpClient? _httpClient = httpClient;
     private JsonSerializerOptions? _jsonOptions;
     private readonly ILogger<BackupService>? _logger = logger;
@@ -34,11 +40,10 @@ public sealed class BackupService(ISchemaProvider schemaProvider, HttpClient? ht
         if (this._api != null) { return; }
         ArgumentNullException.ThrowIfNull(this.Options);
 
-        var domain = $"{this.Options.SubDomain}.cybozu.com";
-        var access = new ApiTokenAccess(domain, this.Options.ApiToken);
+        var access = new ApiTokenAccess(this.Options.SubDomain, this.Options.ApiToken);
 
         this._httpClient ??= new HttpClient {
-            BaseAddress = new Uri($"https://{domain}/k/v1/")
+            BaseAddress = new Uri($"https://{access.Domain}/k/v1/")
         };
 
         this._jsonOptions ??= new JsonSerializerOptions() {
@@ -358,7 +363,9 @@ public sealed class BackupService(ISchemaProvider schemaProvider, HttpClient? ht
 
         this._logger?.LogInformation("フィールドスキーマを保存しています…");
 
-        var json = JsonSerializer.Serialize(metadata, this._jsonOptions);
+        var access = this._accessFactory.CreateApiTokenAccess(this.Options.SubDomain, this.Options.ApiToken);
+        var metadataApi = new KintoneAppMetadataApi(access, this._httpClient!, this._logger as ILogger<KintoneAppMetadataApi>);
+        var json = await metadataApi.GetFieldsJsonAsync(metadata.AppId);
 
         var dir = this.Options.OutputPath.FullName;
         Directory.CreateDirectory(dir);
