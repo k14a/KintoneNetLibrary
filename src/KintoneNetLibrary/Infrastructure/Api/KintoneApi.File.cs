@@ -133,7 +133,7 @@ public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
     }
     #endregion
 
-    #region <<File upload>>
+    #region <<File download>>
     /// <summary>
     /// fileKey からファイルをダウンロードし、バイト配列として返します。
     /// </summary>

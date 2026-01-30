@@ -40,6 +40,30 @@ public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
     }
 
     /// <summary>
+    /// カーソルを作成します。
+    /// </summary>
+    /// <param name="query"></param>
+    /// <param name="fields"></param>
+    /// <param name="size"></param>
+    /// <returns></returns>
+    public Task<string> CreateCursorAsync(string query, IList<string>? fields = null, int? size = null) {
+        var body = new Dictionary<string, object> {
+            { "app", this._appID },
+            { "query", query }
+        };
+
+        if (fields is not null) {
+            body["fields"] = fields;
+        }
+
+        if (size is not null) {
+            body["size"] = size.Value;
+        }
+
+        return this.CreateCursorAsync(body);
+    }
+
+    /// <summary>
     /// カーソルを取得します。
     /// </summary>
     /// <param name="cursorId"></param>
@@ -67,6 +91,41 @@ public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
     }
 
     /// <summary>
+    /// カーソルをストリームで取得します。
+    /// </summary>
+    /// <param name="cursorId"></param>
+    /// <returns></returns>
+    public Task<Stream> FetchCursorPageAsStreamAsync(string cursorId) {
+        return this.FetchCursorStreamAsync(cursorId);
+    }
+
+    /// <summary>
+    /// カーソルをストリームで取得します。
+    /// </summary>
+    /// <param name="cursorId"></param>
+    /// <returns></returns>
+    /// <exception cref="KintoneException"></exception>
+    private async Task<Stream> FetchCursorStreamAsync(string cursorId) {
+        var endpoint = $"records/cursor.json?id={cursorId}";
+        var requestUri = $"{this.GetBaseUri()}{endpoint}";
+
+        var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+        this.SetHeaders(request);
+
+        var response = await this._httpClient.SendAsync(
+            request,
+            HttpCompletionOption.ResponseHeadersRead
+        );
+
+        if (!response.IsSuccessStatusCode) {
+            var json = await response.Content.ReadAsStringAsync();
+            throw new KintoneException(KintoneErrorConverter.Parse(json));
+        }
+
+        return await response.Content.ReadAsStreamAsync();
+    }
+
+    /// <summary>
     /// カーソルを削除します。
     /// </summary>
     /// <param name="json"></param>
@@ -90,19 +149,30 @@ public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
     }
 
     /// <summary>
+    /// カーソルを削除します。
+    /// </summary>
+    /// <param name="cursorId"></param>
+    /// <returns></returns>
+    public Task DeleteCursorAsync(string cursorId) {
+        var json = JsonSerializer.Serialize(new { id = cursorId }, this._jsonOptions);
+        return this.DeleteCursorJsonAsync(json);
+    }
+
+    /// <summary>
     /// カーソルをストリームとして取得します。
     /// </summary>
     /// <param name="cursorId"></param>
     /// <returns></returns>
-    public async IAsyncEnumerable<string> StreamCursorAsync(string cursorId) {
+    public async IAsyncEnumerable<Stream> StreamCursorAsync(string cursorId) {
         try {
             while (true) {
-                var pageJson = await this.FetchCursorAsync(cursorId);
+                var stream = await this.FetchCursorStreamAsync(cursorId);
 
-                using var doc = JsonDocument.Parse(pageJson);
+                using var doc = await JsonDocument.ParseAsync(stream);
                 var hasNext = doc.RootElement.TryGetProperty("next", out var doneProp) && doneProp.GetBoolean();
 
-                yield return pageJson;
+                stream.Position = 0; // 再利用のため巻き戻す
+                yield return stream;
 
                 if (!hasNext) { break; }
             }
@@ -112,7 +182,6 @@ public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
             try {
                 await this.DeleteCursorJsonAsync(deleteRequestJson);
             } catch (KintoneException ex) when (ex.Detail.Contains("GAIA_CN01")) {
-                // カーソルが自動終了されたため、エラーを握りつぶす
                 this._logger?.LogWarning(ex.ToString());
             }
         }

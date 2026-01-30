@@ -1,5 +1,6 @@
 using KintoneNetLibrary.Domain.Entities;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace KintoneNetLibrary.Application.Interfaces;
@@ -24,6 +25,14 @@ public interface IKintoneApi {
     Task<string?> RawFindByIDAsync(string id);
 
     /// <summary>
+    /// IDで単一レコードを取得（Raw・ストリーム）
+    /// </summary>
+    /// <param name="output"></param>
+    /// <param name="id"></param>
+    /// <returns></returns>
+    Task RawFindByIDAsStreamAsync(Stream output, string id);
+
+    /// <summary>
     /// IDリストで複数レコードを取得
     /// </summary>
     /// <typeparam name="T"></typeparam>
@@ -41,6 +50,15 @@ public interface IKintoneApi {
     Task<string?> RawFindByIDsAsync(IList<string> ids, IList<string>? fieldCodes = null);
 
     /// <summary>
+    /// IDリストで複数レコードを取得（Raw・ストリーム）
+    /// </summary>
+    /// <param name="output"></param>
+    /// <param name="ids"></param>
+    /// <param name="fieldCodes"></param>
+    /// <returns></returns>
+    Task RawFindByIDsAsStreamAsync(Stream output, IList<string> ids, IList<string>? fieldCodes = null);
+
+    /// <summary>
     /// 全レコード取得（条件なし）
     /// </summary>
     /// <typeparam name="T"></typeparam>
@@ -54,6 +72,14 @@ public interface IKintoneApi {
     /// <param name="fieldCodes"></param>
     /// <returns></returns>
     Task<string?> RawFindAllAsync(IList<string>? fieldCodes = null);
+
+    /// <summary>
+    /// 全レコード取得（条件なし・Raw・ストリーム）
+    /// </summary>
+    /// <param name="output"></param>
+    /// <param name="fieldCodes"></param>
+    /// <returns></returns>
+    Task RawFindAllAsStreamAsync(Stream output, IList<string>? fieldCodes = null);
 
     /// <summary>
     /// 指定フィールド＝値 で検索
@@ -73,6 +99,16 @@ public interface IKintoneApi {
     Task<string?> RawFindByFieldAsync(string field, string value);
 
     /// <summary>
+    /// 指定フィールド＝値 で検索（Raw・ストリーム）
+    /// </summary>
+    /// <param name="output"></param>
+    /// <param name="field"></param>
+    /// <param name="value"></param>
+    /// <param name="fieldCodes"></param>
+    /// <returns></returns>
+    Task RawFindByFieldAsStreamAsync(Stream output, string field, string value, IList<string>? fieldCodes = null);
+
+    /// <summary>
     /// クエリ文字列で検索
     /// </summary>
     /// <typeparam name="T"></typeparam>
@@ -88,6 +124,15 @@ public interface IKintoneApi {
     /// <param name="fieldCodes"></param>
     /// <returns></returns>
     Task<string?> RawFindByQueryAsync(string queryStr, IList<string>? fieldCodes = null);
+
+    /// <summary>
+    /// クエリ文字列で検索（Raw・ストリーム）
+    /// </summary>
+    /// <param name="output"></param>
+    /// <param name="queryStr"></param>
+    /// <param name="fieldCodes"></param>
+    /// <returns></returns>
+    Task RawFindByQueryAsStreamAsync(Stream output, string queryStr, IList<string>? fieldCodes = null);
 
     /// <summary>
     /// 複数レコードを一括登録します
@@ -186,18 +231,66 @@ public interface IKintoneApi {
     Task<string> CreateCursorAsync(Dictionary<string, object> body);
 
     /// <summary>
-    /// カーソルを取得します
+    /// カーソルを作成します
+    /// </summary>
+    /// <param name="query"></param>
+    /// <param name="fields"></param>
+    /// <param name="size"></param>
+    /// <returns></returns>
+    Task<string> CreateCursorAsync(string query, IList<string>? fields = null, int? size = null);
+
+    /// <summary>
+    /// カーソルをストリームで取得します。
+    /// </summary>
+    /// <param name="cursorId"></param>
+    /// <returns></returns>
+    Task<Stream> FetchCursorPageAsStreamAsync(string cursorId);
+
+    /// <summary>
+    /// カーソルを削除します。
     /// </summary>
     /// <param name="json"></param>
     /// <returns></returns>
     Task<string> DeleteCursorJsonAsync(string json);
 
     /// <summary>
+    /// カーソルを削除します。
+    /// </summary>
+    /// <param name="cursorId"></param>
+    /// <returns></returns>
+    Task DeleteCursorAsync(string cursorId);
+
+    /// <summary>
     /// カーソルをストリームで取得します
     /// </summary>
     /// <param name="cursorId"></param>
     /// <returns></returns>
-    IAsyncEnumerable<string> StreamCursorAsync(string cursorId);
+    IAsyncEnumerable<Stream> StreamCursorAsync(string cursorId);
+
+    /// <summary>
+    /// カーソルをストリームで取得します
+    /// </summary>
+    /// <param name="cursorId"></param>
+    /// <returns></returns>
+    IAsyncEnumerable<Stream> StreamCursorStreamAsync(string cursorId);
+
+    /// <summary>
+    /// カーソルページをストリームで取得します
+    /// </summary>
+    /// <param name="query"></param>
+    /// <param name="fields"></param>
+    /// <param name="size"></param>
+    /// <returns></returns>
+    IAsyncEnumerable<Stream> StreamCursorPagesAsync(string query, IList<string>? fields = null, int? size = null);
+
+    /// <summary>
+    /// カーソルページをストリームで取得します
+    /// </summary>
+    /// <param name="query"></param>
+    /// <param name="fields"></param>
+    /// <param name="size"></param>
+    /// <returns></returns>
+    IAsyncEnumerable<JsonElement> StreamRecordsAsync(string query, IList<string>? fields = null, int? size = null);
 
     /// <summary>
     /// カーソルページサイズ

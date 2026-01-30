@@ -1,3 +1,5 @@
+using System.Net.WebSockets;
+using System.Text;
 using System.Text.Json;
 using KintoneNetLibrary.Application.Interfaces;
 using KintoneNetLibrary.Domain.Entities;
@@ -40,6 +42,38 @@ public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
     }
 
     /// <summary>
+    /// IDで単一レコードを取得（Raw）
+    /// </summary>
+    /// <param name="output"></param>
+    /// <param name="id"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentNullException"></exception>
+    /// <exception cref="KintoneException"></exception>
+    public async Task RawFindByIDAsStreamAsync(
+        Stream output,
+        string id) {
+        if (string.IsNullOrWhiteSpace(id)) {
+            throw new ArgumentNullException(nameof(id));
+        }
+
+        var requestUri = this.BuildRequestUri(KintoneApiEndpoints.GetSingleRecord, $"app={this._appID}&id={id}");
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+        this.SetHeaders(request);
+
+        using var response = await this._httpClient.SendAsync(request);
+        var json = await response.Content.ReadAsStringAsync();
+        this._logger?.LogTrace(json);
+
+        if (!response.IsSuccessStatusCode) {
+            throw new KintoneException(KintoneErrorConverter.Parse(json));
+        }
+
+        var bytes = Encoding.UTF8.GetBytes(json);
+        await output.WriteAsync(bytes);
+    }
+
+    /// <summary>
     /// IDリストで複数レコードを取得（Raw）
     /// </summary>
     /// <param name="ids"></param>
@@ -79,12 +113,70 @@ public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
     }
 
     /// <summary>
+    /// IDリストで複数レコードを取得（Raw）
+    /// </summary>
+    /// <param name="output"></param>
+    /// <param name="ids"></param>
+    /// <param name="fieldCodes"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentNullException"></exception>
+    /// <exception cref="KintoneException"></exception>
+    public async Task RawFindByIDsAsStreamAsync(
+        Stream output,
+        IList<string> ids,
+        IList<string>? fieldCodes = null) {
+        if (ids == null || ids.Count == 0) {
+            throw new ArgumentNullException(nameof(ids));
+        }
+
+        var idList = string.Join(",", ids.Select(id => $"\"{id}\""));
+        var query = $"id in ({idList})";
+
+        if (ids.Count <= KintoneLimit) {
+            // 通常 API で取得してそのまま Stream に書き込む
+            var requestUri = KintoneRequestBuilder.BuildFindRequestUri(
+                this.GetBaseUri(),
+                KintoneApiEndpoints.GetRecords,
+                this._appID,
+                query,
+                fieldCodes
+            );
+
+            using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+            this.SetHeaders(request);
+
+            using var response = await this._httpClient.SendAsync(request);
+            var json = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode) {
+                throw new KintoneException(KintoneErrorConverter.Parse(json));
+            }
+
+            var bytes = Encoding.UTF8.GetBytes(json);
+            await output.WriteAsync(bytes);
+        } else {
+            // 大規模データ → Stream ベースの RawFindBaseJsonAsStreamAsync を使う
+            await this.RawFindBaseJsonAsStreamAsync(output, query, fieldCodes);
+        }
+    }
+
+    /// <summary>
     /// 全レコード取得（条件なし・Raw）
     /// </summary>
     /// <param name="fieldCodes"></param>
     /// <returns></returns>
     public async Task<string?> RawFindAllAsync(IList<string>? fieldCodes = null) {
         return await this.RawFindBaseJsonAsync(string.Empty, fieldCodes: fieldCodes);
+    }
+
+    /// <summary>
+    /// 全レコード取得（条件なし・Raw）
+    /// </summary>
+    /// <param name="output"></param>
+    /// <param name="fieldCodes"></param>
+    /// <returns></returns>
+    public async Task RawFindAllAsStreamAsync(Stream output, IList<string>? fieldCodes = null) {
+        await this.RawFindBaseJsonAsStreamAsync(output, string.Empty, fieldCodes);
     }
 
     /// <summary>
@@ -101,6 +193,21 @@ public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
     }
 
     /// <summary>
+    /// 指定フィールド＝値 で検索（Raw）
+    /// </summary>
+    /// <param name="output"></param>
+    /// <param name="field"></param>
+    /// <param name="value"></param>
+    /// <param name="fieldCodes"></param>
+    /// <returns></returns>
+    public async Task RawFindByFieldAsStreamAsync(Stream output, string field, string value, IList<string>? fieldCodes = null) {
+        ArgumentException.ThrowIfNullOrWhiteSpace(field);
+
+        var query = $"{field} = \"{value}\"";
+        await this.RawFindBaseJsonAsStreamAsync(output, query, fieldCodes);
+    }
+
+    /// <summary>
     /// クエリ文字列で検索（Raw）
     /// </summary>
     /// <param name="queryStr"></param>
@@ -110,7 +217,28 @@ public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
         // LIKE 句のバリデーションは Raw でも同じ
         KintoneQueryValidator.ValidateLikeClause(queryStr, msg => this._logger?.LogWarning(msg));
 
-        return await this.RawFindBaseJsonAsync(queryStr, fieldCodes: fieldCodes);
+        try {
+            return await this.RawFindBaseJsonAsync(queryStr, fieldCodes: fieldCodes);
+        } catch (OutOfMemoryException oom) {
+            throw new KintoneException(
+                "大量データを string として取得したため、メモリ不足 (OutOfMemoryException) が発生しました。" +
+                "大規模データを扱う場合は、RawFindByQueryAsStreamAsync を使用することで" +
+                "メモリ使用量を抑えて安全に処理できます。",
+                oom);
+        }
+    }
+
+    /// <summary>
+    /// クエリ文字列で検索（Raw）
+    /// </summary>
+    /// <param name="output"></param>
+    /// <param name="queryStr"></param>
+    /// <param name="fieldCodes"></param>
+    /// <returns></returns>
+    public async Task RawFindByQueryAsStreamAsync(Stream output, string queryStr, IList<string>? fieldCodes = null) {
+        KintoneQueryValidator.ValidateLikeClause(queryStr, msg => this._logger?.LogWarning(msg));
+
+        await this.RawFindBaseJsonAsStreamAsync(output, queryStr, fieldCodes: fieldCodes);
     }
 
     /// <summary>
@@ -152,7 +280,9 @@ public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
                 ?? new RecordCountResponse();
 
             if (countResult.TotalCount > KintoneLimit) {
-                return await this.RawCursorFetchAllJsonAsync(query, fieldCodes);
+                using var ms = new MemoryStream();
+                await this.RawCursorFetchAllJsonAsStreamAsync(ms, query, fieldCodes);
+                return Encoding.UTF8.GetString(ms.ToArray());
             }
         }
 
@@ -178,12 +308,75 @@ public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
     }
 
     /// <summary>
-    /// カーソルで全件取得（Raw）
+    /// 基本のレコード取得（Raw）
     /// </summary>
+    /// <param name="output"></param>
+    /// <param name="query"></param>
+    /// <param name="fieldCodes"></param>
+    /// <param name="forceCursor"></param>
+    /// <returns></returns>
+    /// <exception cref="KintoneException"></exception>
+    private async Task RawFindBaseJsonAsStreamAsync(Stream output, string query, IList<string>? fieldCodes = null, bool forceCursor = false) {
+        if (!forceCursor) {
+            // 件数取得
+            var countUri = KintoneRequestBuilder.BuildRequestUri(
+                this.GetBaseUri(),
+                KintoneApiEndpoints.GetRecords,
+                this._appID,
+                query,
+                fieldCodes,
+                new Dictionary<string, string> {
+                    { "totalCount", "true" },
+                    { "limit", "1" },
+                }
+            );
+
+            using var countReq = new HttpRequestMessage(HttpMethod.Get, countUri);
+            this.SetHeaders(countReq);
+
+            using var countResp = await this._httpClient.SendAsync(countReq);
+            var countJson = await countResp.Content.ReadAsStringAsync();
+
+            if (!countResp.IsSuccessStatusCode) {
+                throw new KintoneException(KintoneErrorConverter.Parse(countJson));
+            }
+
+            var countResult = JsonSerializer.Deserialize<RecordCountResponse>(countJson, this._jsonOptions)
+                ?? new RecordCountResponse();
+
+            // 大規模データ → カーソルでストリーミング
+            if (countResult.TotalCount > KintoneLimit) {
+                await this.RawCursorFetchAllJsonAsStreamAsync(output, query, fieldCodes);
+                return;
+            }
+        }
+
+        // 小規模データ → 通常 API の JSON をそのまま書き込む
+        var requestUri = KintoneRequestBuilder.BuildRequestUri(this.GetBaseUri(), KintoneApiEndpoints.GetRecords, this._appID, query, fieldCodes);
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+        this.SetHeaders(request);
+
+        using var response = await this._httpClient.SendAsync(request);
+        var json = await response.Content.ReadAsStringAsync();
+
+        if (!response.IsSuccessStatusCode) {
+            throw new KintoneException(KintoneErrorConverter.Parse(json));
+        }
+
+        // 小規模データはそのまま Stream に書く
+        var bytes = Encoding.UTF8.GetBytes(json);
+        await output.WriteAsync(bytes, 0, bytes.Length);
+    }
+
+    /// <summary>
+    /// カーソルで全レコード取得（Raw）
+    /// </summary>
+    /// <param name="output"></param>
     /// <param name="query"></param>
     /// <param name="fieldCodes"></param>
     /// <returns></returns>
-    private async Task<string> RawCursorFetchAllJsonAsync(string query, IList<string>? fieldCodes = null) {
+    private async Task RawCursorFetchAllJsonAsStreamAsync(Stream output, string query, IList<string>? fieldCodes = null) {
         var cursorRequest = new Dictionary<string, object> {
             ["app"] = this._appID,
             ["size"] = this.CursorPageSize,
@@ -198,17 +391,264 @@ public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
         }
 
         var cursor = await this.CreateCursorAsync(cursorRequest);
-        var allRecords = new List<JsonElement>();
 
-        await foreach (var json in this.StreamCursorAsync(cursor)) {
-            using var doc = JsonDocument.Parse(json);
-            if (doc.RootElement.TryGetProperty("records", out var recordsElement)) {
-                foreach (var record in recordsElement.EnumerateArray()) {
-                    allRecords.Add(record.Clone());
-                }
-            }
+        using var writer = new Utf8JsonWriter(output);
+
+        writer.WriteStartObject();
+        writer.WritePropertyName("records");
+        writer.WriteStartArray();
+
+        while (true) {
+            using var stream = await this.FetchCursorStreamAsync(cursor);
+
+            var hasNext = this.ReadRecordsAndNextFromCursorStream(stream, record => {
+                record.WriteTo(writer);
+            });
+
+            if (!hasNext) { break; }
         }
 
-        return JsonSerializer.Serialize(new { records = allRecords }, this._jsonOptions);
+        writer.WriteEndArray();
+        writer.WriteEndObject();
+        writer.Flush();
     }
+
+    private bool ReadRecordsAndNextFromCursorStream(Stream stream, Action<JsonElement> onRecord) {
+        bool hasNext = false;
+
+        byte[] buffer = new byte[64 * 1024];
+        byte[] leftover = Array.Empty<byte>();
+
+        int bytesRead;
+        bool insideRecords = false;
+
+        JsonReaderState state = default;
+
+        try {
+            while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) > 0) {
+                // leftover + buffer を結合
+                var data = new byte[leftover.Length + bytesRead];
+                Buffer.BlockCopy(leftover, 0, data, 0, leftover.Length);
+                Buffer.BlockCopy(buffer, 0, data, leftover.Length, bytesRead);
+
+                // ★ state を維持する
+                var reader = new Utf8JsonReader(data, isFinalBlock: false, state);
+
+                while (reader.Read()) {
+                    if (reader.TokenType == JsonTokenType.PropertyName) {
+                        if (reader.ValueTextEquals("next")) {
+                            reader.Read();
+                            hasNext = reader.GetBoolean();
+                        } else if (reader.ValueTextEquals("records")) {
+                            reader.Read(); // StartArray
+                            insideRecords = true;
+                        }
+                        continue;
+                    }
+
+                    if (insideRecords && reader.TokenType == JsonTokenType.StartObject) {
+                        // ★ チャンクをまたいでも壊れない JSON オブジェクト読み取り
+                        using var doc = this.ReadOneJsonObject(ref reader, stream, ref state, ref leftover);
+                        onRecord(doc.RootElement.Clone());
+                    }
+                }
+
+                // ★ 次チャンクに渡す leftover を更新
+                leftover = data.AsSpan((int)reader.BytesConsumed).ToArray();
+
+                // ★ state を保存
+                state = reader.CurrentState;
+            }
+
+            return hasNext;
+        } catch (Exception ex) {
+            this._logger?.LogError(ex, "Error while reading records from cursor stream.");
+            throw;
+        }
+    }
+
+    private JsonDocument ReadOneJsonObject(
+        ref Utf8JsonReader reader,
+        Stream stream,
+        ref JsonReaderState state,
+        ref byte[] leftover) {
+        using var ms = new MemoryStream();
+        using var writer = new Utf8JsonWriter(ms);
+
+        int depth = 0;
+
+        // StartObject はすでに reader.TokenType == StartObject
+        writer.WriteStartObject();
+        depth++;
+
+        while (true) {
+            // 現在のチャンクを読み進める
+            while (reader.Read()) {
+                switch (reader.TokenType) {
+                    case JsonTokenType.StartObject:
+                        writer.WriteStartObject();
+                        depth++;
+                        break;
+
+                    case JsonTokenType.EndObject:
+                        writer.WriteEndObject();
+                        depth--;
+                        if (depth == 0) {
+                            writer.Flush();
+                            ms.Position = 0;
+                            return JsonDocument.Parse(ms);
+                        }
+                        break;
+
+                    case JsonTokenType.StartArray:
+                        writer.WriteStartArray();
+                        break;
+
+                    case JsonTokenType.EndArray:
+                        writer.WriteEndArray();
+                        break;
+
+                    case JsonTokenType.PropertyName:
+                        writer.WritePropertyName(reader.GetString());
+                        break;
+
+                    case JsonTokenType.String:
+                        writer.WriteStringValue(reader.GetString());
+                        break;
+
+                    case JsonTokenType.Number:
+                        writer.WriteNumberValue(reader.GetDouble());
+                        break;
+
+                    case JsonTokenType.True:
+                    case JsonTokenType.False:
+                        writer.WriteBooleanValue(reader.GetBoolean());
+                        break;
+
+                    case JsonTokenType.Null:
+                        writer.WriteNullValue();
+                        break;
+                }
+            }
+
+            // 現在のチャンクを読み切ったので次のチャンクを読む
+            byte[] buffer = new byte[64 * 1024];
+            int bytesRead = stream.Read(buffer, 0, buffer.Length);
+
+            if (bytesRead == 0) {
+                throw new JsonException("Incomplete JSON object in stream.");
+            }
+
+            // leftover と結合して次の Utf8JsonReader に渡す
+            var data = new byte[leftover.Length + bytesRead];
+            Buffer.BlockCopy(leftover, 0, data, 0, leftover.Length);
+            Buffer.BlockCopy(buffer, 0, data, leftover.Length, bytesRead);
+
+            // 新しい reader を作成（state を維持）
+            reader = new Utf8JsonReader(data, isFinalBlock: false, state);
+
+            // 次チャンクに備えて leftover を更新
+            leftover = data.AsSpan((int)reader.BytesConsumed).ToArray();
+
+            // state を更新
+            state = reader.CurrentState;
+        }
+    }
+
+    /// <summary>
+    /// カーソルをストリームで取得します
+    /// </summary>
+    /// <param name="cursorId"></param>
+    /// <returns></returns>
+    public async IAsyncEnumerable<Stream> StreamCursorStreamAsync(string cursorId) {
+        try {
+            while (true) {
+                var stream = await this.FetchCursorStreamAsync(cursorId);
+
+                using var doc = await JsonDocument.ParseAsync(stream);
+                bool hasNext = doc.RootElement.TryGetProperty("next", out var nextProp) && nextProp.GetBoolean();
+
+                stream.Position = 0;
+                yield return stream;
+
+                if (!hasNext) { break; }
+            }
+
+        } finally {
+            var deleteJson = JsonSerializer.Serialize(new { id = cursorId }, this._jsonOptions);
+            await this.DeleteCursorJsonAsync(deleteJson);
+        }
+    }
+
+    /// <summary>
+    /// カーソルページをストリームで取得します
+    /// </summary>
+    /// <param name="query"></param>
+    /// <param name="fields"></param>
+    /// <param name="size"></param>
+    /// <returns></returns>
+    public async IAsyncEnumerable<Stream> StreamCursorPagesAsync(string query, IList<string>? fields = null, int? size = null) {
+        // カーソル作成
+        var cursorId = await this.CreateCursorAsync(query, fields, size);
+
+        try {
+            while (true) {
+                // 1ページ分の JSON をストリームで取得
+                var stream = await this.FetchCursorPageAsStreamAsync(cursorId);
+
+                // next（または done）を判定するために一度だけパース
+                using var doc = await JsonDocument.ParseAsync(stream);
+                bool hasNext =
+                    (doc.RootElement.TryGetProperty("next", out var nextProp) && nextProp.GetBoolean()) ||
+                    (doc.RootElement.TryGetProperty("done", out var doneProp) && !doneProp.GetBoolean());
+
+                // 呼び出し側に返すために stream を巻き戻す
+                if (stream.CanSeek) {
+                    stream.Position = 0;
+                } else {
+                    // HttpClient のストリームはシーク不可なので MemoryStream にコピー
+                    var ms = new MemoryStream();
+                    stream.Position = 0;
+                    await stream.CopyToAsync(ms);
+                    ms.Position = 0;
+                    stream = ms;
+                }
+
+                yield return stream;
+
+                if (!hasNext) { break; }
+            }
+
+        } finally {
+            // カーソル削除
+            try {
+                await this.DeleteCursorAsync(cursorId);
+            } catch (KintoneException ex) when (ex.Detail.Contains("GAIA_CN01")) {
+                // すでに削除済みなど
+                this._logger?.LogWarning(ex.ToString());
+            }
+        }
+    }
+
+    /// <summary>
+    /// レコードをストリームで取得します
+    /// </summary>
+    /// <param name="query"></param>
+    /// <param name="fields"></param>
+    /// <param name="size"></param>
+    /// <returns></returns>
+    public async IAsyncEnumerable<JsonElement> StreamRecordsAsync(string query, IList<string>? fields = null, int? size = null) {
+        await foreach (var pageStream in this.StreamCursorPagesAsync(query, fields, size)) {
+            // ページ JSON を Utf8JsonReader でパース
+            using var doc = await JsonDocument.ParseAsync(pageStream);
+
+            if (!doc.RootElement.TryGetProperty("records", out var recordsElement)) { continue; }
+
+            foreach (var record in recordsElement.EnumerateArray()) {
+                // JsonElement は使い捨てなので Clone() して返す
+                yield return record.Clone();
+            }
+        }
+    }
+
 }
