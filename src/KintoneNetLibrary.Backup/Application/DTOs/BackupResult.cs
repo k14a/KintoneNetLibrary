@@ -63,6 +63,7 @@ public sealed class BackupResult : IOperationResult {
 
     IReadOnlyList<string> IOperationResult.Errors => this.Errors;
 
-    public int Parts { get; set; }
+    public IList<string> PartFiles { get; set; } = [];
+    public int Parts => this.PartFiles.Count;
     public int SplitSize { get; set; }
 }
