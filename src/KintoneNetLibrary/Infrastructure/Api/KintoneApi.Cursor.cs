@@ -142,6 +142,7 @@ public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
         var responseJson = await response.Content.ReadAsStringAsync();
 
         if (!response.IsSuccessStatusCode) {
+            this._logger?.LogError("DeleteCursorJsonAsync failed: {Json}", responseJson);
             throw new KintoneException(KintoneErrorConverter.Parse(responseJson));
         }
 
@@ -182,7 +183,7 @@ public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
             try {
                 await this.DeleteCursorJsonAsync(deleteRequestJson);
             } catch (KintoneException ex) when (ex.Detail.Contains("GAIA_CN01")) {
-                this._logger?.LogWarning(ex.ToString());
+                this._logger?.LogWarning("DeleteCursorJsonAsync failed with GAIA_CN01: {Exception}", ex.ToString());
             }
         }
     }

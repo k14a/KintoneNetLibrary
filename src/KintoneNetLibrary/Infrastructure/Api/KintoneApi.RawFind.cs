@@ -594,27 +594,22 @@ public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
         try {
             while (true) {
                 // 1ページ分の JSON をストリームで取得
-                var stream = await this.FetchCursorPageAsStreamAsync(cursorId);
+                var rawStream = await this.FetchCursorPageAsStreamAsync(cursorId);
+
+                var ms = new MemoryStream();
+                await rawStream.CopyToAsync(ms);
+                ms.Position = 0;
 
                 // next（または done）を判定するために一度だけパース
-                using var doc = await JsonDocument.ParseAsync(stream);
+                using var doc = await JsonDocument.ParseAsync(ms);
                 bool hasNext =
                     (doc.RootElement.TryGetProperty("next", out var nextProp) && nextProp.GetBoolean()) ||
                     (doc.RootElement.TryGetProperty("done", out var doneProp) && !doneProp.GetBoolean());
 
                 // 呼び出し側に返すために stream を巻き戻す
-                if (stream.CanSeek) {
-                    stream.Position = 0;
-                } else {
-                    // HttpClient のストリームはシーク不可なので MemoryStream にコピー
-                    var ms = new MemoryStream();
-                    stream.Position = 0;
-                    await stream.CopyToAsync(ms);
-                    ms.Position = 0;
-                    stream = ms;
-                }
+                ms.Position = 0;
 
-                yield return stream;
+                yield return ms;
 
                 if (!hasNext) { break; }
             }

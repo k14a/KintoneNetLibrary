@@ -67,6 +67,8 @@ public sealed class BackupService(
         if (this.Options.BatchSize is int size) {
             this._api.CursorPageSize = size; // KintoneApi 側でバリデーション
         }
+
+        this._schemaProvider.SetDomain(this.Options.SubDomain);
     }
 
     /// <summary>
@@ -88,6 +90,7 @@ public sealed class BackupService(
 
                 result.PartFiles.Add(Path.GetFileName(partPath));
                 result.RecordCount += this.CountRecordsInPage(pageStream);
+                // this._logger?.LogInformation("Saved split JSON file: {Path}", partPath);
             }
 
             // 2) スキーマ取得・保存
@@ -143,29 +146,45 @@ public sealed class BackupService(
     /// <param name="pageStream"></param>
     /// <returns></returns>
     private int CountRecordsInPage(Stream pageStream) {
-        // ストリームの先頭に戻す
         if (pageStream.CanSeek) { pageStream.Position = 0; }
 
-        var reader = new Utf8JsonReader(ReadAllBytes(pageStream));
+        using var doc = JsonDocument.Parse(pageStream);
 
-        int count = 0;
-        bool insideRecords = false;
+        if (!doc.RootElement.TryGetProperty("records", out var records)) { return 0; }
 
-        while (reader.Read()) {
-            if (reader.TokenType == JsonTokenType.PropertyName &&
-                reader.ValueTextEquals("records")) {
-                // 次のトークンは StartArray
-                reader.Read();
-                insideRecords = true;
-                continue;
-            }
+        return records.ValueKind switch {
+            JsonValueKind.Array => records.GetArrayLength(),
 
-            if (insideRecords && reader.TokenType == JsonTokenType.StartObject) { count++; }
-            if (insideRecords && reader.TokenType == JsonTokenType.EndArray) { break; }
-        }
-
-        return count;
+            // オブジェクト形式の場合はプロパティ数がレコード数
+            JsonValueKind.Object => records.EnumerateObject().Count(),
+            _ => 0
+        };
     }
+
+    // private int CountRecordsInPage(Stream pageStream) {
+    //     // ストリームの先頭に戻す
+    //     if (pageStream.CanSeek) { pageStream.Position = 0; }
+
+    //     var reader = new Utf8JsonReader(ReadAllBytes(pageStream));
+
+    //     int count = 0;
+    //     bool insideRecords = false;
+
+    //     while (reader.Read()) {
+    //         if (reader.TokenType == JsonTokenType.PropertyName &&
+    //             reader.ValueTextEquals("records")) {
+    //             // 次のトークンは StartArray
+    //             reader.Read();
+    //             insideRecords = true;
+    //             continue;
+    //         }
+
+    //         if (insideRecords && reader.TokenType == JsonTokenType.StartObject) { count++; }
+    //         if (insideRecords && reader.TokenType == JsonTokenType.EndArray) { break; }
+    //     }
+
+    //     return count;
+    // }
 
     private static byte[] ReadAllBytes(Stream stream) {
         using var ms = new MemoryStream();
