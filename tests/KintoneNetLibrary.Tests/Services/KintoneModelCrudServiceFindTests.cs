@@ -3,6 +3,7 @@ using KintoneNetLibrary.Application.UseCases.Services;
 using KintoneNetLibrary.Domain.Access;
 using KintoneNetLibrary.Domain.Common;
 using KintoneNetLibrary.Domain.Entities;
+using KintoneNetLibrary.Domain.Enums;
 using KintoneNetLibrary.Domain.Interfaces;
 using KintoneNetLibrary.Infrastructure.Converters;
 using KintoneNetLibrary.Infrastructure.Helpers;

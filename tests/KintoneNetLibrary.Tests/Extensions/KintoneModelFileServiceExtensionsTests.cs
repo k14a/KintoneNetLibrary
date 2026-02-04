@@ -1,5 +1,6 @@
 using KintoneNetLibrary.Domain.Access;
 using KintoneNetLibrary.Domain.Entities;
+using KintoneNetLibrary.Domain.Enums;
 using KintoneNetLibrary.Domain.Interfaces;
 using KintoneNetLibrary.Extensions;
 using Moq;

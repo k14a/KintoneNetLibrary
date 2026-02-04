@@ -85,8 +85,9 @@ public sealed class BackupService(
             // 1) ページ単位で part_xxxxx.json を作成
             await foreach (var pageStream in this._api!.StreamCursorPagesAsync(this.Options.Query ?? "", this.Options.FieldCodes, this.Options.SplitSize)) {
                 var partPath = this.CreateNextPartFilePath();
-                using var fs = File.Create(partPath);
-                await pageStream.CopyToAsync(fs);
+                await this.WritePrettyJsonAsync(pageStream, partPath);
+                // using var fs = File.Create(partPath);
+                // await pageStream.CopyToAsync(fs);
 
                 result.PartFiles.Add(Path.GetFileName(partPath));
                 result.RecordCount += this.CountRecordsInPage(pageStream);
@@ -159,37 +160,6 @@ public sealed class BackupService(
             JsonValueKind.Object => records.EnumerateObject().Count(),
             _ => 0
         };
-    }
-
-    // private int CountRecordsInPage(Stream pageStream) {
-    //     // ストリームの先頭に戻す
-    //     if (pageStream.CanSeek) { pageStream.Position = 0; }
-
-    //     var reader = new Utf8JsonReader(ReadAllBytes(pageStream));
-
-    //     int count = 0;
-    //     bool insideRecords = false;
-
-    //     while (reader.Read()) {
-    //         if (reader.TokenType == JsonTokenType.PropertyName &&
-    //             reader.ValueTextEquals("records")) {
-    //             // 次のトークンは StartArray
-    //             reader.Read();
-    //             insideRecords = true;
-    //             continue;
-    //         }
-
-    //         if (insideRecords && reader.TokenType == JsonTokenType.StartObject) { count++; }
-    //         if (insideRecords && reader.TokenType == JsonTokenType.EndArray) { break; }
-    //     }
-
-    //     return count;
-    // }
-
-    private static byte[] ReadAllBytes(Stream stream) {
-        using var ms = new MemoryStream();
-        stream.CopyTo(ms);
-        return ms.ToArray();
     }
 
     /// <summary>
@@ -398,16 +368,34 @@ public sealed class BackupService(
     /// <param name="record"></param>
     /// <returns></returns>
     private async Task DownloadFilesAsync(JsonElement record) {
-        var filesDir = Path.Combine(this.BackupRoot, "files");
-        Directory.CreateDirectory(filesDir);
+        // レコード番号を取得
+        if (!record.TryGetProperty("$id", out var idProp) || !idProp.TryGetProperty("value", out var idValueProp)) {
+            this._logger?.LogWarning("レコード番号が見つかりません。添付ファイルのダウンロードをスキップします。");
+            return;
+        }
+        var recordId = idValueProp.GetString() ?? "unknown";
 
         foreach (var property in record.EnumerateObject()) {
-            var value = property.Value;
+            var field = property.Value;
+            var fieldCode = property.Name;
 
-            // 添付ファイルフィールドは配列
-            if (value.ValueKind != JsonValueKind.Array) { continue; }
+            // フィールドがオブジェクトでなければスキップ
+            if (field.ValueKind != JsonValueKind.Object) { continue; }
 
-            foreach (var item in value.EnumerateArray()) {
+            // type が FILE でなければスキップ
+            if (!field.TryGetProperty("type", out var typeProp)) { continue; }
+            if (!string.Equals(typeProp.GetString(), "FILE", StringComparison.OrdinalIgnoreCase)) { continue; }
+
+            // value が配列でなければスキップ
+            if (!field.TryGetProperty("value", out var valueProp)) { continue; }
+            if (valueProp.ValueKind != JsonValueKind.Array) { continue; }
+
+            // 保存先ディレクトリ
+            var fieldDir = Path.Combine(this.BackupRoot, "files", recordId, fieldCode);
+            Directory.CreateDirectory(fieldDir);
+
+            // 添付ファイルを列挙
+            foreach (var item in valueProp.EnumerateArray()) {
                 if (!item.TryGetProperty("fileKey", out var fileKeyProp)) { continue; }
 
                 var fileKey = fileKeyProp.GetString();
@@ -417,9 +405,8 @@ public sealed class BackupService(
                     ? nameProp.GetString() ?? $"{fileKey}.bin"
                     : $"{fileKey}.bin";
 
-                var savePath = Path.Combine(filesDir, fileName);
+                var savePath = Path.Combine(fieldDir, fileName);
 
-                // 既に存在するならスキップ
                 if (File.Exists(savePath)) { continue; }
 
                 try {
@@ -669,8 +656,17 @@ public sealed class BackupService(
         }
 
         try {
-            // 5. 書き込み
-            await File.WriteAllTextAsync(filePath, json);
+            // JSON を整形して書き込む
+            using var doc = JsonDocument.Parse(json);
+
+            using var fs = File.Create(filePath);
+            using var writer = new Utf8JsonWriter(fs, new JsonWriterOptions {
+                Indented = this._jsonOptions!.WriteIndented,
+                Encoder = this._jsonOptions!.Encoder
+            });
+
+            doc.WriteTo(writer);
+
             this._logger?.LogInformation("フィールドスキーマを保存しました: {Path}", filePath);
             return true;
 
@@ -678,6 +674,54 @@ public sealed class BackupService(
             this._logger?.LogError(ex, "フィールドスキーマの保存に失敗しました");
             return false;
         }
+    }
+
+    // private async Task<bool> SaveFieldSchemaAsync(KintoneAppMetadata metadata) {
+    //     if (!this.Options.IncludeFieldSchema) {
+    //         this._logger?.LogInformation("フィールドスキーマのバックアップはスキップされました");
+    //         return false;
+    //     }
+
+    //     this._logger?.LogInformation("フィールドスキーマを保存しています…");
+
+    //     var access = this._accessFactory.CreateApiTokenAccess(this.Options.SubDomain, this.Options.ApiToken);
+    //     var metadataApi = new KintoneAppMetadataApi(access, this._httpClient!, this._logger as ILogger<KintoneAppMetadataApi>);
+    //     var json = await metadataApi.GetFieldsJsonAsync(metadata.AppId);
+
+    //     var dir = this.Options.OutputPath.FullName;
+    //     Directory.CreateDirectory(dir);
+
+    //     var filePath = Path.Combine(dir, this.Options.FieldSchemaFileName);
+
+    //     if (File.Exists(filePath) && !this.Options.Overwrite) {
+    //         this._logger?.LogWarning("fields.json が既に存在するためスキップされました: {Path}", filePath);
+    //         return false;
+    //     }
+
+    //     try {
+    //         // 5. 書き込み
+    //         await File.WriteAllTextAsync(filePath, json);
+    //         this._logger?.LogInformation("フィールドスキーマを保存しました: {Path}", filePath);
+    //         return true;
+
+    //     } catch (Exception ex) {
+    //         this._logger?.LogError(ex, "フィールドスキーマの保存に失敗しました");
+    //         return false;
+    //     }
+    // }
+
+    private async Task WritePrettyJsonAsync(Stream input, string path) {
+        if (input.CanSeek) { input.Position = 0; }
+
+        using var doc = await JsonDocument.ParseAsync(input);
+
+        using var fs = File.Create(path);
+        using var writer = new Utf8JsonWriter(fs, new JsonWriterOptions {
+            Indented = this._jsonOptions!.WriteIndented,
+            Encoder = this._jsonOptions!.Encoder
+        });
+
+        doc.WriteTo(writer);
     }
 
 }

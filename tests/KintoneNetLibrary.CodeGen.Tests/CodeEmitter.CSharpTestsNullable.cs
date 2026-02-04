@@ -2,6 +2,7 @@ using KintoneNetLibrary.CodeGen.Application.Emitters;
 using KintoneNetLibrary.CodeGen.Application.Interfaces;
 using KintoneNetLibrary.CodeGen.Domain.Options;
 using KintoneNetLibrary.Domain.Entities;
+using KintoneNetLibrary.Domain.Enums;
 using Snapshooter.Xunit;
 using Xunit;
 

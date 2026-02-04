@@ -1,5 +1,6 @@
 using KintoneNetLibrary.CodeGen.Application.Emitters;
 using KintoneNetLibrary.Domain.Entities;
+using KintoneNetLibrary.Domain.Enums;
 using Xunit;
 
 namespace KintoneNetLibrary.CodeGen.Tests;

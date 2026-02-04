@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json;
 using KintoneNetLibrary.Domain.Access;
 using KintoneNetLibrary.Domain.Entities;
+using KintoneNetLibrary.Domain.Enums;
 using KintoneNetLibrary.Extensions;
 using KintoneNetLibrary.Infrastructure.Converters;
 using KintoneNetLibrary.Infrastructure.Helpers;

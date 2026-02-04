@@ -2,6 +2,8 @@ using KintoneNetLibrary.CodeGen.Application.Emitters;
 using KintoneNetLibrary.CodeGen.Application.Interfaces;
 using KintoneNetLibrary.CodeGen.Domain.Options;
 using KintoneNetLibrary.Domain.Entities;
+using KintoneNetLibrary.Domain.Enums;
+using Microsoft.Extensions.Logging;
 using Snapshooter.Xunit;
 using Xunit;
 
@@ -10,10 +12,17 @@ namespace KintoneNetLibrary.CodeGen.Tests;
 public class CSharpCodeEmitterAllTypesTests {
     private readonly INameConverter _converter = new CSharpNameConverter();
     private readonly ITypeMapper _mapper = new CSharpTypeMapper();
+    private readonly INameConverterFactory _converterFactory;
+    private readonly ITypeMapperFactory _mapperFactory;
+    private readonly IXmlCommentBuilder _xmlCommentBuilder;
+    private readonly ISubTableEmitter _subTableEmitter;
+    private readonly IHelperClassEmitter _helperClassEmitter;
+    private readonly ILogger<CSharpCodeEmitter>? _logger = null;
 
     [Fact]
     public void EmitAllFieldTypesMatchesSnapshot() {
-        var emitter = new CSharpCodeEmitter(this._converter, this._mapper);
+        // var emitter = new CSharpCodeEmitter(this._converter, this._mapper);
+        var emitter = new CSharpCodeEmitter(this._converterFactory, this._mapperFactory, this._xmlCommentBuilder, this._subTableEmitter, this._helperClassEmitter, this._logger);
 
         var metadata = new KintoneAppMetadata {
             AppId = 3,
@@ -44,7 +53,7 @@ public class CSharpCodeEmitterAllTypesTests {
             }
         };
 
-        var options = new CodeEmitterOptions {
+        var options = new CSharpEmitterOptions {
             Namespace = "KintoneNetLibrary.Generated"
         };
 

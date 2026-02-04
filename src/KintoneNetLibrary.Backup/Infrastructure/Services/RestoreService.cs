@@ -25,37 +25,23 @@ namespace KintoneNetLibrary.Backup.Infrastructure.Services;
 public sealed class RestoreService(
     ISchemaProvider schemaProvider,
     IKintoneAccessFactory accessFactory,
-    // IKintoneAppMetadataApi metadataApi,
     HttpClient? httpClient = null,
     ILogger<RestoreService>? logger = null) : IRestoreService {
 
     private IKintoneApi? _api;
-    // private readonly IKintoneAppMetadataApi _metadataApi = metadataApi;
     private readonly IKintoneAccessFactory _accessFactory = accessFactory;
     private readonly ISchemaProvider _schemaProvider = schemaProvider;
     private HttpClient? _httpClient = httpClient;
     private readonly ILogger? _logger = logger;
     private readonly RestoreResult _result = new();
     public RestoreOptions Options { get; set; } = default!;
-    private static readonly HashSet<string> _readonlyFieldTypes = new() {
+    private static readonly HashSet<string> _readonlyFieldTypes = [
         "CREATOR",
         "MODIFIER",
         "CREATED_TIME",
         "UPDATED_TIME",
         "RECORD_NUMBER",
-    };
-
-    private void EnsureApiInitialized() {
-        if (this._api != null) { return; }
-        ArgumentNullException.ThrowIfNull(this.Options);
-        var access = new ApiTokenAccess(this.Options.SubDomain, this.Options.ApiToken);
-
-        this._httpClient ??= new HttpClient {
-            BaseAddress = new Uri($"https://{access.Domain}/k/v1/")
-        };
-
-        this._api = new KintoneApi(access: access, appID: this.Options.AppID, httpClient: this._httpClient);
-    }
+    ];
 
     /// <summary>
     /// リストアを実行します
@@ -88,7 +74,7 @@ public sealed class RestoreService(
             }
 
             // 4) data/part-xxxx.json を順次読み込み、レコード復元
-            var partFiles = this.GetPartFiles(manifest.Parts);
+            var partFiles = this.GetPartFiles(manifest.PartFiles);
             int partIndex = 1;
 
             foreach (var partFile in partFiles) {
@@ -118,6 +104,21 @@ public sealed class RestoreService(
         } finally {
             this._logger?.LogInformation("リストア 完了");
         }
+    }
+
+    /// <summary>
+    /// Kintone API の初期化を行います
+    /// </summary>
+    private void EnsureApiInitialized() {
+        if (this._api != null) { return; }
+        ArgumentNullException.ThrowIfNull(this.Options);
+        var access = new ApiTokenAccess(this.Options.SubDomain, this.Options.ApiToken);
+
+        this._httpClient ??= new HttpClient {
+            BaseAddress = new Uri($"https://{access.Domain}/k/v1/")
+        };
+
+        this._api = new KintoneApi(access: access, appID: this.Options.AppID, httpClient: this._httpClient);
     }
 
     /// <summary>
@@ -171,17 +172,30 @@ public sealed class RestoreService(
     /// <param name="parts"></param>
     /// <returns></returns>
     /// <exception cref="NotImplementedException"></exception>
-    private IEnumerable<string> GetPartFiles(int parts) {
+    private IEnumerable<string> GetPartFiles(IList<string> partFiles) {
         var dataDir = Path.Combine(this.Options.BackupRootPath.FullName, "data");
 
-        for (var i = 1; i <= parts; i++) {
-            var file = Path.Combine(dataDir, $"part-{i:D4}.json");
-            if (!File.Exists(file)) {
-                throw new FileNotFoundException("バックアップデータファイルが見つかりません", file);
+        foreach (var fileName in partFiles) {
+            var fullPath = Path.Combine(dataDir, fileName);
+
+            if (!File.Exists(fullPath)) {
+                throw new FileNotFoundException($"バックアップデータファイルが見つかりません: {fullPath}");
             }
-            yield return file;
+
+            yield return fullPath;
         }
     }
+    // private IEnumerable<string> GetPartFiles(int parts) {
+    //     var dataDir = Path.Combine(this.Options.BackupRootPath.FullName, "data");
+
+    //     for (var i = 1; i <= parts; i++) {
+    //         var file = Path.Combine(dataDir, $"part-{i:D4}.json");
+    //         if (!File.Exists(file)) {
+    //             throw new FileNotFoundException("バックアップデータファイルが見つかりません", file);
+    //         }
+    //         yield return file;
+    //     }
+    // }
 
     /// <summary>
     /// data/part-xxxx.json を読み込みます
@@ -432,6 +446,10 @@ public sealed class RestoreService(
         }
     }
 
+    /// <summary>
+    /// レコード内の $id フィールドを削除します
+    /// </summary>
+    /// <param name="obj"></param>
     private void RemoveRecordIdFields(JsonObject obj) {
         // $id を削除
         obj.Remove("$id");
@@ -456,6 +474,10 @@ public sealed class RestoreService(
         }
     }
 
+    /// <summary>
+    /// 読み取り専用フィールドを削除します
+    /// </summary>
+    /// <param name="record"></param>
     private void RemoveReadonlyFields(JsonObject record) {
         var toRemove = new List<string>();
 
@@ -541,12 +563,18 @@ public sealed class RestoreService(
         }
 
         // 4) parts と data/part-xxxx.json の整合性チェック
-        for (int i = 1; i <= manifest.Parts; i++) {
-            var partPath = Path.Combine(dataDir, $"part-{i:D4}.json");
-            if (!File.Exists(partPath)) {
-                throw new FileNotFoundException($"分割ファイルが不足しています: {partPath}");
+        foreach (var relativePath in manifest.PartFiles) {
+            var fullPath = Path.Combine(root.FullName, "data", relativePath);
+            if (!File.Exists(fullPath)) {
+                throw new FileNotFoundException($"分割ファイルが不足しています: {fullPath}");
             }
         }
+        // for (int i = 1; i <= manifest.Parts; i++) {
+        //     var partPath = Path.Combine(dataDir, $"part-{i:D4}.json");
+        //     if (!File.Exists(partPath)) {
+        //         throw new FileNotFoundException($"分割ファイルが不足しています: {partPath}");
+        //     }
+        // }
 
         // 5) files ディレクトリ（RestoreFiles=true の場合のみ）
         if (this.Options.RestoreFiles) {

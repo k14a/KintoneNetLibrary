@@ -4,6 +4,7 @@ using KintoneNetLibrary.Domain.Entities;
 using Xunit;
 using DocumentFormat.OpenXml.Wordprocessing;
 using KintoneNetLibrary.Domain.Access;
+using KintoneNetLibrary.Domain.Enums;
 
 namespace KintoneNetLibrary.Tests.Helpers;
 
