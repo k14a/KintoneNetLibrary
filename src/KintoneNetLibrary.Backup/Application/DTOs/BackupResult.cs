@@ -10,6 +10,11 @@ public sealed class BackupResult : IOperationResult {
     public bool Success { get; set; } = true;
 
     /// <summary>
+    /// バックアップを保存したディレクトリ情報。
+    /// </summary>
+    public DirectoryInfo BackedUpDirectory { get; set; } = null!;
+
+    /// <summary>
     /// JSON レコードの保存に成功したか。
     /// </summary>
     public bool JsonSaved { get; set; }

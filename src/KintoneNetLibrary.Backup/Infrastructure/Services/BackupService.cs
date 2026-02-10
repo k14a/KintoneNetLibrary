@@ -86,12 +86,9 @@ public sealed class BackupService(
             await foreach (var pageStream in this._api!.StreamCursorPagesAsync(this.Options.Query ?? "", this.Options.FieldCodes, this.Options.SplitSize)) {
                 var partPath = this.CreateNextPartFilePath();
                 await this.WritePrettyJsonAsync(pageStream, partPath);
-                // using var fs = File.Create(partPath);
-                // await pageStream.CopyToAsync(fs);
 
                 result.PartFiles.Add(Path.GetFileName(partPath));
                 result.RecordCount += this.CountRecordsInPage(pageStream);
-                // this._logger?.LogInformation("Saved split JSON file: {Path}", partPath);
             }
 
             // 2) スキーマ取得・保存
@@ -109,7 +106,9 @@ public sealed class BackupService(
             // 4) manifest.json 保存
             await this.SaveManifestAsync(metadata, result);
 
+            result.BackedUpDirectory = new DirectoryInfo(this.BackupRoot);
             result.Success = true;
+
         } catch (Exception ex) {
             result.Success = false;
             result.Errors.Add(ex.Message);
