@@ -47,7 +47,7 @@ public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
     }
 
     /// <summary>
-    /// 複数レコードを一括更新します（Raw）
+    /// 複数レコードを一括削除します（Raw）
     /// </summary>
     /// <param name="json"></param>
     /// <returns></returns>

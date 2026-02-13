@@ -675,40 +675,6 @@ public sealed class BackupService(
         }
     }
 
-    // private async Task<bool> SaveFieldSchemaAsync(KintoneAppMetadata metadata) {
-    //     if (!this.Options.IncludeFieldSchema) {
-    //         this._logger?.LogInformation("フィールドスキーマのバックアップはスキップされました");
-    //         return false;
-    //     }
-
-    //     this._logger?.LogInformation("フィールドスキーマを保存しています…");
-
-    //     var access = this._accessFactory.CreateApiTokenAccess(this.Options.SubDomain, this.Options.ApiToken);
-    //     var metadataApi = new KintoneAppMetadataApi(access, this._httpClient!, this._logger as ILogger<KintoneAppMetadataApi>);
-    //     var json = await metadataApi.GetFieldsJsonAsync(metadata.AppId);
-
-    //     var dir = this.Options.OutputPath.FullName;
-    //     Directory.CreateDirectory(dir);
-
-    //     var filePath = Path.Combine(dir, this.Options.FieldSchemaFileName);
-
-    //     if (File.Exists(filePath) && !this.Options.Overwrite) {
-    //         this._logger?.LogWarning("fields.json が既に存在するためスキップされました: {Path}", filePath);
-    //         return false;
-    //     }
-
-    //     try {
-    //         // 5. 書き込み
-    //         await File.WriteAllTextAsync(filePath, json);
-    //         this._logger?.LogInformation("フィールドスキーマを保存しました: {Path}", filePath);
-    //         return true;
-
-    //     } catch (Exception ex) {
-    //         this._logger?.LogError(ex, "フィールドスキーマの保存に失敗しました");
-    //         return false;
-    //     }
-    // }
-
     private async Task WritePrettyJsonAsync(Stream input, string path) {
         if (input.CanSeek) { input.Position = 0; }
 

@@ -41,6 +41,8 @@ public sealed class RestoreService(
         "CREATED_TIME",
         "UPDATED_TIME",
         "RECORD_NUMBER",
+        "REFERENCE_TABLE",
+        "LOOKUP",
     ];
 
     /// <summary>
@@ -185,23 +187,7 @@ public sealed class RestoreService(
             yield return fullPath;
         }
     }
-    // private IEnumerable<string> GetPartFiles(int parts) {
-    //     var dataDir = Path.Combine(this.Options.BackupRootPath.FullName, "data");
 
-    //     for (var i = 1; i <= parts; i++) {
-    //         var file = Path.Combine(dataDir, $"part-{i:D4}.json");
-    //         if (!File.Exists(file)) {
-    //             throw new FileNotFoundException("バックアップデータファイルが見つかりません", file);
-    //         }
-    //         yield return file;
-    //     }
-    // }
-
-    /// <summary>
-    /// data/part-xxxx.json を読み込みます
-    /// </summary>
-    /// <param name="path"></param>
-    /// <returns></returns>
     private async Task<List<JsonNode>> LoadPartRecordsAsync(string partFilePath) {
         if (!File.Exists(partFilePath)) {
             throw new FileNotFoundException($"分割ファイルが見つかりません: {partFilePath}");
@@ -569,12 +555,6 @@ public sealed class RestoreService(
                 throw new FileNotFoundException($"分割ファイルが不足しています: {fullPath}");
             }
         }
-        // for (int i = 1; i <= manifest.Parts; i++) {
-        //     var partPath = Path.Combine(dataDir, $"part-{i:D4}.json");
-        //     if (!File.Exists(partPath)) {
-        //         throw new FileNotFoundException($"分割ファイルが不足しています: {partPath}");
-        //     }
-        // }
 
         // 5) files ディレクトリ（RestoreFiles=true の場合のみ）
         if (this.Options.RestoreFiles) {
