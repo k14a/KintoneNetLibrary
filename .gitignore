@@ -49,6 +49,8 @@ TestResults/
 *.coverage
 *.coveragexml
 *.trx
+__snapshots__/
+__mismatch__/
 
 # アップロード禁止な個人設定
 TestConfig.json

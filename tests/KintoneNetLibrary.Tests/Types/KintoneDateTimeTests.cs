@@ -1,6 +1,7 @@
 using System;
 using Xunit;
 using KintoneNetLibrary.Domain.Entities;
+using KintoneNetLibrary.Domain.Enums;
 
 namespace KintoneNetLibrary.Tests.Types;
 

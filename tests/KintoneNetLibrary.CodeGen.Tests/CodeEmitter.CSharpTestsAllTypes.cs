@@ -1,64 +1,94 @@
 using KintoneNetLibrary.CodeGen.Application.Emitters;
 using KintoneNetLibrary.CodeGen.Application.Interfaces;
+using KintoneNetLibrary.CodeGen.Domain.Enums;
+using KintoneNetLibrary.CodeGen.Domain.Models;
 using KintoneNetLibrary.CodeGen.Domain.Options;
-using KintoneNetLibrary.Domain.Entities;
+using KintoneNetLibrary.CodeGen.Domain.Schemas;
 using KintoneNetLibrary.Domain.Enums;
-using Microsoft.Extensions.Logging;
 using Snapshooter.Xunit;
-using Xunit;
 
 namespace KintoneNetLibrary.CodeGen.Tests;
 
 public class CSharpCodeEmitterAllTypesTests {
-    private readonly INameConverter _converter = new CSharpNameConverter();
-    private readonly ITypeMapper _mapper = new CSharpTypeMapper();
-    private readonly INameConverterFactory _converterFactory;
-    private readonly ITypeMapperFactory _mapperFactory;
-    private readonly IXmlCommentBuilder _xmlCommentBuilder;
-    private readonly ISubTableEmitter _subTableEmitter;
-    private readonly IHelperClassEmitter _helperClassEmitter;
-    private readonly ILogger<CSharpCodeEmitter>? _logger = null;
+    // --- Fake 実装群（前のテストと同じ） ---
+    private class FakeNameConverterFactory : INameConverterFactory {
+        public INameConverter Create(GenerateLanguages lang) => new CSharpNameConverter();
+    }
+
+    private class FakeTypeMapperFactory : ITypeMapperFactory {
+        public ITypeMapper Create(GenerateLanguages lang) => new CSharpTypeMapper();
+    }
+
+    private class FakeXmlCommentBuilder : IXmlCommentBuilder {
+        public string BuildForField(KintoneFieldSchema field)
+            => $"    /// <summary>{field.Label}</summary>";
+
+        public string BuildForSubTable(KintoneSubTableSchema sub)
+            => $"    /// <summary>{sub.Label}</summary>";
+    }
+
+    private class FakeSubTableEmitter : ISubTableEmitter {
+        public string EmitSubTable(string fieldCode, KintoneSubTableSchema schema, CSharpEmitterOptions options) => string.Empty;
+
+        GeneratedSubTableModel ISubTableEmitter.EmitSubTable(string name, KintoneSubTableSchema subTable, CSharpEmitterOptions options) => new();
+    }
+
+    private class FakeHelperEmitter : IHelperClassEmitter {
+        public IEnumerable<string> EmitHelperClasses(CSharpEmitterOptions options) => [];
+
+        public IEnumerable<GeneratedHelperClass> EmitHelperClasses(CodeEmitterOptions options) => [];
+    }
 
     [Fact]
     public void EmitAllFieldTypesMatchesSnapshot() {
-        // var emitter = new CSharpCodeEmitter(this._converter, this._mapper);
-        var emitter = new CSharpCodeEmitter(this._converterFactory, this._mapperFactory, this._xmlCommentBuilder, this._subTableEmitter, this._helperClassEmitter, this._logger);
+        var emitter = new CSharpCodeEmitter(
+            new FakeNameConverterFactory(),
+            new FakeTypeMapperFactory(),
+            new FakeXmlCommentBuilder(),
+            new FakeSubTableEmitter(),
+            new FakeHelperEmitter(),
+            logger: null
+        );
 
-        var metadata = new KintoneAppMetadata {
+        // --- metadata → schema に変換 ---
+        var schema = new KintoneAppSchema {
             AppId = 3,
-            Fields = new List<KintoneFieldMetadata> {
-                new() { FieldCode = "text", FieldLabel = "テキスト", FieldType = KintoneFieldType.SingleLineText },
-                new() { FieldCode = "number", FieldLabel = "数量", FieldType = KintoneFieldType.Number },
-                new() { FieldCode = "date", FieldLabel = "日付", FieldType = KintoneFieldType.Date },
-                new() { FieldCode = "datetime", FieldLabel = "日時", FieldType = KintoneFieldType.DateTime },
-                new() { FieldCode = "time", FieldLabel = "時間", FieldType = KintoneFieldType.Time },
-                new() { FieldCode = "checkbox", FieldLabel = "チェック", FieldType = KintoneFieldType.CheckBox },
-                new() { FieldCode = "multi", FieldLabel = "選択肢", FieldType = KintoneFieldType.MultiSelect },
-                new() { FieldCode = "file", FieldLabel = "添付ファイル", FieldType = KintoneFieldType.File },
-                new() { FieldCode = "user", FieldLabel = "担当者", FieldType = KintoneFieldType.UserSelect },
-                new() { FieldCode = "group", FieldLabel = "グループ", FieldType = KintoneFieldType.GroupSelect },
-                new() { FieldCode = "org", FieldLabel = "組織", FieldType = KintoneFieldType.OrganizationSelect },
-
-                // サブテーブル
-                new() {
+            AppName = "AllTypesApp",
+            Revision = 1,
+            Fields = [
+                new() { FieldCode = "text", Label = "テキスト", FieldType = KintoneFieldType.SingleLineText },
+                new() { FieldCode = "number", Label = "数量", FieldType = KintoneFieldType.Number },
+                new() { FieldCode = "date", Label = "日付", FieldType = KintoneFieldType.Date },
+                new() { FieldCode = "datetime", Label = "日時", FieldType = KintoneFieldType.DateTime },
+                new() { FieldCode = "time", Label = "時間", FieldType = KintoneFieldType.Time },
+                new() { FieldCode = "checkbox", Label = "チェック", FieldType = KintoneFieldType.CheckBox },
+                new() { FieldCode = "multi", Label = "選択肢", FieldType = KintoneFieldType.MultiSelect },
+                new() { FieldCode = "file", Label = "添付ファイル", FieldType = KintoneFieldType.File },
+                new() { FieldCode = "user", Label = "担当者", FieldType = KintoneFieldType.UserSelect },
+                new() { FieldCode = "group", Label = "グループ", FieldType = KintoneFieldType.GroupSelect },
+                new() { FieldCode = "org", Label = "組織", FieldType = KintoneFieldType.OrganizationSelect }
+            ],
+            SubTables = [
+                new KintoneSubTableSchema {
                     FieldCode = "details",
-                    FieldLabel = "明細",
-                    FieldType = KintoneFieldType.SubTable,
-                    SubFields = new List<KintoneFieldMetadata> {
-                        new() { FieldCode = "item", FieldLabel = "商品名", FieldType = KintoneFieldType.SingleLineText },
-                        new() { FieldCode = "qty", FieldLabel = "数量", FieldType = KintoneFieldType.Number },
-                        new() { FieldCode = "price", FieldLabel = "単価", FieldType = KintoneFieldType.Number }
-                    }
+                    Label = "明細",
+                    Fields = [
+                        new() { FieldCode = "item", Label = "商品名", FieldType = KintoneFieldType.SingleLineText },
+                        new() { FieldCode = "qty", Label = "数量", FieldType = KintoneFieldType.Number },
+                        new() { FieldCode = "price", Label = "単価", FieldType = KintoneFieldType.Number }
+                    ]
                 }
-            }
+            ]
         };
 
         var options = new CSharpEmitterOptions {
-            Namespace = "KintoneNetLibrary.Generated"
+            Namespace = "KintoneNetLibrary.Generated",
+            MainClassName = "AllTypesModel",
+            UseKintoneNetLibrary = false
         };
 
-        var code = emitter.Emit(metadata, options);
+        var result = emitter.Emit(schema, options);
 
-        Snapshot.Match(code);
+        Snapshot.Match(result.MainModelCode);
     }
 }

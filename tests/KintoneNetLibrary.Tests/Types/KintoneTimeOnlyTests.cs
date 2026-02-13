@@ -2,6 +2,7 @@ using System;
 using Xunit;
 using KintoneNetLibrary.Domain.Entities;
 using System.Globalization;
+using KintoneNetLibrary.Domain.Enums;
 
 namespace KintoneNetLibrary.Tests.Types;
 

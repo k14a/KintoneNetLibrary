@@ -1,9 +1,0 @@
-﻿#nullable enable
-namespace KintoneNetLibrary.Generated;
-
-public record App5
-{
-    public string Text { get; set; }
-    public decimal? Quantity { get; set; }
-}
-

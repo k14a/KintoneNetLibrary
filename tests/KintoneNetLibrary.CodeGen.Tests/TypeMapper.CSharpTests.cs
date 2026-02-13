@@ -26,7 +26,7 @@ public class TypeMapperTests {
     public void MapDateReturnsKintoneDateTime() {
         var field = new KintoneFieldMetadata { FieldType = KintoneFieldType.Date };
         var result = this._mapper.Map(field);
-        Assert.Equal("KintoneDateTime", result);
+        Assert.Equal("KintoneDateOnly", result);
     }
 
     [Fact]

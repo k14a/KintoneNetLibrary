@@ -1,36 +1,74 @@
 using KintoneNetLibrary.CodeGen.Application.Emitters;
 using KintoneNetLibrary.CodeGen.Application.Interfaces;
+using KintoneNetLibrary.CodeGen.Domain.Enums;
+using KintoneNetLibrary.CodeGen.Domain.Models;
 using KintoneNetLibrary.CodeGen.Domain.Options;
-using KintoneNetLibrary.Domain.Entities;
+using KintoneNetLibrary.CodeGen.Domain.Schemas;
 using KintoneNetLibrary.Domain.Enums;
 using Snapshooter.Xunit;
-using Xunit;
 
 namespace KintoneNetLibrary.CodeGen.Tests;
 
 public class CSharpCodeEmitterRecordTests {
-    private readonly INameConverter _converter = new CSharpNameConverter();
-    private readonly ITypeMapper _mapper = new CSharpTypeMapper();
+    // --- Fake 実装群 ---
+    private class FakeNameConverterFactory : INameConverterFactory {
+        public INameConverter Create(GenerateLanguages lang) => new CSharpNameConverter();
+    }
+
+    private class FakeTypeMapperFactory : ITypeMapperFactory {
+        public ITypeMapper Create(GenerateLanguages lang) => new CSharpTypeMapper();
+    }
+
+    private class FakeXmlCommentBuilder : IXmlCommentBuilder {
+        public string BuildForField(KintoneFieldSchema field)
+            => $"    /// <summary>{field.Label}</summary>";
+
+        public string BuildForSubTable(KintoneSubTableSchema sub)
+            => $"    /// <summary>{sub.Label}</summary>";
+    }
+
+    private class FakeSubTableEmitter : ISubTableEmitter {
+        public string EmitSubTable(string fieldCode, KintoneSubTableSchema schema, CSharpEmitterOptions options) => string.Empty;
+
+        GeneratedSubTableModel ISubTableEmitter.EmitSubTable(string name, KintoneSubTableSchema subTable, CSharpEmitterOptions options) => new();
+    }
+
+    private class FakeHelperEmitter : IHelperClassEmitter {
+        public IEnumerable<string> EmitHelperClasses(CSharpEmitterOptions options) => [];
+
+        public IEnumerable<GeneratedHelperClass> EmitHelperClasses(CodeEmitterOptions options) => [];
+    }
 
     [Fact]
     public void Emit_RecordEnabled_MatchesSnapshot() {
-        var emitter = new CSharpCodeEmitter(_converter, _mapper);
+        var emitter = new CSharpCodeEmitter(
+            new FakeNameConverterFactory(),
+            new FakeTypeMapperFactory(),
+            new FakeXmlCommentBuilder(),
+            new FakeSubTableEmitter(),
+            new FakeHelperEmitter(),
+            logger: null
+        );
 
-        var metadata = new KintoneAppMetadata {
+        var schema = new KintoneAppSchema {
             AppId = 5,
-            Fields = new List<KintoneFieldMetadata> {
-                new() { FieldCode = "text", FieldLabel = "テキスト", FieldType = KintoneFieldType.SingleLineText },
-                new() { FieldCode = "number", FieldLabel = "数量", FieldType = KintoneFieldType.Number }
-            }
+            AppName = "RecordTestApp",
+            Revision = 1,
+            Fields = [
+                new() { FieldCode = "text", Label = "テキスト", FieldType = KintoneFieldType.SingleLineText },
+                new() { FieldCode = "number", Label = "数量", FieldType = KintoneFieldType.Number }
+            ]
         };
 
-        var options = new CodeEmitterOptions {
+        var options = new CSharpEmitterOptions {
             Namespace = "KintoneNetLibrary.Generated",
-            UseRecord = true
+            MainClassName = "RecordModel",
+            UseRecord = true,
+            UseKintoneNetLibrary = false
         };
 
-        var code = emitter.Emit(metadata, options);
+        var result = emitter.Emit(schema, options);
 
-        Snapshot.Match(code);
+        Snapshot.Match(result.MainModelCode);
     }
 }

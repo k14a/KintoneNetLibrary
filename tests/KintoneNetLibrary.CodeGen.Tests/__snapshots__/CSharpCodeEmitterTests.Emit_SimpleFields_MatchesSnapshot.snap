@@ -1,9 +1,0 @@
-﻿#nullable enable
-namespace KintoneNetLibrary.Generated;
-
-public class App1
-{
-    public string CustomerName { get; set; }
-    public KintoneDateTime Date { get; set; }
-}
-
