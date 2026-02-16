@@ -17,7 +17,6 @@ public class SchemaProviderTests {
 
         // SchemaProvider が DI で IKintoneAppMetadataApi を受け取る前提
         this._provider = new SchemaProvider(
-            httpClientFactory: Mock.Of<IHttpClientFactory>(),
             logger: logger,
             metadataApi: this._mockApi.Object
         );
@@ -25,7 +24,7 @@ public class SchemaProviderTests {
         this._provider.SetDomain("example");
 
         // デフォルトの最新メタデータ（GetSchemaAsync / CompareAsync 共通）
-        this._mockApi.Setup(x => x.GetAppMetadataAsync(1, "dummy"))
+        this._mockApi.Setup(x => x.GetAppMetadataAsync("example.cybozu.com", "dummy", 1))
             .ReturnsAsync(new KintoneAppMetadata {
                 AppId = 1,
                 Revision = 3,
@@ -58,14 +57,15 @@ public class SchemaProviderTests {
                 ]
             };
 
-        public Task<string> GetFieldsJsonAsync(int appId)
-            => Task.FromResult("{}");
+        // public Task<string> GetFieldsJsonAsync(int appId, string apiToken)
+        //     => Task.FromResult("{}");
 
-        public Task<string> GetLayoutJsonAsync(int appId)
-            => Task.FromResult("{}");
+        // public Task<string> GetLayoutJsonAsync(int appId, string apiToken)
+        //     => Task.FromResult("{}");
 
-        public Task<KintoneAppMetadata> GetAppMetadataAsync(int appId, string apiToken)
-            => Task.FromResult(Metadata);
+        public Task<KintoneAppMetadata> GetAppMetadataAsync(string domain, string apiToken, int appId) => Task.FromResult(this.Metadata);
+        public Task<string> GetFieldsJsonAsync(string domain, string apiToken, int appId) => Task.FromResult("{}");
+        public Task<string> GetLayoutJsonAsync(string domain, string apiToken, int appId) => Task.FromResult("{}");
     }
 
     // -----------------------------
@@ -73,7 +73,7 @@ public class SchemaProviderTests {
     // -----------------------------
     [Fact]
     public async Task GetSchemaAsync_ReturnsConvertedSchema() {
-        var schema = await this._provider.GetSchemaAsync(1, "dummy");
+        var schema = await this._provider.GetSchemaAsync("example.cybozu.com", "dummy", 1);
 
         Assert.Equal(1, schema.AppId);
         Assert.Equal(3, schema.Revision);
@@ -93,13 +93,12 @@ public class SchemaProviderTests {
     public async Task GetMetadataAsync_Throws_WhenDomainNotSet() {
         var logger = Mock.Of<ILogger<SchemaProvider>>();
         var provider = new SchemaProvider(
-            Mock.Of<IHttpClientFactory>(),
             this._mockApi.Object,
             logger
         );
 
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            provider.GetMetadataAsync(1, "dummy"));
+            provider.GetMetadataAsync("example.cybozu.com", "dummy", 1));
     }
 
     // -----------------------------
@@ -114,7 +113,7 @@ public class SchemaProviderTests {
             Fields = []
         };
 
-        var diffs = await this._provider.CompareAsync(backup, 1, "dummy");
+        var diffs = await this._provider.CompareAsync(backup, "example.cybozu.com", "dummy", 1);
 
         Assert.Single(diffs);
         Assert.Equal(KintoneMetadataDiffTypes.Added, diffs[0].DiffType);
@@ -139,7 +138,7 @@ public class SchemaProviderTests {
             ]
         };
 
-        var diffs = await this._provider.CompareAsync(backup, 1, "dummy");
+        var diffs = await this._provider.CompareAsync(backup, "example.cybozu.com", "dummy", 1);
 
         Assert.Single(diffs);
         var diff = diffs[0];
@@ -155,14 +154,13 @@ public class SchemaProviderTests {
         var fakeApi = new FakeKintoneAppMetadataApi();
 
         var provider = new SchemaProvider(
-            httpClientFactory: Mock.Of<IHttpClientFactory>(),
             logger: Mock.Of<ILogger<SchemaProvider>>(),
             metadataApi: fakeApi
         );
 
         provider.SetDomain("example");
 
-        var schema = await provider.GetSchemaAsync(1, "dummy");
+        var schema = await provider.GetSchemaAsync("example.cybozu.com", "dummy", 1);
 
         Assert.Equal(1, schema.AppId);
         Assert.Equal(3, schema.Revision);

@@ -14,12 +14,11 @@ namespace KintoneNetLibrary.Infrastructure.Api;
 /// <summary>
 /// Kintone API 基底クラス
 /// </summary>
-public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
+public partial class KintoneApi : IKintoneApi, IDisposable {
     #region <<Private values>>
     private readonly KintoneAccessBase _access;
     private readonly int _appID;
     private HttpClient _httpClient;
-    // JsonSerializerOptions は再利用推奨のためstaticで保持
     private readonly JsonSerializerOptions _jsonOptions;
     private readonly ILogger<KintoneApi>? _logger;
     private int _cursorPageSize = KintoneConstants.CursorFetchLimit;
@@ -82,7 +81,7 @@ public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
         int appID,
         HttpClient? httpClient = null,
         ILogger<KintoneApi>? logger = null,
-        JsonSerializerOptions? jsonOptions = null) : base(access, httpClient ?? new HttpClient(), logger) {
+        JsonSerializerOptions? jsonOptions = null) {
 
         ArgumentNullException.ThrowIfNull(access);
 
@@ -100,6 +99,46 @@ public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
     }
     #endregion
 
+    private void EnsureDefaultHeaders() {
+        if (!this._httpClient.DefaultRequestHeaders.Accept.Any(x => x.MediaType == "application/json")) {
+            this._httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+        }
+
+        if (!string.IsNullOrEmpty(this._access.ApiToken) && !this._httpClient.DefaultRequestHeaders.Contains("X-Cybozu-API-Token")) {
+            this._httpClient.DefaultRequestHeaders.Add("X-Cybozu-API-Token", this._access.ApiToken);
+        }
+    }
+    private Uri BuildRequestUri(string path, string? query = null) {
+        if (string.IsNullOrWhiteSpace(this._access.Domain)) { throw new InvalidOperationException("Domain is not set."); }
+
+        var baseUri = new Uri($"https://{this._access.Domain.TrimEnd('/')}/k/v1/");
+        var builder = new UriBuilder(new Uri(baseUri, path));
+
+        if (!string.IsNullOrEmpty(query)) { builder.Query = query; }
+
+        return builder.Uri;
+    }
+    private void ApplyAuth(HttpRequestMessage request) {
+        request.Headers.Add("X-Cybozu-API-Token", this._access.ApiToken);
+    }
+    private async Task<string> SendGetAsync(Uri uri) {
+        using var request = new HttpRequestMessage(HttpMethod.Get, uri);
+        this.ApplyAuth(request);
+
+        using var response = await this._httpClient.SendAsync(request);
+        var json = await response.Content.ReadAsStringAsync();
+
+        this._logger?.LogTrace(json);
+
+        if (!response.IsSuccessStatusCode) {
+            var message = $"APIリクエストに失敗しました。StatusCode: {response.StatusCode}, Response: {json}";
+            this._logger?.LogError(message);
+            throw new KintoneException(KintoneErrorConverter.Parse(json));
+        }
+
+        return json;
+    }
     #region <<Protected methods>>
     /// <summary>
     /// HttpClientの初期化
@@ -138,6 +177,14 @@ public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
     /// <param name="request"></param>
     protected void SetHeaders(HttpRequestMessage request) {
         this._access.ApplyAuthentication(request);
+    }
+
+    /// <summary>
+    /// リソースを解放します
+    /// </summary>
+    public void Dispose() {
+        this._httpClient?.Dispose();
+        GC.SuppressFinalize(this);
     }
     #endregion
 }

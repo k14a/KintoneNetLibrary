@@ -10,10 +10,11 @@ public interface ISchemaProvider {
     /// <summary>
     /// 指定されたアプリIDとAPIトークンに基づいてKintoneアプリのスキーマ情報を取得します。
     /// </summary>
-    /// <param name="appId"></param>
+    /// <param name="domain"></param>
     /// <param name="apiToken"></param>
+    /// <param name="appId"></param>
     /// <returns></returns>
-    Task<KintoneAppSchema> GetSchemaAsync(int appId, string apiToken);
+    Task<KintoneAppSchema> GetSchemaAsync(string domain, string apiToken, int appId);
     /// <summary>
     /// Kintoneのサブドメインを設定します。
     /// </summary>
@@ -22,17 +23,18 @@ public interface ISchemaProvider {
     /// <summary>
     /// 指定されたアプリIDとAPIトークンに基づいてKintoneアプリのメタデータを取得します。
     /// </summary>
-    /// <param name="appId"></param>
+    /// <param name="domain"></param>
     /// <param name="apiToken"></param>
+    /// <param name="appId"></param>
     /// <returns></returns>
-    Task<KintoneAppMetadata> GetMetadataAsync(int appId, string apiToken);
+    Task<KintoneAppMetadata> GetMetadataAsync(string domain, string apiToken, int appId);
     /// <summary>
     /// 指定されたバックアップスキーマと現在のスキーマを比較し、差分を取得します。
     /// </summary>
     /// <param name="backupSchema"></param>
-    /// <param name="subDomain"></param>
+    /// <param name="domain"></param>
     /// <param name="appId"></param>
     /// <param name="apiToken"></param>
     /// <returns></returns>
-    Task<IReadOnlyList<KintoneMetadataDiff>> CompareAsync(KintoneAppMetadata backupSchema, int appId, string apiToken);
+    Task<IReadOnlyList<KintoneMetadataDiff>> CompareAsync(KintoneAppMetadata backupSchema, string domain, string apiToken, int appId);
 }

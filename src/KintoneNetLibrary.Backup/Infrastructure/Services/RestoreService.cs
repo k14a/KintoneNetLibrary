@@ -8,6 +8,7 @@ using KintoneNetLibrary.CodeGen.Application.Interfaces;
 using KintoneNetLibrary.Domain.Access;
 using KintoneNetLibrary.Domain.Converters;
 using KintoneNetLibrary.Infrastructure.Api;
+using Microsoft.Extensions.Http.Logging;
 using Microsoft.Extensions.Logging;
 using static KintoneNetLibrary.Domain.Common.KintoneConstants;
 
@@ -25,13 +26,15 @@ namespace KintoneNetLibrary.Backup.Infrastructure.Services;
 public sealed class RestoreService(
     ISchemaProvider schemaProvider,
     IKintoneAccessFactory accessFactory,
-    HttpClient? httpClient = null,
+    // HttpClient? httpClient = null,
+    IHttpClientFactory httpClientFactory,
     ILogger<RestoreService>? logger = null) : IRestoreService {
 
     private IKintoneApi? _api;
     private readonly IKintoneAccessFactory _accessFactory = accessFactory;
     private readonly ISchemaProvider _schemaProvider = schemaProvider;
-    private HttpClient? _httpClient = httpClient;
+    // private HttpClient? _httpClient = httpClient;
+    private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
     private readonly ILogger? _logger = logger;
     private readonly RestoreResult _result = new();
     public RestoreOptions Options { get; set; } = default!;
@@ -116,11 +119,12 @@ public sealed class RestoreService(
         ArgumentNullException.ThrowIfNull(this.Options);
         var access = new ApiTokenAccess(this.Options.SubDomain, this.Options.ApiToken);
 
-        this._httpClient ??= new HttpClient {
-            BaseAddress = new Uri($"https://{access.Domain}/k/v1/")
-        };
+        // this._httpClient ??= new HttpClient {
+        //     BaseAddress = new Uri($"https://{access.Domain}/k/v1/")
+        // };
+        var httpClient = this._httpClientFactory.CreateClient();
 
-        this._api = new KintoneApi(access: access, appID: this.Options.AppID, httpClient: this._httpClient);
+        this._api = new KintoneApi(access: access, appID: this.Options.AppID, httpClient: httpClient);
     }
 
     /// <summary>
@@ -593,10 +597,11 @@ public sealed class RestoreService(
 
         // リストア先アプリのスキーマを取得
         var access = this._accessFactory.CreateApiTokenAccess(this.Options.SubDomain, this.Options.ApiToken);
-        var metadataApi = new KintoneAppMetadataApi(access, this._httpClient!, this._logger as ILogger<KintoneAppMetadataApi>);
+        var metadataApi = new KintoneAppMetadataApi(this._httpClientFactory, this._logger as ILogger<KintoneAppMetadataApi>);
         var currentSchema = await metadataApi.GetAppMetadataAsync(
-            this.Options.AppID,
-            this.Options.ApiToken
+            access.Domain,
+            this.Options.ApiToken,
+            this.Options.AppID
         );
 
         // バックアップ側のフィールド一覧を取得

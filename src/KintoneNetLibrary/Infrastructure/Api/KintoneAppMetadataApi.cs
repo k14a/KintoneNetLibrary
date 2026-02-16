@@ -5,6 +5,7 @@ using KintoneNetLibrary.Domain.Entities;
 using System.Text.Json;
 using KintoneNetLibrary.Domain.Converters;
 using KintoneNetLibrary.Domain.Enums;
+using KintoneNetLibrary.Infrastructure.Converters;
 
 namespace KintoneNetLibrary.Infrastructure.Api;
 
@@ -15,47 +16,82 @@ namespace KintoneNetLibrary.Infrastructure.Api;
 /// <remarks>
 /// コンストラクタ
 /// </remarks>
-/// <param name="access"></param>
-/// <param name="httpClient"></param>
+/// <param name="httpClientFactory"></param>
 /// <param name="logger"></param>
-public class KintoneAppMetadataApi(
-    KintoneAccessBase access,
-    HttpClient httpClient,
-    ILogger<KintoneAppMetadataApi>? logger = null) : BaseKintoneApi(access, httpClient, logger), IKintoneAppMetadataApi {
+public class KintoneAppMetadataApi(IHttpClientFactory httpClientFactory, ILogger<KintoneAppMetadataApi> logger) : IKintoneAppMetadataApi {
+    private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
+    private readonly ILogger<KintoneAppMetadataApi> _logger = logger;
 
-    /// <summary>
-    /// スキップするフィールドタイプのセット
-    /// </summary>
-    private static readonly HashSet<string> _skippedFieldTypes = new(StringComparer.OrdinalIgnoreCase) { "GROUP", "SPACER", "HR" };
+    // ---------------------------------------------------------
+    // 共通ユーティリティ（BaseKintoneApi の代替）
+    // ---------------------------------------------------------
+    private static Uri BuildRequestUri(string domain, string path, string? query = null) {
+        var baseUri = new Uri($"https://{domain.TrimEnd('/')}/k/v1/");
+        var builder = new UriBuilder(new Uri(baseUri, path));
 
+        if (!string.IsNullOrEmpty(query)) { builder.Query = query; }
+
+        return builder.Uri;
+    }
+
+    private static void ApplyAuth(HttpRequestMessage request, string apiToken) {
+        request.Headers.Add("X-Cybozu-API-Token", apiToken);
+    }
+
+    private async Task<string> SendGetAsync(Uri uri, string apiToken) {
+        var client = this._httpClientFactory.CreateClient();
+        using var request = new HttpRequestMessage(HttpMethod.Get, uri);
+        ApplyAuth(request, apiToken);
+
+        using var response = await client.SendAsync(request);
+        var json = await response.Content.ReadAsStringAsync();
+
+        this._logger?.LogTrace(json);
+
+        if (!response.IsSuccessStatusCode) {
+            var message = $"APIリクエストに失敗しました。StatusCode: {response.StatusCode}, Response: {json}";
+            this._logger.LogError(message);
+            throw new KintoneException(KintoneErrorConverter.Parse(json));
+        }
+
+        return json;
+    }
+    // ---------------------------------------------------------
+    // API実装
+    // ---------------------------------------------------------
     /// <summary>
     /// 指定したアプリのフィールド情報をJSON形式で取得します。
     /// </summary>
+    /// <param name="domain"></param>
+    /// <param name="apiToken"></param>
     /// <param name="appId"></param>
     /// <returns></returns>
-    public async Task<string> GetFieldsJsonAsync(int appId) {
-        var uri = this.BuildRequestUri(KintoneApiEndpoints.GetAppFields, $"app={appId}");
-        return await this.SendGetAsync(uri);
+    public async Task<string> GetFieldsJsonAsync(string domain, string apiToken, int appId) {
+        var uri = BuildRequestUri(domain, KintoneApiEndpoints.GetAppFields, $"app={appId}");
+        return await this.SendGetAsync(uri, apiToken);
     }
 
     /// <summary>
     /// 指定したアプリのレイアウト情報をJSON形式で取得します。
     /// </summary>
+    /// <param name="domain"></param>
+    /// <param name="apiToken"></param>
     /// <param name="appId"></param>
     /// <returns></returns>
-    public async Task<string> GetLayoutJsonAsync(int appId) {
-        var uri = this.BuildRequestUri(KintoneApiEndpoints.GetAppLayout, $"app={appId}");
-        return await this.SendGetAsync(uri);
+    public async Task<string> GetLayoutJsonAsync(string domain, string apiToken, int appId) {
+        var uri = BuildRequestUri(domain, KintoneApiEndpoints.GetAppLayout, $"app={appId}");
+        return await this.SendGetAsync(uri, apiToken);
     }
 
     /// <summary>
     /// 指定したアプリのメタデータを取得します。
     /// </summary>
-    /// <param name="appId"></param>
+    /// <param name="domain"></param>
     /// <param name="apiToken"></param>
+    /// <param name="appId"></param>
     /// <returns></returns>
-    public async Task<KintoneAppMetadata> GetAppMetadataAsync(int appId, string apiToken) {
-        var json = await this.GetFieldsJsonAsync(appId);
+    public async Task<KintoneAppMetadata> GetAppMetadataAsync(string domain, string apiToken, int appId) {
+        var json = await this.GetFieldsJsonAsync(domain, apiToken, appId);
 
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
@@ -139,6 +175,13 @@ public class KintoneAppMetadataApi(
     private static IReadOnlyList<string>? ExtractOptions(JsonElement field) {
         if (!field.TryGetProperty("options", out var optionsJson)) { return null; }
 
-        return [.. optionsJson.EnumerateObject().OrderBy(o => o.Value.GetProperty("label").GetString()!).Select(o => o.Value.GetProperty("label").GetString()!)];
+        return [.. optionsJson
+            .EnumerateObject()
+            .OrderBy(o => o.Value.GetProperty("label").GetString()!)
+            .Select(o => o.Value.GetProperty("label").GetString()!)];
     }
+    /// <summary>
+    /// スキップするフィールドタイプのセット
+    /// </summary>
+    private static readonly HashSet<string> _skippedFieldTypes = new(StringComparer.OrdinalIgnoreCase) { "GROUP", "SPACER", "HR" };
 }

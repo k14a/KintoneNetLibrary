@@ -14,7 +14,7 @@ namespace KintoneNetLibrary.Infrastructure.Api;
 /// <summary>
 /// Kintone API のファイル操作に関する機能を提供します。
 /// </summary>
-public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
+public partial class KintoneApi : IKintoneApi, IDisposable {
     #region <<File upload>>
     /// <summary>
     /// 任意のストリームを kintone にアップロードし、fileKey を返します。

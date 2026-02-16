@@ -12,10 +12,9 @@ namespace KintoneNetLibrary.CodeGen.Infrastructure.Services;
 /// <summary>
 /// スキーマプロバイダーサービス
 /// </summary>
-/// <param name="httpClientFactory"></param>
+/// <param name="metadataApi"></param>
 /// <param name="logger"></param>
-public class SchemaProvider(IHttpClientFactory httpClientFactory, IKintoneAppMetadataApi metadataApi, ILogger<SchemaProvider> logger) : ISchemaProvider {
-    private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
+public class SchemaProvider(IKintoneAppMetadataApi metadataApi, ILogger<SchemaProvider> logger) : ISchemaProvider {
     private readonly IKintoneAppMetadataApi _metadataApi = metadataApi;
     private readonly ILogger<SchemaProvider> _logger = logger;
     private string? _domain;
@@ -23,13 +22,14 @@ public class SchemaProvider(IHttpClientFactory httpClientFactory, IKintoneAppMet
     /// <summary>
     /// Kintoneアプリのスキーマ情報を取得します。
     /// </summary>
-    /// <param name="appId"></param>
+    /// <param name="domain"></param>
     /// <param name="apiToken"></param>
+    /// <param name="appId"></param>
     /// <returns></returns>
-    public async Task<KintoneAppSchema> GetSchemaAsync(int appId, string apiToken) {
+    public async Task<KintoneAppSchema> GetSchemaAsync(string domain, string apiToken, int appId) {
         this._logger.LogInformation("Fetching metadata for AppId: {appId}", appId);
 
-        var metadata = await this.GetMetadataAsync(appId, apiToken);
+        var metadata = await this.GetMetadataAsync(domain, apiToken, appId);
         this._logger.LogInformation("Metadata fetched. Converting to schema...");
 
         var schema = this.ConvertMetadataToSchema(metadata);
@@ -41,21 +41,18 @@ public class SchemaProvider(IHttpClientFactory httpClientFactory, IKintoneAppMet
     /// <summary>
     /// Kintoneアプリのメタデータを取得します。
     /// </summary>
-    /// <param name="appId"></param>
+    /// <param name="domain"></param>
     /// <param name="apiToken"></param>
+    /// <param name="appId"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentNullException"></exception>
-    public async Task<KintoneAppMetadata> GetMetadataAsync(int appId, string apiToken) {
+    public async Task<KintoneAppMetadata> GetMetadataAsync(string domain, string apiToken, int appId) {
         if (this._domain is null) {
             var message = "domainが設定されていません。";
             throw new ArgumentNullException(message);
         }
 
-        // var access = new ApiTokenAccess(this._domain, apiToken);
-        // var httpClient = this._httpClientFactory.CreateClient();
-        // var metaApi = new KintoneAppMetadataApi(access, httpClient);
-
-        return await this._metadataApi.GetAppMetadataAsync(appId, apiToken);
+        return await this._metadataApi.GetAppMetadataAsync(domain, apiToken, appId);
     }
 
     /// <summary>
@@ -104,11 +101,11 @@ public class SchemaProvider(IHttpClientFactory httpClientFactory, IKintoneAppMet
     /// <param name="appId"></param>
     /// <param name="apiToken"></param>
     /// <returns></returns>
-    public async Task<IReadOnlyList<KintoneMetadataDiff>> CompareAsync(KintoneAppMetadata backupSchema, int appId, string apiToken) {
+    public async Task<IReadOnlyList<KintoneMetadataDiff>> CompareAsync(KintoneAppMetadata backupSchema, string domain, string apiToken, int appId) {
         ArgumentNullException.ThrowIfNull(backupSchema);
 
         // 最新メタデータ取得
-        var latest = await this.GetMetadataAsync(appId, apiToken);
+        var latest = await this.GetMetadataAsync(domain, apiToken, appId);
         var diffs = new List<KintoneMetadataDiff>();
 
         // -----------------------------

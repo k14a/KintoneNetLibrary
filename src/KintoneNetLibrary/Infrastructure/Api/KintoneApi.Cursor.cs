@@ -15,7 +15,7 @@ namespace KintoneNetLibrary.Infrastructure.Api;
 /// <summary>
 /// Kintone API のカーソル操作に関する機能を提供します。
 /// </summary>
-public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
+public partial class KintoneApi : IKintoneApi, IDisposable {
 
     /// <summary>
     /// カーソルを作成します。

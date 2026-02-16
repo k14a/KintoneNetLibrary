@@ -25,13 +25,15 @@ namespace KintoneNetLibrary.Backup.Infrastructure.Services;
 public sealed class BackupService(
     ISchemaProvider schemaProvider,
     IKintoneAccessFactory _accessFactory,
-    HttpClient? httpClient = null,
+    // HttpClient? httpClient = null,
+    IHttpClientFactory httpClientFactory,
     ILogger<BackupService>? logger = null) : IBackupService {
 
     private IKintoneApi? _api;
     private readonly ISchemaProvider _schemaProvider = schemaProvider;
     private readonly IKintoneAccessFactory _accessFactory = _accessFactory;
-    private HttpClient? _httpClient = httpClient;
+    // private HttpClient? _httpClient = httpClient;
+    private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
     private JsonSerializerOptions? _jsonOptions;
     private readonly ILogger<BackupService>? _logger = logger;
     private int _partIndex = 0;
@@ -63,7 +65,8 @@ public sealed class BackupService(
             }
 
             // 2) スキーマ取得・保存
-            var metadata = await this._schemaProvider.GetMetadataAsync(this.Options.AppID, this.Options.ApiToken);
+            var access = this._accessFactory.CreateApiTokenAccess(this.Options.SubDomain, this.Options.ApiToken);
+            var metadata = await this._schemaProvider.GetMetadataAsync(access.Domain, this.Options.ApiToken, this.Options.AppID);
             await this.SaveFieldSchemaAsync(metadata);
             result.SchemaSaved = true;
 
@@ -97,9 +100,10 @@ public sealed class BackupService(
 
         var access = new ApiTokenAccess(this.Options.SubDomain, this.Options.ApiToken);
 
-        this._httpClient ??= new HttpClient {
-            BaseAddress = new Uri($"https://{access.Domain}/k/v1/")
-        };
+        // this._httpClient ??= new HttpClient {
+        //     BaseAddress = new Uri($"https://{access.Domain}/k/v1/")
+        // };
+        var httpClient = this._httpClientFactory.CreateClient();
 
         this._jsonOptions ??= new JsonSerializerOptions() {
             WriteIndented = this.Options.Pretty,
@@ -107,7 +111,7 @@ public sealed class BackupService(
                 ? null
                 : JavaScriptEncoder.UnsafeRelaxedJsonEscaping
         };
-        this._api = new KintoneApi(access: access, appID: this.Options.AppID, httpClient: this._httpClient, jsonOptions: this._jsonOptions);
+        this._api = new KintoneApi(access: access, appID: this.Options.AppID, httpClient: httpClient, jsonOptions: this._jsonOptions);
 
         // BatchSize が指定されていれば KintoneApi に反映
         if (this.Options.BatchSize is int size) {
@@ -641,8 +645,8 @@ public sealed class BackupService(
         this._logger?.LogInformation("フィールドスキーマを保存しています…");
 
         var access = this._accessFactory.CreateApiTokenAccess(this.Options.SubDomain, this.Options.ApiToken);
-        var metadataApi = new KintoneAppMetadataApi(access, this._httpClient!, this._logger as ILogger<KintoneAppMetadataApi>);
-        var json = await metadataApi.GetFieldsJsonAsync(metadata.AppId);
+        var metadataApi = new KintoneAppMetadataApi(this._httpClientFactory, this._logger as ILogger<KintoneAppMetadataApi>);
+        var json = await metadataApi.GetFieldsJsonAsync(access.Domain, this.Options.ApiToken, metadata.AppId);
 
         var dir = this.Options.OutputPath.FullName;
         Directory.CreateDirectory(dir);

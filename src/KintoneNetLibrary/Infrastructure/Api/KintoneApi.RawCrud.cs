@@ -10,7 +10,7 @@ namespace KintoneNetLibrary.Infrastructure.Api;
 /// <summary>
 /// レコード一括登録・更新・削除（Raw）
 /// </summary>
-public partial class KintoneApi : BaseKintoneApi, IKintoneApi {
+public partial class KintoneApi : IKintoneApi, IDisposable {
     /// <summary>
     /// 複数レコードを一括登録します（Raw）
     /// </summary>
