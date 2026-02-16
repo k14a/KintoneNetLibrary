@@ -59,6 +59,7 @@ public static class StringExtensions {
     /// <returns></returns>
     public static string ToRoman(this string text) {
         if (string.IsNullOrEmpty(text)) { return string.Empty; }
+        if (text.IsAscii()) { return text; }
 
         var sb = new StringBuilder();
 

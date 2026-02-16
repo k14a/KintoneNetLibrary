@@ -5,6 +5,8 @@ using KintoneNetLibrary.CodeGen.Domain.Models;
 using KintoneNetLibrary.CodeGen.Domain.Options;
 using KintoneNetLibrary.CodeGen.Domain.Schemas;
 using KintoneNetLibrary.CodeGen.Domain.Services;
+using KintoneNetLibrary.Infrastructure.Helpers;
+using KintoneNetLibrary.Infrastructure.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace KintoneNetLibrary.CodeGen.Application.Emitters;
@@ -23,6 +25,7 @@ public class CSharpCodeEmitter(
     IXmlCommentBuilder xml,
     ISubTableEmitter subTableEmitter,
     IHelperClassEmitter helperEmitter,
+    IDateTimeProvider? clock = null,
     ILogger<CSharpCodeEmitter>? logger = null) : ICodeEmitter {
 
     private readonly INameConverter _converter = converterFactory.Create(GenerateLanguages.CSharp);
@@ -30,6 +33,7 @@ public class CSharpCodeEmitter(
     private readonly IXmlCommentBuilder _xml = xml;
     private readonly ISubTableEmitter _subTableEmitter = subTableEmitter;
     private readonly IHelperClassEmitter _helperEmitter = helperEmitter;
+    private readonly IDateTimeProvider _clock = clock ?? new SystemDateTimeProvider();
     private readonly ILogger<CSharpCodeEmitter>? _logger = logger;
 
     /// <summary>
@@ -129,7 +133,7 @@ public class CSharpCodeEmitter(
         sb.AppendLine($"// App ID : {schema.AppId}");
         sb.AppendLine($"// Revision : {schema.Revision}");
         sb.AppendLine($"// Namespace: {options.Namespace}");
-        sb.AppendLine($"// Generated: {DateTime.UtcNow:s} (UTC)");
+        sb.AppendLine($"// Generated: {this._clock.UtcNow:s} (UTC)");
         if (!string.IsNullOrWhiteSpace(options.HeaderComment)) {
             sb.AppendLine($"// Note : {options.HeaderComment}");
         }

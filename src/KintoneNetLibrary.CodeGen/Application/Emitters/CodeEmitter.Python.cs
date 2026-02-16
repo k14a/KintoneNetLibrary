@@ -7,6 +7,8 @@ using KintoneNetLibrary.CodeGen.Domain.Schemas;
 using KintoneNetLibrary.CodeGen.Domain.Services;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Domain.Enums;
+using KintoneNetLibrary.Infrastructure.Helpers;
+using KintoneNetLibrary.Infrastructure.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace KintoneNetLibrary.CodeGen.Application.Emitters;
@@ -19,9 +21,11 @@ namespace KintoneNetLibrary.CodeGen.Application.Emitters;
 public class PythonCodeEmitter(
     INameConverterFactory converterFactory,
     ITypeMapperFactory mapperFactory,
+    IDateTimeProvider? clock = null,
     ILogger<PythonCodeEmitter>? logger = null) : ICodeEmitter {
     private readonly INameConverter _converter = converterFactory.Create(GenerateLanguages.Python);
     private readonly ITypeMapper _mapper = mapperFactory.Create(GenerateLanguages.Python);
+    private readonly IDateTimeProvider _clock = clock ?? new SystemDateTimeProvider();
     private readonly ILogger<PythonCodeEmitter>? _logger = logger;
     private readonly string _invalid_field_name = "INVALID_FIELD_NAME";
 
@@ -87,7 +91,7 @@ public class PythonCodeEmitter(
         sb.AppendLine($"# App ID   : {schema.AppId}");
         sb.AppendLine($"# Revision : {schema.Revision}");
         sb.AppendLine($"# Module   : {options.ModuleName}");
-        sb.AppendLine($"# Generated: {DateTime.UtcNow:s} (UTC)");
+        sb.AppendLine($"# Generated: {this._clock.UtcNow:s} (UTC)");
         if (!string.IsNullOrWhiteSpace(options.HeaderComment)) {
             sb.AppendLine($"# {options.HeaderComment}");
         }

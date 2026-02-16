@@ -102,28 +102,6 @@ public class CSharpNameConverter : INameConverter {
     }
 
     /// <summary>
-    /// ASCII 文字列かどうか
-    /// </summary>
-    /// <param name="s"></param>
-    /// <returns></returns>
-    [Obsolete("Use KintoneNetLibrary.Extensions.StringExtensions.IsAscii instead")]
-    private static bool IsAscii(string s) => s.All(c => c <= 127);
-
-    /// <summary>
-    /// PascalCase に変換する
-    /// </summary>
-    /// <param name="text"></param>
-    /// <returns></returns>
-    [Obsolete("Use KintoneNetLibrary.Extensions.StringExtensions.ToPascalCase instead")]
-    private static string ToPascalCase(string text) {
-        var parts = Regex.Split(text, @"[^A-Za-z0-9]+")
-                         .Where(x => !string.IsNullOrWhiteSpace(x))
-                         .Select(x => char.ToUpperInvariant(x[0]) + x[1..]);
-
-        return string.Concat(parts);
-    }
-
-    /// <summary>
     /// 安全な識別子に変換する
     /// </summary>
     /// <param name="name"></param>

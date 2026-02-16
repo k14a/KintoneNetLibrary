@@ -5,12 +5,12 @@ using KintoneNetLibrary.CodeGen.Domain.Models;
 using KintoneNetLibrary.CodeGen.Domain.Options;
 using KintoneNetLibrary.CodeGen.Domain.Schemas;
 using KintoneNetLibrary.Domain.Enums;
+using KintoneNetLibrary.Infrastructure.Interfaces;
 using Snapshooter.Xunit;
-using Xunit;
 
-namespace KintoneNetLibrary.CodeGen.Tests;
+namespace KintoneNetLibrary.CodeGen.Tests.CodeEmitter.CSharp;
 
-public class CSharpCodeEmitterSubtableTests {
+public class CSharpCodeEmitterNullableTests {
     // --- Fake 実装群 ---
     private class FakeNameConverterFactory : INameConverterFactory {
         public INameConverter Create(GenerateLanguages lang) => new CSharpNameConverter();
@@ -40,56 +40,40 @@ public class CSharpCodeEmitterSubtableTests {
         public IEnumerable<GeneratedHelperClass> EmitHelperClasses(CodeEmitterOptions options) => [];
     }
 
+    private class FakeClock : IDateTimeProvider {
+        public DateTime Now => new(2024, 1, 1);
+
+        public DateTime UtcNow => new(2024, 1, 1);
+    }
+
     [Fact]
-    public void EmitWithSubtableMatchesSnapshot() {
+    public void Emit_NullableEnabled_MatchesSnapshot() {
         var emitter = new CSharpCodeEmitter(
             new FakeNameConverterFactory(),
             new FakeTypeMapperFactory(),
             new FakeXmlCommentBuilder(),
             new FakeSubTableEmitter(),
             new FakeHelperEmitter(),
+            new FakeClock(),
             logger: null
         );
 
         var schema = new KintoneAppSchema {
-            AppId = 2,
-            AppName = "SubtableTestApp",
+            AppId = 4,
+            AppName = "NullableTestApp",
             Revision = 1,
             Fields = [
-                new() {
-                    FieldCode = "customer_name",
-                    Label = "顧客名",
-                    FieldType = KintoneFieldType.SingleLineText
-                }
-            ],
-            SubTables = [
-                new KintoneSubTableSchema {
-                    FieldCode = "order_items",
-                    Label = "明細",
-                    Fields = [
-                        new() {
-                            FieldCode = "item_name",
-                            Label = "商品名",
-                            FieldType = KintoneFieldType.SingleLineText
-                        },
-                        new() {
-                            FieldCode = "quantity",
-                            Label = "数量",
-                            FieldType = KintoneFieldType.Number
-                        },
-                        new() {
-                            FieldCode = "unit_price",
-                            Label = "単価",
-                            FieldType = KintoneFieldType.Number
-                        }
-                    ]
-                }
+                new() { FieldCode = "text", Label = "テキスト", FieldType = KintoneFieldType.SingleLineText },
+                new() { FieldCode = "number", Label = "数量", FieldType = KintoneFieldType.Number },
+                new() { FieldCode = "date", Label = "日付", FieldType = KintoneFieldType.Date },
+                new() { FieldCode = "file", Label = "添付", FieldType = KintoneFieldType.File }
             ]
         };
 
         var options = new CSharpEmitterOptions {
             Namespace = "KintoneNetLibrary.Generated",
-            MainClassName = "SubtableModel",
+            MainClassName = "NullableModel",
+            NullableEnabled = true,
             UseKintoneNetLibrary = false
         };
 

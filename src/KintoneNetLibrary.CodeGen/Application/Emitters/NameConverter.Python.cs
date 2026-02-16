@@ -20,6 +20,7 @@ public class PythonNameConverter : INameConverter {
         { "件名", "subject" },
         { "備考", "note" },
         { "名", "name" },
+        { "明細", "meisai" },
     };
 
     // システムフィールド（FieldCode ベース）
@@ -30,6 +31,9 @@ public class PythonNameConverter : INameConverter {
 
     public string ToClassName(string label, string code) {
         var baseName = SelectBaseName(label, code);
+        if (Dictionary.TryGetValue(baseName, out var mapped)) {
+            return mapped.ToPascalCase();
+        }
 
         // romanize → sanitize → PascalCase
         var roman = baseName.ToRoman();
@@ -45,6 +49,10 @@ public class PythonNameConverter : INameConverter {
     public string ToPropertyName(string label, string code) {
         var baseName = SelectBaseName(label, code);
 
+        if (string.IsNullOrWhiteSpace(baseName)) {
+            return "INVALID_FIELD_NAME";
+        }
+
         // システムフィールドは固定名
         if (SystemFieldCodes.Contains(code)) {
             return code.ToSnakeCase();
@@ -52,6 +60,10 @@ public class PythonNameConverter : INameConverter {
 
         if (code.IsAscii()) {
             return baseName.ToSnakeCase();
+        }
+
+        if (Dictionary.TryGetValue(baseName, out var mapped)) {
+            return mapped.ToSnakeCase();
         }
 
         // romanize → sanitize → snake_case
@@ -76,25 +88,4 @@ public class PythonNameConverter : INameConverter {
         sanitized = Regex.Replace(sanitized, "_+", "_");
         return sanitized.Trim('_');
     }
-
-    [Obsolete("Use KintoneNetLibrary.Extensions.StringExtensions.ToPascalCase instead")]
-    private static string ToPascalCase(string text) {
-        var parts = Regex.Split(text, @"[^A-Za-z0-9]+")
-            .Where(x => !string.IsNullOrWhiteSpace(x))
-            .Select(x => char.ToUpperInvariant(x[0]) + x[1..].ToLowerInvariant());
-
-        return string.Concat(parts);
-    }
-
-    [Obsolete("Use KintoneNetLibrary.Extensions.StringExtensions.ToSnakeCase instead")]
-    private static string ToSnakeCase(string text) {
-        var parts = Regex.Split(text, @"[^A-Za-z0-9]+")
-            .Where(x => !string.IsNullOrWhiteSpace(x))
-            .Select(x => x.ToLowerInvariant());
-
-        return string.Join("_", parts);
-    }
-
-    [Obsolete("Use KintoneNetLibrary.Extensions.StringExtensions.ToRoman instead")]
-    private static string ToRoman(string text) => CSharpNameConverter.ToRoman(text);
 }

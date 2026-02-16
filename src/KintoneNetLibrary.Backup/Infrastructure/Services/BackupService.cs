@@ -43,35 +43,6 @@ public sealed class BackupService(
     public string BackupRoot { get; set; } = string.Empty;
 
     /// <summary>
-    /// Kintone API 初期化を保証します
-    /// </summary>
-    private void EnsureApiInitialized() {
-        if (this._api != null) { return; }
-        ArgumentNullException.ThrowIfNull(this.Options);
-
-        var access = new ApiTokenAccess(this.Options.SubDomain, this.Options.ApiToken);
-
-        this._httpClient ??= new HttpClient {
-            BaseAddress = new Uri($"https://{access.Domain}/k/v1/")
-        };
-
-        this._jsonOptions ??= new JsonSerializerOptions() {
-            WriteIndented = this.Options.Pretty,
-            Encoder = this.Options.EscapeUnicode
-                ? null
-                : JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-        };
-        this._api = new KintoneApi(access: access, appID: this.Options.AppID, httpClient: this._httpClient, jsonOptions: this._jsonOptions);
-
-        // BatchSize が指定されていれば KintoneApi に反映
-        if (this.Options.BatchSize is int size) {
-            this._api.CursorPageSize = size; // KintoneApi 側でバリデーション
-        }
-
-        this._schemaProvider.SetDomain(this.Options.SubDomain);
-    }
-
-    /// <summary>
     /// バックアップを実行します
     /// </summary>
     public async Task<BackupResult> RunBackupAsync() {
@@ -115,6 +86,35 @@ public sealed class BackupService(
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Kintone API 初期化を保証します
+    /// </summary>
+    private void EnsureApiInitialized() {
+        if (this._api != null) { return; }
+        ArgumentNullException.ThrowIfNull(this.Options);
+
+        var access = new ApiTokenAccess(this.Options.SubDomain, this.Options.ApiToken);
+
+        this._httpClient ??= new HttpClient {
+            BaseAddress = new Uri($"https://{access.Domain}/k/v1/")
+        };
+
+        this._jsonOptions ??= new JsonSerializerOptions() {
+            WriteIndented = this.Options.Pretty,
+            Encoder = this.Options.EscapeUnicode
+                ? null
+                : JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        };
+        this._api = new KintoneApi(access: access, appID: this.Options.AppID, httpClient: this._httpClient, jsonOptions: this._jsonOptions);
+
+        // BatchSize が指定されていれば KintoneApi に反映
+        if (this.Options.BatchSize is int size) {
+            this._api.CursorPageSize = size; // KintoneApi 側でバリデーション
+        }
+
+        this._schemaProvider.SetDomain(this.Options.SubDomain);
     }
 
     /// <summary>

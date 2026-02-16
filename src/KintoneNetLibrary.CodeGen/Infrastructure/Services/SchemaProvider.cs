@@ -5,6 +5,7 @@ using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Domain.Access;
 using KintoneNetLibrary.Infrastructure.Api;
 using KintoneNetLibrary.Domain.Enums;
+using KintoneNetLibrary.Application.Interfaces;
 
 namespace KintoneNetLibrary.CodeGen.Infrastructure.Services;
 
@@ -13,8 +14,9 @@ namespace KintoneNetLibrary.CodeGen.Infrastructure.Services;
 /// </summary>
 /// <param name="httpClientFactory"></param>
 /// <param name="logger"></param>
-public class SchemaProvider(IHttpClientFactory httpClientFactory, ILogger<SchemaProvider> logger) : ISchemaProvider {
+public class SchemaProvider(IHttpClientFactory httpClientFactory, IKintoneAppMetadataApi metadataApi, ILogger<SchemaProvider> logger) : ISchemaProvider {
     private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
+    private readonly IKintoneAppMetadataApi _metadataApi = metadataApi;
     private readonly ILogger<SchemaProvider> _logger = logger;
     private string? _domain;
 
@@ -49,11 +51,11 @@ public class SchemaProvider(IHttpClientFactory httpClientFactory, ILogger<Schema
             throw new ArgumentNullException(message);
         }
 
-        var access = new ApiTokenAccess(this._domain, apiToken);
-        var httpClient = this._httpClientFactory.CreateClient();
-        var metaApi = new KintoneAppMetadataApi(access, httpClient);
+        // var access = new ApiTokenAccess(this._domain, apiToken);
+        // var httpClient = this._httpClientFactory.CreateClient();
+        // var metaApi = new KintoneAppMetadataApi(access, httpClient);
 
-        return await metaApi.GetAppMetadataAsync(appId, apiToken);
+        return await this._metadataApi.GetAppMetadataAsync(appId, apiToken);
     }
 
     /// <summary>
