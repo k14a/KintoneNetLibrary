@@ -2,7 +2,15 @@ using System.Net.Http.Headers;
 
 namespace KintoneNetLibrary.Tests.Helpers;
 
+/// <summary>
+/// HttpRequestMessageとHttpResponseMessageの内容を完全に複製するための拡張メソッド。
+/// </summary>
 internal static class HttpRequestMessageExtensions {
+    /// <summary>
+    /// HttpRequestMessageを完全に複製します。Contentも複製されるため、元のHttpRequestMessageの内容を変更してもクローンには影響しません。
+    /// </summary>
+    /// <param name="request">複製するHttpRequestMessage</param>
+    /// <returns>複製されたHttpRequestMessage</returns>
     public static async Task<HttpRequestMessage> CloneAsync(this HttpRequestMessage request) {
         var clone = new HttpRequestMessage(request.Method, request.RequestUri) {
             Version = request.Version
@@ -19,6 +27,11 @@ internal static class HttpRequestMessageExtensions {
         return clone;
     }
 
+    /// <summary>
+    /// HttpResponseMessageを完全に複製します。Contentも複製されるため、元のHttpResponseMessageの内容を変更してもクローンには影響しません。
+    /// </summary>
+    /// <param name="response">複製するHttpResponseMessage</param>
+    /// <returns>複製されたHttpResponseMessage</returns>
     public static async Task<HttpResponseMessage> CloneAsync(this HttpResponseMessage response) {
         var clone = new HttpResponseMessage(response.StatusCode) {
             ReasonPhrase = response.ReasonPhrase,
@@ -37,6 +50,11 @@ internal static class HttpRequestMessageExtensions {
         return clone;
     }
 
+    /// <summary>
+    /// HttpContentを完全に複製します。MultipartFormDataContentの場合は各パートも複製されます。
+    /// </summary>
+    /// <param name="content">複製するHttpContent</param>
+    /// <returns>複製されたHttpContent</returns>
     public static async Task<HttpContent> CloneAsync(this HttpContent content) {
         if (content == null) {
             return null!;

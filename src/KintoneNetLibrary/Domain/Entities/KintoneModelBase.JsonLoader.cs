@@ -11,7 +11,12 @@ namespace KintoneNetLibrary.Domain.Entities;
 /// </summary>
 public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase where TSelf : KintoneModelBase<TSelf>, new() {
     /// <summary>
-    /// JSON辞書からフィールド値を読み込み
+    /// JSONからフィールドマップを読み込み、モデルのプロパティに値をセットします。
+    /// このメソッドは、Kintone APIから取得したJSONレスポンスをモデルに変換するために使用されます。
+    /// フィールドマップは、フィールドコードをキー、JsonElementを値とする辞書形式で提供されます。
+    /// 特殊フィールド '$id' はRecordIDプロパティにマッピングされます。
+    /// サブテーブルフィールドは、サブテーブルアイテムのリストとして処理されます。
+    /// その他のフィールドは、KintoneValueConverterを使用して適切なC#型に変換されます。
     /// </summary>
     /// <param name="fieldMap"></param>
     public void LoadFromJsonDictionary(Dictionary<string, JsonElement> fieldMap) {
@@ -74,8 +79,11 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     }
 
     /// <summary>
-    /// プロパティがサブテーブルかどうかを判定
+    /// プロパティがサブテーブルかどうかを判定するヘルパーメソッド
     /// </summary>
+    /// <param name="prop">判定対象のプロパティ情報</param>
+    /// <param name="attr">プロパティに付与されたKintoneItemAttribute</param>
+    /// <returns>サブテーブルであればtrue、それ以外はfalse</returns>
     private static bool IsSubTableProperty(PropertyInfo prop, KintoneItemAttribute? attr) {
         if (attr != null && attr.FieldType == KintoneFieldType.SubTable) { return true; }
 

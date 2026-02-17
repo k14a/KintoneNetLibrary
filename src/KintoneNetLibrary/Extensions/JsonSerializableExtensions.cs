@@ -5,7 +5,6 @@ using KintoneNetLibrary.Utils;
 
 namespace KintoneNetLibrary.Extensions;
 
-// コメントは日本語で記述
 /// <summary>
 /// IJsonSerializable インターフェイスを実装するオブジェクトの JSON シリアライズ拡張メソッドを提供します。
 /// </summary>
@@ -18,9 +17,9 @@ public static class JsonSerializableExtensions {
     /// <summary>
     /// オブジェクトを JSON 文字列にシリアライズします。
     /// </summary>
-    /// <param name="obj"></param>
-    /// <param name="indented"></param>
-    /// <returns></returns>
+    /// <param name="obj">JSONシリアライズ可能なオブジェクト</param>
+    /// <param name="indented">JSONをインデントして出力するかどうか</param>
+    /// <returns>シリアライズされたJSON文字列</returns>
     public static string ToJson(this IJsonSerializable obj, bool indented = false) {
         var options = JsonOptionsUtil.Clone(DefaultJsonOptions.Default, indented);
         return JsonSerializer.Serialize(obj, options);
@@ -28,9 +27,9 @@ public static class JsonSerializableExtensions {
     /// <summary>
     /// オブジェクトを JSON 文字列にシリアライズします。シリアライズ中に例外が発生した場合、エラーメッセージを含む JSON を返します。     
     /// </summary>
-    /// <param name="obj"></param>
-    /// <param name="indented"></param>
-    /// <returns></returns>
+    /// <param name="obj">JSONシリアライズ可能なオブジェクト</param>
+    /// <param name="indented">JSONをインデントして出力するかどうか</param>
+    /// <returns>シリアライズされたJSON文字列、またはエラーメッセージを含むJSON文字列</returns>
     public static string ToJsonSafe(this IJsonSerializable obj, bool indented = false) {
         try {
             return obj.ToJson(indented);

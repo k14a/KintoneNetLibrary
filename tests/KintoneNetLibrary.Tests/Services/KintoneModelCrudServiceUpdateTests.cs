@@ -11,8 +11,14 @@ using Xunit;
 
 namespace KintoneNetLibrary.Tests.Services;
 
+/// <summary>
+/// KintoneTypedCrudService<SampleModel> クラスの UpdateAsync メソッドの動作をテストするクラスです。
+/// </summary>
 public class KintoneModelCrudServiceUpdateTests {
     #region <<Test methods>>
+    /// <summary>
+    /// UpdateAsync メソッドに、RecordID と Revision が両方とも有効な値のレコードを1件だけ含むリストを渡した場合、UpdateRecordsAsync メソッドが呼び出され、その結果が正しく返されることをテストします。
+    /// </summary>
     [Fact]
     public async Task UpdateAsyncWithSingleRecordReturnsSucceededResult() {
         var testRecord = new SampleModel { FieldA = "Update1", RecordID = "R9999", Revision = 1 };
@@ -39,6 +45,10 @@ public class KintoneModelCrudServiceUpdateTests {
         Assert.Equal(2, updated.Revision);
         Assert.Empty(result.Failed);
     }
+
+    /// <summary>
+    /// UpdateAsync メソッドに、RecordID と Revision が両方とも有効な値のレコードを複数件含むリストを渡した場合、UpdateRecordsAsync メソッドが呼び出され、その結果が正しく返されることをテストします。
+    /// </summary>
     [Fact]
     public async Task UpdateAsyncWithMultipleRecordsReturnsAllSucceeded() {
         var records = new List<SampleModel> {
@@ -67,6 +77,10 @@ public class KintoneModelCrudServiceUpdateTests {
         Assert.Contains(result.Succeeded, r => r.RecordID == "R1002" && r.Revision == 3);
         Assert.Empty(result.Failed);
     }
+
+    /// <summary>
+    /// UpdateAsync メソッドに、RecordID と Revision が両方とも有効な値のレコードを複数件含むリストを渡した場合、最初のバルク更新で例外がスローされ、その後の単件リトライで全件が成功することをテストします。
+    /// </summary>
     [Fact]
     public async Task UpdateAsyncWhenBulkFailsAndSingleRetrySucceedsRecordsAddedToSucceeded() {
         // Arrange
@@ -116,13 +130,16 @@ public class KintoneModelCrudServiceUpdateTests {
         Assert.Equal(3, callLog.Count); // 1回bulk + 2回single
         Assert.Equal("bulk", callLog[0]);
     }
+
+    /// <summary>
+    /// UpdateAsync メソッドに、RecordID と Revision が両方とも有効な値のレコードを複数件含むリストを渡した場合、最初のバルク更新で例外がスローされ、その後の単件リトライでも全件が失敗することをテストします。失敗したレコードはすべて Failed に追加されることを確認します。
+    /// </summary>
     [Fact]
     public async Task UpdateAsyncWhenBulkAndRetryBothFailAddsAllRecordsToFailed() {
         // Arrange
         var records = new List<SampleModel> {
-        new() { FieldA = "R1", RecordID = "RID001", Revision = 1 },
-        new() { FieldA = "R2", RecordID = "RID002", Revision = 1 }
-    };
+            new() { FieldA = "R1", RecordID = "RID001", Revision = 1 },
+            new() { FieldA = "R2", RecordID = "RID002", Revision = 1 } };
 
         var mockRepo = new Mock<IKintoneRepository>();
 
@@ -158,6 +175,10 @@ public class KintoneModelCrudServiceUpdateTests {
             Assert.Equal("SINGLE_ERR", failure.Error?.Code);
         });
     }
+
+    /// <summary>
+    /// UpdateAsync メソッドに、RecordID が null で Revision が -1 のレコード（＝Create対象）を含むリストを渡した場合、UpdateRecordsAsync メソッドが呼び出されて例外がスローされ、そのレコードが Failed に追加されることをテストします。
+    /// </summary>
     [Fact]
     public async Task UpdateAsyncWhenRecordIdIsNullAddsToFailed() {
         var records = new List<SampleModel> {
@@ -182,6 +203,10 @@ public class KintoneModelCrudServiceUpdateTests {
         Assert.Equal("Missing ID", result.Failed[0].ErrorMessage);
         Assert.Null(result.Failed[0].Record.RecordID);
     }
+
+    /// <summary>
+    /// UpdateAsync メソッドに、RecordID と Revision が両方とも有効な値のレコードを含むリストを渡した場合、最初のバルク更新で例外がスローされ、その後の単件リトライで例外がスローされることをテストします。失敗したレコードはすべて Failed に追加されることを確認します。
+    /// </summary>
     [Fact]
     public async Task UpdateAsyncWhenRevisionIsInvalidAddsToFailed() {
         var records = new List<SampleModel> {
@@ -207,6 +232,10 @@ public class KintoneModelCrudServiceUpdateTests {
         Assert.Single(result.Failed);
         Assert.Equal("Revision number is invalid", result.Failed[0].Error?.Message);
     }
+
+    /// <summary>
+    /// UpdateAsync メソッドに、RecordID と Revision が両方とも有効な値のレコードを含むリストを渡した場合、UpdateRecordsAsync メソッドが空のレスポンスを返すことがあることをテストします。空のレスポンスはエラーではなく、すべてのレコードが成功とみなされることを確認します。
+    /// </summary>
     [Fact]
     public async Task UpdateAsyncWhenResponseIsEmptyReturnsEmptySucceeded() {
         var records = new List<SampleModel> {
@@ -233,6 +262,10 @@ public class KintoneModelCrudServiceUpdateTests {
         // ✅ 失敗にも分類されていないことを確認（レスポンスが空でもエラーではない）
         Assert.Empty(result.Failed);
     }
+
+    /// <summary>
+    /// UpdateAsync メソッドに、RecordID と Revision が両方とも有効な値のレコードを複数件含むリストを渡した場合、最初のバルク更新で例外がスローされ、その後の単件リトライでも全件が失敗することをテストします。失敗したレコードはすべて Failed に追加されることを確認します。また、バルク更新の失敗と単件リトライの失敗の両方で、適切なログメッセージが記録されることを確認します。
+    /// </summary>
     [Fact]
     public async Task UpdateAsyncWhenBulkFailsLogsWarningMessage() {
         var testRecords = new List<SampleModel> {
@@ -266,6 +299,10 @@ public class KintoneModelCrudServiceUpdateTests {
             Times.Once
         );
     }
+
+    /// <summary>
+    /// UpdateAsync メソッドに、RecordID と Revision が両方とも有効な値のレコードを複数件含むリストを渡した場合、最初のバルク更新で例外がスローされ、その後の単件リトライでも全件が失敗することをテストします。失敗したレコードはすべて Failed に追加されることを確認します。また、単件リトライの失敗で、適切なエラーログメッセージが記録されることを確認します。
+    /// </summary>
     [Fact]
     public async Task UpdateAsyncWhenSingleRetryFailsLogsErrorMessage() {
         var testRecords = new List<SampleModel> {

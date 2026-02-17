@@ -13,8 +13,14 @@ using Xunit;
 
 namespace KintoneNetLibrary.Tests.Services;
 
+/// <summary>
+/// KintoneTypedCrudService<SampleModel> クラスの SaveAsync メソッドと SaveWithRetryAsync メソッドの動作をテストするクラスです。
+/// </summary>
 public class KintoneModelCrudServiceSaveTests {
     #region <<Test methods>>
+    /// <summary>
+    /// SaveAsync メソッドに、RecordID が null で Revision が -1 のレコード（＝Create対象）だけを含むリストを渡した場合、CreateRecordsAsync メソッドが呼び出され、その結果が正しく返されることをテストします。
+    /// </summary>
     [Fact]
     public async Task SaveAsyncWhenOnlyCreateTargetsExistCallsCreateOnly() {
         var records = new List<SampleModel> {
@@ -55,6 +61,10 @@ public class KintoneModelCrudServiceSaveTests {
             null,
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
+
+    /// <summary>
+    /// SaveAsync メソッドに、RecordID が null で Revision が -1 のレコード（＝Create対象）を含まないリストを渡した場合、UpdateRecordsAsync メソッドが呼び出され、その結果が正しく返されることをテストします。
+    /// </summary>
     [Fact]
     public async Task SaveAsyncWhenOnlyUpdateTargetsExistCallsUpdateOnlyAndReturnsResult() {
         var updateRecord = new SampleModel {
@@ -100,6 +110,10 @@ public class KintoneModelCrudServiceSaveTests {
             null,
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
+
+    /// <summary>
+    /// SaveAsync メソッドに、RecordID が null で Revision が -1 のレコード（＝Create対象）と、RecordID と Revision が両方とも有効な値のレコード（＝Update対象）を両方含むリストを渡した場合、CreateRecordsAsync メソッドと UpdateRecordsAsync メソッドの両方が呼び出され、それぞれの結果が正しく組み合わされて返されることをテストします。
+    /// </summary>
     [Fact]
     public async Task SaveAsyncWhenCreateAndUpdateTargetsExistCallsBothAndCombinesResults() {
         var records = new List<SampleModel> {
@@ -131,6 +145,10 @@ public class KintoneModelCrudServiceSaveTests {
         Assert.Contains(result.Succeeded, r => r.RecordID == "R2001" && r.Revision == 1);
         Assert.Contains(result.Succeeded, r => r.RecordID == "R1002" && r.Revision == 3);
     }
+
+    /// <summary>
+    /// SaveWithRetryAsync メソッドに、RecordID が null で Revision が -1 のレコード（＝Create対象）だけを含むリストを渡した場合、CreateRecordsAsync メソッドが呼び出され、その結果が正しく返されることをテストします。
+    /// </summary>
     [Fact]
     public async Task SaveWithRetryAsyncWhenOnlyCreateTargetsSucceedsOnCreate() {
         var createModel = new SampleModel { RecordID = null, Revision = -1 };
@@ -155,6 +173,10 @@ public class KintoneModelCrudServiceSaveTests {
         Assert.Equal("C1001", result.Succeeded[0].RecordID);
         Assert.Equal(1, result.Succeeded[0].Revision);
     }
+
+    /// <summary>
+    /// SaveWithRetryAsync メソッドに、RecordID が null で Revision が -1 のレコード（＝Create対象）を含むリストを渡した場合、最初の CreateRecordsAsync メソッドの呼び出しが例外をスローし、その後のリトライで UpdateRecordsAsync メソッドが呼び出されて成功することをテストします。
+    /// </summary>
     [Fact]
     public async Task SaveWithRetryAsyncWhenCreateFailsUpdatesOnRetry() {
         var model = new SampleModel2 {
@@ -184,6 +206,10 @@ public class KintoneModelCrudServiceSaveTests {
         Assert.Equal("U123", result.Succeeded[0].RecordID);
         Assert.Equal(2, result.Succeeded[0].Revision);
     }
+
+    /// <summary>
+    /// SaveWithRetryAsync メソッドに、RecordID と Revision が両方とも有効な値のレコード（＝Update対象）だけを含むリストを渡した場合、最初の UpdateRecordsAsync メソッドの呼び出しが例外をスローし、その後のリトライで UpdateRecordsAsync メソッドが再度呼び出されて成功することをテストします。
+    /// </summary>
     [Fact]
     public async Task SaveWithRetryAsyncWhenOnlyUpdateTargetsSucceedsOnUpdate() {
         var model = new SampleModel { RecordID = "U999", Revision = 7 };
@@ -209,6 +235,10 @@ public class KintoneModelCrudServiceSaveTests {
 
     #endregion
 }
+
+/// <summary>
+/// テスト用のサンプルモデルクラスです。SampleModel と異なり、更新対象を識別するためのキー項目 CustomUpdateKey を持ちます。
+/// </summary>
 internal class SampleModel2 : KintoneModelBase<SampleModel2> {
     public override int AppID { get; init; } = 9999;
     public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("dummyDomain", "dummyApiToken");

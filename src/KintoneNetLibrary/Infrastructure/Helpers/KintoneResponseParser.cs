@@ -6,7 +6,6 @@ using KintoneNetLibrary.Infrastructure.Converters;
 
 namespace KintoneNetLibrary.Infrastructure.Helpers;
 
-// コメントは日本語で記述
 /// <summary>
 /// Kintone のレスポンスを解析するためのヘルパークラス
 /// </summary>
@@ -23,8 +22,13 @@ public static class KintoneResponseParser {
     }
 
     /// <summary>
-    /// CreateRecordsAsync などのレスポンス JSON を元に、作成結果を元のモデルに反映する
+    /// CreateRecordsAsync のレスポンス JSON を解析して、元のレコードリストに ID と Revision をセットするためのメソッド
     /// </summary>
+    /// <typeparam name="T">解析対象のモデルの型</typeparam>
+    /// <param name="originalRecords">元のレコードリスト</param>
+    /// <param name="responseJson">レスポンス JSON</param>
+    /// <returns>ID と Revision がセットされたレコードリスト</returns>
+    /// <exception cref="KintoneException">レスポンスのレコード数が一致しない場合にスローされます</exception>
     public static IList<T> ParseCreatedRecords<T>(IList<T> originalRecords, string responseJson) where T : KintoneModelBase<T>, new() {
         var indexes = KintoneRecordIndexesResponse.Parse(responseJson).ToIndexes();
 
@@ -42,13 +46,14 @@ public static class KintoneResponseParser {
 
         return originalRecords;
     }
+
     /// <summary>
     /// 単一レコードの JSON を解析してモデルに変換する
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="json"></param>
-    /// <returns></returns>
-    /// <exception cref="InvalidOperationException"></exception>
+    /// <typeparam name="T">解析対象のモデルの型</typeparam>
+    /// <param name="json">解析対象の JSON 文字列</param>
+    /// <returns>解析結果のモデル</returns>
+    /// <exception cref="InvalidOperationException">JSON に 'record' プロパティが存在しない場合にスローされます</exception>
     public static T ParseRecord<T>(string json) where T : KintoneModelBase<T>, new() {
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
@@ -61,13 +66,14 @@ public static class KintoneResponseParser {
         return JsonSerializer.Deserialize<T>(modelJson, KintoneJsonOptions.Default)!;
 
     }
+
     /// <summary>
     /// 複数レコードの JSON を解析してモデルのリストに変換する
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="json"></param>
-    /// <returns></returns>
-    /// <exception cref="InvalidOperationException"></exception>
+    /// <typeparam name="T">解析対象のモデルの型</typeparam>
+    /// <param name="json">解析対象の JSON 文字列</param>
+    /// <returns>解析結果のモデルのリスト</returns>
+    /// <exception cref="InvalidOperationException">JSON に 'records' プロパティが存在しない場合にスローされます</exception>
     public static IList<T> ParseRecords<T>(string json) where T : KintoneModelBase<T>, new() {
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;

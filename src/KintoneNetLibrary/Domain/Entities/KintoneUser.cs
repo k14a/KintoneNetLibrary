@@ -10,7 +10,7 @@ public class KintoneUser {
     /// </summary>
     public string Code { get; set; } = string.Empty;
     /// <summary>
-    /// ユーザー名 
+    /// ユーザー名
     /// </summary>
     public string Name { get; set; } = string.Empty;
 }

@@ -126,7 +126,7 @@ public class KintoneDeleteResult {
 /// Kintone削除APIの失敗理由を表す列挙型
 /// RecordNotFound: レコードが見つからない
 /// DeleteError: 削除処理中にエラーが発生
-/// この列挙型は、KintoneDeleteFailureクラスで使用されます。   
+/// この列挙型は、KintoneDeleteFailureクラスで使用されます。
 /// </summary>
 public enum KintoneDeleteFailureReason {
     /// <summary>
@@ -168,8 +168,10 @@ public class KintoneDeleteFailure : IJsonSerializable {
     public KintoneDeleteFailureReason Reason { get; set; }
 
     /// <summary>
-    /// オブジェクトをJSON形式の文字列に変換します。
+    /// KintoneDeleteFailure クラスの新しいインスタンスを初期化します。
     /// </summary>
+    /// <param name="indented">JSON出力をインデントするかどうかを指定します。</param>
+    /// <returns>JSON形式の文字列</returns>
     public string ToJson(bool indented = false) {
         var options = JsonOptionsUtil.Clone(DefaultJsonOptions.Default, indented);
         return JsonSerializer.Serialize(new { this.ID, this.ErrorMessage, this.Reason }, options);

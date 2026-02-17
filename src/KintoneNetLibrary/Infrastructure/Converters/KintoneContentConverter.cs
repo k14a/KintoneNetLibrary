@@ -10,9 +10,9 @@ public static class KintoneContentConverter {
     /// <summary>
     /// オブジェクトをJSON文字列に変換する
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="obj"></param>
-    /// <returns></returns>
+    /// <typeparam name="T">変換するオブジェクトの型</typeparam>
+    /// <param name="obj">変換するオブジェクト</param>
+    /// <returns>JSON文字列</returns>
     public static string ToJson<T>(T obj) {
         return JsonSerializer.Serialize(obj);
     }
@@ -20,9 +20,9 @@ public static class KintoneContentConverter {
     /// <summary>
     /// JSON文字列をオブジェクトに変換する
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="json"></param>
-    /// <returns></returns>
+    /// <typeparam name="T">変換するオブジェクトの型</typeparam>
+    /// <param name="json">JSON文字列</param>
+    /// <returns>変換されたオブジェクト</returns>
     public static T FromJson<T>(string json) {
         return JsonSerializer.Deserialize<T>(json);
     }
@@ -30,9 +30,9 @@ public static class KintoneContentConverter {
     /// <summary>
     /// オブジェクトをDictionaryに変換する
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="obj"></param>
-    /// <returns></returns>
+    /// <typeparam name="T">変換するオブジェクトの型</typeparam>
+    /// <param name="obj">変換するオブジェクト</param>
+    /// <returns>変換されたDictionary</returns>
     public static Dictionary<string, object> ToDictionary<T>(T obj) {
         var json = ToJson(obj);
         return JsonSerializer.Deserialize<Dictionary<string, object>>(json);
@@ -41,9 +41,9 @@ public static class KintoneContentConverter {
     /// <summary>
     /// Dictionaryをオブジェクトに変換する
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="dict"></param>
-    /// <returns></returns>
+    /// <typeparam name="T">変換するオブジェクトの型</typeparam>
+    /// <param name="dict">変換するDictionary</param>
+    /// <returns>変換されたオブジェクト</returns>
     public static T FromDictionary<T>(Dictionary<string, object> dict) {
         var json = JsonSerializer.Serialize(dict);
         return JsonSerializer.Deserialize<T>(json);

@@ -34,6 +34,8 @@ public class KintoneField {
     /// KintoneFieldのコンストラクタ
     /// このコンストラクタは、フィールドのタイプと値を指定して初期化します。
     /// </summary>
+    /// <param name="type">フィールドのタイプ</param>
+    /// <param name="value">フィールドの値</param>
     public KintoneField(string type, object value) {
         this.Type = type;
         this.Value = value;

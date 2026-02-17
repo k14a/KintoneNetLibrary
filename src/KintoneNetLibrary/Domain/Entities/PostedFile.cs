@@ -1,10 +1,9 @@
 ﻿namespace KintoneNetLibrary.Domain.Entities;
 
-// コメントは日本語で記述
 /// <summary>
 /// アップロードされたファイルを表すエンティティ
 /// </summary>
-/// <param name="filePath"></param>
+/// <param name="filePath">ファイルのパス</param>
 public class PostedFile(string filePath) {
     /// <summary>
     /// ファイルのパス

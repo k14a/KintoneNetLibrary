@@ -33,7 +33,7 @@ public class KintoneDateOnly : IKintoneFieldConverter {
     /// <summary>
     /// 指定された日付の値で KintoneDateOnly クラスの新しいインスタンスを初期化します。
     /// </summary>
-    /// <param name="value"></param>
+    /// <param name="value">日付の値</param>
     public KintoneDateOnly(DateOnly? value) {
         this.Value = value;
     }
@@ -41,7 +41,7 @@ public class KintoneDateOnly : IKintoneFieldConverter {
     /// <summary>
     /// 指定された生の値で KintoneDateOnly クラスの新しいインスタンスを初期化します。
     /// </summary>
-    /// <param name="value"></param>
+    /// <param name="value">生の値</param>
     public KintoneDateOnly(string? value) {
         this.RawValue = value;
         this.Value = DateOnly.TryParse(value, out var d) ? d : null;

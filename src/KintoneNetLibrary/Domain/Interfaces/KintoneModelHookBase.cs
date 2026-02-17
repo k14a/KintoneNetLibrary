@@ -1,5 +1,4 @@
 namespace KintoneNetLibrary.Domain.Entities {
-    // コメントは日本語で記述
     /// <summary>
     /// Kintoneモデルのフック基底クラス。
     /// </summary>

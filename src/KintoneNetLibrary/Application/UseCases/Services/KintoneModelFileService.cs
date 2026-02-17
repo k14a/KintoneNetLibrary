@@ -4,13 +4,11 @@ using Microsoft.Extensions.Logging;
 
 namespace KintoneNetLibrary.Application.UseCases.Services;
 /// <summary>
-/// Kintoneモデルのファイル操作を提供するサービスクラス。
+/// Kintoneモデルのファイル操作を提供するサービス実装クラスです。
 /// </summary>
-/// <remarks>このクラスは、Kintoneモデルのファイルアップロードとダウンロードを管理します。</remarks>
 /// <typeparam name="T">KintoneModelBaseを継承したモデルクラス</typeparam>
 /// <param name="repository">Kintoneリポジトリインターフェース</param>
 /// <param name="logger">ロガーインスタンス（オプション）</param>
-/// <exception cref="ArgumentNullException">repositoryがnullの場合にスローされます。</exception>
 public class KintoneModelFileService<T>(IKintoneRepository repository, ILogger<KintoneModelFileService<T>>? logger = null) : IKintoneModelFileService<T> where T : KintoneModelBase<T>, new() {
     private readonly IKintoneRepository _repository = repository ?? throw new ArgumentNullException(nameof(repository));
     private readonly ILogger<KintoneModelFileService<T>>? _logger = logger;
@@ -19,11 +17,9 @@ public class KintoneModelFileService<T>(IKintoneRepository repository, ILogger<K
     /// <summary>
     /// モデルのファイルをアップロードし、KintoneFileを更新します。
     /// </summary>
-    /// <remarks>モデル内のFileInfoプロパティを使用して、ファイルをアップロードします。</remarks>
     /// <param name="model">アップロード対象のKintoneモデル</param>
     /// <returns>アップロードされたKintoneFileオブジェクト</returns>
-    /// <exception cref="ArgumentNullException">modelがnullの場合にスローされます。</exception>
-    /// <exception cref="InvalidOperationException">モデルにFileInfoとKintoneFileの両方のプロパティが必要です。</exception>
+    /// <exception cref="InvalidOperationException">モデルにFileInfoとKintoneFileの両方のプロパティが必要な場合にスローされます。</exception>
     /// <exception cref="FileNotFoundException">アップロード対象のファイルが存在しない場合にスローされます。</exception>
     public async Task<KintoneFile> UploadFileAsync(T model) {
         ArgumentNullException.ThrowIfNull(model);
@@ -64,7 +60,7 @@ public class KintoneModelFileService<T>(IKintoneRepository repository, ILogger<K
     /// </summary>
     /// <remarks>モデル内のFileInfoリストを使用して、複数のファイルをアップロードします。</remarks>
     /// <param name="model">アップロード対象のKintoneモデル</param>
-    /// <param name="file"></param>
+    /// <param name="file">アップロードするファイル情報</param>
     /// <returns>アップロードされたKintoneFileのリスト</returns>
     /// <exception cref="ArgumentNullException">modelがnullの場合にスローされます。</exception>
     /// <exception cref="InvalidOperationException">モデルにFileInfoとKintoneFileの両方のプロパティが必要です。</exception>
@@ -283,7 +279,7 @@ public class KintoneModelFileService<T>(IKintoneRepository repository, ILogger<K
     /// </summary>
     /// <remarks>モデル内のKintoneFileを使用して、ファイルをダウンロードし、指定されたパスに保存します。</remarks>
     /// <param name="model">ダウンロード対象のKintoneモデル</param>
-    /// <param name="file">ダウンロードするKintoneFile</param>  
+    /// <param name="file">ダウンロードするKintoneFile</param>
     /// <param name="overwrite">既存ファイルを上書きするかどうか</param>
     /// <param name="throwIfExists">既存ファイルが存在する場合に例外をスローするかどうか</param>
     /// <returns>ダウンロードされたファイルのFileInfo</returns>
@@ -325,7 +321,7 @@ public class KintoneModelFileService<T>(IKintoneRepository repository, ILogger<K
     }
 
     /// <summary>
-    /// 指定されたファイル名でファイルを保存します。    
+    /// 指定されたファイル名でファイルを保存します。
     /// </summary>
     /// <remarks>ファイル名、バイト配列、保存先ディレクトリ、上書きオプション、既存ファイルの存在時の挙動を指定してファイルを保存します。</remarks>
     /// <param name="fileName">保存するファイルの名前</param>

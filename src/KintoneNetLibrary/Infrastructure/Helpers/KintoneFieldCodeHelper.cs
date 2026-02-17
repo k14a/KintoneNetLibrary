@@ -12,8 +12,8 @@ public static class KintoneFieldCodeHelper {
     /// <summary>
     /// 指定された型からKintoneのフィールドコードを取得します。
     /// </summary>
-    /// <param name="type"></param>
-    /// <returns></returns>
+    /// <param name="type">Kintoneのフィールドコードを取得する型</param>
+    /// <returns>取得したフィールドコードの配列</returns>
     public static string[] GetKintoneFieldCodes(this Type type) {
         return type.GetProperties()
             .Select(prop => prop.GetCustomAttribute<KintoneItemAttribute>())

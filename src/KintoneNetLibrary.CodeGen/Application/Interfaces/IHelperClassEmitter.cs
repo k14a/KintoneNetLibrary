@@ -10,7 +10,7 @@ public interface IHelperClassEmitter {
     /// <summary>
     /// ヘルパークラス群を生成する
     /// </summary>
-    /// <param name="options"></param>
-    /// <returns></returns>
+    /// <param name="options">コード生成オプション</param>
+    /// <returns>生成されたヘルパークラスのコレクション</returns>
     IEnumerable<GeneratedHelperClass> EmitHelperClasses(CodeEmitterOptions options);
 }

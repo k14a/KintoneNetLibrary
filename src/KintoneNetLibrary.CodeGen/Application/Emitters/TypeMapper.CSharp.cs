@@ -13,8 +13,8 @@ public class CSharpTypeMapper : ITypeMapper {
     /// <summary>
     /// Kintone フィールドを C# 型にマップする
     /// </summary>
-    /// <param name="field"></param>
-    /// <returns></returns>
+    /// <param name="field">Kintone フィールドメタデータ</param>
+    /// <returns>対応する C# 型</returns>
     public string Map(KintoneFieldMetadata field) {
         return field.FieldType switch {
             // 文字列系
@@ -57,10 +57,10 @@ public class CSharpTypeMapper : ITypeMapper {
     /// <summary>
     /// Kintone フィールドを C# 型にマップする
     /// </summary>
-    /// <param name="field"></param>
-    /// <param name="useKintoneNetLibrary"></param>
-    /// <param name="subTableClassName"></param>
-    /// <returns></returns>
+    /// <param name="field">Kintone フィールドスキーマ</param>
+    /// <param name="useKintoneNetLibrary">KintoneNetLibrary を使用するかどうか</param>
+    /// <param name="subTableClassName">サブテーブルのクラス名</param>
+    /// <returns>対応する C# 型</returns>
     public string MapType(KintoneFieldSchema field, bool useKintoneNetLibrary, string subTableClassName = "") {
         if (field.FieldType == KintoneFieldType.SubTable) {
             return $"List<{subTableClassName}>";
@@ -72,8 +72,8 @@ public class CSharpTypeMapper : ITypeMapper {
     /// <summary>
     /// KintoneNetLibrary 型マッピング
     /// </summary>
-    /// <param name="field"></param>
-    /// <returns></returns>
+    /// <param name="field">Kintone フィールドスキーマ</param>
+    /// <returns>対応する C# 型</returns>
     private string MapLibrary(KintoneFieldSchema field) {
         return field.FieldType switch {
             KintoneFieldType.SingleLineText => "string",
@@ -116,8 +116,8 @@ public class CSharpTypeMapper : ITypeMapper {
     /// <summary>
     /// 純粋な C# 型マッピング
     /// </summary>
-    /// <param name="field"></param>
-    /// <returns></returns>
+    /// <param name="field">Kintone フィールドスキーマ</param>
+    /// <returns>対応する C# 型</returns>
     private string MapPure(KintoneFieldSchema field) {
         return field.FieldType switch {
             KintoneFieldType.SingleLineText => "string",

@@ -11,14 +11,17 @@ public sealed class RestoreOptions {
     /// Kintone サブドメイン(必須)
     /// </summary>
     public required string SubDomain { get; init; }
+
     /// <summary>
     /// アプリID(必須)
     /// </summary>
     public required int AppID { get; init; }
+
     /// <summary>
     /// APIトークン(必須)
     /// </summary>
     public required string ApiToken { get; init; }
+
     /// <summary>
     /// バックアップJSONファイルのパス(必須)
     /// </summary>
@@ -28,23 +31,28 @@ public sealed class RestoreOptions {
     /// リストアモード
     /// </summary>
     public RestoreMode Mode { get; init; } = RestoreMode.FullReplace;
+
     /// <summary>
     /// 添付ファイルをリストアするかどうか
     /// false の場合、添付ファイルフィールドは空のまま復元されます
     /// </summary>
     public bool RestoreFiles { get; init; } = true;
+
     /// <summary>
     /// スキーマ差異があっても強制復元するかどうか
     /// </summary>
     public bool Force { get; init; } = false;
+
     /// <summary>
     /// ドライランモードかどうか
     /// </summary>
     public bool DryRun { get; init; } = false;
+
     /// <summary>
     /// バリデーションのみ実行するかどうか
     /// </summary>
     public bool ValidateOnly { get; init; } = false;
+
     /// <summary>
     /// バッチサイズ
     /// </summary>

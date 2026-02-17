@@ -6,7 +6,6 @@ using KintoneNetLibrary.Domain.Enums;
 
 namespace KintoneNetLibrary.Infrastructure.Converters;
 
-// コメントは日本語で記述
 /// <summary>
 /// Kintoneのフィールド値をC#の型に変換するためのユーティリティクラス
 /// </summary>
@@ -14,11 +13,11 @@ public static class KintoneValueConverter {
     /// <summary>
     /// Kintoneのフィールド値をC#の型に変換します。
     /// </summary>
-    /// <param name="valueElement"></param>
-    /// <param name="fieldType"></param>
-    /// <param name="targetType"></param>
-    /// <returns></returns>
-    /// <exception cref="NotSupportedException"></exception>
+    /// <param name="valueElement">Kintoneのフィールド値を表すJsonElement</param>
+    /// <param name="fieldType">Kintoneのフィールドタイプ</param>
+    /// <param name="targetType">変換先のC#の型</param>
+    /// <returns>変換されたC#のオブジェクト</returns>
+    /// <exception cref="NotSupportedException">サポートされていない変換が要求された場合にスローされます</exception>
     public static object? ConvertToCSharp(JsonElement valueElement, KintoneFieldType fieldType, Type targetType) {
         if (valueElement.ValueKind == JsonValueKind.Null) {
             return null;
@@ -109,9 +108,9 @@ public static class KintoneValueConverter {
     /// <summary>
     /// Nullableな整数をパースします。
     /// </summary>
-    /// <param name="valueElement"></param>
-    /// <returns></returns>
-    /// <exception cref="JsonException"></exception>
+    /// <param name="valueElement">Kintoneのフィールド値を表すJsonElement</param>
+    /// <returns>パースされたNullableな整数</returns>
+    /// <exception cref="JsonException">予期しないValueKindの場合にスローされます</exception>
     private static int? ParseNullableInt(JsonElement valueElement) {
         return valueElement.ValueKind switch {
             JsonValueKind.Number => valueElement.GetInt32(),
@@ -122,9 +121,9 @@ public static class KintoneValueConverter {
     /// <summary>
     /// 文字列からNullableな整数をパースします。
     /// </summary>
-    /// <param name="str"></param>
-    /// <returns></returns>
-    /// <exception cref="JsonException"></exception>
+    /// <param name="str">パースする文字列</param>
+    /// <returns>パースされたNullableな整数</returns>
+    /// <exception cref="JsonException">文字列が整数に変換できない場合にスローされます</exception>
     private static int? ParseIntFromString(string? str) {
         if (string.IsNullOrWhiteSpace(str)) { return null; }
         if (int.TryParse(str, out var result)) { return result; }

@@ -6,7 +6,13 @@ using Xunit;
 
 namespace KintoneNetLibrary.Tests.Helpers.Queries;
 
+/// <summary>
+/// KintoneQueryのEqualとNotEqualメソッドのテストクラスです。
+/// </summary>
 public class KintoneQueryEqualTests {
+    /// <summary>
+    /// Equalメソッドが整数値に対して正しいクエリを生成することをテストします。
+    /// </summary>
     [Fact]
     public void EqualIntValueGeneratesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
@@ -15,6 +21,10 @@ public class KintoneQueryEqualTests {
 
         Assert.Equal("Price = 100", query);
     }
+
+    /// <summary>
+    /// Equalメソッドが文字列値に対して正しいクエリを生成することをテストします。
+    /// </summary>
     [Fact]
     public void EqualStringValueGeneratesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
@@ -23,6 +33,10 @@ public class KintoneQueryEqualTests {
 
         Assert.Equal("Title = \"C# Guide\"", query);
     }
+
+    /// <summary>
+    /// EqualメソッドがDateTime値に対して正しいクエリを生成することをテストします。
+    /// </summary>
     [Fact]
     public void NotEqualDateTimeValueGeneratesCorrectQuery() {
         var date = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -33,6 +47,10 @@ public class KintoneQueryEqualTests {
         var expected = $"ReleaseDate != \"{date:yyyy-MM-ddTHH:mm:ssZ}\"";
         Assert.Equal(expected, query);
     }
+
+    /// <summary>
+    /// NotEqualメソッドがBoolean値に対して正しいクエリを生成することをテストします。
+    /// </summary>
     [Fact]
     public void NotEqualBooleanValueGeneratesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()

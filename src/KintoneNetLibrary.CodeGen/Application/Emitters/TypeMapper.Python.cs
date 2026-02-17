@@ -14,8 +14,12 @@ public class PythonTypeMapper : ITypeMapper {
     }
 
     /// <summary>
-    /// Kintone フィールドスキーマを Python 型にマップする
+    /// Kintone フィールドを Python 型にマップする
     /// </summary>
+    /// <param name="field">Kintone フィールドスキーマ</param>
+    /// <param name="useTypeHint">型ヒントを使用するかどうか</param>
+    /// <param name="subTableClassName">サブテーブルのクラス名</param>
+    /// <returns>対応する Python 型</returns>
     public string MapType(KintoneFieldSchema field, bool useTypeHint, string subTableClassName = "") {
         // 型ヒントを使わない場合は全部 str にする
         if (!useTypeHint) { return "str"; }

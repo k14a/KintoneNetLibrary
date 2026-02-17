@@ -6,12 +6,20 @@ using Xunit;
 
 namespace KintoneNetLibrary.CodeGen.Tests.TypeMapper.CSharp;
 
+/// <summary>
+/// CSharpTypeMapper の単体テスト。
+/// </summary>
 public class CSharpTypeMapperTests {
     private readonly CSharpTypeMapper _mapper = new();
 
     // -----------------------------
     // 1. Map(KintoneFieldMetadata)
     // -----------------------------
+    /// <summary>
+    /// Map メソッドが、KintoneFieldMetadata の FieldType に基づいて期待される C# 型名を返すことを検証するテスト。
+    /// </summary>
+    /// <param name="type">Kintone フィールドの種類</param>
+    /// <param name="expected">期待される C# 型名</param>
     [Theory]
     [InlineData(KintoneFieldType.SingleLineText, "string")]
     [InlineData(KintoneFieldType.MultiLineText, "string")]
@@ -34,6 +42,9 @@ public class CSharpTypeMapperTests {
         Assert.Equal(expected, result);
     }
 
+    /// <summary>
+    /// Map メソッドが、SubTable フィールドに対して "List<フィールドコード>" 形式の型名を返すことを検証するテスト。
+    /// </summary>
     [Fact]
     public void Map_Metadata_SubTable_ReturnsListOfFieldCode() {
         var field = new KintoneFieldMetadata { FieldType = KintoneFieldType.SubTable, FieldCode = "order_items" };
@@ -44,6 +55,9 @@ public class CSharpTypeMapperTests {
     // -----------------------------
     // 2. MapType (SubTable)
     // -----------------------------
+    /// <summary>
+    /// MapType メソッドが、SubTable フィールドに対して、提供されたクラス名を使用して "List<クラス名>" 形式の型名を返すことを検証するテスト。
+    /// </summary>
     [Fact]
     public void MapType_SubTable_UsesProvidedClassName() {
         var field = new KintoneFieldSchema { FieldType = KintoneFieldType.SubTable };
@@ -54,6 +68,11 @@ public class CSharpTypeMapperTests {
     // -----------------------------
     // 3. MapType (Library mode)
     // -----------------------------
+    /// <summary>
+    /// MapType メソッドが、KintoneFieldSchema の FieldType に基づいて、KintoneNetLibrary を使用する場合の期待される C# 型名を返すことを検証するテスト。
+    /// </summary>
+    /// <param name="type">Kintone フィールドの種類</param>
+    /// <param name="expected">期待される C# 型名</param>
     [Theory]
     [InlineData(KintoneFieldType.SingleLineText, "string")]
     [InlineData(KintoneFieldType.MultiLineText, "string")]
@@ -76,6 +95,9 @@ public class CSharpTypeMapperTests {
         Assert.Equal(expected, result);
     }
 
+    /// <summary>
+    /// MapType メソッドが、Number フィールドに対して、DecimalPlaces の値に基づいて "decimal?" または "int?" を返すことを検証するテスト。
+    /// </summary>
     [Fact]
     public void MapType_LibraryMode_Number_UsesDecimalOrInt() {
         var decimalField = new KintoneFieldSchema { FieldType = KintoneFieldType.Number, DecimalPlaces = 2 };
@@ -88,6 +110,11 @@ public class CSharpTypeMapperTests {
     // -----------------------------
     // 4. MapType (Pure mode)
     // -----------------------------
+    /// <summary>
+    /// MapType メソッドが、KintoneFieldSchema の FieldType に基づいて、KintoneNetLibrary を使用しない場合の期待される C# 型名を返すことを検証するテスト。
+    /// </summary>
+    /// <param name="type">Kintone フィールドの種類</param>
+    /// <param name="expected"></param>
     [Theory]
     [InlineData(KintoneFieldType.Date, "DateOnly?")]
     [InlineData(KintoneFieldType.DateTime, "DateTime?")]
@@ -102,6 +129,9 @@ public class CSharpTypeMapperTests {
         Assert.Equal(expected, result);
     }
 
+    /// <summary>
+    /// MapType メソッドが、Number フィールドに対して、DecimalPlaces の値に基づいて "decimal?" または "int?" を返すことを検証するテスト。
+    /// </summary>
     [Fact]
     public void MapType_PureMode_Number_UsesDecimalOrInt() {
         var decimalField = new KintoneFieldSchema { FieldType = KintoneFieldType.Number, DecimalPlaces = 3 };

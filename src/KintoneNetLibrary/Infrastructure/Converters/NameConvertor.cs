@@ -23,8 +23,7 @@ public class NameConvertor {
     /// <summary>
     /// 変換方向
     /// </summary>
-    public enum Direction
-    {
+    public enum Direction {
         /// <summary>
         /// 両方
         /// </summary>
@@ -47,9 +46,9 @@ public class NameConvertor {
     /// <summary>
     /// コンストラクタ
     /// </summary>
-    /// <param name="itemName"></param>
-    /// <param name="propertyName"></param>
-    /// <param name="direction"></param>
+    /// <param name="itemName">Kintone上の項目名</param>
+    /// <param name="propertyName">対応するC#のプロパティ名</param>
+    /// <param name="direction">変換方向（読み取り / 書き出し / 両方）</param>
     public NameConvertor(string itemName, string propertyName, Direction direction = Direction.Both) {
         this.ItemName = itemName;
         this.PropertyName = propertyName;
@@ -59,10 +58,10 @@ public class NameConvertor {
     /// <summary>
     /// ファクトリーメソッド
     /// </summary>
-    /// <param name="itemName"></param>
-    /// <param name="propertyName"></param>
-    /// <param name="direction"></param>
-    /// <returns></returns>
+    /// <param name="itemName">Kintone上の項目名</param>
+    /// <param name="propertyName">対応するC#のプロパティ名</param>
+    /// <param name="direction">変換方向（読み取り / 書き出し / 両方）</param>
+    /// <returns>新しいNameConvertorインスタンス</returns>
     public static NameConvertor Create(string itemName, string propertyName, Direction direction = Direction.Both) {
         return new NameConvertor(itemName, propertyName, direction);
     }

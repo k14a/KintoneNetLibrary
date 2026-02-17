@@ -22,10 +22,10 @@ public class SchemaProvider(IKintoneAppMetadataApi metadataApi, ILogger<SchemaPr
     /// <summary>
     /// Kintoneアプリのスキーマ情報を取得します。
     /// </summary>
-    /// <param name="domain"></param>
-    /// <param name="apiToken"></param>
-    /// <param name="appId"></param>
-    /// <returns></returns>
+    /// <param name="domain">Kintoneのサブドメイン</param>
+    /// <param name="apiToken">APIトークン</param>
+    /// <param name="appId">アプリケーションのID</param>
+    /// <returns>取得したスキーマ情報</returns>
     public async Task<KintoneAppSchema> GetSchemaAsync(string domain, string apiToken, int appId) {
         this._logger.LogInformation("Fetching metadata for AppId: {appId}", appId);
 
@@ -41,11 +41,11 @@ public class SchemaProvider(IKintoneAppMetadataApi metadataApi, ILogger<SchemaPr
     /// <summary>
     /// Kintoneアプリのメタデータを取得します。
     /// </summary>
-    /// <param name="domain"></param>
-    /// <param name="apiToken"></param>
-    /// <param name="appId"></param>
-    /// <returns></returns>
-    /// <exception cref="ArgumentNullException"></exception>
+    /// <param name="domain">Kintoneのサブドメイン</param>
+    /// <param name="apiToken">APIトークン</param>
+    /// <param name="appId">アプリケーションのID</param>
+    /// <returns>取得したメタデータ情報</returns>
+    /// <exception cref="ArgumentNullException">domainが設定されていない場合にスローされます</exception>
     public async Task<KintoneAppMetadata> GetMetadataAsync(string domain, string apiToken, int appId) {
         if (this._domain is null) {
             var message = "domainが設定されていません。";
@@ -58,14 +58,14 @@ public class SchemaProvider(IKintoneAppMetadataApi metadataApi, ILogger<SchemaPr
     /// <summary>
     /// Kintoneのサブドメインを設定します。
     /// </summary>
-    /// <param name="subDomain"></param>
+    /// <param name="subDomain">Kintoneのサブドメイン</param>
     public void SetDomain(string subDomain) => this._domain = $"{subDomain}.cybozu.com";
 
     /// <summary>
     /// Kintoneアプリのメタデータをスキーマに変換します。
     /// </summary>
-    /// <param name="metadata"></param>
-    /// <returns></returns>
+    /// <param name="metadata">Kintoneアプリのメタデータ</param>
+    /// <returns>変換後のスキーマ情報</returns>
     private KintoneAppSchema ConvertMetadataToSchema(KintoneAppMetadata metadata) {
         return new KintoneAppSchema {
             AppId = metadata.AppId,
@@ -96,11 +96,11 @@ public class SchemaProvider(IKintoneAppMetadataApi metadataApi, ILogger<SchemaPr
     /// <summary>
     /// 指定されたバックアップスキーマと現在のスキーマを比較し、差分を取得します。
     /// </summary>
-    /// <param name="backupSchema"></param>
-    /// <param name="subDomain"></param>
-    /// <param name="appId"></param>
-    /// <param name="apiToken"></param>
-    /// <returns></returns>
+    /// <param name="backupSchema">バックアップスキーマ</param>
+    /// <param name="domain">Kintoneのサブドメイン</param>
+    /// <param name="appId">アプリケーションのID</param>
+    /// <param name="apiToken">APIトークン</param>
+    /// <returns>差分情報のリスト</returns>
     public async Task<IReadOnlyList<KintoneMetadataDiff>> CompareAsync(KintoneAppMetadata backupSchema, string domain, string apiToken, int appId) {
         ArgumentNullException.ThrowIfNull(backupSchema);
 

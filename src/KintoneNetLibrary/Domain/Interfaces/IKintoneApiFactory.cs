@@ -3,14 +3,15 @@ using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.Domain.Interfaces;
 
-// コメントは日本語で記述
 /// <summary>
 /// Kintone API ファクトリ インターフェイス
 /// </summary>
 public interface IKintoneApiFactory {
     /// <summary>
-    /// KintoneModelBase のプロパティから API インスタンスを生成します。
+    /// 指定されたモデルに基づいて Kintone API インスタンスを作成します。
     /// </summary>
-    // KintoneApi Create(KintoneModelBase model);
+    /// <typeparam name="T">Kintoneモデルの型</typeparam>
+    /// <param name="model">Kintoneモデルのインスタンス</param>
+    /// <returns>Kintone API インスタンス</returns>
     KintoneApi Create<T>(T model) where T : KintoneModelBase<T>, new();
 }

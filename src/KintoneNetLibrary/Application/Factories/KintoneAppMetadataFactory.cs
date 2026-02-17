@@ -11,10 +11,10 @@ public static class KintoneAppMetadataFactory {
     /// <summary>
     /// Kintoneアプリのメタデータを生成する
     /// </summary>
-    /// <param name="fieldsJson"></param>
-    /// <param name="layoutJson"></param>
-    /// <param name="appId"></param>
-    /// <returns></returns>
+    /// <param name="fieldsJson">フィールド情報のJSON文字列</param>
+    /// <param name="layoutJson">レイアウト情報のJSON文字列</param>
+    /// <param name="appId">アプリID</param>
+    /// <returns>生成されたKintoneアプリのメタデータ</returns>
     public static KintoneAppMetadata Create(string fieldsJson, string layoutJson, int appId) {
         var fields = ParseFields(fieldsJson);
 
@@ -25,8 +25,8 @@ public static class KintoneAppMetadataFactory {
     /// <summary>
     /// フィールド情報をパースする
     /// </summary>
-    /// <param name="fieldsJson"></param>
-    /// <returns></returns>
+    /// <param name="fieldsJson">フィールド情報のJSON文字列</param>
+    /// <returns>パースされたフィールド情報のリスト</returns>
     private static List<KintoneFieldMetadata> ParseFields(string fieldsJson) {
         using var doc = JsonDocument.Parse(fieldsJson);
         var root = doc.RootElement;
@@ -44,8 +44,8 @@ public static class KintoneAppMetadataFactory {
     /// <summary>
     /// フィールド情報をパースする
     /// </summary>
-    /// <param name="element"></param>
-    /// <returns></returns>
+    /// <param name="element">フィールドのJSON要素</param>
+    /// <returns>パースされたフィールド情報</returns>
     private static KintoneFieldMetadata ParseField(JsonElement element) {
         var type = element.GetProperty("type").GetString()!;
         var code = element.GetProperty("code").GetString()!;
@@ -88,8 +88,8 @@ public static class KintoneAppMetadataFactory {
     /// <summary>
     /// フィールドタイプをパースする
     /// </summary>
-    /// <param name="type"></param>
-    /// <returns></returns>
+    /// <param name="type">フィールドタイプの文字列</param>
+    /// <returns>パースされたフィールドタイプ</returns>
     private static KintoneFieldType ParseFieldType(string type) {
         return type switch {
             "SINGLE_LINE_TEXT" => KintoneFieldType.SingleLineText,

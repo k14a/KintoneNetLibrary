@@ -3,7 +3,7 @@ using KintoneNetLibrary.Infrastructure.Converters;
 namespace KintoneNetLibrary.Domain.Entities;
 
 /// <summary>
-/// Kintoneモデル基底クラス（変換機能付き）
+/// KintoneModelBase クラスの変換に関する部分
 /// </summary>
 /// <typeparam name="TSelf"></typeparam>
 public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase where TSelf : KintoneModelBase<TSelf>, new() {

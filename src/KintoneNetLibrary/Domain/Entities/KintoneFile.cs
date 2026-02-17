@@ -6,7 +6,7 @@
 /// </summary>
 public class KintoneFile {
     /// <summary>
-    /// ファイルのコンテンツタイプ  
+    /// ファイルのコンテンツタイプ
     /// このプロパティは、KintoneのファイルのMIMEタイプを表します。
     /// 例: "image/png", "application/pdf" など
     /// </summary>

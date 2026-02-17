@@ -80,7 +80,7 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// <summary>
     /// Kintoneのレコード更新用形式に変換する
     /// </summary>
-    /// <returns></returns>
+    /// <returns>更新用レコードの辞書形式</returns>
     public virtual IDictionary<string, object> ToKintoneUpdateRecord() {
         var record = this.ToKintoneRecord();
 
@@ -105,8 +105,8 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// <summary>
     /// 更新キー用フィールドを取得する
     /// </summary>
-    /// <param name="keyValue"></param>
-    /// <returns></returns>
+    /// <param name="keyValue">更新キーの値</param>
+    /// <returns>更新キーのフィールドコードと値のタプル</returns>
     private (string? fieldCode, object? value) GetUpdateKeyField(out object? keyValue) {
         var keyProp = this.GetType().GetProperties().FirstOrDefault(p => p.GetCustomAttribute<KintoneItemAttribute>()?.IsKey == true);
 

@@ -1,16 +1,9 @@
 namespace KintoneNetLibrary.Domain.Common;
 
 /// <summary>
-/// KintoneConstantsクラスは、Kintoneに関連する定数を定義します。
-/// このクラスは、Kintone APIの制限や設定に関する定数を提供します。
-/// これにより、Kintone APIの使用時に一貫性を保ち、コードの可読性を向上させます。
+/// KintoneConstantsクラスは、KintoneNetLibraryで使用される定数を定義するクラスです。
+/// このクラスには、Kintone APIの制限やフィールドコードの最大文字数など、Kintoneに関連する定数が含まれています。
 /// </summary>
-/// <remarks>
-/// このクラスは、Kintone APIの制限や設定に関する定数を一元管理するために使用されます。
-/// これにより、Kintone APIの使用時に一貫性を保ち、コードの可読性を向上させます。
-/// 例えば、Kintone APIが一度に処理可能な最大レコード数や、カーソルAPIで一度に取得可能な最大件数などの定数が含まれています。
-/// また、Kintoneのフィールドコードの最大文字数や、アップロード可能ファイルサイズ、最大アップロードファイル数などの制限も定義されています。
-/// </remarks>
 public static class KintoneConstants {
     /// <summary>
     /// Kintone APIが一度に処理可能な最大レコード数（例：100件）

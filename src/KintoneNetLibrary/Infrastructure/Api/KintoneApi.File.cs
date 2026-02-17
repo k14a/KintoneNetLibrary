@@ -10,34 +10,36 @@ using Microsoft.Extensions.Logging;
 
 namespace KintoneNetLibrary.Infrastructure.Api;
 
-// コメントは日本語で記述
 /// <summary>
 /// Kintone API のファイル操作に関する機能を提供します。
 /// </summary>
-public partial class KintoneApi : IKintoneApi, IDisposable {
+public partial class KintoneApi : IKintoneApi {
     #region <<File upload>>
     /// <summary>
     /// 任意のストリームを kintone にアップロードし、fileKey を返します。
     /// </summary>
+    /// <param name="stream">アップロードするストリーム</param>
+    /// <param name="fileName">アップロードするファイル名</param>
+    /// <returns>アップロードされたファイルの fileKey</returns>
     public async Task<string> UploadFileAsync(Stream stream, string fileName) {
         return await this.UploadFileInternalAsync(stream, fileName, CancellationToken.None);
     }
     /// <summary>
     /// 任意のストリームを kintone にアップロードし、fileKey を返します。
     /// </summary>
-    /// <param name="stream"></param>
-    /// <param name="fileName"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
+    /// <param name="stream">アップロードするストリーム</param>
+    /// <param name="fileName">アップロードするファイル名</param>
+    /// <param name="cancellationToken">キャンセルトークン</param>
+    /// <returns>アップロードされたファイルの fileKey</returns>
     public async Task<string> UploadFileAsync(Stream stream, string fileName, CancellationToken cancellationToken) {
         return await this.UploadFileInternalAsync(stream, fileName, cancellationToken);
     }
     /// <summary>
     /// 指定されたファイルを kintone にアップロードし、fileKey を返します。
     /// </summary>
-    /// <param name="file"></param>
-    /// <returns></returns>
-    /// <exception cref="FileNotFoundException"></exception>
+    /// <param name="file">アップロードするファイル</param>
+    /// <returns>アップロードされたファイルの fileKey</returns>
+    /// <exception cref="FileNotFoundException">指定されたファイルが存在しない場合にスローされます</exception>
     public async Task<string> UploadFileAsync(FileInfo file) {
         if (!file.Exists) {
             throw new FileNotFoundException("指定されたファイルが存在しません。", file.FullName);
@@ -49,12 +51,12 @@ public partial class KintoneApi : IKintoneApi, IDisposable {
     /// <summary>
     /// 指定されたファイルを kintone にアップロードし、fileKey を返します。
     /// </summary>
-    /// <param name="stream"></param>
-    /// <param name="fileName"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    /// <exception cref="InvalidOperationException"></exception>
-    /// <exception cref="KintoneException"></exception>
+    /// <param name="stream">アップロードするストリーム</param>
+    /// <param name="fileName">アップロードするファイル名</param>
+    /// <param name="cancellationToken">キャンセルトークン</param>
+    /// <returns>アップロードされたファイルの fileKey</returns>
+    /// <exception cref="InvalidOperationException">ストリームがシーク不可能な場合や空のファイルの場合にスローされます</exception>
+    /// <exception cref="KintoneException">Kintone API からのエラーが発生した場合にスローされます</exception>
     private async Task<string> UploadFileInternalAsync(Stream stream, string fileName, CancellationToken cancellationToken) {
         ArgumentNullException.ThrowIfNull(stream);
         fileName ??= "";
@@ -137,10 +139,10 @@ public partial class KintoneApi : IKintoneApi, IDisposable {
     /// <summary>
     /// fileKey からファイルをダウンロードし、バイト配列として返します。
     /// </summary>
-    /// <param name="fileKey"></param>
-    /// <returns></returns>
-    /// <exception cref="ArgumentException"></exception>
-    /// <exception cref="KintoneException"></exception>
+    /// <param name="fileKey">ダウンロードするファイルの fileKey</param>
+    /// <returns>ダウンロードしたファイルのバイト配列</returns>
+    /// <exception cref="ArgumentException">fileKey が空の場合にスローされます</exception>
+    /// <exception cref="KintoneException">Kintone API からのエラーが発生した場合にスローされます</exception>
     public async Task<byte[]> DownloadFileAsync(string fileKey) {
         ArgumentNullException.ThrowIfNull(fileKey);
         if (fileKey == string.Empty) {
@@ -189,6 +191,10 @@ public partial class KintoneApi : IKintoneApi, IDisposable {
     /// <summary>
     /// fileKey からファイルをダウンロードし、ストリームとして返します。
     /// </summary>
+    /// <param name="fileKey">ダウンロードするファイルの fileKey</param>
+    /// <returns>ダウンロードしたファイルのストリーム</returns>
+    /// <exception cref="ArgumentException">fileKey が空の場合にスローされます</exception>
+    /// <exception cref="KintoneException">Kintone API からのエラーが発生した場合にスローされます</exception>
     public async Task<Stream> DownloadFileStreamAsync(string fileKey) {
         ArgumentNullException.ThrowIfNull(fileKey);
         if (fileKey == string.Empty) {
@@ -228,9 +234,10 @@ public partial class KintoneApi : IKintoneApi, IDisposable {
     /// <summary>
     /// fileKey からファイルをダウンロードし、指定されたファイルに保存します。
     /// </summary>
-    /// <param name="fileKey"></param>
-    /// <param name="destination"></param>
-    /// <returns></returns>
+    /// <param name="fileKey">ダウンロードするファイルの fileKey</param>
+    /// <param name="destination">保存先のファイル情報</param>
+    /// <exception cref="ArgumentException">fileKey が空の場合にスローされます</exception>
+    /// <exception cref="KintoneException">Kintone API からのエラーが発生した場合にスローされます</exception>
     public async Task DownloadFileAsync(string fileKey, FileInfo destination) {
         var bytes = await this.DownloadFileAsync(fileKey);
         using var fs = destination.OpenWrite();

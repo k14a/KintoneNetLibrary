@@ -10,11 +10,11 @@ using KintoneNetLibrary.Infrastructure.Converters;
 using KintoneNetLibrary.Application.Interfaces;
 
 namespace KintoneNetLibrary.Infrastructure.Api;
-// コメントは日本語で記述
+
 /// <summary>
 /// Kintone API 基底クラス
 /// </summary>
-public partial class KintoneApi : IKintoneApi, IDisposable {
+public partial class KintoneApi : IKintoneApi {
     #region <<Private values>>
     private readonly KintoneAccessBase _access;
     private readonly int _appID;
@@ -70,12 +70,12 @@ public partial class KintoneApi : IKintoneApi, IDisposable {
     /// <summary>
     /// コンストラクタ
     /// </summary>
-    /// <param name="access">KintoneAccessBase</param>
-    /// <param name="appID">Kintone Application ID</param>
-    /// <param name="httpClient"></param>
-    /// <param name="logger"></param>
-    /// <param name="jsonOptions"></param>
-    /// <exception cref="ArgumentNullException"></exception>
+    /// <param name="access">Kintoneへのアクセス情報を保持するオブジェクト</param>
+    /// <param name="appID">KintoneアプリケーションID</param>
+    /// <param name="httpClient">HTTPクライアント</param>
+    /// <param name="logger">ロガー</param>
+    /// <param name="jsonOptions">JSONシリアライズオプション</param>
+    /// <exception cref="ArgumentNullException">accessがnullの場合にスローされます</exception>
     public KintoneApi(
         KintoneAccessBase access,
         int appID,
@@ -99,6 +99,9 @@ public partial class KintoneApi : IKintoneApi, IDisposable {
     }
     #endregion
 
+    /// <summary>
+    /// HTTPクライアントのデフォルトヘッダを設定します
+    /// </summary>
     private void EnsureDefaultHeaders() {
         if (!this._httpClient.DefaultRequestHeaders.Accept.Any(x => x.MediaType == "application/json")) {
             this._httpClient.DefaultRequestHeaders.Accept.Add(
@@ -109,6 +112,14 @@ public partial class KintoneApi : IKintoneApi, IDisposable {
             this._httpClient.DefaultRequestHeaders.Add("X-Cybozu-API-Token", this._access.ApiToken);
         }
     }
+
+    /// <summary>
+    /// APIリクエスト用のURIを構築します
+    /// </summary>
+    /// <param name="path">APIのパス</param>
+    /// <param name="query">クエリ文字列</param>
+    /// <returns>構築されたURI</returns>
+    /// <exception cref="InvalidOperationException">ドメインが設定されていない場合にスローされます</exception>
     private Uri BuildRequestUri(string path, string? query = null) {
         if (string.IsNullOrWhiteSpace(this._access.Domain)) { throw new InvalidOperationException("Domain is not set."); }
 
@@ -119,9 +130,21 @@ public partial class KintoneApi : IKintoneApi, IDisposable {
 
         return builder.Uri;
     }
+
+    /// <summary>
+    /// APIリクエストに認証情報を適用します
+    /// </summary>
+    /// <param name="request">HTTPリクエストメッセージ</param>
     private void ApplyAuth(HttpRequestMessage request) {
         request.Headers.Add("X-Cybozu-API-Token", this._access.ApiToken);
     }
+
+    /// <summary>
+    /// GETリクエストを送信し、レスポンスのJSONを返します
+    /// </summary>
+    /// <param name="uri">リクエスト先のURI</param>
+    /// <returns>レスポンスのJSON文字列</returns>
+    /// <exception cref="KintoneException">APIリクエストが失敗した場合にスローされます</exception>
     private async Task<string> SendGetAsync(Uri uri) {
         using var request = new HttpRequestMessage(HttpMethod.Get, uri);
         this.ApplyAuth(request);
@@ -155,18 +178,18 @@ public partial class KintoneApi : IKintoneApi, IDisposable {
     /// <summary>
     /// BaseUri作成
     /// </summary>
-    /// <returns>BaseUri</returns>
-    /// <exception cref="InvalidOperationException">domain is not set.</exception>
+    /// <returns>構築されたBaseUri</returns>
+    /// <exception cref="InvalidOperationException">ドメインが設定されていない場合にスローされます</exception>
     protected Uri GetBaseUri() {
         if (string.IsNullOrWhiteSpace(this._access.Domain)) { throw new InvalidOperationException("Domain is not set."); }
         return new Uri($"https://{this._access.Domain.TrimEnd('/')}/k/v1/");
     }
     /// <summary>
-    /// AppID取得
+    /// AppIDを取得します
     /// </summary>
-    /// <typeparam name="T"></typeparam>
+    /// <typeparam name="T">Kintoneのレコードデータの型</typeparam>
     /// <returns>AppID</returns>
-    /// <exception cref="InvalidOperationException"></exception>
+    /// <exception cref="InvalidOperationException">KintoneItemAttributeが定義されていない場合にスローされます</exception>
     protected int GetAppID<T>() where T : KintoneModelBase<T>, new() {
         var attr = typeof(T).GetCustomAttribute<KintoneItemAttribute>() ?? throw new InvalidOperationException($"KintoneItemAttribute is not defined on type {typeof(T).FullName}.");
         return this._appID;
@@ -174,17 +197,9 @@ public partial class KintoneApi : IKintoneApi, IDisposable {
     /// <summary>
     /// リクエストヘッダ作成
     /// </summary>
-    /// <param name="request"></param>
+    /// <param name="request">HTTPリクエストメッセージ</param>
     protected void SetHeaders(HttpRequestMessage request) {
         this._access.ApplyAuthentication(request);
-    }
-
-    /// <summary>
-    /// リソースを解放します
-    /// </summary>
-    public void Dispose() {
-        this._httpClient?.Dispose();
-        GC.SuppressFinalize(this);
     }
     #endregion
 }

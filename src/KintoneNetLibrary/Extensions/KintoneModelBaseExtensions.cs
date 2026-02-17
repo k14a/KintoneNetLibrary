@@ -14,11 +14,11 @@ public static class KintoneModelBaseExtensions {
     /// <summary>
     /// KintoneModelBaseオブジェクトをKintoneのJSON形式にシリアライズします
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="model"></param>
-    /// <param name="escapeUnicode"></param>
-    /// <param name="indented"></param>
-    /// <returns></returns>
+    /// <typeparam name="T">KintoneModelBaseを継承したモデルの型</typeparam>
+    /// <param name="model">シリアライズ対象のモデル</param>
+    /// <param name="escapeUnicode">Unicode文字をエスケープするかどうか</param>
+    /// <param name="indented">JSONをインデントして出力するかどうか</param>
+    /// <returns>シリアライズされたJSON文字列</returns>
     public static string ToKintoneJson<T>(this T model, bool escapeUnicode = true, bool indented = false) where T : KintoneModelBase<T>, new() {
         var props = typeof(T)
             .GetProperties()
@@ -44,11 +44,11 @@ public static class KintoneModelBaseExtensions {
     /// <summary>
     /// KintoneModelBaseオブジェクトのコレクションをKintoneのJSON配列形式にシリアライズします
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="models"></param>
-    /// <param name="escapeUnicode"></param>
-    /// <param name="indented"></param>
-    /// <returns></returns>
+    /// <typeparam name="T">KintoneModelBaseを継承したモデルの型</typeparam>
+    /// <param name="models">シリアライズ対象のモデルのコレクション</param>
+    /// <param name="escapeUnicode">Unicode文字をエスケープするかどうか</param>
+    /// <param name="indented">JSONをインデントして出力するかどうか</param>
+    /// <returns>シリアライズされたJSON配列文字列</returns>
     public static string ToKintoneJsonArray<T>(this IEnumerable<T> models, bool escapeUnicode = true, bool indented = false) where T : KintoneModelBase<T>, new() {
         var list = models.Select(m => JsonSerializer.Deserialize<Dictionary<string, object?>>(
             m.ToKintoneJson(),

@@ -22,8 +22,8 @@ public static class MimeTypeWrapper {
     /// <summary>
     /// 指定されたContent-Typeが許容されるかどうかを判定します
     /// </summary>
-    /// <param name="contentType"></param>
-    /// <returns></returns>
+    /// <param name="contentType">判定対象のContent-Type</param>
+    /// <returns>許容されるContent-Typeであればtrue、それ以外はfalse</returns>
     public static bool IsAcceptableContentType(string? contentType) {
         return contentType != null && AcceptableContentTypes.Contains(contentType);
     }

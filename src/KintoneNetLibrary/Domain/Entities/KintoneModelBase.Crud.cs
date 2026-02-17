@@ -48,7 +48,7 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     }
 
     /// <summary>
-    /// レコードを削除します。  
+    /// レコードを削除します。
     /// </summary>
     /// <remarks>
     /// このメソッドは、現在のモデルインスタンスをKintoneから削除します。
@@ -140,7 +140,7 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     }
 
     /// <summary>
-    /// レコードを単一更新します。  
+    /// レコードを単一更新します。
     /// </summary>
     /// <remarks>
     /// このメソッドは、複数のモデルインスタンスをKintoneに単一で更新します。
@@ -255,7 +255,7 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// <summary>
     /// レコードを単一保存します。
     /// </summary>
-    /// <remarks>   
+    /// <remarks>
     /// このメソッドは、複数のモデルインスタンスをKintoneに単一で保存します。
     /// </remarks>
     /// <param name="models">保存するモデルのリスト</param>
@@ -385,7 +385,7 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// <summary>
     /// レコードをキーのリストで検索します。
     /// </summary>
-    /// <remarks>   
+    /// <remarks>
     /// このメソッドは、指定されたキーのリストを持つレコードをKintoneから検索します。
     /// </remarks>
     /// <param name="models">検索するモデルのリスト</param>
@@ -449,7 +449,7 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// <remarks>
     /// このメソッドは、指定されたクエリを使用してKintoneからレコードを検索します。
     /// </remarks>
-    /// <param name="query">検索クエリ</param>  
+    /// <param name="query">検索クエリ</param>
     /// <returns>検索結果のレコードのリスト</returns>
     /// <exception cref="KintoneException">Kintone APIのエラーが発生した場合にスローされます。</exception>
     /// <exception cref="ArgumentException">クエリが無効な場合にスローされます。</exception>

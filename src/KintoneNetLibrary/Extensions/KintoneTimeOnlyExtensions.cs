@@ -2,7 +2,6 @@ using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.Extensions;
 
-// コメントは日本語で記述
 /// <summary>
 /// KintoneTimeOnly 拡張メソッド群
 /// </summary>

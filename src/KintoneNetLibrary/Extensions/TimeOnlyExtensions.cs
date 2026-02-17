@@ -1,7 +1,6 @@
 namespace KintoneNetLibrary.Extensions;
 
-// コメントは日本語で記述
-/// <summary>
+// コメントは日本語で記述/// <summary>
 /// TimeOnly型の拡張メソッドを提供します。
 /// </summary>
 public static class TimeOnlyExtensions {

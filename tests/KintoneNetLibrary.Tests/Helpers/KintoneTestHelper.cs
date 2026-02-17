@@ -17,11 +17,11 @@ using Microsoft.Extensions.Options;
 namespace KintoneNetLibrary.Tests.Helpers;
 
 /// <summary>
-/// Kintoneテスト用ヘルパークラス
+/// KintoneRequestBuilder クラスのユニットテスト。
 /// </summary>
 public static class KintoneTestHelper {
     /// <summary>
-    /// KintoneApiインスタンスを作成します
+    /// テスト用の KintoneApi インスタンスを作成します。
     /// </summary>
     /// <returns></returns>
     public static KintoneApi CreateApi() {
@@ -36,10 +36,10 @@ public static class KintoneTestHelper {
     /// <summary>
     /// 指定されたモデルのレコードをチャンクに分割して作成します
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="api"></param>
-    /// <param name="models"></param>
-    /// <returns></returns>
+    /// <typeparam name="T">KintoneModelBase を継承したモデルの型</typeparam>
+    /// <param name="api">KintoneApi インスタンス</param>
+    /// <param name="models">作成するモデルのリスト</param>
+    /// <returns>作成されたモデルのリスト</returns>
     public static async Task<IList<T>> CreateRecordsInChunksAsync<T>(KintoneApi api, IList<T> models) where T : KintoneModelBase<T>, new() {
         var allCreated = new List<T>();
         foreach (var chunk in models.Chunk(KintoneConstants.KintoneLimit)) {
@@ -55,11 +55,11 @@ public static class KintoneTestHelper {
     /// <summary>
     /// 指定されたモデルのレコードをチャンクに分割して削除します
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="api"></param>
-    /// <param name="models"></param>
+    /// <typeparam name="T">KintoneModelBase を継承したモデルの型</typeparam>
+    /// <param name="api">KintoneApi インスタンス</param>
+    /// <param name="models">削除するモデルのリスト</param>
     /// <returns></returns>
-    /// <exception cref="InvalidOperationException"></exception>
+    /// <exception cref="InvalidOperationException">削除に失敗した場合にスローされます</exception>
     public static async Task DeleteRecordsInChunksAsync<T>(KintoneApi api, IList<T> models) where T : KintoneModelBase<T>, new() {
         foreach (var chunk in models.Chunk(KintoneConstants.KintoneDeleteLimit)) {
             var deleteJson = KintoneRequestBuilder.BuildDeleteJson(chunk);
@@ -70,14 +70,14 @@ public static class KintoneTestHelper {
     /// <summary>
     /// 指定されたクエリでレコード数が期待値に達するまで待機します
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="api"></param>
-    /// <param name="query"></param>
-    /// <param name="expectedCount"></param>
-    /// <param name="maxRetry"></param>
-    /// <param name="delayMilliseconds"></param>
-    /// <returns></returns>
-    /// <exception cref="TimeoutException"></exception>
+    /// <typeparam name="T">KintoneModelBase を継承したモデルの型</typeparam>
+    /// <param name="api">KintoneApi インスタンス</param>
+    /// <param name="query">検索クエリ</param>
+    /// <param name="expectedCount">期待されるレコード数</param>
+    /// <param name="maxRetry">最大リトライ回数</param>
+    /// <param name="delayMilliseconds">リトライ間の待機時間（ミリ秒）</param>
+    /// <returns>期待されるレコード数に達した場合、取得されたレコードのリスト</returns>
+    /// <exception cref="TimeoutException">期待されるレコード数に達しなかった場合にスローされます</exception>
     public static async Task<IList<T>> WaitForExpectedRecordCountAsync<T>(KintoneApi api, string query, int expectedCount, int maxRetry = 6, int delayMilliseconds = 500) where T : KintoneModelBase<T>, new() {
         for (int retry = 0; retry < maxRetry; retry++) {
             var foundJson = await api.FindByQueryAsync<T>(query);
@@ -96,8 +96,8 @@ public static class KintoneTestHelper {
     /// <summary>
     /// KintoneTypedCrudServiceインスタンスを作成します
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <returns></returns>
+    /// <typeparam name="T">KintoneModelBase を継承したモデルの型</typeparam>
+    /// <returns>作成された KintoneTypedCrudService インスタンス</returns>
     public static KintoneTypedCrudService<T> CreateCrudService<T>() where T : KintoneModelBase<T>, new() {
         var config = TestEnv.Settings;
         var options = new KintoneExecutionOptions { MaxConcurrency = 2 };

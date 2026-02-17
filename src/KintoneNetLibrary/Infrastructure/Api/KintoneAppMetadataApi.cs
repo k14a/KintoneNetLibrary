@@ -9,15 +9,11 @@ using KintoneNetLibrary.Infrastructure.Converters;
 
 namespace KintoneNetLibrary.Infrastructure.Api;
 
-// コメントは日本語で記述
 /// <summary>
-/// Kintoneアプリのメタデータを取得するAPIクラス
+/// kintoneのアプリメタデータAPIクライアント実装
 /// </summary>
-/// <remarks>
-/// コンストラクタ
-/// </remarks>
-/// <param name="httpClientFactory"></param>
-/// <param name="logger"></param>
+/// <param name="httpClientFactory">HTTPクライアントファクトリ</param>
+/// <param name="logger">ロガー</param>
 public class KintoneAppMetadataApi(IHttpClientFactory httpClientFactory, ILogger<KintoneAppMetadataApi> logger) : IKintoneAppMetadataApi {
     private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
     private readonly ILogger<KintoneAppMetadataApi> _logger = logger;
@@ -25,6 +21,13 @@ public class KintoneAppMetadataApi(IHttpClientFactory httpClientFactory, ILogger
     // ---------------------------------------------------------
     // 共通ユーティリティ（BaseKintoneApi の代替）
     // ---------------------------------------------------------
+    /// <summary>
+    /// APIリクエスト用のURIを構築します。
+    /// </summary>
+    /// <param name="domain">kintoneのドメイン</param>
+    /// <param name="path">APIのパス</param>
+    /// <param name="query">クエリ文字列（オプション）</param>
+    /// <returns>構築されたURI</returns>
     private static Uri BuildRequestUri(string domain, string path, string? query = null) {
         var baseUri = new Uri($"https://{domain.TrimEnd('/')}/k/v1/");
         var builder = new UriBuilder(new Uri(baseUri, path));
@@ -34,10 +37,22 @@ public class KintoneAppMetadataApi(IHttpClientFactory httpClientFactory, ILogger
         return builder.Uri;
     }
 
+    /// <summary>
+    /// APIトークンをHTTPリクエストに適用します。
+    /// </summary>
+    /// <param name="request">HTTPリクエストメッセージ</param>
+    /// <param name="apiToken">APIトークン</param>
     private static void ApplyAuth(HttpRequestMessage request, string apiToken) {
         request.Headers.Add("X-Cybozu-API-Token", apiToken);
     }
 
+    /// <summary>
+    /// GETリクエストを送信し、レスポンスのJSONを文字列として返します。エラーが発生した場合はKintoneExceptionをスローします。
+    /// </summary>
+    /// <param name="uri">リクエストURI</param>
+    /// <param name="apiToken">APIトークン</param>
+    /// <returns>レスポンスのJSON文字列</returns>
+    /// <exception cref="KintoneException">APIリクエストが失敗した場合にスローされます</exception>
     private async Task<string> SendGetAsync(Uri uri, string apiToken) {
         var client = this._httpClientFactory.CreateClient();
         using var request = new HttpRequestMessage(HttpMethod.Get, uri);
@@ -62,10 +77,10 @@ public class KintoneAppMetadataApi(IHttpClientFactory httpClientFactory, ILogger
     /// <summary>
     /// 指定したアプリのフィールド情報をJSON形式で取得します。
     /// </summary>
-    /// <param name="domain"></param>
-    /// <param name="apiToken"></param>
-    /// <param name="appId"></param>
-    /// <returns></returns>
+    /// <param name="domain">kintoneのドメイン</param>
+    /// <param name="apiToken">APIトークン</param>
+    /// <param name="appId">アプリID</param>
+    /// <returns>フィールド情報のJSON文字列</returns>
     public async Task<string> GetFieldsJsonAsync(string domain, string apiToken, int appId) {
         var uri = BuildRequestUri(domain, KintoneApiEndpoints.GetAppFields, $"app={appId}");
         return await this.SendGetAsync(uri, apiToken);
@@ -74,10 +89,10 @@ public class KintoneAppMetadataApi(IHttpClientFactory httpClientFactory, ILogger
     /// <summary>
     /// 指定したアプリのレイアウト情報をJSON形式で取得します。
     /// </summary>
-    /// <param name="domain"></param>
-    /// <param name="apiToken"></param>
-    /// <param name="appId"></param>
-    /// <returns></returns>
+    /// <param name="domain">kintoneのドメイン</param>
+    /// <param name="apiToken">APIトークン</param>
+    /// <param name="appId">アプリID</param>
+    /// <returns>レイアウト情報のJSON文字列</returns>
     public async Task<string> GetLayoutJsonAsync(string domain, string apiToken, int appId) {
         var uri = BuildRequestUri(domain, KintoneApiEndpoints.GetAppLayout, $"app={appId}");
         return await this.SendGetAsync(uri, apiToken);
@@ -86,10 +101,10 @@ public class KintoneAppMetadataApi(IHttpClientFactory httpClientFactory, ILogger
     /// <summary>
     /// 指定したアプリのメタデータを取得します。
     /// </summary>
-    /// <param name="domain"></param>
-    /// <param name="apiToken"></param>
-    /// <param name="appId"></param>
-    /// <returns></returns>
+    /// <param name="domain">kintoneのドメイン</param>
+    /// <param name="apiToken">APIトークン</param>
+    /// <param name="appId">アプリID</param>
+    /// <returns>アプリのメタデータ</returns>
     public async Task<KintoneAppMetadata> GetAppMetadataAsync(string domain, string apiToken, int appId) {
         var json = await this.GetFieldsJsonAsync(domain, apiToken, appId);
 
@@ -170,8 +185,8 @@ public class KintoneAppMetadataApi(IHttpClientFactory httpClientFactory, ILogger
     /// <summary>
     /// 選択肢を抽出します。
     /// </summary>
-    /// <param name="field"></param>
-    /// <returns></returns>
+    /// <param name="field">フィールドのJSON要素</param>
+    /// <returns>選択肢のリスト</returns>
     private static IReadOnlyList<string>? ExtractOptions(JsonElement field) {
         if (!field.TryGetProperty("options", out var optionsJson)) { return null; }
 
@@ -183,5 +198,5 @@ public class KintoneAppMetadataApi(IHttpClientFactory httpClientFactory, ILogger
     /// <summary>
     /// スキップするフィールドタイプのセット
     /// </summary>
-    private static readonly HashSet<string> _skippedFieldTypes = new(StringComparer.OrdinalIgnoreCase) { "GROUP", "SPACER", "HR" };
+    private static readonly HashSet<string> _skippedFieldTypes = [with(StringComparer.OrdinalIgnoreCase), "GROUP", "SPACER", "HR"];
 }

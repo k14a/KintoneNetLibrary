@@ -7,17 +7,16 @@ using Microsoft.Extensions.DependencyInjection;
 namespace KintoneNetLibrary.CodeGen.Infrastructure.Factories;
 
 /// <summary>
-/// 名前変換ファクトリクラス
+/// 名前変換ファクトリ
 /// </summary>
-/// <param name="provider"></param>
 public class NameConverterFactory() : INameConverterFactory {
 
     /// <summary>
     /// 名前変換の作成
     /// </summary>
-    /// <param name="lang"></param>
-    /// <returns></returns>
-    /// <exception cref="NotSupportedException"></exception>
+    /// <param name="lang">生成する言語</param>
+    /// <returns>指定された言語の名前変換</returns>
+    /// <exception cref="NotSupportedException">サポートされていない言語が指定された場合にスローされます</exception>
     public INameConverter Create(GenerateLanguages lang) {
         return lang switch {
             GenerateLanguages.CSharp => new CSharpNameConverter(),

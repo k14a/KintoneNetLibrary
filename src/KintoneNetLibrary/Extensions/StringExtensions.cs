@@ -3,18 +3,21 @@ using System.Text.RegularExpressions;
 
 namespace KintoneNetLibrary.Extensions;
 
+/// <summary>
+/// 文字列操作に関する拡張メソッドを提供します。
+/// </summary>
 public static class StringExtensions {
     /// <summary>
     /// 文字列が ASCII 文字のみで構成されているかどうかを判定します。
     /// </summary>
-    /// <param name="s"></param>
-    /// <returns></returns>
+    /// <param name="s">判定対象の文字列</param>
+    /// <returns>ASCII 文字のみで構成されている場合は true、それ以外の場合は false</returns>
     public static bool IsAscii(this string s) => s.All(c => c <= 127);
     /// <summary>
     /// 文字列を snake_case に変換します。
     /// </summary>
-    /// <param name="text"></param>
-    /// <returns></returns>
+    /// <param name="text">変換対象の文字列</param>
+    /// <returns>変換後の snake_case 文字列</returns>
     public static string ToSnakeCase(this string text) {
         if (string.IsNullOrWhiteSpace(text)) { return text; }
 
@@ -30,8 +33,8 @@ public static class StringExtensions {
     /// <summary>
     /// 文字列を PascalCase に変換します。
     /// </summary>
-    /// <param name="text"></param>
-    /// <returns></returns>
+    /// <param name="text">変換対象の文字列</param>
+    /// <returns>変換後の PascalCase 文字列</returns>
     public static string ToPascalCase(this string text) {
         var parts = Regex.Split(text, @"[^A-Za-z0-9]+").Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => char.ToUpperInvariant(x[0]) + x[1..]);
 
@@ -40,8 +43,8 @@ public static class StringExtensions {
     /// <summary>
     /// 文字列を camelCase に変換します。
     /// </summary>
-    /// <param name="text"></param>
-    /// <returns></returns>
+    /// <param name="text">変換対象の文字列</param>
+    /// <returns>変換後の camelCase 文字列</returns>
     public static string ToCamelCase(this string text) {
         var parts = Regex.Split(text, @"[^A-Za-z0-9]+").Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
 
@@ -55,8 +58,8 @@ public static class StringExtensions {
     /// <summary>
     /// 文字列をローマ字に変換します。
     /// </summary>
-    /// <param name="text"></param>
-    /// <returns></returns>
+    /// <param name="text">変換対象の文字列</param>
+    /// <returns>変換後のローマ字文字列</returns>
     public static string ToRoman(this string text) {
         if (string.IsNullOrEmpty(text)) { return string.Empty; }
         if (text.IsAscii()) { return text; }

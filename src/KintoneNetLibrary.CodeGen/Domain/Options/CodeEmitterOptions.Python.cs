@@ -14,10 +14,20 @@ public class PythonEmitterOptions : CodeEmitterOptions {
     /// </summary>
     public bool UseTypeHint { get; set; } = true;
 
+    /// <summary>
+    /// 出力ファイル拡張子
+    /// </summary>
     public override string FileExtension => ".py";
 
+    /// <summary>
+    /// 言語ごとのコメント文字列
+    /// </summary>
     public override string CommentPrefix => "#";
 
+    /// <summary>
+    /// オプションのデフォルト値を設定する
+    /// </summary>
+    /// <param name="appId">アプリケーションの ID</param>
     public void EnsureDefaults(int appId) {
         base.EnsureDefaults(appId);
 

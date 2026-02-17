@@ -10,9 +10,9 @@ public static class JsonOptionsUtil {
     /// <summary>
     /// JsonSerializerOptionsをクローンする
     /// </summary>
-    /// <param name="source"></param>
-    /// <param name="writeIndented"></param>
-    /// <returns></returns>
+    /// <param name="source">クローン元のJsonSerializerOptions</param>
+    /// <param name="writeIndented">インデントを有効にするかどうか</param>
+    /// <returns>クローンされたJsonSerializerOptions</returns>
     public static JsonSerializerOptions Clone(JsonSerializerOptions source, bool writeIndented = false) {
         return new JsonSerializerOptions {
             AllowTrailingCommas = source.AllowTrailingCommas,

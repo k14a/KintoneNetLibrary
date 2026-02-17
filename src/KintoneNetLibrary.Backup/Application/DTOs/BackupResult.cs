@@ -2,6 +2,9 @@ using KintoneNetLibrary.Backup.Application.Interfaces;
 
 namespace KintoneNetLibrary.Backup.Application.DTOs;
 
+/// <summary>
+/// バックアップ結果クラス
+/// </summary>
 public sealed class BackupResult : IOperationResult {
     /// <summary>
     /// バックアップ全体が成功したかどうか。
@@ -64,11 +67,29 @@ public sealed class BackupResult : IOperationResult {
     /// </summary>
     public bool IsPartialSuccess => this.Success && this.HasWarnings;
 
+    /// <summary>
+    /// IOperationResult インターフェースの実装
+    /// </summary>
     IReadOnlyList<string> IOperationResult.Warnings => this.Warnings;
 
+    /// <summary>
+    /// IOperationResult インターフェースの実装
+    /// </summary>
+    /// </summary>
     IReadOnlyList<string> IOperationResult.Errors => this.Errors;
 
+    /// <summary>
+    /// IOperationResult インターフェースの実装
+    /// </summary>
     public IList<string> PartFiles { get; set; } = [];
+
+    /// <summary>
+    /// バックアップ方式
+    /// </summary>
     public int Parts => this.PartFiles.Count;
+
+    /// <summary>
+    /// バックアップ方式
+    /// </summary>
     public int SplitSize { get; set; }
 }

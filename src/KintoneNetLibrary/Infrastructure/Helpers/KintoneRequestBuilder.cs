@@ -7,7 +7,6 @@ using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.Infrastructure.Helpers;
 
-// コメントは日本語で記述
 /// <summary>
 /// Kintone リクエストビルダー
 /// </summary>
@@ -15,8 +14,12 @@ public static class KintoneRequestBuilder {
     private static readonly JsonSerializerOptions _jsonOptions = DefaultJsonOptions.Default;
 
     /// <summary>
-    /// Kintone レコード登録（複数）の JSON を構築
+    /// Kintone レコード作成の JSON を構築
     /// </summary>
+    /// <typeparam name="T">検証対象のモデルの型</typeparam>
+    /// <param name="records">作成対象のレコードのリスト</param>
+    /// <returns>作成用の JSON 文字列</returns>
+    /// <exception cref="ArgumentException">レコードが空の場合にスローされます</exception>
     public static string BuildCreateJson<T>(IEnumerable<T> records) where T : KintoneModelBase<T>, new() {
         var list = records.ToList();
         if (list.Count == 0) {
@@ -32,9 +35,15 @@ public static class KintoneRequestBuilder {
 
         return JsonSerializer.Serialize(body, _jsonOptions);
     }
+
     /// <summary>
-    /// Kintone レコード更新（複数）の JSON を構築
+    /// Kintone レコード更新の JSON を構築
     /// </summary>
+    /// <typeparam name="T">検証対象のモデルの型</typeparam>
+    /// <param name="models">更新対象のレコードのリスト</param>
+    /// <returns>更新用の JSON 文字列</returns>
+    /// <exception cref="ArgumentException">レコードが空の場合にスローされます</exception>
+    /// <exception cref="InvalidOperationException">RecordID または IsKey 属性が見つからない場合にスローされます</exception>
     public static string BuildUpdateJson<T>(IList<T> models) where T : KintoneModelBase<T>, new() {
         if (models is null || models.Count == 0) {
             throw new ArgumentException("Models list is null or empty.", nameof(models));
@@ -77,6 +86,10 @@ public static class KintoneRequestBuilder {
     /// <summary>
     /// Kintone レコード削除（複数）の JSON を構築
     /// </summary>
+    /// <typeparam name="T">検証対象のモデルの型</typeparam>
+    /// <param name="models">削除対象のレコードのリスト</param>
+    /// <returns>削除用の JSON 文字列</returns>
+    /// <exception cref="ArgumentException">レコードが空の場合にスローされます</exception>
     public static string BuildDeleteJson<T>(IEnumerable<T> models) where T : KintoneModelBase<T>, new() {
         var modelList = models.ToList();
         if (modelList.Count == 0) {
@@ -96,16 +109,17 @@ public static class KintoneRequestBuilder {
 
         return JsonSerializer.Serialize(deleteBody, _jsonOptions);
     }
+
     /// <summary>
     /// Kintone リクエスト URI を構築
     /// </summary>
-    /// <param name="baseUri"></param>
-    /// <param name="path"></param>
-    /// <param name="appID"></param>
-    /// <param name="query"></param>
-    /// <param name="fieldCodes"></param>
-    /// <param name="additionalParams"></param>
-    /// <returns></returns>
+    /// <param name="baseUri">ベースとなる URI</param>
+    /// <param name="path">リクエストパス</param>
+    /// <param name="appID">アプリID</param>
+    /// <param name="query">検索クエリ</param>
+    /// <param name="fieldCodes">取得するフィールドコードのリスト</param>
+    /// <param name="additionalParams">追加のクエリパラメータ</param>
+    /// <returns>構築された URI</returns>
     public static Uri BuildRequestUri(
         Uri baseUri,
         string path,
@@ -139,15 +153,16 @@ public static class KintoneRequestBuilder {
         builder.Query = string.Join("&", parameters);
         return builder.Uri;
     }
+
     /// <summary>
     /// Kintone 検索リクエスト URI を構築
     /// </summary>
-    /// <param name="baseUri"></param>
-    /// <param name="path"></param>
-    /// <param name="appID"></param>
-    /// <param name="query"></param>
-    /// <param name="fieldCodes"></param>
-    /// <returns></returns>
+    /// <param name="baseUri">ベースとなる URI</param>
+    /// <param name="path">リクエストパス</param>
+    /// <param name="appID">アプリID</param>
+    /// <param name="query">検索クエリ</param>
+    /// <param name="fieldCodes">取得するフィールドコードのリスト</param>
+    /// <returns>構築された URI</returns>
     public static Uri BuildFindRequestUri(Uri baseUri, string path, int appID, string? query = null, IList<string>? fieldCodes = null) {
         var effectiveFields = EnsureMinimumFields(fieldCodes);
 
@@ -170,8 +185,8 @@ public static class KintoneRequestBuilder {
     /// <summary>
     /// 最低限必要なフィールドコードを確保
     /// </summary>
-    /// <param name="fieldCodes"></param>
-    /// <returns></returns>
+    /// <param name="fieldCodes">フィールドコードのリスト</param>
+    /// <returns>最低限必要なフィールドコードを含むリスト</returns>
     internal static IList<string> EnsureMinimumFields(IList<string> fieldCodes) {
         var required = new[] { "$id", "$revision" };
         return fieldCodes != null && fieldCodes.Count > 0 ? required.Union(fieldCodes).Distinct().ToArray() : null;

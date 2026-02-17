@@ -6,7 +6,7 @@ namespace KintoneNetLibrary.Domain.Entities;
 /// <summary>
 /// Kintoneのインデックスを表すクラス
 /// このクラスは、KintoneのレコードのIDとリビジョンを保持します。
-/// 単一レコードの ID / Revision を表す DTO.    
+/// 単一レコードの ID / Revision を表す DTO.
 /// </summary>
 public class KintoneIndexes {
     /// <summary>

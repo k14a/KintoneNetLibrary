@@ -2,7 +2,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace KintoneNetLibrary.Infrastructure.Helpers;
 
-// コメントは日本語で記述
 /// <summary>
 /// Kintoneサービスロケーター
 /// </summary>
@@ -12,17 +11,17 @@ public static class KintoneServiceLocator {
     /// <summary>
     /// 初期化
     /// </summary>
-    /// <param name="provider"></param>
-    /// <exception cref="ArgumentNullException"></exception>
+    /// <param name="provider">サービスプロバイダー</param>
+    /// <exception cref="ArgumentNullException">provider が null の場合にスローされます</exception>
     public static void Initialize(IServiceProvider provider) {
         _provider = provider ?? throw new ArgumentNullException(nameof(provider));
     }
     /// <summary>
     /// サービスの解決
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <returns></returns>
-    /// <exception cref="InvalidOperationException"></exception>
+    /// <typeparam name="T">解決対象のサービスの型</typeparam>
+    /// <returns>解決されたサービスのインスタンス</returns>
+    /// <exception cref="InvalidOperationException">サービスロケーターが初期化されていない場合にスローされます</exception>
     public static T Resolve<T>() where T : notnull {
         if (_provider == null) {
             throw new InvalidOperationException("KintoneServiceLocator is not initialized.");

@@ -14,8 +14,14 @@ using Xunit;
 
 namespace KintoneNetLibrary.Tests.Services;
 
+/// <summary>
+/// KintoneModelCrudService の DeleteAsync メソッドの単体テストクラス。
+/// </summary>
 public class KintoneModelCrudServiceDeleteTests {
     #region <<Test methods>>
+    /// <summary>
+    /// DeleteAsync メソッドに空のモデルリストを渡した場合、成功も失敗もない結果が返されることをテストします。
+    /// </summary>
     [Fact]
     public async Task DeleteAsyncShouldReturnEmptyResultWhenModelsIsEmpty() {
         // Arrange
@@ -54,6 +60,10 @@ public class KintoneModelCrudServiceDeleteTests {
         TestLogHelper.VerifyLog(loggerMock, LogLevel.Information, "DeleteAsync() - Start", Times.Once());
         TestLogHelper.VerifyLog(loggerMock, LogLevel.Information, "DeleteAsync() - Finish", Times.Once());
     }
+
+    /// <summary>
+    /// DeleteAsync メソッドに1件のモデルを渡した場合、そのモデルが削除され、成功リストにIDが含まれることをテストします。
+    /// </summary>
     [Fact]
     public async Task DeleteAsyncShouldDeleteOneModelWhenOneModelProvided() {
         // Arrange
@@ -89,6 +99,10 @@ public class KintoneModelCrudServiceDeleteTests {
         TestLogHelper.VerifyLog(loggerMock, LogLevel.Information, "DeleteAsync() - Start", Times.Once());
         TestLogHelper.VerifyLog(loggerMock, LogLevel.Information, "DeleteAsync() - Finish", Times.Once());
     }
+
+    /// <summary>
+    /// DeleteAsync メソッドに複数のモデルを渡した場合、それらのモデルが削除され、成功リストにIDが含まれることをテストします。
+    /// </summary>
     [Fact]
     public async Task DeleteAsyncShouldDeleteMultipleModelsWhenMultipleModelsProvided() {
         // Arrange
@@ -120,15 +134,17 @@ public class KintoneModelCrudServiceDeleteTests {
             )
         ), Times.Once);
     }
+
+    /// <summary>
+    /// DeleteAsync メソッドに複数のモデルを渡した場合、その中に無効なモデルが含まれていても、有効なモデルだけが削除され、成功リストに有効なモデルのIDが含まれることをテストします。
+    /// </summary>
     [Fact]
     public async Task DeleteAsyncShouldDeleteOnlyValidModelsWhenSomeModelsAreInvalid() {
         // Arrange
-        var models = new List<SampleModel>
-        {
-        new() { RecordID = "201" },
-        new() { RecordID = null },  // 無効モデル
-        new() { RecordID = "202" }
-    };
+        var models = new List<SampleModel> {
+            new() { RecordID = "201" },
+            new() { RecordID = null },  // 無効モデル
+             new() { RecordID = "202" } };
 
         var mockRepo = new Mock<IKintoneRepository>();
         var loggerMock = new Mock<ILogger<KintoneTypedCrudService<SampleModel>>>();
@@ -152,6 +168,10 @@ public class KintoneModelCrudServiceDeleteTests {
             )
         ), Times.Once);
     }
+
+    /// <summary>
+    /// DeleteAsync メソッドに存在しないレコードIDを持つモデルを渡した場合、NotFound エラーが発生し、失敗リストにエラー情報が含まれることをテストします。
+    /// </summary>
     [Fact]
     public async Task DeleteAsyncShouldHandleNotFoundRecordWhenRecordIDIsInvalid() {
         // Arrange
@@ -185,6 +205,10 @@ public class KintoneModelCrudServiceDeleteTests {
         Assert.Single(result.Failed);
         Assert.True(result.HasFailures);
     }
+
+    /// <summary>
+    /// DeleteAsync メソッドに複数のモデルを渡した場合、その中に存在しないレコードIDを持つモデルが含まれていても、有効なモデルは削除され、成功リストに有効なモデルのIDが含まれ、失敗リストに無効なモデルのエラー情報が含まれることをテストします。
+    /// </summary>
     [Fact]
     public async Task DeleteAsyncShouldSeparateDeletedAndFailedRecordsWhenPartiallyFound() {
         // Arrange
@@ -249,6 +273,10 @@ public class KintoneModelCrudServiceDeleteTests {
 
         Assert.True(result.HasFailures);
     }
+
+    /// <summary>
+    /// DeleteAsync メソッドに複数のレコードIDを渡した場合、それらのモデルが削除されることをテストします。
+    /// </summary>
     [Fact]
     public async Task DeleteAsyncShouldDeleteMultipleModelsWhenMultipleIdsProvided() {
         // Arrange

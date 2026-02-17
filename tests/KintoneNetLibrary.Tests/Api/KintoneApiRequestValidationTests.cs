@@ -12,8 +12,14 @@ using Xunit;
 
 namespace KintoneNetLibrary.Tests.Api;
 
+/// <summary>
+/// Tests for validating the construction of API requests, particularly for file upload and download operations.
+/// </summary>
 public class KintoneApiRequestValidationTests {
     #region <<Test methods>>
+    /// <summary>
+    /// Tests that the UploadFileAsync method constructs the multipart/form-data request correctly, including the content type and field name for the file.
+    /// </summary>
     [Fact]
     public async Task UploadFileAsyncSetsCorrectContentTypeAndFieldName() {
         HttpRequestMessage? capturedRequest = null;
@@ -50,6 +56,9 @@ public class KintoneApiRequestValidationTests {
         Assert.Equal("application/octet-stream", fileContent!.Headers.ContentType?.MediaType);
     }
 
+    /// <summary>
+    /// Tests that the DownloadFileStreamAsync method correctly processes the response and returns a stream with the expected content, ensuring that the content type is handled appropriately.
+    /// </summary>
     [Fact]
     public async Task DownloadFileStreamAsyncReturnsCorrectStreamContent() {
         var dummyContent = "This is a file";

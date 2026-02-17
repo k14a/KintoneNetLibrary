@@ -15,6 +15,8 @@ public class CSharpXmlCommentBuilder(ILogger<CSharpXmlCommentBuilder> logger) : 
     /// <summary>
     /// フィールド用 XML コメントを生成する
     /// </summary>
+    /// <param name="field">Kintone フィールドスキーマ</param>
+    /// <returns>生成された XML コメント</returns>
     public string BuildForField(KintoneFieldSchema field) {
         var sb = new StringBuilder();
 
@@ -54,6 +56,8 @@ public class CSharpXmlCommentBuilder(ILogger<CSharpXmlCommentBuilder> logger) : 
     /// <summary>
     /// サブテーブル用 XML コメントを生成する
     /// </summary>
+    /// <param name="subTable">Kintone サブテーブルスキーマ</param>
+    /// <returns>生成された XML コメント</returns>
     public string BuildForSubTable(KintoneSubTableSchema subTable) {
         var sb = new StringBuilder();
 
@@ -71,8 +75,10 @@ public class CSharpXmlCommentBuilder(ILogger<CSharpXmlCommentBuilder> logger) : 
     }
 
     /// <summary>
-    /// XML コメント内で不正な文字をエスケープ
+    /// テキストを XML コメント用にエスケープする
     /// </summary>
+    /// <param name="text">エスケープするテキスト</param>
+    /// <returns>エスケープされたテキスト</returns>
     private static string Escape(string text) {
         return text
             .Replace("&", "&amp;")

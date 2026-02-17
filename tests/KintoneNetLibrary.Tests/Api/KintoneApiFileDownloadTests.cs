@@ -10,10 +10,16 @@ using Xunit;
 
 namespace KintoneNetLibrary.Tests.Api;
 
+/// <summary>
+/// KintoneApiのファイルダウンロード機能に関するテストクラス。
+/// </summary>
 public class KintoneApiDownloadFileTests {
     private const string DummyDomain = "example.cybozu.com";
     private const string DummyFileKey = "validKey";
 
+    /// <summary>
+    /// DownloadFileAsyncが正常にファイルのバイト配列を返すことを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task DownloadFileAsyncReturnsByteArrayWhenSuccess() {
         // Arrange
@@ -34,6 +40,10 @@ public class KintoneApiDownloadFileTests {
         // Assert
         Assert.Equal(expectedContent, result);
     }
+
+    /// <summary>
+    /// DownloadFileAsyncがエラー時にKintoneExceptionをスローし、エラーメッセージとコードが正しく設定されていることを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task DownloadFileAsyncThrowsKintoneExceptionWhenError() {
         // Arrange
@@ -60,6 +70,10 @@ public class KintoneApiDownloadFileTests {
         Assert.Equal("指定された fileKey が無効です", ex.Message);
         Assert.Equal("GAIA_CO01", ex.Error?.Code);
     }
+
+    /// <summary>
+    /// DownloadFileAsyncが有効なfileKeyで正しいバイト配列を返すことを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task DownloadFileAsyncValidKeyReturnsExpectedBytes() {
         // Arrange
@@ -85,6 +99,10 @@ public class KintoneApiDownloadFileTests {
         // Assert
         Assert.Equal(expectedContent, result);
     }
+
+    /// <summary>
+    /// DownloadFileStreamAsyncが有効なfileKeyで正しいストリームを返すことを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task DownloadFileStreamAsyncValidKeyReturnsExpectedStream() {
         // Arrange
@@ -113,6 +131,10 @@ public class KintoneApiDownloadFileTests {
         // Assert
         Assert.Equal(expectedText, actualText);
     }
+
+    /// <summary>
+    /// DownloadFileAsyncがエラー時にKintoneExceptionをスローすることを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task DownloadFileAsyncErrorResponseThrowsKintoneException() {
         // Arrange
@@ -130,6 +152,10 @@ public class KintoneApiDownloadFileTests {
         var ex = await Assert.ThrowsAsync<KintoneException>(() => api.DownloadFileAsync(DummyFileKey));
         Assert.Contains("Invalid fileKey", ex.Message);
     }
+
+    /// <summary>
+    /// DownloadFileAsyncがnullまたは空のfileKeyでArgumentNullExceptionまたはArgumentExceptionをスローすることを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task DownloadFileAsyncNullFileKeyThrowsArgumentNullException() {
         var httpClient = new HttpClient(); // 実際に送信されない
@@ -138,6 +164,10 @@ public class KintoneApiDownloadFileTests {
         var ex = await Assert.ThrowsAsync<ArgumentNullException>(() => api.DownloadFileAsync(null));
         Assert.Contains("fileKey", ex.Message);
     }
+
+    /// <summary>
+    /// DownloadFileAsyncが空のfileKeyでArgumentExceptionをスローすることを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task DownloadFileAsyncEmptyFileKeyThrowsArgumentException() {
         var httpClient = new HttpClient(); // 実際に送信されない
@@ -146,6 +176,10 @@ public class KintoneApiDownloadFileTests {
         var ex = await Assert.ThrowsAsync<ArgumentException>(() => api.DownloadFileAsync(""));
         Assert.Contains("fileKey", ex.Message);
     }
+
+    /// <summary>
+    /// DownloadFileAsyncがHTTPエラーでKintoneExceptionをスローし、エラーメッセージにAPIからのエラー内容が含まれていることを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task DownloadFileAsyncInvalidFileKeyThrowsKintoneException() {
         // Arrange
@@ -163,6 +197,10 @@ public class KintoneApiDownloadFileTests {
         var ex = await Assert.ThrowsAsync<KintoneException>(() => api.DownloadFileAsync(DummyFileKey));
         Assert.Contains("Invalid fileKey", ex.Message);
     }
+
+    /// <summary>
+    /// DownloadFileAsyncがHTTPステータスコード200であっても、APIからのエラーを示すJSONが返された場合にKintoneExceptionをスローすることを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task DownloadFileAsyncErrorJsonReturnedThrowsKintoneException() {
         var errorJson = "{\"message\":\"File not found\"}";
@@ -178,6 +216,10 @@ public class KintoneApiDownloadFileTests {
         var ex = await Assert.ThrowsAsync<KintoneException>(() => api.DownloadFileAsync(DummyFileKey));
         Assert.Contains("File not found", ex.Message);
     }
+
+    /// <summary>
+    /// DownloadFileAsyncがHTTPステータスコード200であっても、APIからのエラーを示すJSONが返された場合にKintoneExceptionをスローすることを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task DownloadFileAsyncInvalidJsonStructureThrowsKintoneException() {
         var invalidJson = "{ this is not valid json }";
@@ -193,6 +235,10 @@ public class KintoneApiDownloadFileTests {
         var ex = await Assert.ThrowsAsync<KintoneException>(() => api.DownloadFileAsync(DummyFileKey));
         Assert.Contains("JSON", ex.Message); // メッセージ内容はKintoneErrorConverter次第で調整
     }
+
+    /// <summary>
+    /// DownloadFileAsyncがHTTPステータスコード200であっても、Content-Typeが想定外の場合にKintoneExceptionをスローすることを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task DownloadFileAsyncUnexpectedContentTypeThrowsKintoneException() {
         var errorJson = "{\"message\":\"Unexpected response\"}";
@@ -208,6 +254,10 @@ public class KintoneApiDownloadFileTests {
         var ex = await Assert.ThrowsAsync<KintoneException>(() => api.DownloadFileAsync(DummyFileKey));
         Assert.Contains("Content-Type", ex.Message); // もしくは "Unexpected response"
     }
+
+    /// <summary>
+    /// DownloadFileAsyncがHTTPリクエストのタイムアウトでTaskCanceledExceptionをスローした場合に、KintoneExceptionをスローすることを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task DownloadFileAsyncHttpTimeoutThrowsKintoneException() {
         // Arrange
@@ -224,6 +274,10 @@ public class KintoneApiDownloadFileTests {
         var ex = await Assert.ThrowsAsync<KintoneException>(() => api.DownloadFileAsync(DummyFileKey));
         Assert.Contains("タイムアウト", ex.Message); // 実装に応じて調整
     }
+
+    /// <summary>
+    /// DownloadFileStreamAsyncが有効なfileKeyで正しいストリームを返すことを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task DownloadFileStreamAsyncValidResponseReturnsStream() {
         // Arrange
@@ -252,6 +306,10 @@ public class KintoneApiDownloadFileTests {
         Assert.Equal(fileBytes.Length, readCount);
         Assert.Equal(fileBytes, buffer);
     }
+
+    /// <summary>
+    /// DownloadFileStreamAsyncがHTTPエラーでKintoneExceptionをスローすることを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task DownloadFileStreamAsyncErrorResponseThrowsKintoneException() {
         // Arrange
@@ -268,6 +326,10 @@ public class KintoneApiDownloadFileTests {
         var ex = await Assert.ThrowsAsync<KintoneException>(() => api.DownloadFileStreamAsync(DummyFileKey));
         Assert.Contains("Invalid fileKey", ex.Message);
     }
+
+    /// <summary>
+    /// DownloadFileStreamAsyncがnullまたは空のfileKeyでArgumentNullExceptionまたはArgumentExceptionをスローすることを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task DownloadFileStreamAsyncNullFileKeyThrowsArgumentNullException() {
         var httpClient = new HttpClient();
@@ -276,6 +338,10 @@ public class KintoneApiDownloadFileTests {
         var ex = await Assert.ThrowsAsync<ArgumentNullException>(() => api.DownloadFileStreamAsync(null!));
         Assert.Contains("fileKey", ex.Message);
     }
+
+    /// <summary>
+    /// DownloadFileStreamAsyncが空のfileKeyでArgumentExceptionをスローすることを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task DownloadFileStreamAsyncEmptyFileKeyThrowsArgumentException() {
         var httpClient = new HttpClient();
@@ -284,6 +350,10 @@ public class KintoneApiDownloadFileTests {
         var ex = await Assert.ThrowsAsync<ArgumentException>(() => api.DownloadFileStreamAsync(string.Empty));
         Assert.Contains("fileKey must not be empty", ex.Message);
     }
+
+    /// <summary>
+    /// DownloadFileStreamAsyncがHTTPステータスコード200であっても、Content-Typeが想定外の場合にKintoneExceptionをスローすることを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task DownloadFileStreamAsyncUnexpectedContentTypeThrowsKintoneException() {
         // Arrange
@@ -300,6 +370,10 @@ public class KintoneApiDownloadFileTests {
         var ex = await Assert.ThrowsAsync<KintoneException>(() => api.DownloadFileStreamAsync(DummyFileKey));
         Assert.Contains("予期しないContent-Type", ex.Message);
     }
+
+    /// <summary>
+    /// DownloadFileStreamAsyncが有効なfileKeyで正しいストリームを返すことを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task DownloadFileStreamAsyncValidFileKeyReturnsStream() {
         var contentBytes = new byte[] { 1, 2, 3 };
@@ -319,6 +393,10 @@ public class KintoneApiDownloadFileTests {
         await stream.CopyToAsync(ms);
         Assert.Equal(contentBytes, ms.ToArray());
     }
+
+    /// <summary>
+    /// DownloadFileStreamAsyncがHTTPステータスコード200であっても、Content-Typeが想定外の場合にKintoneExceptionをスローすることを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task DownloadFileStreamAsyncInvalidContentTypeThrowsKintoneExceptionWithContentTypeInMessage() {
         // Arrange
@@ -335,6 +413,10 @@ public class KintoneApiDownloadFileTests {
         Assert.Contains("Content-Type", ex.Message); // Content-Typeの記述が含まれていること
         Assert.Contains("text/html", ex.Message);    // 実際に受信したContent-Typeが含まれていること
     }
+
+    /// <summary>
+    /// DownloadFileStreamAsyncがHTTPステータスコード200であっても、APIからのエラーを示すJSONが返された場合にKintoneExceptionをスローすることを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task DownloadFileStreamAsyncKintoneJsonErrorThrowsKintoneExceptionWithErrorMessage() {
         // Arrange
@@ -350,6 +432,10 @@ public class KintoneApiDownloadFileTests {
         var ex = await Assert.ThrowsAsync<KintoneException>(() => api.DownloadFileStreamAsync("invalid_key"));
         Assert.Contains("Invalid fileKey", ex.Message); // Kintoneのエラーメッセージが含まれていること
     }
+
+    /// <summary>
+    /// DownloadFileStreamAsyncがHTTPエラーでKintoneExceptionをスローし、APIからのエラーコードがKintoneException.Errorプロパティに正しく設定されていることを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task DownloadFileStreamAsyncHttpErrorWithJsonThrowsParsedKintoneException() {
         var jsonError = "{\"code\":\"E001\",\"message\":\"Invalid fileKey\"}";
@@ -363,6 +449,10 @@ public class KintoneApiDownloadFileTests {
         Assert.NotNull(ex.Error);
         Assert.Equal("E001", ex.Error.Code);
     }
+
+    /// <summary>
+    /// DownloadFileStreamAsyncがHTTPエラーでKintoneExceptionをスローし、APIからのレスポンスがJSONでない場合に、Content-Typeを含む一般的なエラーメッセージがKintoneExceptionに含まれていることを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task DownloadFileStreamAsyncHttpErrorWithNonJsonBodyThrowsGenericKintoneException() {
         var badBody = "<html>Internal Error</html>";
@@ -375,6 +465,10 @@ public class KintoneApiDownloadFileTests {
         var ex = await Assert.ThrowsAsync<KintoneException>(() => api.DownloadFileStreamAsync("filekey"));
         Assert.Contains("Content-Type", ex.Message);
     }
+
+    /// <summary>
+    /// DownloadFileStreamAsyncが空のfileKeyでArgumentExceptionをスローすることを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task DownloadFileStreamAsyncEmptyFileKeyEncodedProperly() {
         var contentBytes = new byte[] { 1 };
@@ -396,6 +490,10 @@ public class KintoneApiDownloadFileTests {
         var ex = await Assert.ThrowsAsync<ArgumentException>(() => api.DownloadFileStreamAsync(""));
         Assert.Contains("fileKey must not be empty.", ex.Message);
     }
+
+    /// <summary>
+    /// DownloadFileStreamAsyncがfileKeyに特殊文字を含む場合に、URLエンコードされたfileKeyがリクエストURIに含まれていることを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task DownloadFileStreamAsyncFileKeyWithSpecialCharsEncodedInUrl() {
         var fileKey = "abc+/=def";
@@ -421,6 +519,12 @@ public class KintoneApiDownloadFileTests {
     }
 
     #region <<Private method(s)>>
+    /// <summary>
+    /// テスト用のApiTokenAccessを作成するヘルパーメソッド。
+    /// </summary>
+    /// <param name="apiToken">APIトークン</param>
+    /// <param name="domain">ドメイン</param>
+    /// <returns>ApiTokenAccessのインスタンス</returns>
     private static ApiTokenAccess CreateMockAccess(string apiToken = "dummyToken", string domain = DummyDomain) {
         return new ApiTokenAccess(domain, apiToken);
     }

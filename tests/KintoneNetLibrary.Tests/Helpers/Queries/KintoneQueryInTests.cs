@@ -6,7 +6,13 @@ using Xunit;
 
 namespace KintoneNetLibrary.Tests.Helpers.Queries;
 
+/// <summary>
+/// KintoneQueryのInとNotInのテストクラス。
+/// </summary>
 public class KintoneQueryInTests {
+    /// <summary>
+    /// Inメソッドが整数のリストを正しいクエリ文字列に変換することをテストします。
+    /// </summary>
     [Fact]
     public void InIntListCreatesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
@@ -15,6 +21,10 @@ public class KintoneQueryInTests {
 
         Assert.Equal("Price in (100, 200, 300)", query);
     }
+
+    /// <summary>
+    /// Inメソッドが文字列のリストを正しいクエリ文字列に変換することをテストします。
+    /// </summary>
     [Fact]
     public void InStringListCreatesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
@@ -23,6 +33,10 @@ public class KintoneQueryInTests {
 
         Assert.Equal("Title in (\"C#\", \"Java\", \"Go\")", query);
     }
+
+    /// <summary>
+    /// Inメソッドに空のリストを渡した場合、ArgumentExceptionがスローされることをテストします。
+    /// </summary>
     [Fact]
     public void InEmptyListThrowsArgumentException() {
         var query = new KintoneQuery<BookModel>();
@@ -33,7 +47,13 @@ public class KintoneQueryInTests {
     }
 }
 
+/// <summary>
+/// KintoneQueryのNotInメソッドのテストクラス。
+/// </summary>
 public class KintoneQueryNotInTests {
+    /// <summary>
+    /// NotInメソッドが整数のリストを正しいクエリ文字列に変換することをテストします。
+    /// </summary>
     [Fact]
     public void NotInIntListCreatesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
@@ -42,6 +62,10 @@ public class KintoneQueryNotInTests {
 
         Assert.Equal("Price not in (0, 1, 999)", query);
     }
+
+    /// <summary>
+    /// NotInメソッドが文字列のリストを正しいクエリ文字列に変換することをテストします。
+    /// </summary>
     [Fact]
     public void NotInStringListCreatesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
@@ -52,7 +76,13 @@ public class KintoneQueryNotInTests {
     }
 }
 
+/// <summary>
+/// KintoneQueryのInとNotInのオーバーロードメソッドのテストクラス。
+/// </summary>
 public class KintoneQueryInOverloadTests {
+    /// <summary>
+    /// Inメソッドのオーバーロードが整数の可変引数を正しいクエリ文字列に変換することをテストします。
+    /// </summary>
     [Fact]
     public void InIntParamsGeneratesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
@@ -61,6 +91,10 @@ public class KintoneQueryInOverloadTests {
 
         Assert.Equal("Price in (100, 200, 300)", query);
     }
+
+    /// <summary>
+    /// Inメソッドのオーバーロードが文字列の可変引数を正しいクエリ文字列に変換することをテストします。
+    /// </summary>
     [Fact]
     public void InStringParamsGeneratesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
@@ -69,6 +103,10 @@ public class KintoneQueryInOverloadTests {
 
         Assert.Equal("Title in (\"A\", \"B\", \"C\")", query);
     }
+
+    /// <summary>
+    /// Inメソッドのオーバーロードに空のリストを渡した場合、ArgumentExceptionがスローされることをテストします。
+    /// </summary>
     [Fact]
     public void InEmptyParamsThrowsException() {
         var query = new KintoneQuery<BookModel>();
@@ -76,6 +114,10 @@ public class KintoneQueryInOverloadTests {
 
         Assert.Contains("値のリストが空です", ex.Message);
     }
+
+    /// <summary>
+    /// Inメソッドのオーバーロードにnullを渡した場合、ArgumentNullExceptionがスローされることをテストします。
+    /// </summary>
     [Fact]
     public void InNullParamsThrowsException() {
         var query = new KintoneQuery<BookModel>();
@@ -86,7 +128,13 @@ public class KintoneQueryInOverloadTests {
     }
 }
 
+/// <summary>
+/// KintoneQueryのNotInメソッドのオーバーロードのテストクラス。
+/// </summary>
 public class KintoneQueryNotInOverloadTests {
+    /// <summary>
+    /// NotInメソッドのオーバーロードが整数の可変引数を正しいクエリ文字列に変換することをテストします。
+    /// </summary>
     [Fact]
     public void NotInIntParamsGeneratesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
@@ -95,6 +143,10 @@ public class KintoneQueryNotInOverloadTests {
 
         Assert.Equal("Price not in (100, 200, 300)", query);
     }
+
+    /// <summary>
+    /// NotInメソッドのオーバーロードが文字列の可変引数を正しいクエリ文字列に変換することをテストします。
+    /// </summary>
     [Fact]
     public void NotInStringParamsGeneratesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
@@ -103,6 +155,10 @@ public class KintoneQueryNotInOverloadTests {
 
         Assert.Equal("Title not in (\"A\", \"B\", \"C\")", query);
     }
+
+    /// <summary>
+    /// NotInメソッドのオーバーロードに空のリストを渡した場合、ArgumentExceptionがスローされることをテストします。
+    /// </summary>
     [Fact]
     public void NotInEmptyParamsThrowsException() {
         var query = new KintoneQuery<BookModel>();
@@ -111,6 +167,10 @@ public class KintoneQueryNotInOverloadTests {
 
         Assert.Contains("値のリストが空です", ex.Message);
     }
+
+    /// <summary>
+    /// NotInメソッドのオーバーロードにnullを渡した場合、ArgumentNullExceptionがスローされることをテストします。
+    /// </summary>
     [Fact]
     public void NotInNullParamsThrowsException() {
         var query = new KintoneQuery<BookModel>();

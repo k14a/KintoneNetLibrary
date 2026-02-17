@@ -14,7 +14,13 @@ using Xunit;
 
 namespace KintoneNetLibrary.Tests.Api;
 
+/// <summary>
+/// KintoneApi のファイルアップロード機能に関するユニットテストクラス。
+/// </summary>
 public partial class KintoneApiFileUploadTests {
+    /// <summary>
+    /// UploadFileAsync メソッドが正常にファイルをアップロードし、APIから返された fileKey を正しく返すことを検証するテスト。
+    /// </summary>
     [Fact]
     public async Task UploadFileAsyncReturnsFileKeyWhenSuccess() {
         // Arrange
@@ -38,8 +44,12 @@ public partial class KintoneApiFileUploadTests {
         // Assert
         Assert.Equal(expectedFileKey, fileKey);
     }
+
+    /// <summary>
+    /// UploadFileAsync メソッドがエラー時に KintoneException をスローすることを検証するテスト。
+    /// </summary>
     [Fact]
-    public async Task UploadFileAsyncThrowsKintoneExceptionWhenError() {
+    public async Task UploadFileAsyncThrowsKintoneExceptionWhenApiReturnsError() {
         // Arrange
         var errorJson = """
         {
@@ -67,6 +77,10 @@ public partial class KintoneApiFileUploadTests {
         Assert.Equal("GAIA_CO02", ex.Error?.Code);
         Assert.Equal("error-id-456", ex.Error?.ID);
     }
+
+    /// <summary>
+    /// UploadFileAsync メソッドがローカルでファイルサイズの制限を超えた場合に KintoneException をスローすることを検証するテスト。
+    /// </summary>
     [Fact]
     public async Task UploadFileAsyncThrowsWhenFileSizeExceedsMaxUploadFileSize() {
         var httpClient = KintoneHttpTestHelper.CreateMockHttpClient(_ =>
@@ -83,6 +97,10 @@ public partial class KintoneApiFileUploadTests {
         var ex = await Assert.ThrowsAsync<KintoneException>(() => api.UploadFileAsync(stream, "dummy.txt"));
         Assert.Equal("LOCAL_FILE_TOO_LARGE", ex.Error.Code);
     }
+
+    /// <summary>
+    /// UploadFileAsync メソッドがローカルでファイルサイズの制限を超えた場合に、適切なエラーメッセージとコードを持つ KintoneException をスローすることを検証するテスト。
+    /// </summary>
     [Fact]
     public async Task UploadFileAsyncThrowsExceptionWhenFileSizeExceedsLimit() {
         // Arrange
@@ -103,6 +121,10 @@ public partial class KintoneApiFileUploadTests {
         Assert.Equal("LOCAL_FILE_TOO_LARGE", ex.Error.Code);
         Assert.Contains("ファイルサイズが制限", ex.Error.Message);
     }
+
+    /// <summary>
+    /// UploadFileAsync メソッドがシーク不可能なストリームを受け取った場合に InvalidOperationException をスローすることを検証するテスト。
+    /// </summary>
     [Fact]
     public async Task UploadFileAsyncThrowsExceptionWhenStreamIsNotSeekable() {
         using var stream = new NonSeekableStream();
@@ -117,6 +139,10 @@ public partial class KintoneApiFileUploadTests {
 
         Assert.Contains("シーク可能なストリーム", ex.Message);
     }
+
+    /// <summary>
+    /// UploadFileAsync メソッドが遅延ストリームを正常に処理できることを検証するテスト。
+    /// </summary>
     [Fact]
     public async Task UploadFileAsyncUsingSlowStreamDoesNotThrow() {
         var content = Encoding.UTF8.GetBytes("test slow stream content");
@@ -135,6 +161,10 @@ public partial class KintoneApiFileUploadTests {
 
         Assert.Null(ex);
     }
+
+    /// <summary>
+    /// UploadFileAsync メソッドが読み込み中に例外をスローするストリームを受け取った場合に、HttpRequestException をスローし、その内部例外が IOException であることを検証するテスト。
+    /// </summary>
     [Fact]
     public async Task UploadFileAsyncUsingFaultyStreamThrowsIOException() {
         var content = Encoding.UTF8.GetBytes("test faulty stream content");
@@ -155,6 +185,10 @@ public partial class KintoneApiFileUploadTests {
         Assert.IsType<IOException>(ex.InnerException); // 内部例外が IOException であることを確認
         Assert.Contains("意図的な例外", ex.InnerException?.Message);
     }
+
+    /// <summary>
+    /// UploadFileAsync メソッドが空のストリームを受け取った場合に InvalidOperationException をスローすることを検証するテスト。
+    /// </summary>
     [Fact]
     public async Task UploadFileAsyncUsingEmptyStreamThrowsInvalidOperationException() {
         using var emptyStream = new EmptyStream(); // Length == 0 のストリーム
@@ -167,6 +201,12 @@ public partial class KintoneApiFileUploadTests {
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             api.UploadFileAsync(emptyStream, "empty.txt"));
     }
+
+    /// <summary>
+    /// UploadFileAsync メソッドが HTTP レスポンスでエラーコードが返された場合に、KintoneException をスローし、そのエラーコードとメッセージが正しく設定されていることを検証するテスト。
+    /// </summary>
+    /// <param name="statusCode">HTTP レスポンスのステータスコード</param>
+    /// <param name="expectedCode">期待されるエラーコード</param>
     [Theory]
     [InlineData(HttpStatusCode.BadRequest, "400")]
     [InlineData(HttpStatusCode.InternalServerError, "500")]
@@ -192,6 +232,10 @@ public partial class KintoneApiFileUploadTests {
         Assert.Equal("SAMPLE_ERROR_CODE", ex.Error.Code);
         Assert.Equal("アップロード失敗", ex.Error.Message);
     }
+
+    /// <summary>
+    /// UploadFileAsync メソッドが特殊文字を含むファイル名を正しく処理し、APIに正しい形式で送信されることを検証するテスト。
+    /// </summary>
     [Fact]
     public async Task UploadFileAsyncWithSpecialFileNameWorksCorrectly() {
         var expectedFileKey = "special_key";
@@ -243,6 +287,10 @@ public partial class KintoneApiFileUploadTests {
 
         Assert.Equal(expectedFileKey, fileKey);
     }
+
+    /// <summary>
+    /// UploadFileAsync メソッドが null のストリームを受け取った場合に ArgumentNullException をスローすることを検証するテスト。
+    /// </summary>
     [Fact]
     public async Task UploadFileAsyncNullStreamThrowsArgumentNullException() {
         var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123);
@@ -256,6 +304,10 @@ public partial class KintoneApiFileUploadTests {
 
         Assert.Contains("stream", ex.ParamName);
     }
+
+    /// <summary>
+    /// UploadFileAsync メソッドが API から fileKey が null のレスポンスを受け取った場合に、KintoneException をスローし、エラーコードが "FILEKEY_MISSING" であることを検証するテスト。
+    /// </summary>
     [Fact]
     public async Task UploadFileAsyncResponseWithNullFileKeyThrowsKintoneException() {
         var httpClient = KintoneHttpTestHelper.CreateMockHttpClient(request => {
@@ -277,7 +329,10 @@ public partial class KintoneApiFileUploadTests {
         Assert.Contains("fileKey", ex.Error.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact(DisplayName = "UploadFileAsync: 非常に長いファイル名（255バイト以上）でも正常にアップロードされる")]
+    /// <summary>
+    /// UploadFileAsync メソッドが非常に長いファイル名（255バイト以上）を正しく処理し、APIに正しい形式で送信されることを検証するテスト。
+    /// </summary>
+    [Fact]
     public async Task UploadFileAsyncWithVeryLongFileNameWorksCorrectly() {
         // Arrange
         var stream = new MemoryStream(Encoding.UTF8.GetBytes("dummy"));
@@ -313,7 +368,11 @@ public partial class KintoneApiFileUploadTests {
         // Assert
         Assert.Equal(dummyFileKey, result);
     }
-    [Fact(DisplayName = "UploadFileAsync_ResetsStreamPosition_BeforeUpload")]
+
+    /// <summary>
+    /// UploadFileAsync メソッドがストリームの Position を途中に設定した状態で渡された場合に、API に送信される前に Position をリセットして全体をアップロードすることを検証するテスト。
+    /// </summary>
+    [Fact]
     public async Task UploadFileAsyncResetsStreamPositionBeforeUpload() {
         // Arrange
         const string fileName = "positioned.txt";
@@ -344,7 +403,12 @@ public partial class KintoneApiFileUploadTests {
         // Assert
         Assert.Equal("dummy_file_key", fileKey);
     }
-    [Theory(DisplayName = "UploadFileAsync_WithControlCharactersInFileName_WorksCorrectly")]
+
+    /// <summary>
+    /// UploadFileAsync メソッドがファイル名に制御文字（例：改行やキャリッジリターン）が含まれている場合に、API に送信される前にこれらの文字を適切に処理して送信することを検証するテスト。
+    /// </summary>
+    /// <param name="fileName">テスト対象のファイル名</param>
+    [Theory]
     [InlineData("test\n.txt")]
     [InlineData("test\r.txt")]
     public async Task UploadFileAsyncWithControlCharactersInFileNameWorksCorrectly(string fileName) {
@@ -390,7 +454,12 @@ public partial class KintoneApiFileUploadTests {
         // Assert
         Assert.Equal("dummy_file_key", fileKey);
     }
-    [Theory(DisplayName = "UploadFileAsync_ContentTypeIsApplicationOctetStream_WhenFileNameIsNullOrEmptyOrNull")]
+
+    /// <summary>
+    /// UploadFileAsync メソッドがファイル名が null、空文字、またはスペースのみの場合に、API に送信される前に Content-Type を "application/octet-stream" に設定して送信することを検証するテスト。
+    /// </summary>
+    /// <param name="testFileName">テスト対象のファイル名</param>
+    [Theory]
     [InlineData(null)]      // null もテスト対象に追加
     [InlineData("")]
     [InlineData(" ")]
@@ -424,6 +493,10 @@ public partial class KintoneApiFileUploadTests {
         // Assert
         Assert.Equal("dummy_file_key", fileKey);
     }
+
+    /// <summary>
+    /// UploadFileAsync メソッドがキャンセルされた CancellationToken を受け取った場合に、TaskCanceledException をスローすることを検証するテスト。
+    /// </summary>
     [Fact]
     public async Task UploadFileAsyncCancellationRequestedThrowsTaskCanceledException() {
         // Arrange
@@ -444,6 +517,10 @@ public partial class KintoneApiFileUploadTests {
             await api.UploadFileAsync(dummyFileStream, fileName, cts.Token);
         });
     }
+
+    /// <summary>
+    /// UploadFileAsync メソッドが HTTP クライアントのタイムアウトによりキャンセルされた場合に、TaskCanceledException をスローすることを検証するテスト。
+    /// </summary>
     [Fact]
     public async Task UploadFileAsyncTimeoutThrowsTaskCanceledException() {
         // Arrange
@@ -477,6 +554,10 @@ public partial class KintoneApiFileUploadTests {
 
         Assert.True(ex is not null, "Expected TaskCanceledException due to timeout");
     }
+
+    /// <summary>
+    /// UploadFileAsync メソッドが API から予期しない Content-Type（例：text/html）でレスポンスを受け取った場合に、KintoneException をスローすることを検証するテスト。
+    /// </summary>
     [Fact]
     public async Task UploadFileAsyncResponseWithUnexpectedContentTypeThrowsJsonException() {
         // Arrange
@@ -504,6 +585,10 @@ public partial class KintoneApiFileUploadTests {
             await api.UploadFileAsync(dummyContent, fileName);
         });
     }
+
+    /// <summary>
+    /// UploadFileAsync メソッドが読み込み中に例外をスローするストリームを受け取った場合に、HttpRequestException をスローし、その内部例外が IOException であることを検証するテスト。
+    /// </summary>
     [Fact]
     public async Task UploadFileAsyncStreamThrowsExceptionDuringReadThrowsHttpRequestException() {
         // Arrange
@@ -540,8 +625,17 @@ public partial class KintoneApiFileUploadTests {
     }
 
     #region <<Private methods>>
+    /// <summary>
+    /// Content-Disposition ヘッダーを抽出するための正規表現を生成するメソッド。
+    /// </summary>
+    /// <returns>Content-Disposition ヘッダーを抽出する正規表現オブジェクト</returns>
     [GeneratedRegex(@"Content-Disposition: form-data;[^\r\n]*")]
     private static partial Regex ContentDispositionRegex();
+
+    /// <summary>
+    /// Content-Disposition ヘッダーから filename= の部分を抽出するための正規表現を生成するメソッド。
+    /// </summary>
+    /// <returns>filename= の部分を抽出する正規表現オブジェクト</returns>
     [GeneratedRegex(@"filename=(?:""([^""]*)""|([^;]*))")]
     private static partial Regex FileNameRegex();
     #endregion

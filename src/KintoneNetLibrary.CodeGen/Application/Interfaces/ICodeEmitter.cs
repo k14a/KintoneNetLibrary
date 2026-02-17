@@ -13,11 +13,12 @@ public interface ICodeEmitter {
     /// 対応する生成言語
     /// </summary>
     GenerateLanguages Language { get; }
+
     /// <summary>
     /// コード生成を実行します
     /// </summary>
-    /// <param name="schema"></param>
-    /// <param name="options"></param>
-    /// <returns></returns>
+    /// <param name="schema">Kintone アプリスキーマ</param>
+    /// <param name="options">コード生成オプション</param>
+    /// <returns>生成されたモデル結果</returns>
     GeneratedModelResult Emit(KintoneAppSchema schema, CodeEmitterOptions options);
 }

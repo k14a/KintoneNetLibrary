@@ -1,12 +1,15 @@
 ﻿namespace KintoneNetLibrary.Extensions;
 
 /// <summary>
-/// IList&lt;T&gt; 用のユーティリティ拡張メソッド。
+/// IList&lt;T&gt; に対する拡張メソッドを提供するクラス
 /// </summary>
 public static class IListExtensions {
     /// <summary>
-    /// IEnumerable&lt;T&gt; の要素を IList&lt;T&gt; に追加します。
+    /// IList&lt;T&gt;.AddRangeをIList&lt;T&gt;に追加
     /// </summary>
+    /// <typeparam name="T">要素の型</typeparam>
+    /// <param name="target">追加先のIList&lt;T&gt;</param>
+    /// <param name="source">追加する要素のコレクション</param>
     public static void AddRange<T>(this IList<T> target, IEnumerable<T> source) {
         ArgumentNullException.ThrowIfNull(target);
 
@@ -21,10 +24,10 @@ public static class IListExtensions {
     /// <summary>
     /// List&lt;T&gt;.RemoveAllをIList&lt;T&gt;に追加
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="list"></param>
-    /// <param name="match"></param>
-    /// <returns></returns>
+    /// <typeparam name="T">要素の型</typeparam>
+    /// <param name="list">操作対象のIList&lt;T&gt;</param>
+    /// <param name="match">削除条件を示すPredicate&lt;T&gt;</param>
+    /// <returns>削除された要素の数</returns>
     /// <exception cref="ArgumentNullException"></exception>
     public static int RemoveAll<T>(this IList<T> list, Predicate<T> match) {
         ArgumentNullException.ThrowIfNull(list);

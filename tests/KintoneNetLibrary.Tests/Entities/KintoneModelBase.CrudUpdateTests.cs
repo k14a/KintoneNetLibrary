@@ -9,7 +9,13 @@ using Xunit;
 
 namespace KintoneNetLibrary.Tests.Entities;
 
+/// <summary>
+/// KintoneModelBaseのUpdateAsync、UpdateBulkAsync、UpdateSingleAsyncメソッドのテストクラス。
+/// </summary>
 public class KintoneModelBaseUpdateTests {
+    /// <summary>
+    /// テスト用のダミーモデルクラス。KintoneModelBaseを継承し、必要なプロパティとフィールドを定義しています。
+    /// </summary>
     public class DummyModel : KintoneModelBase<DummyModel> {
         public override int AppID { get; init; }
         public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
@@ -21,6 +27,9 @@ public class KintoneModelBaseUpdateTests {
     }
 
     #region <<Test methods>>
+    /// <summary>
+    /// UpdateAsyncが成功した場合、期待される結果を返すことをテストします。モックサービスを使用して、UpdateAsyncが正しい引数で呼び出され、成功の結果が返されることを検証します。
+    /// </summary>
     [Fact]
     public async Task UpdateAsyncSuccessReturnsExpectedResult() {
         // Arrange
@@ -47,6 +56,10 @@ public class KintoneModelBaseUpdateTests {
         Assert.False(result.HasFailures);
         mockService.Verify(s => s.UpdateAsync(It.Is<IList<DummyModel>>(arr => arr.Count == 1 && arr[0] == model), false), Times.Once);
     }
+
+    /// <summary>
+    /// UpdateAsyncが失敗した場合、期待される失敗の結果を返すことをテストします。モックサービスを使用して、UpdateAsyncが正しい引数で呼び出され、失敗の結果が返されることを検証します。
+    /// </summary>
     [Fact]
     public async Task UpdateAsyncFailureReturnsFailedResult() {
         // Arrange
@@ -80,6 +93,10 @@ public class KintoneModelBaseUpdateTests {
         Assert.Equal("Invalid FieldB", result.Failed.First().ErrorMessage);
         mockService.Verify(s => s.UpdateAsync(It.Is<IList<DummyModel>>(arr => arr.Count == 1 && arr[0] == model), false), Times.Once);
     }
+
+    /// <summary>
+    /// UpdateAsyncでenableSingleRetryOnErrorフラグがtrueの場合、サービスに正しい引数で呼び出されることをテストします。モックサービスを使用して、UpdateAsyncがenableSingleRetryOnErrorフラグをtrueで呼び出されることを検証します。
+    /// </summary>
     [Fact]
     public async Task UpdateAsyncWithRetryFlagTruePassesFlagToService() {
         // Arrange
@@ -102,6 +119,10 @@ public class KintoneModelBaseUpdateTests {
         Assert.False(result.HasFailures);
         mockService.Verify(s => s.UpdateAsync(It.Is<IList<DummyModel>>(arr => arr.Count == 1 && arr[0] == model), true), Times.Once);
     }
+
+    /// <summary>
+    /// UpdateBulkAsyncがすべて成功した場合、期待される成功の結果を返すことをテストします。モックサービスを使用して、UpdateAsyncが正しい引数で呼び出され、すべて成功の結果が返されることを検証します。
+    /// </summary>
     [Fact]
     public async Task UpdateBulkAsyncAllSuccessReturnsAllSucceeded() {
         // Arrange
@@ -130,6 +151,10 @@ public class KintoneModelBaseUpdateTests {
         Assert.False(result.HasFailures);
         mockService.Verify(s => s.UpdateAsync(It.Is<IList<DummyModel>>(arr => arr.SequenceEqual(models)), false), Times.Once);
     }
+
+    /// <summary>
+    /// UpdateBulkAsyncで一部のレコードが失敗した場合、期待される成功と失敗の結果を返すことをテストします。モックサービスを使用して、UpdateAsyncが正しい引数で呼び出され、一部成功と一部失敗の結果が返されることを検証します。
+    /// </summary>
     [Fact]
     public async Task UpdateBulkAsyncPartialFailureReturnsCorrectSucceededAndFailed() {
         // Arrange
@@ -169,6 +194,10 @@ public class KintoneModelBaseUpdateTests {
 
         mockService.Verify(s => s.UpdateAsync(It.Is<IList<DummyModel>>(arr => arr.SequenceEqual(models)), false), Times.Once);
     }
+
+    /// <summary>
+    /// UpdateBulkAsyncでenableSingleRetryOnErrorフラグがtrueの場合、サービスに正しい引数で呼び出されることをテストします。モックサービスを使用して、UpdateAsyncがenableSingleRetryOnErrorフラグをtrueで呼び出されることを検証します。
+    /// </summary>
     [Fact]
     public async Task UpdateBulkAsyncWithRetryFlagTruePassesFlagToService() {
         // Arrange
@@ -194,6 +223,10 @@ public class KintoneModelBaseUpdateTests {
         Assert.False(result.HasFailures);
         mockService.Verify(s => s.UpdateAsync(It.Is<IList<DummyModel>>(arr => arr.SequenceEqual(models)), true), Times.Once);
     }
+
+    /// <summary>
+    /// UpdateBulkAsyncで空のリストを渡した場合、空の結果を返すことをテストします。モックサービスを使用して、UpdateAsyncが空のリストで呼び出されることを検証し、結果が空であることを確認します。
+    /// </summary>
     [Fact]
     public async Task UpdateBulkAsyncEmptyListReturnsEmptyResult() {
         // Arrange
@@ -216,6 +249,10 @@ public class KintoneModelBaseUpdateTests {
         Assert.False(result.HasFailures);
         mockService.Verify(s => s.UpdateAsync(It.Is<IList<DummyModel>>(arr => arr.Count == 0), false), Times.Once);
     }
+
+    /// <summary>
+    /// UpdateSingleAsyncがすべて成功した場合、期待される成功の結果を返すことをテストします。モックサービスを使用して、UpdateAsyncが正しい引数で呼び出され、すべて成功の結果が返されることを検証します。
+    /// </summary>
     [Fact]
     public async Task UpdateSingleAsyncAllSuccessReturnsAllSucceeded() {
         // Arrange
@@ -243,6 +280,10 @@ public class KintoneModelBaseUpdateTests {
         Assert.False(result.HasFailures);
         mockService.Verify(s => s.UpdateAsync(It.Is<IList<DummyModel>>(arr => arr.Count == 1), false), Times.Exactly(2));
     }
+
+    /// <summary>
+    /// UpdateSingleAsyncで一部のレコードが失敗した場合、期待される成功と失敗の結果を返すことをテストします。モックサービスを使用して、UpdateAsyncが正しい引数で呼び出され、一部成功と一部失敗の結果が返されることを検証します。
+    /// </summary>
     [Fact]
     public async Task UpdateSingleAsyncPartialFailureReturnsCorrectSucceededAndFailed() {
         // Arrange
@@ -285,6 +326,10 @@ public class KintoneModelBaseUpdateTests {
 
         mockService.Verify(s => s.UpdateAsync(It.Is<IList<DummyModel>>(arr => arr.Count == 1), false), Times.Exactly(3));
     }
+
+    /// <summary>
+    /// UpdateSingleAsyncでenableSingleRetryOnErrorフラグがtrueの場合、サービスに正しい引数で呼び出されることをテストします。モックサービスを使用して、UpdateAsyncがenableSingleRetryOnErrorフラグをtrueで呼び出されることを検証します。
+    /// </summary>
     [Fact]
     public async Task UpdateSingleAsyncWithRetryFlagTrueCallsServiceWithRetry() {
         // Arrange
@@ -309,6 +354,10 @@ public class KintoneModelBaseUpdateTests {
         Assert.False(result.HasFailures);
         mockService.Verify(s => s.UpdateAsync(It.Is<IList<DummyModel>>(arr => arr.Count == 1), true), Times.Exactly(2));
     }
+
+    /// <summary>
+    /// UpdateSingleAsyncで空のリストを渡した場合、空の結果を返すことをテストします。モックサービスを使用して、UpdateAsyncが空のリストで呼び出されることを検証し、結果が空であることを確認します。1j
+    /// </summary>
     [Fact]
     public async Task UpdateSingleAsyncEmptyListReturnsEmptyResult() {
         // Arrange

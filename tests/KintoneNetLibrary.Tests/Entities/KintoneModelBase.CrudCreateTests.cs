@@ -14,7 +14,13 @@ using Xunit;
 
 namespace KintoneNetLibrary.Tests.Entities;
 
+/// <summary>
+/// KintoneModelBase の CreateAsync および CreateBulkAsync メソッドに関するユニットテストクラス。
+/// </summary>
 public class KintoneModelBaseCreateTests {
+    /// <summary>
+    /// テスト用のダミーモデルクラス。KintoneModelBase を継承し、必要なプロパティとフィールドを定義している。
+    /// </summary>
     public class DummyModel : KintoneModelBase<DummyModel> {
         public override int AppID { get; init; }
         public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
@@ -26,6 +32,9 @@ public class KintoneModelBaseCreateTests {
     }
 
     #region <<Test methods>>
+    /// <summary>
+    /// CreateAsync メソッドが IKintoneModelCrudService の CreateAsync メソッドを正しい引数で呼び出し、期待される結果を返すことをテストする。
+    /// </summary>
     [Fact]
     public async Task CreateAsyncCallsServiceWithCorrectArgumentsReturnsExpectedResult() {
         // Arrange
@@ -51,6 +60,10 @@ public class KintoneModelBaseCreateTests {
         Assert.False(result.HasFailures);
         mockService.Verify(s => s.CreateAsync(It.Is<IList<DummyModel>>(arr => arr.Count == 1 && arr[0] == model), false), Times.Once);
     }
+
+    /// <summary>
+    /// CreateAsync メソッドに enableSingleRetryOnError フラグが true の場合、IKintoneModelCrudService の CreateAsync メソッドに正しい引数で呼び出されることをテストする。
+    /// </summary>
     [Fact]
     public async Task CreateAsyncWithRetryFlagTruePassesFlagToService() {
         // Arrange
@@ -71,6 +84,10 @@ public class KintoneModelBaseCreateTests {
         // Assert
         mockService.Verify(s => s.CreateAsync(It.IsAny<IList<DummyModel>>(), true), Times.Once);
     }
+
+    /// <summary>
+    /// CreateAsync メソッドに空のモデルリストを渡した場合、IKintoneModelCrudService の CreateAsync メソッドが呼び出されず、空の結果が返されることをテストする。
+    /// </summary>
     [Fact]
     public async Task CreateBulkAsyncCallsServiceWithCorrectArgumentsReturnsExpectedResult() {
         // Arrange
@@ -100,6 +117,10 @@ public class KintoneModelBaseCreateTests {
         Assert.False(result.HasFailures);
         mockService.Verify(s => s.CreateAsync(It.Is<IList<DummyModel>>(arr => arr.SequenceEqual(models)), false), Times.Once);
     }
+
+    /// <summary>
+    /// CreateBulkAsync メソッドに enableSingleRetryOnError フラグが true の場合、IKintoneModelCrudService の CreateAsync メソッドに正しい引数で呼び出されることをテストする。
+    /// </summary>
     [Fact]
     public async Task CreateBulkAsyncWithRetryFlagTruePassesFlagToService() {
         // Arrange
@@ -122,6 +143,10 @@ public class KintoneModelBaseCreateTests {
         // Assert
         mockService.Verify(s => s.CreateAsync(It.Is<IList<DummyModel>>(arr => arr.SequenceEqual(models)), true), Times.Once);
     }
+
+    /// <summary>
+    /// CreateBulkAsync メソッドに空のモデルリストを渡した場合、IKintoneModelCrudService の CreateAsync メソッドが呼び出されず、空の結果が返されることをテストする。
+    /// </summary>
     [Fact]
     public async Task CreateBulkAsyncWithEmptyListReturnsEmptyResult() {
         // Arrange
@@ -144,6 +169,10 @@ public class KintoneModelBaseCreateTests {
         Assert.False(result.HasFailures);
         mockService.Verify(s => s.CreateAsync(It.Is<IList<DummyModel>>(arr => arr.Count == 0), false), Times.Once);
     }
+
+    /// <summary>
+    /// CreateBulkAsync メソッドが部分的に成功した場合、正しい成功と失敗の結果を返すことをテストする。
+    /// </summary>
     [Fact]
     public async Task CreateBulkAsyncPartialSuccessReturnsCorrectSucceededAndFailedResults() {
         // Arrange
@@ -184,6 +213,10 @@ public class KintoneModelBaseCreateTests {
 
         mockService.Verify(s => s.CreateAsync(It.Is<IList<DummyModel>>(arr => arr.SequenceEqual(models)), false), Times.Once);
     }
+
+    /// <summary>
+    /// CreateSingleAsync メソッドが複数のモデルを処理する際、すべてのモデルが成功した場合に正しい結果を返すことをテストする。
+    /// </summary>
     [Fact]
     public async Task CreateSingleAsyncMultipleModelsAllSuccessReturnsAllSucceeded() {
         // Arrange
@@ -212,6 +245,10 @@ public class KintoneModelBaseCreateTests {
         mockService.Verify(s => s.CreateAsync(It.Is<IList<DummyModel>>(arr => arr.Count == 1 && arr[0] == model1), false), Times.Once);
         mockService.Verify(s => s.CreateAsync(It.Is<IList<DummyModel>>(arr => arr.Count == 1 && arr[0] == model2), false), Times.Once);
     }
+
+    /// <summary>
+    /// CreateSingleAsync メソッドが複数のモデルを処理する際、部分的に成功した場合に正しい成功と失敗の結果を返すことをテストする。
+    /// </summary>
     [Fact]
     public async Task CreateSingleAsyncMultipleModelsPartialFailureReturnsCorrectSucceededAndFailed() {
         // Arrange
@@ -254,6 +291,10 @@ public class KintoneModelBaseCreateTests {
 
         mockService.Verify(s => s.CreateAsync(It.Is<IList<DummyModel>>(arr => arr.Count == 1), false), Times.Exactly(3));
     }
+
+    /// <summary>
+    /// CreateSingleAsync メソッドに enableSingleRetryOnError フラグが true の場合、失敗したモデルに対して再試行が行われ、最終的にすべてのモデルが成功することをテストする。
+    /// </summary>
     [Fact]
     public async Task CreateSingleAsyncWithRetryFlagTrueCallsServiceWithRetry() {
         // Arrange
@@ -278,6 +319,10 @@ public class KintoneModelBaseCreateTests {
         Assert.False(result.HasFailures);
         mockService.Verify(s => s.CreateAsync(It.Is<IList<DummyModel>>(arr => arr.Count == 1), true), Times.Exactly(2));
     }
+
+    /// <summary>
+    /// CreateSingleAsync メソッドに空のモデルリストを渡した場合、IKintoneModelCrudService の CreateAsync メソッドが呼び出されず、空の結果が返されることをテストする。
+    /// </summary>
     [Fact]
     public async Task CreateSingleAsyncEmptyListReturnsEmptyResult() {
         // Arrange

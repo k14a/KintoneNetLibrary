@@ -9,7 +9,13 @@ using Xunit;
 
 namespace KintoneNetLibrary.Tests.Entities;
 
+/// <summary>
+/// KintoneModelBaseの保存関連のテストクラス。
+/// </summary>
 public class KintoneModelBaseSaveTests {
+    /// <summary>
+    /// テスト用のダミーモデルクラス。実際のアプリIDやアクセス情報はテスト内でモックされるため、適当な値を設定している。
+    /// </summary>
     public class DummyModel : KintoneModelBase<DummyModel> {
         public override int AppID { get; init; }
         public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
@@ -21,6 +27,9 @@ public class KintoneModelBaseSaveTests {
     }
 
     #region <<Test methods>>
+    /// <summary>
+    /// SaveAsyncが成功した場合、期待される結果を返すことをテストする。
+    /// </summary>
     [Fact]
     public async Task SaveAsyncSuccessReturnsExpectedResult() {
         // Arrange
@@ -47,6 +56,10 @@ public class KintoneModelBaseSaveTests {
         Assert.False(result.HasFailures);
         mockService.Verify(s => s.SaveAsync(It.Is<IList<DummyModel>>(arr => arr.Count == 1 && arr[0] == model), It.IsAny<bool>()), Times.Once);
     }
+
+    /// <summary>
+    /// SaveAsyncが失敗した場合、期待される失敗結果を返すことをテストする。
+    /// </summary>
     [Fact]
     public async Task SaveAsyncFailureReturnsExpectedFailureResult() {
         // Arrange
@@ -81,6 +94,10 @@ public class KintoneModelBaseSaveTests {
         Assert.Contains("Invalid FieldB", result.Failed[0].ErrorMessage);
         mockService.Verify(s => s.SaveAsync(It.Is<IList<DummyModel>>(arr => arr.Count == 1 && arr[0] == model), It.IsAny<bool>()), Times.Once);
     }
+
+    /// <summary>
+    /// SaveAsyncでリトライフラグをtrueにした場合、サービスに正しくフラグが渡されることをテストする。
+    /// </summary>
     [Fact]
     public async Task SaveAsyncWithRetryFlagTruePassesFlagToService() {
         // Arrange
@@ -103,6 +120,10 @@ public class KintoneModelBaseSaveTests {
         Assert.False(result.HasFailures);
         mockService.Verify(s => s.SaveAsync(It.Is<IList<DummyModel>>(arr => arr.Count == 1 && arr[0] == model), true), Times.Once);
     }
+
+    /// <summary>
+    /// SaveWithRetryAsyncが成功した場合、リトライフラグに関係なく期待される結果を返すことをテストする。
+    /// </summary>
     [Fact]
     public async Task SaveWithRetryAsyncSuccessWithoutRetryReturnsExpectedResult() {
         // Arrange
@@ -129,6 +150,10 @@ public class KintoneModelBaseSaveTests {
         Assert.False(result.HasFailures);
         mockService.Verify(s => s.SaveWithRetryAsync(It.Is<IList<DummyModel>>(arr => arr.Count == 1 && arr[0] == model), false, true), Times.Once);
     }
+
+    /// <summary>
+    /// SaveWithRetryAsyncが初回失敗し、リトライで成功した場合、最終的に成功結果を返すことをテストする。
+    /// </summary>
     [Fact]
     public async Task SaveWithRetryAsyncFirstAttemptFailsRetrySucceeds() {
         // Arrange
@@ -160,6 +185,10 @@ public class KintoneModelBaseSaveTests {
         Assert.False(result.HasFailures);
         mockService.Verify(s => s.SaveWithRetryAsync(It.Is<IList<DummyModel>>(arr => arr.Count == 1 && arr[0] == model), true, true), Times.Once);
     }
+
+    /// <summary>
+    /// SaveWithRetryAsyncが全ての試行で失敗した場合、最終的に失敗結果を返すことをテストする。
+    /// </summary>
     [Fact]
     public async Task SaveWithRetryAsyncAllAttemptsFailReturnsFailure() {
         // Arrange
@@ -193,6 +222,10 @@ public class KintoneModelBaseSaveTests {
         Assert.Equal("Network timeout", result.Failed[0].ErrorMessage);
         mockService.Verify(s => s.SaveWithRetryAsync(It.Is<IList<DummyModel>>(arr => arr.Count == 1 && arr[0] == model), true, true), Times.Once);
     }
+
+    /// <summary>
+    /// SaveWithRetryAsyncで、初回の作成が失敗し、リトライで更新に切り替えて成功した場合、最終的に成功結果を返すことをテストする。
+    /// </summary>
     [Fact]
     public async Task SaveWithRetryAsyncCreateFailsUpdateRetrySucceedsWhenEnabled() {
         // Arrange
@@ -229,6 +262,10 @@ public class KintoneModelBaseSaveTests {
         Assert.False(result.HasFailures);
         mockService.Verify(s => s.SaveWithRetryAsync(It.IsAny<IList<DummyModel>>(), true, true), Times.Once);
     }
+
+    /// <summary>
+    /// SaveWithRetryAsyncで、初回の作成が失敗し、リトライで更新に切り替えるオプションが無効な場合、最終的に失敗結果を返すことをテストする。
+    /// </summary>
     [Fact]
     public async Task SaveWithRetryAsyncCreateFailsNoUpdateRetryWhenDisabled() {
         // Arrange
@@ -262,6 +299,10 @@ public class KintoneModelBaseSaveTests {
         Assert.Equal("Record already exists", result.Failed[0].ErrorMessage);
         mockService.Verify(s => s.SaveWithRetryAsync(It.IsAny<IList<DummyModel>>(), true, false), Times.Once);
     }
+
+    /// <summary>
+    /// SaveBulkAsyncが全てのモデルで成功した場合、期待される成功結果を返すことをテストする。
+    /// </summary>
     [Fact]
     public async Task SaveBulkAsyncAllModelsSucceedReturnsSuccessResult() {
         // Arrange
@@ -291,6 +332,10 @@ public class KintoneModelBaseSaveTests {
         Assert.False(result.HasFailures);
         mockService.Verify(s => s.SaveAsync(models, false), Times.Once);
     }
+
+    /// <summary>
+    /// SaveBulkAsyncが一部のモデルで失敗した場合、成功と失敗の両方の結果を返すことをテストする。
+    /// </summary>
     [Fact]
     public async Task SaveBulkAsyncSomeModelsFailReturnsPartialResult() {
         // Arrange
@@ -326,6 +371,10 @@ public class KintoneModelBaseSaveTests {
         Assert.Equal("Validation error", result.Failed[0].ErrorMessage);
         mockService.Verify(s => s.SaveAsync(It.IsAny<IList<DummyModel>>(), true), Times.Once);
     }
+
+    /// <summary>
+    /// SaveBulkAsyncが全てのモデルで失敗した場合、期待される失敗結果を返すことをテストする。
+    /// </summary>
     [Fact]
     public async Task SaveBulkAsyncAllModelsFailReturnsAllFailures() {
         // Arrange
@@ -366,6 +415,10 @@ public class KintoneModelBaseSaveTests {
         Assert.All(result.Failed, f => Assert.Contains("FieldB must be positive", f.ErrorMessage));
         mockService.Verify(s => s.SaveAsync(models, false), Times.Once);
     }
+
+    /// <summary>
+    /// SaveSingleAsyncが全てのモデルで成功した場合、全て成功の結果を返すことをテストする。
+    /// </summary>
     [Fact]
     public async Task SaveSingleAsyncAllModelsSucceedReturnsAllSuccesses() {
         // Arrange
@@ -404,6 +457,10 @@ public class KintoneModelBaseSaveTests {
         Assert.Contains(model2, result.Succeeded);
         mockService.Verify(s => s.SaveAsync(It.IsAny<IList<DummyModel>>(), false), Times.Exactly(2));
     }
+
+    /// <summary>
+    /// SaveSingleAsyncが一部のモデルで失敗した場合、成功と失敗の両方の結果を返すことをテストする。
+    /// </summary>
     [Fact]
     public async Task SaveSingleAsyncPartialSuccessReturnsMixedResult() {
         // Arrange
@@ -448,6 +505,10 @@ public class KintoneModelBaseSaveTests {
         Assert.Contains("FieldB must be positive", result.Failed[0].ErrorMessage);
         mockService.Verify(s => s.SaveAsync(It.IsAny<IList<DummyModel>>(), false), Times.Exactly(2));
     }
+
+    /// <summary>
+    /// SaveSingleAsyncが全てのモデルで失敗した場合、全て失敗の結果を返すことをテストする。
+    /// </summary>
     [Fact]
     public async Task SaveSingleAsyncAllModelsFailReturnsAllFailures() {
         // Arrange
@@ -497,6 +558,10 @@ public class KintoneModelBaseSaveTests {
         Assert.All(result.Failed, f => Assert.Contains("FieldB must be positive", f.ErrorMessage));
         mockService.Verify(s => s.SaveAsync(It.IsAny<IList<DummyModel>>(), false), Times.Exactly(2));
     }
+
+    /// <summary>
+    /// SaveWithRetryBulkAsyncが全てのモデルで成功した場合、期待される成功結果を返すことをテストする。
+    /// </summary>
     [Fact]
     public async Task SaveWithRetryBulkAsyncAllModelsSucceedReturnsSuccessResult() {
         // Arrange
@@ -527,6 +592,10 @@ public class KintoneModelBaseSaveTests {
         Assert.False(result.HasFailures);
         mockService.Verify(s => s.SaveWithRetryAsync(models, true, true), Times.Once);
     }
+
+    /// <summary>
+    /// SaveWithRetryBulkAsyncが一部のモデルで失敗した場合、成功と失敗の両方の結果を返すことをテストする。
+    /// </summary>
     [Fact]
     public async Task SaveWithRetryBulkAsyncPartialSuccessReturnsMixedResult() {
         // Arrange
@@ -566,6 +635,10 @@ public class KintoneModelBaseSaveTests {
         Assert.Contains("FieldB must be positive", result.Failed[0].ErrorMessage);
         mockService.Verify(s => s.SaveWithRetryAsync(models, false, true), Times.Once);
     }
+
+    /// <summary>
+    /// SaveWithRetryBulkAsyncが全てのモデルで失敗した場合、全て失敗の結果を返すことをテストする。
+    /// </summary>
     [Fact]
     public async Task SaveWithRetryBulkAsyncAllModelsFailReturnsAllFailures() {
         // Arrange
@@ -608,6 +681,10 @@ public class KintoneModelBaseSaveTests {
         Assert.All(result.Failed, f => Assert.Contains("FieldB must be positive", f.ErrorMessage));
         mockService.Verify(s => s.SaveWithRetryAsync(models, false, false), Times.Once);
     }
+
+    /// <summary>
+    /// SaveWithRetryBulkAsyncで、初回の保存が失敗し、リトライで成功した場合、最終的に成功結果を返すことをテストする。
+    /// </summary>
     [Fact]
     public async Task SaveWithRetryBulkAsyncRetryTurnsFailureIntoSuccess() {
         // Arrange
@@ -653,6 +730,10 @@ public class KintoneModelBaseSaveTests {
         Assert.Contains(model, result.Succeeded);
         mockService.Verify(s => s.SaveWithRetryAsync(models, true, true), Times.AtLeastOnce);
     }
+
+    /// <summary>
+    /// SaveWithRetryBulkAsyncで、全ての試行が失敗した場合、最終的に失敗結果を返すことをテストする。
+    /// </summary>
     [Fact]
     public async Task SaveWithRetryBulkAsyncAllAttemptsFailReturnsFinalFailures() {
         // Arrange
@@ -690,6 +771,10 @@ public class KintoneModelBaseSaveTests {
         Assert.Contains("FieldB must be positive", result.Failed[0].ErrorMessage);
         mockService.Verify(s => s.SaveWithRetryAsync(models, true, true), Times.Once);
     }
+
+    /// <summary>
+    /// SaveWithRetrySingleAsyncが全てのモデルで成功した場合、全て成功の結果を返すことをテストする。
+    /// </summary>
     [Fact]
     public async Task SaveWithRetrySingleAsyncAllModelsSucceedReturnsAllSuccesses() {
         // Arrange
@@ -727,6 +812,10 @@ public class KintoneModelBaseSaveTests {
         Assert.Contains(model2, result.Succeeded);
         mockService.Verify(s => s.SaveWithRetryAsync(It.IsAny<IList<DummyModel>>(), false, true), Times.Exactly(2));
     }
+
+    /// <summary>
+    /// SaveWithRetrySingleAsyncが一部のモデルで失敗した場合、成功と失敗の両方の結果を返すことをテストする。
+    /// </summary>
     [Fact]
     public async Task SaveWithRetrySingleAsyncPartialSuccessReturnsMixedResult() {
         // Arrange
@@ -770,6 +859,10 @@ public class KintoneModelBaseSaveTests {
         Assert.Equal("Save failed for model2", result.Failed[0].ErrorMessage);
         mockService.Verify(s => s.SaveWithRetryAsync(It.IsAny<IList<DummyModel>>(), false, true), Times.Exactly(2));
     }
+
+    /// <summary>
+    /// SaveWithRetrySingleAsyncが全てのモデルで失敗した場合、全て失敗の結果を返すことをテストする。
+    /// </summary>
     [Fact]
     public async Task SaveWithRetrySingleAsyncAllModelsFailReturnsAllFailures() {
         // Arrange
@@ -818,6 +911,10 @@ public class KintoneModelBaseSaveTests {
         Assert.Equal("Save failed for model2", result.Failed[1].ErrorMessage);
         mockService.Verify(s => s.SaveWithRetryAsync(It.IsAny<IList<DummyModel>>(), false, true), Times.Exactly(2));
     }
+
+    /// <summary>
+    /// SaveWithRetrySingleAsyncで、初回の保存が失敗し、リトライで成功した場合、最終的に成功結果を返すことをテストする。
+    /// </summary>
     [Fact]
     public async Task SaveWithRetrySingleAsyncRetrySucceedsReturnsSuccessAfterInitialFailure() {
         // Arrange
@@ -860,6 +957,10 @@ public class KintoneModelBaseSaveTests {
         Assert.Contains(model, result.Succeeded);
         mockService.Verify(s => s.SaveWithRetryAsync(It.IsAny<IList<DummyModel>>(), true, true), Times.Once);
     }
+
+    /// <summary>
+    /// SaveWithRetrySingleAsyncで、全ての試行が失敗した場合、最終的に失敗結果を返すことをテストする。
+    /// </summary>
     [Fact]
     public async Task SaveWithRetrySingleAsyncRetryFailsReturnsFailure() {
         // Arrange
@@ -887,10 +988,6 @@ public class KintoneModelBaseSaveTests {
         mockService
             .Setup(s => s.SaveWithRetryAsync(It.Is<IList<DummyModel>>(l => l[0] == model), true, true))
             .ReturnsAsync(failureResult2);
-        // .ReturnsAsync(() => {
-        //     callCount++;
-        //     return callCount == 1 ? failureResult1 : failureResult2;
-        // });
 
         var services = new ServiceCollection();
         services.AddSingleton(mockService.Object);

@@ -12,6 +12,11 @@ namespace KintoneNetLibrary.Tests.Helpers;
 /// HttpClient をモックするためのユーティリティクラス。
 /// </summary>
 public static class KintoneHttpTestHelper {
+    /// <summary>
+    /// HttpRequestMessage を受け取り、HttpResponseMessage を返すハンドラー関数を指定して、モックされた HttpClient を作成します。
+    /// </summary>
+    /// <param name="handler">HttpRequestMessage を受け取り、HttpResponseMessage を返す関数</param>
+    /// <returns>モックされた HttpClient</returns>
     public static HttpClient CreateMockHttpClient(Func<HttpRequestMessage, HttpResponseMessage> handler) {
         var mockHandler = new Mock<HttpMessageHandler>();
 
@@ -29,6 +34,11 @@ public static class KintoneHttpTestHelper {
         };
     }
 
+    /// <summary>
+    /// HttpRequestMessage を完全に複製するための拡張メソッド。これにより、元のリクエストが破棄されたり、ストリームが閉じられたりしても、テストで安全に使用できるようになります。
+    /// </summary>
+    /// <param name="request">複製する HttpRequestMessage</param>
+    /// <returns>複製された HttpRequestMessage</returns>
     private static async Task<HttpRequestMessage> CloneHttpRequestMessageAsync(HttpRequestMessage request) {
         var clone = new HttpRequestMessage(request.Method, request.RequestUri) {
             Version = request.Version
@@ -77,19 +87,49 @@ public static class KintoneHttpTestHelper {
     }
 
 }
+
+/// <summary>
+/// リクエストがキャンセルされた場合のハンドラー。キャンセルトークンがキャンセルされていると例外をスローします。
+/// </summary>
 public class CancelledHandler : HttpMessageHandler {
+    /// <summary>
+    /// リクエストがキャンセルされた場合、OperationCanceledException をスローします。
+    /// </summary>
+    /// <param name="request">送信される HTTP リクエスト</param>
+    /// <param name="cancellationToken">キャンセルトークン</param>
+    /// <returns>HTTP レスポンスメッセージ</returns>
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
         cancellationToken.ThrowIfCancellationRequested();
         return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK));
     }
 }
+
+/// <summary>
+/// リクエストがタイムアウトした場合のハンドラー。指定された時間だけ待機し、その後に HTTP 200 OK を返します。
+/// </summary>
 public class TimeoutHandler : HttpMessageHandler {
+    /// <summary>
+    /// リクエストがタイムアウトした場合、指定された時間だけ待機し、その後に HTTP 200 OK を返します。
+    /// </summary>
+    /// <param name="request">送信される HTTP リクエスト</param>
+    /// <param name="cancellationToken">キャンセルトークン</param>
+    /// <returns>HTTP レスポンスメッセージ</returns>
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
         await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken); // 故意に長時間待機
         return new HttpResponseMessage(HttpStatusCode.OK);
     }
 }
+
+/// <summary>
+/// レスポンスの Content-Type が想定外の場合のハンドラー。HTTP 200 OK を返しますが、Content-Type は "text/html" として設定されます。
+/// </summary>
 public class UnexpectedContentTypeHandler : HttpMessageHandler {
+    /// <summary>
+    /// レスポンスの Content-Type が想定外の場合、HTTP 200 OK を返しますが、Content-Type は "text/html" として設定されます。
+    /// </summary>
+    /// <param name="request">送信される HTTP リクエスト</param>
+    /// <param name="cancellationToken">キャンセルトークン</param>
+    /// <returns>HTTP レスポンスメッセージ</returns>
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
         var response = new HttpResponseMessage(HttpStatusCode.OK) {
             Content = new StringContent("<html><body>Error</body></html>")
@@ -98,7 +138,17 @@ public class UnexpectedContentTypeHandler : HttpMessageHandler {
         return Task.FromResult(response);
     }
 }
+
+/// <summary>
+/// レスポンスのストリームが途中で切断される場合のハンドラー。HTTP 200 OK を返しますが、Content のストリームは指定されたバイト数で切断されます。
+/// </summary>
 public class StreamCutoffHandler : HttpMessageHandler {
+    /// <summary>
+    /// レスポンスのストリームが途中で切断される場合、HTTP 200 OK を返しますが、Content のストリームは指定されたバイト数で切断されます。
+    /// </summary>
+    /// <param name="request">送信される HTTP リクエスト</param>
+    /// <param name="cancellationToken">キャンセルトークン</param>
+    /// <returns>HTTP レスポンスメッセージ</returns>
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
         var faultyStream = new CutoffStream(new byte[] { 1, 2, 3, 4, 5 }, cutoffAfterBytes: 3);
         var response = new HttpResponseMessage(HttpStatusCode.OK) {

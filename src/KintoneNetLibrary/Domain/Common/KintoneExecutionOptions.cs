@@ -1,16 +1,9 @@
 namespace KintoneNetLibrary.Domain.Common;
 
 /// <summary>
-/// KintoneExecutionOptionsクラスは、Kintone APIの実行オプションを定義します。
-/// このクラスは、Kintone APIの実行時に使用されるオプションを提供します。
-/// これにより、Kintone APIの実行方法をカスタマイズでき、特定の要件に応じて動作を調整できます。
+/// KintoneExecutionOptionsクラスは、KintoneNetLibraryで使用されるKintone APIの実行オプションを定義するクラスです。
+/// このクラスには、Kintone APIの実行に関連するオプションが含まれており、最大同時実行数やエラー時の再試行設定などが定義されています。
 /// </summary>
-/// <remarks>
-/// このクラスは、Kintone APIの実行時に使用されるオプションを一元管理するために使用されます。
-/// これにより、Kintone APIの実行方法をカスタマイズでき、特定の要件に応じて動作を調整できます。
-/// 例えば、最大同時実行数やエラー時の再試行オプション、作成から更新への再試行オプションなどが含まれています。
-/// また、これらのオプションは、Kintone APIの実行時に適用され、APIの動作を制御します。
-/// </remarks>
 public class KintoneExecutionOptions {
     /// <summary>
     /// 最大同時実行数を取得または設定します。

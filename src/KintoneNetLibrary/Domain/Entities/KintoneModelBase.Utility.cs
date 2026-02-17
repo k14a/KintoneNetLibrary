@@ -28,9 +28,9 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// <summary>
     /// インデックス情報を適用します。
     /// </summary>
-    /// <param name="indexes"></param>
-    /// <param name="index"></param>
-    /// <returns></returns>
+    /// <param name="indexes">インデックス情報</param>
+    /// <param name="index">適用するインデックスの位置</param>
+    /// <returns>適用後のKintoneIndex</returns>
     private KintoneIndex ApplyIndex(KintoneIndexes indexes, int index = 0) {
         if (indexes.IDs.Count > index && indexes.Revisions.Count > index) {
             this.RecordID = indexes.IDs[index];

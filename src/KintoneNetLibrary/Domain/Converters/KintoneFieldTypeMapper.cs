@@ -10,12 +10,12 @@ public static class KintoneFieldTypeMapper {
     /// <summary>
     /// kintone 側で値を持たないフィールドタイプ（スキップ対象）
     /// </summary>
-    private static readonly HashSet<string> SkipTypes =
-        new(StringComparer.OrdinalIgnoreCase) {
-            "GROUP",
-            "SPACER",
-            "HR"
-        };
+    private static readonly HashSet<string> SkipTypes = [
+        with(StringComparer.OrdinalIgnoreCase),
+        "GROUP",
+        "SPACER",
+        "HR"
+    ];
 
     /// <summary>
     /// kintone の type → KintoneFieldType のマッピング表
@@ -79,7 +79,9 @@ public static class KintoneFieldTypeMapper {
     }
 
     /// <summary>
-    /// スキップ対象かどうか判定します。
-    /// </summary>
+    /// kintone の type がスキップ対象かどうかを判定します。
+    /// これにより、値を持たないフィールドタイプを処理から除外できます。
+    /// </summary> <param name="type">kintone のフィールドタイプ文字列</param>
+    /// <returns>スキップ対象の場合 true、そうでない場合 false</returns>
     public static bool IsSkipped(string type) => SkipTypes.Contains(type);
 }

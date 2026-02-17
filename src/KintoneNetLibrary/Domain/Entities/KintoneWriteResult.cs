@@ -8,7 +8,6 @@ using KintoneNetLibrary.Utils;
 
 namespace KintoneNetLibrary.Domain.Entities;
 
-// コメントは日本語で記述
 /// <summary>
 /// Kintoneへの書き込み結果を表すクラス
 /// </summary>
@@ -46,11 +45,29 @@ public class KintoneWriteResult<T> where T : KintoneModelBase<T>, new() {
     }
 }
 
+/// <summary>
+/// Kintoneへの書き込みに失敗したレコードの情報を表すクラス
+/// </summary>
+/// <typeparam name="T">Kintoneモデルの型</typeparam>
 public class KintoneWriteFailure<T> : IJsonSerializable {
+    /// <summary>
+    /// 書き込みに失敗したレコードの情報
+    /// </summary>
     public T Record { get; init; } = default!;
+    /// <summary>
+    /// エラーメッセージ
+    /// </summary>
     public string ErrorMessage { get; init; } = string.Empty;
+    /// <summary>
+    /// Kintoneのエラー情報
+    /// </summary>
     public KintoneError? Error { get; init; }
 
+    /// <summary>
+    /// 例外情報をJSON形式で取得します。
+    /// </summary>
+    /// <param name="indented">インデントを有効にするかどうか</param>
+    /// <returns>JSON形式の例外情報</returns>
     public string ToJson(bool indented = false) {
         var options = JsonOptionsUtil.Clone(DefaultJsonOptions.Default, indented);
         return JsonSerializer.Serialize(new { this.Record, this.ErrorMessage, this.Error }, options);

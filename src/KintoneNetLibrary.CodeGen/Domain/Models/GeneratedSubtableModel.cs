@@ -8,6 +8,7 @@ public class GeneratedSubTableModel {
     /// 生成されたサブテーブル行クラス名
     /// </summary>
     public string ClassName { get; set; } = "";
+
     /// <summary>
     /// 生成された C# コード全文
     /// </summary>

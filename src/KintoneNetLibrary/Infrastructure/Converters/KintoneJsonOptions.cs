@@ -3,7 +3,6 @@ using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.Infrastructure.Converters;
 
-// コメントは日本語で記述
 /// <summary>
 /// Kintone用のJsonSerializerOptionsを提供するクラス
 /// </summary>
@@ -30,14 +29,13 @@ public static class KintoneJsonOptions {
     /// <summary>
     /// カスタムのJsonSerializerOptionsを作成
     /// </summary>
-    /// <param name="baseOptions"></param>
-    /// <returns></returns>
+    /// <param name="baseOptions">ベースとなるJsonSerializerOptions</param>
+    /// <returns>作成されたJsonSerializerOptions</returns>
     public static JsonSerializerOptions Create(JsonSerializerOptions? baseOptions = null) {
         var options = baseOptions ?? new JsonSerializerOptions {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             WriteIndented = false
         };
-        // options.Converters.Add(new KintoneRecordConverterFactory<T>());
         return options;
     }
 }

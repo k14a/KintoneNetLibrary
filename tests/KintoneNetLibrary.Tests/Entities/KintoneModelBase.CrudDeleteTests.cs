@@ -9,7 +9,13 @@ using Xunit;
 
 namespace KintoneNetLibrary.Tests.Entities;
 
+/// <summary>
+/// KintoneModelBase の DeleteAsync メソッドと関連する一括削除メソッドのテストクラス。
+/// </summary>
 public class KintoneModelBaseDeleteAsyncTests {
+    /// <summary>
+    /// テスト用のダミーモデルクラス。KintoneModelBase を継承し、必要なプロパティを実装している。
+    /// </summary>
     public class DummyModel : KintoneModelBase<DummyModel> {
         public override int AppID { get; init; }
         public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
@@ -19,6 +25,9 @@ public class KintoneModelBaseDeleteAsyncTests {
     }
 
     #region <<Test methods>>
+    /// <summary>
+    /// 有効なモデルを削除するテスト。DeleteAsync メソッドが IKintoneModelCrudService の DeleteAsync を正しく呼び出し、成功結果を返すことを検証する。
+    /// </summary>
     [Fact]
     public async Task DeleteAsyncValidModelCallsServiceAndReturnsResult() {
         // Arrange
@@ -45,6 +54,10 @@ public class KintoneModelBaseDeleteAsyncTests {
         Assert.False(result.HasFailures);
         mockService.Verify(s => s.DeleteAsync(It.Is<IList<DummyModel>>(list => list.Count == 1), true), Times.Once);
     }
+
+    /// <summary>
+    /// 存在確認を行わずにモデルを削除するテスト。DeleteAsync メソッドが IKintoneModelCrudService の DeleteAsync を validateExistence フラグを false にして呼び出すことを検証する。
+    /// </summary>
     [Fact]
     public async Task DeleteAsyncWithValidateExistenceFalseCallsServiceWithFlag() {
         // Arrange
@@ -70,6 +83,10 @@ public class KintoneModelBaseDeleteAsyncTests {
         Assert.Single(result.Succeeded);
         mockService.Verify(s => s.DeleteAsync(It.Is<IList<DummyModel>>(list => list.Count == 1), false), Times.Once);
     }
+
+    /// <summary>
+    /// 存在しないモデルを削除しようとした場合のテスト。DeleteAsync メソッドが IKintoneModelCrudService の DeleteAsync を呼び出し、失敗結果を返すことを検証する。
+    /// </summary>
     [Fact]
     public async Task DeleteAsyncDeleteFailsReturnsFailureResult() {
         // Arrange
@@ -102,6 +119,10 @@ public class KintoneModelBaseDeleteAsyncTests {
         Assert.Equal("Record not found", result.Failed.First().ErrorMessage);
         Assert.True(result.HasFailures);
     }
+
+    /// <summary>
+    /// 複数の有効なモデルを削除するテスト。DeleteBulkAsync メソッドが IKintoneModelCrudService の DeleteAsync を正しく呼び出し、成功結果を返すことを検証する。
+    /// </summary>
     [Fact]
     public async Task DeleteBulkAsyncWithTwoValidModelsReturnsSucceededResult() {
         // Arrange
@@ -135,6 +156,10 @@ public class KintoneModelBaseDeleteAsyncTests {
         // Verify: モックが1回呼ばれたことを確認（同じ一致条件を使う）
         mockService.Verify(s => s.DeleteAsync(It.IsAny<IList<DummyModel>>(), It.IsAny<bool>()), Times.Once);
     }
+
+    /// <summary>
+    /// 複数のモデルを削除するテスト。DeleteBulkAsync メソッドが IKintoneModelCrudService の DeleteAsync を呼び出し、部分的に成功し部分的に失敗する結果を返すことを検証する。
+    /// </summary>
     [Fact]
     public async Task DeleteBulkAsyncWithThreeModelsTwoSucceededOneFailedReturnsPartialResult() {
         // Arrange
@@ -171,6 +196,10 @@ public class KintoneModelBaseDeleteAsyncTests {
         // Verify: モックが1回呼ばれたことを確認
         mockService.Verify(s => s.DeleteAsync(It.IsAny<IList<DummyModel>>(), true), Times.Once);
     }
+
+    /// <summary>
+    /// 複数の有効なIDを削除するテスト。DeleteBulkAsync メソッドが IKintoneModelCrudService の DeleteAsync を正しく呼び出し、成功結果を返すことを検証する。
+    /// </summary>
     [Fact]
     public async Task DeleteBulkAsyncWithTwoValidIdsReturnsSucceededResult() {
         // Arrange
@@ -201,6 +230,10 @@ public class KintoneModelBaseDeleteAsyncTests {
         // Verify: モックが正しく呼ばれたことを確認
         mockService.Verify(s => s.DeleteAsync<DummyModel>(ids, false), Times.Once);
     }
+
+    /// <summary>
+    /// 複数のIDを削除するテスト。DeleteBulkAsync メソッドが IKintoneModelCrudService の DeleteAsync を呼び出し、部分的に成功し部分的に失敗する結果を返すことを検証する。
+    /// </summary>
     [Fact]
     public async Task DeleteBulkAsyncWithThreeIdsTwoSucceededOneFailedReturnsPartialResult() {
         // Arrange
@@ -239,6 +272,10 @@ public class KintoneModelBaseDeleteAsyncTests {
         // Verify: モックが1回呼ばれたことを確認
         mockService.Verify(s => s.DeleteAsync<DummyModel>(ids, true), Times.Once);
     }
+
+    /// <summary>
+    /// 複数の有効なIDを削除するテスト。DeleteSingleAsync メソッドが IKintoneModelCrudService の DeleteAsync を正しく呼び出し、成功結果を返すことを検証する。
+    /// </summary>
     [Fact]
     public async Task DeleteSingleAsyncWithTwoValidIdsReturnsSucceededResult() {
         // Arrange
@@ -271,6 +308,10 @@ public class KintoneModelBaseDeleteAsyncTests {
         mockService.Verify(s => s.DeleteAsync<DummyModel>(It.Is<IList<string>>(x => x.SequenceEqual(new[] { "1003" })), true), Times.Once);
         mockService.Verify(s => s.DeleteAsync<DummyModel>(It.Is<IList<string>>(x => x.SequenceEqual(new[] { "1004" })), true), Times.Once);
     }
+
+    /// <summary>
+    /// 複数のIDを削除するテスト。DeleteSingleAsync メソッドが IKintoneModelCrudService の DeleteAsync を呼び出し、部分的に成功し部分的に失敗する結果を返すことを検証する。
+    /// </summary>
     [Fact]
     public async Task DeleteSingleAsyncWithThreeModelsTwoSucceededOneFailedReturnsPartialResult() {
         // Arrange
@@ -321,6 +362,10 @@ public class KintoneModelBaseDeleteAsyncTests {
         mockService.Verify(s => s.DeleteAsync<DummyModel>(It.Is<IList<DummyModel>>(x => x.Count == 1 && x[0].RecordID == "1004"), true), Times.Once);
         mockService.Verify(s => s.DeleteAsync<DummyModel>(It.Is<IList<DummyModel>>(x => x.Count == 1 && x[0].RecordID == "9999"), true), Times.Once);
     }
+
+    /// <summary>
+    /// 複数の有効なモデルを削除するテスト。DeleteSingleAsync メソッドが IKintoneModelCrudService の DeleteAsync を正しく呼び出し、成功結果を返すことを検証する。
+    /// </summary>
     [Fact]
     public async Task DeleteSingleAsyncWithTwoValidModelsReturnsSucceededResult() {
         // Arrange
@@ -356,6 +401,10 @@ public class KintoneModelBaseDeleteAsyncTests {
         mockService.Verify(s => s.DeleteAsync<DummyModel>(It.Is<IList<DummyModel>>(x => x.Count == 1 && x[0].RecordID == "1003"), true), Times.Once);
         mockService.Verify(s => s.DeleteAsync<DummyModel>(It.Is<IList<DummyModel>>(x => x.Count == 1 && x[0].RecordID == "1004"), true), Times.Once);
     }
+
+    /// <summary>
+    /// 複数のIDを削除するテスト。DeleteSingleAsync メソッドが IKintoneModelCrudService の DeleteAsync を呼び出し、部分的に成功し部分的に失敗する結果を返すことを検証する。
+    /// </summary>
     [Fact]
     public async Task DeleteSingleAsyncWithThreeIdsTwoSucceededOneFailedReturnsPartialResult() {
         // Arrange

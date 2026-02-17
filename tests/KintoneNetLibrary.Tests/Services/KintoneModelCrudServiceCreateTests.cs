@@ -15,8 +15,14 @@ using Xunit;
 
 namespace KintoneNetLibrary.Tests.Services;
 
+/// <summary>
+/// KintoneModelCrudServiceのCreateAsyncメソッドのテストクラス
+/// </summary>
 public class KintoneModelCrudServiceCreateTests {
     #region <<Test methods>>
+    /// <summary>
+    /// 有効なレコードのリストを渡した場合、すべてのレコードが成功として返されることを確認するテスト
+    /// </summary>
     [Fact]
     public async Task CreateAsyncWithValidRecordsReturnsSucceededResult() {
         // Arrange
@@ -47,6 +53,10 @@ public class KintoneModelCrudServiceCreateTests {
         Assert.Equal(10, result.Succeeded.Count);
         Assert.Empty(result.Failed);
     }
+
+    /// <summary>
+    /// リポジトリが例外をスローした場合、すべてのレコードが失敗として返されることを確認するテスト
+    /// </summary>
     [Fact]
     public async Task CreateAsyncWhenRepositoryThrowsExceptionAddsToFailed() {
         // Arrange
@@ -73,6 +83,10 @@ public class KintoneModelCrudServiceCreateTests {
         Assert.Empty(result.Succeeded);
         Assert.Equal(2, result.Failed.Count); // 全件失敗としてカウント
     }
+
+    /// <summary>
+    /// リポジトリがKintoneExceptionをスローし、enableSingleRetryOnErrorがfalseの場合、すべてのレコードが失敗として返されることを確認するテスト
+    /// </summary>
     [Fact]
     public async Task CreateAsyncWhenKintoneExceptionOccursAndNoRetryAddsAllToFailed() {
         var testRecords = Enumerable.Range(1, 2)
@@ -97,11 +111,14 @@ public class KintoneModelCrudServiceCreateTests {
         Assert.Equal(2, result.Failed.Count);
         Assert.All(result.Failed, f => Assert.Equal("Invalid data", f.Error?.Message));
     }
+
+    /// <summary>
+    /// リポジトリがKintoneExceptionをスローし、enableSingleRetryOnErrorがtrueの場合、リトライが成功すればレコードが成功として返されることを確認するテスト
+    /// </summary>
     [Fact]
     public async Task CreateAsyncWhenKintoneExceptionOccursAndRetrySucceedsAddsToSucceeded() {
         var testRecords = new List<SampleModel> {
-        new() { FieldA = "RetryMe" }
-    };
+            new() { FieldA = "RetryMe" }};
 
         var mockRepo = new Mock<IKintoneRepository>();
 
@@ -136,6 +153,10 @@ public class KintoneModelCrudServiceCreateTests {
         Assert.Empty(result.Failed);
         Assert.Equal("9999", result.Succeeded[0].ID);
     }
+
+    /// <summary>
+    /// リポジトリがKintoneExceptionをスローし、enableSingleRetryOnErrorがtrueの場合、最初のBulk呼び出しが失敗し、次のシングルレコード呼び出しでリトライが成功すれば、すべてのレコードが成功として返されることを確認するテスト
+    /// </summary>
     [Fact]
     public async Task CreateAsyncWhenBulkFailsAndSingleRetrySucceedsAllRecordsAddedToSucceeded() {
         // Arrange
@@ -183,12 +204,15 @@ public class KintoneModelCrudServiceCreateTests {
         Assert.Empty(result.Failed);
         Assert.All(result.Succeeded, r => Assert.StartsWith("999", r.ID));
     }
+
+    /// <summary>
+    /// リクエストとレスポンスのレコード数が一致しない場合、すべてのレコードが失敗として返されることを確認するテスト
+    /// </summary>
     [Fact]
     public async Task CreateAsyncWhenResponseCountMismatchThrowsKintoneException() {
         var testRecords = new List<SampleModel> {
-        new() { FieldA = "R1" },
-        new() { FieldA = "R2" }
-    };
+            new() { FieldA = "R1" },
+            new() { FieldA = "R2" } };
 
         var mockRepo = new Mock<IKintoneRepository>();
         mockRepo.Setup(r => r.CreateRecordsAsync<SampleModel>(It.IsAny<IList<SampleModel>>()))
@@ -210,6 +234,10 @@ public class KintoneModelCrudServiceCreateTests {
         Assert.Equal(testRecords.Count, result.Failed.Count);
         Assert.All(result.Failed, f => Assert.Equal("Mismatch between the number of request and response records.", f.ErrorMessage));
     }
+
+    /// <summary>
+    /// レスポンスのリビジョンがパースできない場合、レコードのリビジョンにデフォルト値が設定されることを確認するテスト
+    /// </summary>
     [Fact]
     public async Task CreateAsyncWhenRevisionIsInvalidSetsDefaultRevision() {
         var testRecords = new List<SampleModel> {
@@ -236,14 +264,17 @@ public class KintoneModelCrudServiceCreateTests {
         Assert.Equal("1234", result.Succeeded[0].ID);
         Assert.Equal(-1, result.Succeeded[0].Revision); // TryParse失敗時のデフォルト
     }
+
+    /// <summary>
+    /// レスポンスのIDがnullまたは空文字の場合、レコードのIDに空文字が設定されることを確認するテスト
+    /// </summary>
     [Fact]
     public async Task CreateAsyncWhenResponseHasNullOrEmptyIdsSetsEmptyStringToId() {
         // Arrange
         var testRecords = new List<SampleModel> {
-        new() { FieldA = "R1" },
-        new() { FieldA = "R2" },
-        new() { FieldA = "R3" }
-    };
+            new() { FieldA = "R1" },
+            new() { FieldA = "R2" },
+            new() { FieldA = "R3" } };
 
         var mockRepo = new Mock<IKintoneRepository>();
         mockRepo.Setup(r => r.CreateRecordsAsync<SampleModel>(It.IsAny<IList<SampleModel>>()))
@@ -272,6 +303,10 @@ public class KintoneModelCrudServiceCreateTests {
 
         Assert.All(result.Succeeded, r => Assert.Equal(1, r.Revision));
     }
+
+    /// <summary>
+    /// リポジトリが壊れたJSONを返した場合、すべてのレコードが失敗として返されることを確認するテスト
+    /// </summary>
     [Fact]
     public async Task CreateAsyncWhenCreateRecordsReturnsMalformedJsonAddsToFailed() {
         // Arrange
@@ -299,6 +334,10 @@ public class KintoneModelCrudServiceCreateTests {
         Assert.Equal(2, result.Failed.Count);
         Assert.All(result.Failed, f => Assert.Contains("BadJson", f.Record.FieldA));
     }
+
+    /// <summary>
+    /// リポジトリがKintoneExceptionをスローし、enableSingleRetryOnErrorがtrueの場合、最初のBulk呼び出しが失敗し、次のシングルレコード呼び出しでリトライも失敗すれば、すべてのレコードが失敗として返されることを確認するテスト
+    /// </summary>
     [Fact]
     public async Task CreateAsyncWhenBulkAndRetryBothFailAddsAllRecordsToFailed() {
         // Arrange
@@ -340,6 +379,10 @@ public class KintoneModelCrudServiceCreateTests {
             Assert.Contains("R", f.Record.FieldA);
         });
     }
+
+    /// <summary>
+    /// リポジトリがKintoneExceptionをスローし、enableSingleRetryOnErrorがtrueの場合、最初のBulk呼び出しが失敗し、次のシングルレコード呼び出しでリトライも失敗した際に、警告ログが出力されることを確認するテスト
+    /// </summary>
     [Fact]
     public async Task CreateAsyncWhenBulkFailsLogsWarningMessage() {
         var testRecords = new List<SampleModel> {
@@ -375,6 +418,10 @@ public class KintoneModelCrudServiceCreateTests {
 
     #endregion
 }
+
+/// <summary>
+/// テスト用のサンプルモデルクラス
+/// </summary>
 internal class SampleModel : KintoneModelBase<SampleModel> {
     public override int AppID { get; init; } = 8888;
     public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("dummyDomain", "dummyApiToken");

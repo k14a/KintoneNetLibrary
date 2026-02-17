@@ -14,25 +14,21 @@ using Microsoft.Extensions.Logging;
 namespace KintoneNetLibrary.Backup.Infrastructure.Services;
 
 /// <summary>
-/// バックアップサービス
+/// バックアップサービスの実装
 /// </summary>
-/// <remarks>
-/// コンストラクタ
-/// </remarks>
-/// <param name="schemaProvider"></param>
-/// <param name="httpClient"></param>
-/// <param name="logger"></param>
+/// <param name="schemaProvider">スキーマプロバイダー</param>
+/// <param name="_accessFactory">Kintoneアクセスファクトリー</param>
+/// <param name="httpClientFactory">HTTPクライアントファクトリー</param>
+/// <param name="logger">ロガー</param>
 public sealed class BackupService(
     ISchemaProvider schemaProvider,
     IKintoneAccessFactory _accessFactory,
-    // HttpClient? httpClient = null,
     IHttpClientFactory httpClientFactory,
     ILogger<BackupService>? logger = null) : IBackupService {
 
     private IKintoneApi? _api;
     private readonly ISchemaProvider _schemaProvider = schemaProvider;
     private readonly IKintoneAccessFactory _accessFactory = _accessFactory;
-    // private HttpClient? _httpClient = httpClient;
     private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
     private JsonSerializerOptions? _jsonOptions;
     private readonly ILogger<BackupService>? _logger = logger;
@@ -124,7 +120,7 @@ public sealed class BackupService(
     /// <summary>
     /// 次の分割ファイルパスを作成します
     /// </summary>
-    /// <returns></returns>
+    /// <returns>作成された分割ファイルのパス</returns>
     private string CreateNextPartFilePath() {
         this._partIndex++;
 
@@ -147,8 +143,8 @@ public sealed class BackupService(
     /// <summary>
     /// ストリーム内のレコード数をカウントします
     /// </summary>
-    /// <param name="pageStream"></param>
-    /// <returns></returns>
+    /// <param name="pageStream">レコードが含まれるストリーム</param>
+    /// <returns>レコード数</returns>
     private int CountRecordsInPage(Stream pageStream) {
         if (pageStream.CanSeek) { pageStream.Position = 0; }
 
@@ -168,8 +164,8 @@ public sealed class BackupService(
     /// <summary>
     /// バックアップ先ディレクトリを準備します
     /// </summary>
-    /// <returns></returns>
-    /// <exception cref="IOException"></exception>
+    /// <returns>作成されたバックアップ先ディレクトリのパス</returns>
+    /// <exception cref="IOException">バックアップ先ディレクトリの作成に失敗した場合</exception>
     private string PrepareBackupDirectories() {
         this._logger?.LogInformation("バックアップ先ディレクトリを準備します: App={App}", this.Options.AppID);
 
@@ -205,8 +201,8 @@ public sealed class BackupService(
     /// <summary>
     /// レコードをストリームで取得します
     /// </summary>
-    /// <param name="output"></param>
-    /// <returns></returns>
+    /// <param name="output">出力先のストリーム</param>
+    /// <returns>非同期操作のタスク</returns>
     private async Task FetchRecordsAsStreamAsync(Stream output) {
         if (!string.IsNullOrWhiteSpace(this.Options.Query)) {
             await this._api!.RawFindByQueryAsStreamAsync(
@@ -223,8 +219,8 @@ public sealed class BackupService(
     /// <summary>
     /// ストリーム内のレコード数をカウントします
     /// </summary>
-    /// <param name="input"></param>
-    /// <returns></returns>
+    /// <param name="input">レコードが含まれるストリーム</param>
+    /// <returns>レコード数</returns>
     private async Task<int> CountRecordsInStreamAsync(Stream input) {
         // Utf8JsonReader は同期 API なので、Stream を一括読み込みする必要がある
         // ただし byte[] は UTF-8 のままなので string よりはるかに軽い
@@ -269,8 +265,8 @@ public sealed class BackupService(
     /// <summary>
     /// ストリームから分割された JSON ファイルを保存します
     /// </summary>
-    /// <param name="input"></param>
-    /// <returns></returns>
+    /// <param name="input">レコードが含まれるストリーム</param>
+    /// <returns>作成された分割ファイルのパスのリスト</returns>
     private async Task<List<string>> SaveSplitJsonFilesFromStreamAsync(Stream input) {
         var result = new List<string>();
         var buffer = new byte[8192];
@@ -368,8 +364,8 @@ public sealed class BackupService(
     /// <summary>
     /// レコード内の添付ファイルをダウンロードします
     /// </summary>
-    /// <param name="record"></param>
-    /// <returns></returns>
+    /// <param name="record">添付ファイルを含むレコードの JSON 要素</param>
+    /// <returns>非同期操作のタスク</returns>
     private async Task DownloadFilesAsync(JsonElement record) {
         // レコード番号を取得
         if (!record.TryGetProperty("$id", out var idProp) || !idProp.TryGetProperty("value", out var idValueProp)) {
@@ -428,8 +424,8 @@ public sealed class BackupService(
     /// <summary>
     /// ストリームから添付ファイルをダウンロードします
     /// </summary>
-    /// <param name="input"></param>
-    /// <returns></returns>
+    /// <param name="input">レコードが含まれるストリーム</param>
+    /// <returns>非同期操作のタスク</returns>
     private async Task<(int success, int fail)> DownloadFilesWithResultFromStreamAsync(Stream input) {
         // Stream → MemoryStream（UTF-8 のままなので軽量）
         using var ms = new MemoryStream();
@@ -454,10 +450,10 @@ public sealed class BackupService(
     }
 
     /// <summary>
-    /// ストリームから添付ファイル情報を抽出します
+    /// ストリームから添付ファイルの情報を抽出します
     /// </summary>
-    /// <param name="span"></param>
-    /// <returns></returns>
+    /// <param name="span">JSON データを含むバイト配列のスパン</param>
+    /// <returns>抽出されたファイル情報のリスト</returns>
     private List<(string fileKey, string fileName)> ExtractFileInfos(ReadOnlySpan<byte> span) {
         var list = new List<(string fileKey, string fileName)>();
 
@@ -511,9 +507,9 @@ public sealed class BackupService(
     /// <summary>
     /// 単一ファイルをダウンロードします
     /// </summary>
-    /// <param name="fileKey"></param>
-    /// <param name="fileName"></param>
-    /// <returns></returns>
+    /// <param name="fileKey">ダウンロードするファイルのキー</param>
+    /// <param name="fileName">ダウンロードするファイルの名前</param>
+    /// <returns>非同期操作のタスク</returns>
     private async Task DownloadSingleFileAsync(string fileKey, string fileName) {
         // 保存先パス: {OutputPath}/files/{fileName}
         var destPath = Path.Combine(this.Options.OutputPath.FullName, "files", fileName);
@@ -526,8 +522,8 @@ public sealed class BackupService(
     /// <summary>
     /// JSON オブジェクトを抽出します
     /// </summary>
-    /// <param name="reader"></param>
-    /// <param name="source"></param>
+    /// <param name="reader">JSON リーダー</param>
+    /// <param name="source">JSON データを含むバイト配列のスパン</param>
     /// <returns></returns>
     private static string ExtractJsonObject(ref Utf8JsonReader reader, ReadOnlySpan<byte> source) {
         var start = reader.TokenStartIndex;
@@ -553,8 +549,8 @@ public sealed class BackupService(
     /// <summary>
     /// ファイルフィールドかどうかを判定します
     /// </summary>
-    /// <param name="element"></param>
-    /// <returns></returns>
+    /// <param name="element">判定する JSON 要素</param>
+    /// <returns>ファイルフィールドであれば true、それ以外は false</returns>
     private static bool IsFileField(JsonElement element) {
         if (element.ValueKind != JsonValueKind.Array) {
             return false;
@@ -573,9 +569,11 @@ public sealed class BackupService(
     /// <summary>
     /// JSON を保存します
     /// </summary>
-    /// <param name="json"></param>
-    /// <returns></returns>
-    /// <exception cref="IOException"></exception>
+    /// <param name="json">保存する JSON データ</param>
+    /// <param name="fileName">保存するファイル名</param>
+    /// <param name="directory">保存先ディレクトリ（省略可能）</param>
+    /// <returns>非同期操作のタスク</returns>
+    /// <exception cref="IOException">ファイルの保存に失敗した場合にスローされます</exception>
     private async Task<bool> SaveJsonAsync(string json, string fileName, string? directory = null) {
         if (!this.Options.OutputPath.Exists) {
             this.Options.OutputPath.Create();
@@ -601,9 +599,9 @@ public sealed class BackupService(
     /// <summary>
     /// マニフェストを保存します
     /// </summary>
-    /// <param name="metadata"></param>
-    /// <param name="result"></param>
-    /// <returns></returns>
+    /// <param name="metadata">アプリのメタデータ</param>
+    /// <param name="result">バックアップ結果</param>
+    /// <returns>非同期操作のタスク</returns>
     private async Task SaveManifestAsync(KintoneAppMetadata metadata, BackupResult result) {
         var manifest = new BackupManifest {
             AppId = this.Options.AppID,
@@ -635,7 +633,8 @@ public sealed class BackupService(
     /// <summary>
     /// フィールドスキーマを保存します
     /// </summary>
-    /// <returns></returns>
+    /// <param name="metadata">アプリのメタデータ</param>
+    /// <returns>非同期操作のタスク</returns>
     private async Task<bool> SaveFieldSchemaAsync(KintoneAppMetadata metadata) {
         if (!this.Options.IncludeFieldSchema) {
             this._logger?.LogInformation("フィールドスキーマのバックアップはスキップされました");
@@ -679,6 +678,12 @@ public sealed class BackupService(
         }
     }
 
+    /// <summary>
+    /// ストリームから整形された JSON ファイルを書き込みます
+    /// </summary>
+    /// <param name="input">入力ストリーム</param>
+    /// <param name="path">出力ファイルのパス</param>
+    /// <returns>非同期操作のタスク</returns>
     private async Task WritePrettyJsonAsync(Stream input, string path) {
         if (input.CanSeek) { input.Position = 0; }
 

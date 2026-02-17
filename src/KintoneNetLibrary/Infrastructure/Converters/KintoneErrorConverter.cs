@@ -11,9 +11,9 @@ public static class KintoneErrorConverter {
     /// <summary>
     /// JSON文字列をKintoneErrorオブジェクトに変換する
     /// </summary>
-    /// <param name="json"></param>
-    /// <returns></returns>
-    /// <exception cref="KintoneException"></exception>
+    /// <param name="json">Kintone APIからのエラーレスポンスのJSON文字列</param>
+    /// <returns>KintoneErrorオブジェクト</returns>
+    /// <exception cref="KintoneException">Kintone APIからのエラーレスポンスの解析に失敗した場合にスローされます</exception>
     public static KintoneError Parse(string json) {
         try {
             var error = JsonSerializer.Deserialize<KintoneError>(json) ?? throw new KintoneException("Error response is null.");

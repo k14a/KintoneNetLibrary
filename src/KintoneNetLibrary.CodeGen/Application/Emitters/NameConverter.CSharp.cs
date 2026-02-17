@@ -36,25 +36,25 @@ public class CSharpNameConverter : INameConverter {
     /// <summary>
     /// クラス名に変換する
     /// </summary>
-    /// <param name="label"></param>
-    /// <param name="code"></param>
-    /// <returns></returns>
+    /// <param name="label">ラベル</param>
+    /// <param name="code">コード</param>
+    /// <returns>変換後のクラス名</returns>
     public string ToClassName(string label, string code) => MakeSafeIdentifier(this.Convert(label, code));
 
     /// <summary>
     /// プロパティ名に変換する
     /// </summary>
-    /// <param name="label"></param>
-    /// <param name="code"></param>
-    /// <returns></returns>
+    /// <param name="label">ラベル</param>
+    /// <param name="code">コード</param>
+    /// <returns>変換後のプロパティ名</returns>
     public string ToPropertyName(string label, string code) => MakeSafeIdentifier(this.Convert(label, code));
 
     /// <summary>
     /// 変換ロジック本体
     /// </summary>
-    /// <param name="label"></param>
-    /// <param name="code"></param>
-    /// <returns></returns>
+    /// <param name="label">ラベル</param>
+    /// <param name="code">コード</param>
+    /// <returns>変換後の名前</returns>
     private string Convert(string label, string code) {
         var baseName = string.IsNullOrWhiteSpace(code) ? label : code;
         if (SystemFields.TryGetValue(baseName, out var systemField)) { return systemField.PropertyName; }
@@ -84,8 +84,8 @@ public class CSharpNameConverter : INameConverter {
     /// <summary>
     /// フィールドコードを安全化する
     /// </summary>
-    /// <param name="code"></param>
-    /// <returns></returns>
+    /// <param name="code">フィールドコード</param>
+    /// <returns>安全化されたフィールドコード</returns>
     private static string SanitizeFieldCode(string code) {
         if (string.IsNullOrWhiteSpace(code)) { return "_"; }
 
@@ -104,8 +104,8 @@ public class CSharpNameConverter : INameConverter {
     /// <summary>
     /// 安全な識別子に変換する
     /// </summary>
-    /// <param name="name"></param>
-    /// <returns></returns>
+    /// <param name="name">識別子名</param>
+    /// <returns>安全な識別子</returns>
     private static string MakeSafeIdentifier(string name) {
         if (string.IsNullOrWhiteSpace(name)) { return "_"; }
 
@@ -121,8 +121,8 @@ public class CSharpNameConverter : INameConverter {
     /// <summary>
     /// C# キーワードかどうか
     /// </summary>
-    /// <param name="name"></param>
-    /// <returns></returns>
+    /// <param name="name">識別子名</param>
+    /// <returns>キーワードの場合は true、それ以外は false</returns>
     private static bool IsCSharpKeyword(string name) {
         return new[] {
             "class",
@@ -141,8 +141,8 @@ public class CSharpNameConverter : INameConverter {
     /// <summary>
     /// 簡易ローマ字変換
     /// </summary>
-    /// <param name="text"></param>
-    /// <returns></returns>
+    /// <param name="text">変換対象の文字列</param>
+    /// <returns>ローマ字に変換された文字列</returns>
     [Obsolete("Use KintoneNetLibrary.Extensions.StringExtensions.ToRoman instead")]
     internal static string ToRoman(string text) {
         if (string.IsNullOrEmpty(text)) { return string.Empty; }

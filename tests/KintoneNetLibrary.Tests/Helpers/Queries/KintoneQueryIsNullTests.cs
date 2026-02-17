@@ -6,7 +6,13 @@ using Xunit;
 
 namespace KintoneNetLibrary.Tests.Helpers.Queries;
 
+/// <summary>
+/// KintoneQueryのIsNullとIsNotNullのテストクラス。
+/// </summary>
 public class KintoneQueryNullTests {
+    /// <summary>
+    /// IsNullメソッドがnullを正しいクエリ文字列に変換することをテストします。
+    /// </summary>
     [Fact]
     public void IsNullGeneratesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
@@ -15,6 +21,10 @@ public class KintoneQueryNullTests {
 
         Assert.Equal("Price = null", query);
     }
+
+    /// <summary>
+    /// IsNotNullメソッドがnullを正しいクエリ文字列に変換することをテストします。
+    /// </summary>
     [Fact]
     public void IsNotNullGeneratesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
@@ -23,11 +33,19 @@ public class KintoneQueryNullTests {
 
         Assert.Equal("Title != null", query);
     }
+
+    /// <summary>
+    /// IsNullメソッドにnullの式を渡した場合、ArgumentNullExceptionがスローされることをテストします。
+    /// </summary>
     [Fact]
     public void IsNullNullExpressionThrowsException() {
         var query = new KintoneQuery<BookModel>();
         Assert.Throws<ArgumentNullException>(() => query.IsNull<string>(null!));
     }
+
+    /// <summary>
+    /// IsNotNullメソッドにnullの式を渡した場合、ArgumentNullExceptionがスローされることをテストします。
+    /// </summary>
     [Fact]
     public void IsNotNullNullExpressionThrowsException() {
         var query = new KintoneQuery<BookModel>();
@@ -35,7 +53,13 @@ public class KintoneQueryNullTests {
     }
 }
 
+/// <summary>
+/// KintoneQueryのIsNullとIsNotNullの文字列フィールドに対するテストクラス。
+/// </summary>
 public class KintoneQueryIsNullStringFieldTests {
+    /// <summary>
+    /// IsNullメソッドが文字列フィールドに対してnullを正しいクエリ文字列に変換することをテストします。
+    /// </summary>
     [Fact]
     public void IsNullStringFieldGeneratesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
@@ -44,6 +68,10 @@ public class KintoneQueryIsNullStringFieldTests {
 
         Assert.Equal("Title = null", query);
     }
+
+    /// <summary>
+    /// IsNotNullメソッドが文字列フィールドに対してnullを正しいクエリ文字列に変換することをテストします。
+    /// </summary>
     [Fact]
     public void IsNotNullStringFieldGeneratesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
@@ -52,6 +80,10 @@ public class KintoneQueryIsNullStringFieldTests {
 
         Assert.Equal("Title != null", query);
     }
+
+    /// <summary>
+    /// IsNullメソッドに空のフィールド名を渡した場合、ArgumentExceptionがスローされることをテストします。
+    /// </summary>
     [Fact]
     public void IsNullEmptyFieldThrowsException() {
         var query = new KintoneQuery<BookModel>();
@@ -59,6 +91,10 @@ public class KintoneQueryIsNullStringFieldTests {
 
         Assert.Contains("field", ex.Message);
     }
+
+    /// <summary>
+    /// IsNotNullメソッドに空のフィールド名を渡した場合、ArgumentExceptionがスローされることをテストします。
+    /// </summary>
     [Fact]
     public void IsNotNullNullFieldThrowsException() {
         var query = new KintoneQuery<BookModel>();

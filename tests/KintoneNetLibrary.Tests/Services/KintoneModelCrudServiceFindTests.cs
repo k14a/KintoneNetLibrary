@@ -16,8 +16,14 @@ using Xunit;
 
 namespace KintoneNetLibrary.Tests.Services;
 
+/// <summary>
+/// KintoneModelCrudService の FindAsync メソッドに関するユニットテストクラスです。
+/// </summary>
 public class KintoneModelCrudServiceFindTests {
     #region <<Test methods>>
+    /// <summary>
+    /// FindAsync メソッドに単一のレコードIDを渡した場合、そのIDに対応するレコードが正しく返されることをテストします。
+    /// </summary>
     [Fact]
     public async Task FindAsyncWithSingleIDReturnsSingleRecord() {
         // Arrange
@@ -52,14 +58,17 @@ public class KintoneModelCrudServiceFindTests {
         Assert.Equal("TestValue", single.FieldA);
         Assert.Equal(456, single.FieldB);
     }
+
+    /// <summary>
+    /// FindAsync メソッドに複数のレコードIDを渡した場合、それらのIDに対応するレコードが正しく返されることをテストします。
+    /// </summary>
     [Fact]
     public async Task FindAsyncWithMultipleIDsReturnsMultipleRecords() {
         // Arrange
         var testIds = new[] { "123", "456" };
         var expectedModels = new List<SampleModel> {
-        new() { RecordID = "123", FieldA = "ValueA1", FieldB = 100 },
-        new() { RecordID = "456", FieldA = "ValueA2", FieldB = 200 }
-    };
+            new() { RecordID = "123", FieldA = "ValueA1", FieldB = 100 },
+            new() { RecordID = "456", FieldA = "ValueA2", FieldB = 200 } };
 
         var wrappedJson = JsonSerializer.Serialize(new {
             records = expectedModels.Select(m => new Dictionary<string, object> {
@@ -93,6 +102,10 @@ public class KintoneModelCrudServiceFindTests {
             Assert.Equal(expected.FieldB, actual.FieldB);
         }
     }
+
+    /// <summary>
+    /// FindAsync メソッドにクエリを渡した場合、そのクエリにマッチするレコードが正しく返されることをテストします。
+    /// </summary>
     [Fact]
     public async Task FindAsyncWithQueryReturnsMatchingRecords() {
         // Arrange
@@ -134,6 +147,10 @@ public class KintoneModelCrudServiceFindTests {
         Assert.Equal("Test Book", single.FieldA);
         Assert.Equal(1000, single.FieldB);
     }
+
+    /// <summary>
+    /// FindAsync メソッドにクエリを渡した場合、そのクエリにマッチするレコードが存在しないとき、空のリストが返されることをテストします。
+    /// </summary>
     [Fact]
     public async Task FindAsyncWithQueryButNoMatchesReturnsEmptyList() {
         // Arrange
@@ -160,6 +177,10 @@ public class KintoneModelCrudServiceFindTests {
         // Assert
         Assert.Empty(result);
     }
+
+    /// <summary>
+    /// FindAsync メソッドにクエリを渡した場合、そのクエリにマッチする複数のレコードが正しく返されることをテストします。
+    /// </summary>
     [Fact]
     public async Task FindAsyncWithQueryMatchingMultipleRecordsReturnsAllRecords() {
         // Arrange
@@ -200,6 +221,10 @@ public class KintoneModelCrudServiceFindTests {
         Assert.Contains(list, r => r.Title == "C# Clean Architecture");
         Assert.Contains(list, r => r.Title == "Docker Testing Strategies");
     }
+
+    /// <summary>
+    /// FindAsync メソッドにレコードIDもクエリも渡さなかった場合、すべてのレコードが正しく返されることをテストします。
+    /// </summary>
     [Fact]
     public async Task FindAsyncWithoutIdsOrQueryReturnsAllRecords() {
         // Arrange
@@ -236,6 +261,10 @@ public class KintoneModelCrudServiceFindTests {
         Assert.Contains(list, r => r.Title == "Refactoring Legacy Code");
         Assert.Contains(list, r => r.Title == "Kintone API Integration Tips");
     }
+
+    /// <summary>
+    /// FindAsync メソッドにクエリを渡した場合、そのクエリにマッチするレコードが存在するが、Kintone からのレスポンスが不正な JSON であったとき、JSON のパースに失敗して KintoneException がスローされることをテストします。
+    /// </summary>
     [Fact]
     public async Task FindAsyncWhenJsonExceptionThrownLogsErrorAndThrowsKintoneException() {
         // Arrange
@@ -278,6 +307,10 @@ public class KintoneModelCrudServiceFindTests {
         TestLogHelper.VerifyLog(loggerMock, LogLevel.Information, "FindAsync() - Start", Times.Once());
         TestLogHelper.VerifyLog(loggerMock, LogLevel.Information, "FindAsync() - Finish", Times.Once());
     }
+
+    /// <summary>
+    /// FindAsync メソッドにクエリを渡した場合、そのクエリにマッチするレコードが存在するが、Kintone からのレスポンスの処理中に予期しない例外が発生したとき、その例外が KintoneException にラップされてスローされることをテストします。
+    /// </summary>
     [Fact]
     public async Task FindAsyncWhenUnexpectedExceptionThrownLogsErrorAndThrowsKintoneException() {
         // Arrange
@@ -314,6 +347,9 @@ public class KintoneModelCrudServiceFindTests {
     #endregion
 }
 
+/// <summary>
+/// テスト用のサンプルモデルクラスです。AppID と Access はダミー値を設定しています。
+/// </summary>
 internal class SampleModel3 : KintoneModelBase<SampleModel3> {
     public override int AppID { get; init; } = 7778;
     public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("dummyDomain", "dummyApiToken");

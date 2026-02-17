@@ -6,7 +6,13 @@ using Xunit;
 
 namespace KintoneNetLibrary.Tests.Helpers.Queries;
 
+/// <summary>
+/// KintoneQueryのBetween、BetweenExclusive、NotBetween、GreaterThan、GreaterThanOrEqual、LessThan、LessThanOrEqualの各メソッドの動作をテストするクラスです。数値型や日付型フィールドに対して正しいクエリが生成されることを検証し、無効な引数やサポートされていないフィールドタイプに対して適切な例外がスローされることを確認します。
+/// </summary>
 public class KintoneQueryBetweenTests {
+    /// <summary>
+    /// Betweenメソッドが、数値型フィールドに対して正しいクエリを生成することをテストします。Priceフィールドに対して100から200の範囲を指定し、生成されるクエリが"Price >= 100 and Price <= 200"であることを検証します。
+    /// </summary>
     [Fact]
     public void BetweenInclusiveIntRangeCreatesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
@@ -15,6 +21,10 @@ public class KintoneQueryBetweenTests {
 
         Assert.Equal("Price >= 100 and Price <= 200", query);
     }
+
+    /// <summary>
+    /// Betweenメソッドが、日付型フィールドに対して正しいクエリを生成することをテストします。ReleaseDateフィールドに対して2023年1月1日から2023年12月31日までの範囲を指定し、生成されるクエリが"ReleaseDate >= "2023-01-01T00:00:00Z" and ReleaseDate <= "2023-12-31T00:00:00Z""であることを検証します。
+    /// </summary>
     [Fact]
     public void BetweenInclusiveDateRangeCreatesCorrectQuery() {
         var from = new DateTime(2023, 1, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -26,12 +36,20 @@ public class KintoneQueryBetweenTests {
 
         Assert.Equal($"ReleaseDate >= \"{from:yyyy-MM-ddTHH:mm:ssZ}\" and ReleaseDate <= \"{to:yyyy-MM-ddTHH:mm:ssZ}\"", query);
     }
+
+    /// <summary>
+    /// Betweenメソッドが、フィールド名がnullの場合にArgumentExceptionをスローすることをテストします。フィールド名にnullを指定してBetweenを呼び出し、"Field name must be specified"というメッセージを含むArgumentExceptionがスローされることを検証します。
+    /// </summary>
     [Fact]
     public void BetweenFromGreaterThanToThrowsArgumentException() {
         var ex = Assert.Throws<ArgumentException>(() => new KintoneQuery<BookModel>().Between("Price", 300, 100));
 
         Assert.Contains("from must be less than or equal to to", ex.Message);
     }
+
+    /// <summary>
+    /// Betweenメソッドが、fromまたはtoのいずれかがnullの場合にArgumentNullExceptionをスローすることをテストします。fromにnullを指定してBetweenを呼び出し、toにnullを指定してBetweenを呼び出し、それぞれArgumentNullExceptionがスローされることを検証します。
+    /// </summary>
     [Fact]
     public void BetweenFieldNameIsNullThrowsArgumentException() {
         var ex = Assert.Throws<ArgumentException>(() =>
@@ -39,11 +57,19 @@ public class KintoneQueryBetweenTests {
 
         Assert.Contains("Field name must be specified", ex.Message);
     }
+
+    /// <summary>
+    /// Betweenメソッドが、fromとtoの型が一致していない場合にArgumentExceptionをスローすることをテストします。fromにint、toにdoubleを指定してBetweenを呼び出し、"from（Int32）と to（Double）の型は一致している必要があります"というメッセージを含むArgumentExceptionがスローされることを検証します。
+    /// </summary>
     [Fact]
     public void BetweenNullFromOrToThrowsArgumentNullException() {
         Assert.Throws<ArgumentNullException>(() => new KintoneQuery<BookModel>().Between("Price", null!, 10));
         Assert.Throws<ArgumentNullException>(() => new KintoneQuery<BookModel>().Between("Price", 1, null!));
     }
+
+    /// <summary>
+    /// Betweenメソッドが、fromとtoの型が一致していない場合にArgumentExceptionをスローすることをテストします。fromにint、toにdoubleを指定してBetweenを呼び出し、"from（Int32）と to（Double）の型は一致している必要があります"というメッセージを含むArgumentExceptionがスローされることを検証します。
+    /// </summary>
     [Fact]
     public void BetweenFromToTypeMismatchThrowsArgumentException() {
         var ex = Assert.Throws<ArgumentException>(() =>
@@ -51,6 +77,10 @@ public class KintoneQueryBetweenTests {
 
         Assert.Contains("from（Int32）と to（Double）の型は一致している必要があります", ex.Message);
     }
+
+    /// <summary>
+    /// Betweenメソッドが、数値型や日付型以外のフィールドに対して呼び出された場合にNotSupportedExceptionをスローすることをテストします。Titleフィールド（文字列型）に対してBetweenを呼び出し、"この操作は数値型や日付型フィールドでのみ使用可能です"というメッセージを含むNotSupportedExceptionがスローされることを検証します。
+    /// </summary>
     [Fact]
     public void BetweenUnsupportedTypeThrowsNotSupportedException() {
         var ex = Assert.Throws<NotSupportedException>(() =>
@@ -60,7 +90,13 @@ public class KintoneQueryBetweenTests {
     }
 }
 
+/// <summary>
+/// KintoneQueryのBetweenExclusiveメソッドの動作をテストするクラスです。数値型や日付型フィールドに対して正しいクエリが生成されることを検証し、無効な引数やサポートされていないフィールドタイプに対して適切な例外がスローされることを確認します。
+/// </summary>
 public class KintoneQueryBetweenExclusiveTests {
+    /// <summary>
+    /// BetweenExclusiveメソッドが、数値型フィールドに対して正しいクエリを生成することをテストします。Priceフィールドに対して100から200の範囲を指定し、生成されるクエリが"Price > 100 and Price < 200"であることを検証します。
+    /// </summary>
     [Fact]
     public void BetweenExclusiveIntRangeCreatesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
@@ -69,6 +105,10 @@ public class KintoneQueryBetweenExclusiveTests {
 
         Assert.Equal("Price > 100 and Price < 200", query);
     }
+
+    /// <summary>
+    /// BetweenExclusiveメソッドが、日付型フィールドに対して正しいクエリを生成することをテストします。ReleaseDateフィールドに対して2023年1月1日から2023年12月31日までの範囲を指定し、生成されるクエリが"ReleaseDate > "2023-01-01T00:00:00Z" and ReleaseDate < "2023-12-31T00:00:00Z""であることを検証します。
+    /// </summary>
     [Fact]
     public void BetweenExclusiveDateRangeCreatesCorrectQuery() {
         var from = new DateTime(2023, 1, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -80,6 +120,10 @@ public class KintoneQueryBetweenExclusiveTests {
 
         Assert.Equal($"ReleaseDate > \"{from:yyyy-MM-ddTHH:mm:ssZ}\" and ReleaseDate < \"{to:yyyy-MM-ddTHH:mm:ssZ}\"", query);
     }
+
+    /// <summary>
+    /// BetweenExclusiveメソッドが、数値型や日付型以外のフィールドに対して呼び出された場合にNotSupportedExceptionをスローすることをテストします。Titleフィールド（文字列型）に対してBetweenExclusiveを呼び出し、"この操作は数値型や日付型フィールドでのみ使用可能です"というメッセージを含むNotSupportedExceptionがスローされることを検証します。
+    /// </summary>
     [Fact]
     public void BetweenExclusiveInvalidFieldThrowsNotSupportedException() {
         var query = new KintoneQuery<BookModel>();
@@ -88,6 +132,10 @@ public class KintoneQueryBetweenExclusiveTests {
 
         Assert.Contains("この操作は数値型や日付型フィールドでのみ使用可能です", ex.Message);
     }
+
+    /// <summary>
+    /// BetweenExclusiveメソッドが、fromの値がtoの値より大きい場合にArgumentExceptionをスローすることをテストします。Priceフィールドに対してfromに200、toに100を指定してBetweenExclusiveを呼び出し、"from must be less than or equal to to"というメッセージを含むArgumentExceptionがスローされることを検証します。
+    /// </summary>
     [Fact]
     public void BetweenExclusiveFromGreaterThanToThrowsArgumentException() {
         var query = new KintoneQuery<BookModel>();
@@ -96,6 +144,10 @@ public class KintoneQueryBetweenExclusiveTests {
 
         Assert.Contains("from must be less than or equal to to", ex.Message);
     }
+
+    /// <summary>
+    /// BetweenExclusiveメソッドが、fromとtoの型が一致していない場合にArgumentExceptionをスローすることをテストします。Priceフィールドに対してfromにint、toにdoubleを指定してBetweenExclusiveを呼び出し、"from（Int32）と to（Double）の型は一致している必要があります"というメッセージを含むArgumentExceptionがスローされることを検証します。
+    /// </summary>
     [Fact]
     public void BetweenExclusiveTypeMismatchThrowsArgumentException() {
         var query = new KintoneQuery<BookModel>();
@@ -106,7 +158,13 @@ public class KintoneQueryBetweenExclusiveTests {
     }
 }
 
+/// <summary>
+/// KintoneQueryのNotBetweenメソッドの動作をテストするクラスです。数値型や日付型フィールドに対して正しいクエリが生成されることを検証し、無効な引数やサポートされていないフィールドタイプに対して適切な例外がスローされることを確認します。
+/// </summary>
 public class KintoneQueryNotBetweenTests {
+    /// <summary>
+    /// NotBetweenメソッドが、数値型フィールドに対して正しいクエリを生成することをテストします。Priceフィールドに対して100から200の範囲を指定し、生成されるクエリが"Price < 100 or Price > 200"であることを検証します。
+    /// </summary>
     [Fact]
     public void NotBetweenIntRangeCreatesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
@@ -115,6 +173,10 @@ public class KintoneQueryNotBetweenTests {
 
         Assert.Equal("Price < 100 or Price > 200", query);
     }
+
+    /// <summary>
+    /// NotBetweenメソッドが、日付型フィールドに対して正しいクエリを生成することをテストします。ReleaseDateフィールドに対して2023年1月1日から2023年12月31日までの範囲を指定し、生成されるクエリが"ReleaseDate < "2023-01-01T00:00:00Z" or ReleaseDate > "2023-12-31T23:59:59Z""であることを検証します。
+    /// </summary>
     [Fact]
     public void NotBetweenDateTimeRangeCreatesCorrectQuery() {
         var from = new DateTime(2023, 1, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -127,6 +189,10 @@ public class KintoneQueryNotBetweenTests {
         var expected = $"ReleaseDate < \"{from:yyyy-MM-ddTHH:mm:ssZ}\" or ReleaseDate > \"{to:yyyy-MM-ddTHH:mm:ssZ}\"";
         Assert.Equal(expected, query);
     }
+
+    /// <summary>
+    /// NotBetweenメソッドが、フィールドセレクターがnullの場合にArgumentNullExceptionをスローすることをテストします。フィールドセレクターにnullを指定してNotBetweenを呼び出し、"Value cannot be null. (Parameter 'fieldSelector')"というメッセージを含むArgumentNullExceptionがスローされることを検証します。
+    /// </summary>
     [Fact]
     public void NotBetweenNullSelectorThrowsArgumentNullException() {
         var ex = Assert.Throws<ArgumentNullException>(() =>
@@ -134,6 +200,10 @@ public class KintoneQueryNotBetweenTests {
 
         Assert.Equal("Value cannot be null. (Parameter 'fieldSelector')", ex.Message);
     }
+
+    /// <summary>
+    /// NotBetweenメソッドが、fromの値がtoの値より大きい場合にArgumentExceptionをスローすることをテストします。Priceフィールドに対してfromに200、toに100を指定してNotBetweenを呼び出し、"from must be less than or equal to to"というメッセージを含むArgumentExceptionがスローされることを検証します。
+    /// </summary>
     [Fact]
     public void NotBetweenUnsupportedTypeThrowsNotSupportedException() {
         var ex = Assert.Throws<NotSupportedException>(() =>
@@ -141,6 +211,10 @@ public class KintoneQueryNotBetweenTests {
 
         Assert.Contains("この操作は数値型や日付型フィールドでのみ使用可能", ex.Message);
     }
+
+    /// <summary>
+    /// NotBetweenメソッドが、fromの値がtoの値より大きい場合にArgumentExceptionをスローすることをテストします。Priceフィールドに対してfromに200、toに100を指定してNotBetweenを呼び出し、"from must be less than or equal to to"というメッセージを含むArgumentExceptionがスローされることを検証します。
+    /// </summary>
     [Fact]
     public void NotBetweenFromGreaterThanToDoesNotThrow() {
         // NotBetween では from > to も特に問題とはしない（条件: x < from || x > to ）
@@ -152,7 +226,13 @@ public class KintoneQueryNotBetweenTests {
     }
 }
 
+/// <summary>
+/// KintoneQueryのGreaterThan、GreaterThanOrEqual、LessThan、LessThanOrEqualの各メソッドの動作をテストするクラスです。数値型や日付型フィールドに対して正しいクエリが生成されることを検証し、無効な引数やサポートされていないフィールドタイプに対して適切な例外がスローされることを確認します。
+/// </summary>
 public class KintoneQueryGreaterThanTests {
+    /// <summary>
+    /// GreaterThanメソッドが、数値型フィールドに対して正しいクエリを生成することをテストします。Priceフィールドに対して100の値を指定し、生成されるクエリが"Price > 100"であることを検証します。
+    /// </summary>
     [Fact]
     public void GreaterThanIntValueGeneratesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
@@ -161,6 +241,10 @@ public class KintoneQueryGreaterThanTests {
 
         Assert.Equal("Price > 100", query);
     }
+
+    /// <summary>
+    /// GreaterThanメソッドが、日付型フィールドに対して正しいクエリを生成することをテストします。ReleaseDateフィールドに対して2024年1月1日の値を指定し、生成されるクエリが"ReleaseDate > "2024-01-01T00:00:00Z""であることを検証します。
+    /// </summary>
     [Fact]
     public void GreaterThanDateTimeValueGeneratesCorrectQuery() {
         var date = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -171,6 +255,10 @@ public class KintoneQueryGreaterThanTests {
 
         Assert.Equal($"ReleaseDate > \"{date:yyyy-MM-ddTHH:mm:ssZ}\"", query);
     }
+
+    /// <summary>
+    /// GreaterThanメソッドが、数値型フィールドに対して正しいクエリを生成することをテストします。Ratingフィールドに対して4.5の値を指定し、生成されるクエリが"Rating > 4.5"であることを検証します。
+    /// </summary>
     [Fact]
     public void GreaterThanThrowsOnUnsupportedType() {
         var ex = Assert.Throws<NotSupportedException>(() => {
@@ -181,6 +269,10 @@ public class KintoneQueryGreaterThanTests {
 
         Assert.Contains("この操作は数値型や日付型フィールドでのみ使用可能", ex.Message);
     }
+
+    /// <summary>
+    /// GreaterThanメソッドが、数値型フィールドに対して正しいクエリを生成することをテストします。Priceフィールドに対してnullの値を指定し、生成されるクエリが"Price > 150"であることを検証します。
+    /// </summary>
     [Fact]
     public void GreaterThanNullableIntGeneratesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
@@ -191,7 +283,13 @@ public class KintoneQueryGreaterThanTests {
     }
 }
 
+/// <summary>
+/// KintoneQueryのGreaterThanOrEqualメソッドが、数値型や日付型フィールドに対して正しいクエリを生成することをテストするクラスです。Priceフィールドに対して100の値を指定した場合、生成されるクエリが"Price >= 100"であることを検証します。また、ReleaseDateフィールドに対して2024年1月1日の値を指定した場合、生成されるクエリが"ReleaseDate >= "2024-01-01T00:00:00Z""であることを検証します。さらに、Ratingフィールドに対して4.5の値を指定した場合、生成されるクエリが"Rating >= 4.5"であることを検証します。
+/// </summary>
 public class KintoneQueryGreaterThanOrEqualTests {
+    /// <summary>
+    /// GreaterThanOrEqualメソッドが、数値型フィールドに対して正しいクエリを生成することをテストします。Priceフィールドに対して100の値を指定し、生成されるクエリが"Price >= 100"であることを検証します。
+    /// </summary>
     [Fact]
     public void GreaterThanOrEqualIntValueGeneratesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
@@ -200,6 +298,10 @@ public class KintoneQueryGreaterThanOrEqualTests {
 
         Assert.Equal("Price >= 100", query);
     }
+
+    /// <summary>
+    /// GreaterThanOrEqualメソッドが、日付型フィールドに対して正しいクエリを生成することをテストします。ReleaseDateフィールドに対して2024年1月1日の値を指定し、生成されるクエリが"ReleaseDate >= "2024-01-01T00:00:00Z""であることを検証します。
+    /// </summary>
     [Fact]
     public void GreaterThanOrEqualDateTimeValueGeneratesCorrectQuery() {
         var value = new DateTime(2024, 1, 1, 12, 0, 0, DateTimeKind.Utc);
@@ -211,6 +313,10 @@ public class KintoneQueryGreaterThanOrEqualTests {
         var expected = $"ReleaseDate >= \"{value:yyyy-MM-ddTHH:mm:ssZ}\"";
         Assert.Equal(expected, query);
     }
+
+    /// <summary>
+    /// GreaterThanOrEqualメソッドが、数値型フィールドに対して正しいクエリを生成することをテストします。Ratingフィールドに対して4.5の値を指定し、生成されるクエリが"Rating >= 4.5"であることを検証します。
+    /// </summary>
     [Fact]
     public void GreaterThanOrEqualDecimalValueGeneratesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
@@ -221,7 +327,13 @@ public class KintoneQueryGreaterThanOrEqualTests {
     }
 }
 
+/// <summary>
+/// KintoneQueryのLessThan、LessThanOrEqualメソッドが、数値型や日付型フィールドに対して正しいクエリを生成することをテストするクラスです。Priceフィールドに対して100の値を指定した場合、生成されるクエリが"Price < 100"であることを検証します。また、ReleaseDateフィールドに対して2024年1月1日の値を指定した場合、生成されるクエリが"ReleaseDate < "2024-01-01T00:00:00Z""であることを検証します。さらに、Ratingフィールドに対して4.5の値を指定した場合、生成されるクエリが"Rating < 4.5"であることを検証します。
+/// </summary>
 public class KintoneQueryLessThanTests {
+    /// <summary>
+    /// LessThanメソッドが、数値型フィールドに対して正しいクエリを生成することをテストします。Priceフィールドに対して100の値を指定し、生成されるクエリが"Price < 100"であることを検証します。
+    /// </summary>
     [Fact]
     public void LessThanIntValueGeneratesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
@@ -230,6 +342,10 @@ public class KintoneQueryLessThanTests {
 
         Assert.Equal("Price < 500", query);
     }
+
+    /// <summary>
+    /// LessThanメソッドが、日付型フィールドに対して正しいクエリを生成することをテストします。ReleaseDateフィールドに対して2025年1月1日の値を指定し、生成されるクエリが"ReleaseDate < "2025-01-01T00:00:00Z""であることを検証します。
+    /// </summary>
     [Fact]
     public void LessThanDateTimeValueGeneratesCorrectQuery() {
         var date = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -241,6 +357,10 @@ public class KintoneQueryLessThanTests {
         var expected = $"ReleaseDate < \"{date:yyyy-MM-ddTHH:mm:ssZ}\"";
         Assert.Equal(expected, query);
     }
+
+    /// <summary>
+    /// LessThanメソッドが、数値型フィールドに対して正しいクエリを生成することをテストします。Ratingフィールドに対して4.5の値を指定し、生成されるクエリが"Rating < 4.5"であることを検証します。
+    /// </summary>
     [Fact]
     public void LessThanDecimalValueGeneratesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
@@ -251,7 +371,13 @@ public class KintoneQueryLessThanTests {
     }
 }
 
+/// <summary>
+/// KintoneQueryのLessThanOrEqualメソッドが、数値型や日付型フィールドに対して正しいクエリを生成することをテストするクラスです。Priceフィールドに対して100の値を指定した場合、生成されるクエリが"Price <= 100"であることを検証します。また、ReleaseDateフィールドに対して2024年1月1日の値を指定した場合、生成されるクエリが"ReleaseDate <= "2024-01-01T00:00:00Z""であることを検証します。さらに、Ratingフィールドに対して4.5の値を指定した場合、生成されるクエリが"Rating <= 4.5"であることを検証します。
+/// </summary>
 public class KintoneQueryLessThanOrEqualTests {
+    /// <summary>
+    /// LessThanOrEqualメソッドが、数値型フィールドに対して正しいクエリを生成することをテストします。Priceフィールドに対して100の値を指定し、生成されるクエリが"Price <= 100"であることを検証します。
+    /// </summary>
     [Fact]
     public void LessThanOrEqualIntValueGeneratesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()
@@ -260,6 +386,10 @@ public class KintoneQueryLessThanOrEqualTests {
 
         Assert.Equal("Price <= 500", query);
     }
+
+    /// <summary>
+    /// LessThanOrEqualメソッドが、日付型フィールドに対して正しいクエリを生成することをテストします。ReleaseDateフィールドに対して2025年6月11日の値を指定し、生成されるクエリが"ReleaseDate <= "2025-06-11T12:00:00Z""であることを検証します。
+    /// </summary>
     [Fact]
     public void LessThanOrEqualDateTimeValueGeneratesCorrectQuery() {
         var date = new DateTime(2025, 6, 11, 12, 0, 0, DateTimeKind.Utc);
@@ -271,6 +401,10 @@ public class KintoneQueryLessThanOrEqualTests {
         var expected = $"ReleaseDate <= \"{date:yyyy-MM-ddTHH:mm:ssZ}\"";
         Assert.Equal(expected, query);
     }
+
+    /// <summary>
+    /// LessThanOrEqualメソッドが、数値型フィールドに対して正しいクエリを生成することをテストします。Ratingフィールドに対して4.5の値を指定し、生成されるクエリが"Rating <= 4.5"であることを検証します。
+    /// </summary>
     [Fact]
     public void LessThanOrEqualDecimalValueGeneratesCorrectQuery() {
         var query = new KintoneQuery<BookModel>()

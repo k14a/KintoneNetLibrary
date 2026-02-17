@@ -8,10 +8,16 @@ using Xunit;
 
 namespace KintoneNetLibrary.Tests.Api;
 
+/// <summary>
+/// KintoneApiのファイル関連機能（アップロード・ダウンロード）に関するテストクラス。
+/// </summary>
 public class KintoneApiFileTests {
     private const string FilePath = "Files/test1.txt";
 
-    [Fact(DisplayName = "PDFファイルのアップロードとダウンロードが正常に動作すること")]
+    /// <summary>
+    /// テキストファイルのアップロードとダウンロードが正常に動作することを検証するテスト。
+    /// </summary>
+    [Fact]
     public async Task UploadAndDownloadPdfFileWorksCorrectly() {
         var api = KintoneTestHelper.CreateApi();
         var uuid = Guid.NewGuid().ToString();
@@ -54,7 +60,11 @@ public class KintoneApiFileTests {
             }
         }
     }
-    [Fact(DisplayName = "CSVファイルのアップロードとダウンロードが正常に動作すること")]
+
+    /// <summary>
+    /// CSVファイルのアップロードとダウンロードが正常に動作することを検証するテスト。
+    /// </summary>
+    [Fact]
     public async Task UploadAndDownloadCsvFileWorksCorrectly() {
         // Arrange
         var api = KintoneTestHelper.CreateApi();
@@ -99,7 +109,11 @@ public class KintoneApiFileTests {
             await KintoneTestHelper.DeleteRecordsInChunksAsync(api, [createdRecord]);
         }
     }
-    [Fact(DisplayName = "PNGファイルのアップロードとダウンロードが正常に動作すること")]
+
+    /// <summary>
+    /// PNGファイルのアップロードとダウンロードが正常に動作することを検証するテスト。
+    /// </summary>
+    [Fact]
     public async Task UploadAndDownloadPngFileWorksCorrectly() {
         // Arrange
         var api = KintoneTestHelper.CreateApi();
@@ -144,7 +158,11 @@ public class KintoneApiFileTests {
             await KintoneTestHelper.DeleteRecordsInChunksAsync(api, [createdRecord]);
         }
     }
-    [Fact(DisplayName = "ZIPファイル（stream）のアップロードとダウンロードが正常に動作すること")]
+
+    /// <summary>
+    /// ZIPファイルのアップロードとダウンロードが正常に動作することを検証するテスト。
+    /// </summary>
+    [Fact]
     public async Task UploadAndDownloadZipFileWithStreamWorksCorrectly() {
         var api = KintoneTestHelper.CreateApi();
         var uuid = Guid.NewGuid().ToString();
@@ -193,7 +211,11 @@ public class KintoneApiFileTests {
             await KintoneTestHelper.DeleteRecordsInChunksAsync(api, [createdRecord]);
         }
     }
-    [Fact(DisplayName = "Excelファイルのアップロードとダウンロードが正常に動作すること")]
+
+    /// <summary>
+    /// Excelファイルのアップロードとダウンロードが正常に動作することを検証するテスト。
+    /// </summary>
+    [Fact]
     public async Task UploadAndDownloadExcelFileWorksCorrectly() {
         // Arrange
         var api = KintoneTestHelper.CreateApi();
@@ -239,7 +261,11 @@ public class KintoneApiFileTests {
             await KintoneTestHelper.DeleteRecordsInChunksAsync(api, [createdRecord]);
         }
     }
-    [Fact(DisplayName = "FileInfoベースのアップロード・ダウンロードが正常に動作すること")]
+
+    /// <summary>
+    /// FileInfoを使用したファイルのアップロードとダウンロードが正常に動作することを検証するテスト。
+    /// </summary>
+    [Fact]
     public async Task UploadAndDownloadFileWithFileInfoWorksCorrectly() {
         var api = KintoneTestHelper.CreateApi();
         var uuid = Guid.NewGuid().ToString();
@@ -292,7 +318,11 @@ public class KintoneApiFileTests {
             await KintoneTestHelper.DeleteRecordsInChunksAsync(api, [createdRecord]);
         }
     }
-    [Fact(DisplayName = "ZIPファイルのアップロード・ダウンロードが正常に動作すること")]
+
+    /// <summary>
+    /// ZIPファイルのアップロードとダウンロードが正常に動作することを検証するテスト。
+    /// </summary>
+    [Fact]
     public async Task UploadAndDownloadZipFileWorksCorrectly() {
         var api = KintoneTestHelper.CreateApi();
         var uuid = Guid.NewGuid().ToString();
@@ -352,5 +382,4 @@ public class KintoneApiFileTests {
             await KintoneTestHelper.DeleteRecordsInChunksAsync(api, [createdRecord]);
         }
     }
-
 }

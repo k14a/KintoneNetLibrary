@@ -5,7 +5,6 @@ using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.Infrastructure.Helpers;
 
-// コメントは日本語で記述
 /// <summary>
 /// Kintoneのクエリ文の妥当性を検証するためのヘルパークラス
 /// </summary>
@@ -37,14 +36,15 @@ public static partial class KintoneQueryValidator {
             }
         }
     }
+
     /// <summary>
     /// Kintoneのクエリ文に含まれるフィールドコードが、指定されたモデルTに定義されているか検証します。
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="query"></param>
-    /// <param name="throwOnError"></param>
-    /// <param name="onWarn"></param>
-    /// <exception cref="InvalidOperationException"></exception>
+    /// <typeparam name="T">検証対象のモデルの型</typeparam>
+    /// <param name="query">Kintoneの検索クエリ</param>
+    /// <param name="throwOnError">エラー発生時に例外をスローするかどうか</param>
+    /// <param name="onWarn">警告を出力するデリゲート（例: msg => logger?.LogWarning(msg)）</param>
+    /// <exception cref="InvalidOperationException">存在しないフィールドコードが含まれている場合にスローされます</exception>
     public static void ValidateFieldCodes<T>(string query, bool throwOnError = true, Action<string> onWarn = null) {
         if (string.IsNullOrWhiteSpace(query)) {
             return;
@@ -94,15 +94,15 @@ public static partial class KintoneQueryValidator {
     /// <summary>
     /// 指定された単語がKintoneのクエリキーワードであるかを判定します。
     /// </summary>
-    /// <param name="word"></param>
-    /// <returns></returns>
+    /// <param name="word">判定対象の単語</param>
+    /// <returns>キーワードである場合はtrue、それ以外はfalse</returns>
     private static bool IsKintoneQueryKeyword(string word) => KintoneKeywords.Contains(word);
 
     /// <summary>
     /// 指定された単語がリテラル値（数値リテラルまたはクォート済み文字列）であるかを判定します。
     /// </summary>
-    /// <param name="word"></param>
-    /// <returns></returns>
+    /// <param name="word">判定対象の単語</param>
+    /// <returns>リテラル値である場合はtrue、それ以外はfalse</returns>
     private static bool IsLiteralValue(string word) {
         // 数字リテラル・クォート済み文字列はここでは単純に除外（実装は要改善可能）
         return int.TryParse(word, out _) || double.TryParse(word, out _) || word.StartsWith("\"") || word.EndsWith("\"");

@@ -14,14 +14,14 @@ namespace KintoneNetLibrary.Infrastructure.Api;
 /// <summary>
 /// レコード取得（Raw）
 /// </summary>
-public partial class KintoneApi : IKintoneApi, IDisposable {
+public partial class KintoneApi : IKintoneApi {
     /// <summary>
     /// IDで単一レコードを取得（Raw）
     /// </summary>
-    /// <param name="id"></param>
-    /// <returns></returns>
-    /// <exception cref="ArgumentNullException"></exception>
-    /// <exception cref="KintoneException"></exception>
+    /// <param name="id">取得するレコードのID</param>
+    /// <returns>取得したレコードのJSON文字列</returns>
+    /// <exception cref="ArgumentNullException">id が null または空白の場合にスローされます</exception>
+    /// <exception cref="KintoneException">Kintone API からのエラーが発生した場合にスローされます</exception>
     public async Task<string?> RawFindByIDAsync(string id) {
         if (string.IsNullOrWhiteSpace(id)) { throw new ArgumentNullException(nameof(id)); }
 
@@ -44,11 +44,11 @@ public partial class KintoneApi : IKintoneApi, IDisposable {
     /// <summary>
     /// IDで単一レコードを取得（Raw）
     /// </summary>
-    /// <param name="output"></param>
-    /// <param name="id"></param>
+    /// <param name="output">取得したレコードのJSON文字列を書き込むストリーム</param>
+    /// <param name="id">取得するレコードのID</param>
     /// <returns></returns>
-    /// <exception cref="ArgumentNullException"></exception>
-    /// <exception cref="KintoneException"></exception>
+    /// <exception cref="ArgumentNullException">id が null または空白の場合にスローされます</exception>
+    /// <exception cref="KintoneException">Kintone API からのエラーが発生した場合にスローされます</exception>
     public async Task RawFindByIDAsStreamAsync(
         Stream output,
         string id) {
@@ -76,11 +76,11 @@ public partial class KintoneApi : IKintoneApi, IDisposable {
     /// <summary>
     /// IDリストで複数レコードを取得（Raw）
     /// </summary>
-    /// <param name="ids"></param>
-    /// <param name="fieldCodes"></param>
-    /// <returns></returns>
-    /// <exception cref="ArgumentNullException"></exception>
-    /// <exception cref="KintoneException"></exception>
+    /// <param name="ids">取得するレコードのIDリスト</param>
+    /// <param name="fieldCodes">取得するフィールドコードのリスト</param>
+    /// <returns>取得したレコードのJSON文字列</returns>
+    /// <exception cref="ArgumentNullException">ids が null または空の場合にスローされます</exception>
+    /// <exception cref="KintoneException">Kintone API からのエラーが発生した場合にスローされます</exception>
     public async Task<string?> RawFindByIDsAsync(IList<string> ids, IList<string>? fieldCodes = null) {
         if (ids == null || ids.Count == 0) { throw new ArgumentNullException(nameof(ids)); }
 
@@ -115,12 +115,12 @@ public partial class KintoneApi : IKintoneApi, IDisposable {
     /// <summary>
     /// IDリストで複数レコードを取得（Raw）
     /// </summary>
-    /// <param name="output"></param>
-    /// <param name="ids"></param>
-    /// <param name="fieldCodes"></param>
+    /// <param name="output">取得したレコードのJSON文字列を書き込むストリーム</param>
+    /// <param name="ids">取得するレコードのIDリスト</param>
+    /// <param name="fieldCodes">取得するフィールドコードのリスト</param>
     /// <returns></returns>
-    /// <exception cref="ArgumentNullException"></exception>
-    /// <exception cref="KintoneException"></exception>
+    /// <exception cref="ArgumentNullException">ids が null または空の場合にスローされます</exception>
+    /// <exception cref="KintoneException">Kintone API からのエラーが発生した場合にスローされます</exception>
     public async Task RawFindByIDsAsStreamAsync(
         Stream output,
         IList<string> ids,
@@ -163,8 +163,8 @@ public partial class KintoneApi : IKintoneApi, IDisposable {
     /// <summary>
     /// 全レコード取得（条件なし・Raw）
     /// </summary>
-    /// <param name="fieldCodes"></param>
-    /// <returns></returns>
+    /// <param name="fieldCodes">取得するフィールドコードのリスト</param>
+    /// <returns>取得したレコードのJSON文字列</returns>
     public async Task<string?> RawFindAllAsync(IList<string>? fieldCodes = null) {
         return await this.RawFindBaseJsonAsync(string.Empty, fieldCodes: fieldCodes);
     }
@@ -172,9 +172,8 @@ public partial class KintoneApi : IKintoneApi, IDisposable {
     /// <summary>
     /// 全レコード取得（条件なし・Raw）
     /// </summary>
-    /// <param name="output"></param>
-    /// <param name="fieldCodes"></param>
-    /// <returns></returns>
+    /// <param name="output">取得したレコードのJSON文字列を書き込むストリーム</param>
+    /// <param name="fieldCodes">取得するフィールドコードのリスト</param>
     public async Task RawFindAllAsStreamAsync(Stream output, IList<string>? fieldCodes = null) {
         await this.RawFindBaseJsonAsStreamAsync(output, string.Empty, fieldCodes);
     }
@@ -182,9 +181,9 @@ public partial class KintoneApi : IKintoneApi, IDisposable {
     /// <summary>
     /// 指定フィールド＝値 で検索（Raw）
     /// </summary>
-    /// <param name="field"></param>
-    /// <param name="value"></param>
-    /// <returns></returns>
+    /// <param name="field">検索するフィールドコード</param>
+    /// <param name="value">検索する値</param>
+    /// <returns>取得したレコードのJSON文字列</returns>
     public async Task<string?> RawFindByFieldAsync(string field, string value) {
         ArgumentException.ThrowIfNullOrWhiteSpace(field);
 
@@ -195,10 +194,10 @@ public partial class KintoneApi : IKintoneApi, IDisposable {
     /// <summary>
     /// 指定フィールド＝値 で検索（Raw）
     /// </summary>
-    /// <param name="output"></param>
-    /// <param name="field"></param>
-    /// <param name="value"></param>
-    /// <param name="fieldCodes"></param>
+    /// <param name="output">取得したレコードのJSON文字列を書き込むストリーム</param>
+    /// <param name="field">検索するフィールドコード</param>
+    /// <param name="value">検索する値</param>
+    /// <param name="fieldCodes">取得するフィールドコードのリスト</param>
     /// <returns></returns>
     public async Task RawFindByFieldAsStreamAsync(Stream output, string field, string value, IList<string>? fieldCodes = null) {
         ArgumentException.ThrowIfNullOrWhiteSpace(field);
@@ -210,9 +209,9 @@ public partial class KintoneApi : IKintoneApi, IDisposable {
     /// <summary>
     /// クエリ文字列で検索（Raw）
     /// </summary>
-    /// <param name="queryStr"></param>
-    /// <param name="fieldCodes"></param>
-    /// <returns></returns>
+    /// <param name="queryStr">検索するクエリ文字列</param>
+    /// <param name="fieldCodes">取得するフィールドコードのリスト</param>
+    /// <returns>取得したレコードのJSON文字列</returns>
     public async Task<string?> RawFindByQueryAsync(string queryStr, IList<string>? fieldCodes = null) {
         // LIKE 句のバリデーションは Raw でも同じ
         KintoneQueryValidator.ValidateLikeClause(queryStr, msg => this._logger?.LogWarning(msg));
@@ -231,9 +230,9 @@ public partial class KintoneApi : IKintoneApi, IDisposable {
     /// <summary>
     /// クエリ文字列で検索（Raw）
     /// </summary>
-    /// <param name="output"></param>
-    /// <param name="queryStr"></param>
-    /// <param name="fieldCodes"></param>
+    /// <param name="output">取得したレコードのJSON文字列を書き込むストリーム</param>
+    /// <param name="queryStr">検索するクエリ文字列</param>
+    /// <param name="fieldCodes">取得するフィールドコードのリスト</param>
     /// <returns></returns>
     public async Task RawFindByQueryAsStreamAsync(Stream output, string queryStr, IList<string>? fieldCodes = null) {
         KintoneQueryValidator.ValidateLikeClause(queryStr, msg => this._logger?.LogWarning(msg));
@@ -244,10 +243,10 @@ public partial class KintoneApi : IKintoneApi, IDisposable {
     /// <summary>
     /// 基本のレコード取得（Raw）
     /// </summary>
-    /// <param name="query"></param>
-    /// <param name="fieldCodes"></param>
-    /// <param name="forceCursor"></param>
-    /// <returns></returns>
+    /// <param name="query">検索するクエリ文字列</param>
+    /// <param name="fieldCodes">取得するフィールドコードのリスト</param>
+    /// <param name="forceCursor">カーソルを強制的に使用するかどうか</param>
+    /// <returns>取得したレコードのJSON文字列</returns>
     /// <exception cref="KintoneException"></exception>
     private async Task<string?> RawFindBaseJsonAsync(
         string query,
@@ -310,12 +309,11 @@ public partial class KintoneApi : IKintoneApi, IDisposable {
     /// <summary>
     /// 基本のレコード取得（Raw）
     /// </summary>
-    /// <param name="output"></param>
-    /// <param name="query"></param>
-    /// <param name="fieldCodes"></param>
-    /// <param name="forceCursor"></param>
-    /// <returns></returns>
-    /// <exception cref="KintoneException"></exception>
+    /// <param name="output">取得したレコードのJSON文字列を書き込むストリーム</param>
+    /// <param name="query">検索するクエリ文字列</param>
+    /// <param name="fieldCodes">取得するフィールドコードのリスト</param>
+    /// <param name="forceCursor">カーソルを強制的に使用するかどうか</param>
+    /// <exception cref="KintoneException">Kintone API の呼び出し中にエラーが発生した場合にスローされます</exception>
     private async Task RawFindBaseJsonAsStreamAsync(Stream output, string query, IList<string>? fieldCodes = null, bool forceCursor = false) {
         if (!forceCursor) {
             // 件数取得
@@ -372,10 +370,10 @@ public partial class KintoneApi : IKintoneApi, IDisposable {
     /// <summary>
     /// カーソルで全レコード取得（Raw）
     /// </summary>
-    /// <param name="output"></param>
-    /// <param name="query"></param>
-    /// <param name="fieldCodes"></param>
-    /// <returns></returns>
+    /// <param name="output">取得したレコードのJSON文字列を書き込むストリーム</param>
+    /// <param name="query">検索するクエリ文字列</param>
+    /// <param name="fieldCodes">取得するフィールドコードのリスト</param>
+    /// <returns>取得したレコードのJSON文字列を書き込むストリーム</returns>
     private async Task RawCursorFetchAllJsonAsStreamAsync(Stream output, string query, IList<string>? fieldCodes = null) {
         var cursorRequest = new Dictionary<string, object> {
             ["app"] = this._appID,
@@ -413,6 +411,12 @@ public partial class KintoneApi : IKintoneApi, IDisposable {
         writer.Flush();
     }
 
+    /// <summary>
+    /// カーソルストリームからレコードと next を読み取る
+    /// </summary>
+    /// <param name="stream">カーソルストリーム</param>
+    /// <param name="onRecord">レコードを処理するデリゲート</param>
+    /// <returns>次のレコードが存在するかどうか</returns>
     private bool ReadRecordsAndNextFromCursorStream(Stream stream, Action<JsonElement> onRecord) {
         bool hasNext = false;
 
@@ -467,6 +471,15 @@ public partial class KintoneApi : IKintoneApi, IDisposable {
         }
     }
 
+    /// <summary>
+    /// Utf8JsonReader を使って、チャンクをまたいで 1 つの JSON オブジェクトを読み取る
+    /// </summary>
+    /// <param name="reader">現在の Utf8JsonReader</param>
+    /// <param name="stream">カーソルストリーム</param>
+    /// <param name="state">現在の JsonReaderState</param>
+    /// <param name="leftover">前のチャンクからの残りのデータ</param>
+    /// <returns></returns>
+    /// <exception cref="JsonException"></exception>
     private JsonDocument ReadOneJsonObject(
         ref Utf8JsonReader reader,
         Stream stream,
@@ -558,8 +571,8 @@ public partial class KintoneApi : IKintoneApi, IDisposable {
     /// <summary>
     /// カーソルをストリームで取得します
     /// </summary>
-    /// <param name="cursorId"></param>
-    /// <returns></returns>
+    /// <param name="cursorId">カーソルID</param>
+    /// <returns>取得したレコードのJSON文字列を書き込むストリーム</returns>
     public async IAsyncEnumerable<Stream> StreamCursorStreamAsync(string cursorId) {
         try {
             while (true) {
@@ -583,10 +596,10 @@ public partial class KintoneApi : IKintoneApi, IDisposable {
     /// <summary>
     /// カーソルページをストリームで取得します
     /// </summary>
-    /// <param name="query"></param>
-    /// <param name="fields"></param>
-    /// <param name="size"></param>
-    /// <returns></returns>
+    /// <param name="query">クエリ文字列</param>
+    /// <param name="fields">取得するフィールドのリスト</param>
+    /// <param name="size">1ページあたりの取得件数</param>
+    /// <returns>取得したレコードのJSON文字列を書き込むストリーム</returns>
     public async IAsyncEnumerable<Stream> StreamCursorPagesAsync(string query, IList<string>? fields = null, int? size = null) {
         // カーソル作成
         var cursorId = await this.CreateCursorAsync(query, fields, size);
@@ -628,10 +641,10 @@ public partial class KintoneApi : IKintoneApi, IDisposable {
     /// <summary>
     /// レコードをストリームで取得します
     /// </summary>
-    /// <param name="query"></param>
-    /// <param name="fields"></param>
-    /// <param name="size"></param>
-    /// <returns></returns>
+    /// <param name="query">クエリ文字列</param>
+    /// <param name="fields">取得するフィールドのリスト</param>
+    /// <param name="size">1ページあたりの取得件数</param>
+    /// <returns>取得したレコードの JSON 要素の列挙</returns>
     public async IAsyncEnumerable<JsonElement> StreamRecordsAsync(string query, IList<string>? fields = null, int? size = null) {
         await foreach (var pageStream in this.StreamCursorPagesAsync(query, fields, size)) {
             // ページ JSON を Utf8JsonReader でパース

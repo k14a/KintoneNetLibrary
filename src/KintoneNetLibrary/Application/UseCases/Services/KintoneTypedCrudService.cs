@@ -13,10 +13,10 @@ namespace KintoneNetLibrary.Application.UseCases.Services;
 /// <summary>
 /// KintoneモデルのCRUD操作を提供するサービスクラスです。
 /// </summary>
-/// <param name="repository"></param>
-/// <param name="executionOptions"></param>
-/// <param name="jsonOptions"></param>
-/// <param name="logger"></param>
+/// <param name="repository">Kintoneリポジトリインターフェース</param>
+/// <param name="executionOptions">Kintone実行オプション</param>
+/// <param name="jsonOptions">JSONシリアライズオプション（オプション）</param>
+/// <param name="logger">ロガーインスタンス（オプション）</param>
 public class KintoneTypedCrudService<T>(
     IKintoneRepository repository,
     IOptions<KintoneExecutionOptions>? executionOptions,
@@ -31,9 +31,9 @@ public class KintoneTypedCrudService<T>(
     /// <summary>
     /// Kintoneモデルのレコードを作成します。
     /// </summary>
-    /// <param name="records"></param>
-    /// <param name="enableSingleRetryOnError"></param>
-    /// <returns></returns>
+    /// <param name="records">作成対象のKintoneモデルのリスト</param>
+    /// <param name="enableSingleRetryOnError">エラー発生時に単一レコードの再試行を有効にするかどうか</param>
+    /// <returns>作成結果を含むKintoneWriteResultオブジェクト</returns>
     public async Task<KintoneWriteResult<T>> CreateAsync(IList<T> records, bool enableSingleRetryOnError = false) {
         try {
             this._logger?.LogInformation("CreateAsync() - Start");
@@ -68,9 +68,9 @@ public class KintoneTypedCrudService<T>(
     /// <summary>
     /// 指定されたチャンクのレコードをKintoneアプリに作成します。
     /// </summary>
-    /// <param name="chunk"></param>
-    /// <param name="enableSingleRetryOnError"></param>
-    /// <returns></returns>
+    /// <param name="chunk">作成対象のKintoneモデルのチャンク</param>
+    /// <param name="enableSingleRetryOnError">エラー発生時に単一レコードの再試行を有効にするかどうか</param>
+    /// <returns>作成結果を含むKintoneWriteResultオブジェクト</returns>
     private async Task<KintoneWriteResult<T>> CreateChunkAsync(IList<T> chunk, bool enableSingleRetryOnError) {
         var result = new KintoneWriteResult<T>();
 
@@ -127,10 +127,10 @@ public class KintoneTypedCrudService<T>(
     /// <summary>
     /// Kintoneモデルのレコードを検索します。
     /// </summary>
-    /// <param name="ids"></param>
-    /// <param name="query"></param>
-    /// <param name="fieldCodes"></param>
-    /// <returns></returns>
+    /// <param name="ids">検索対象のレコードIDのリスト（オプション）</param>
+    /// <param name="query">検索クエリ（オプション）</param>
+    /// <param name="fieldCodes">取得するフィールドコードのリスト（オプション）</param>
+    /// <returns>検索結果のKintoneモデルのリスト</returns>
     /// <exception cref="KintoneException"></exception>
     public async Task<IEnumerable<T>> FindAsync(IList<string>? ids = null, string? query = null, IList<string>? fieldCodes = null) {
         try {
@@ -187,9 +187,9 @@ public class KintoneTypedCrudService<T>(
     /// <summary>
     /// Kintoneモデルのレコードを更新します。
     /// </summary>
-    /// <param name="records"></param>
-    /// <param name="enableSingleRetryOnError"></param>
-    /// <returns></returns>
+    /// <param name="records">更新対象のKintoneモデルのリスト</param>
+    /// <param name="enableSingleRetryOnError">エラー発生時に単一レコードの再試行を有効にするかどうか</param>
+    /// <returns>更新結果を含むKintoneWriteResultオブジェクト</returns>
     public async Task<KintoneWriteResult<T>> UpdateAsync(IList<T> records, bool enableSingleRetryOnError = false) {
         try {
             this._logger?.LogInformation("UpdateAsync() - Start");
@@ -222,9 +222,9 @@ public class KintoneTypedCrudService<T>(
     /// <summary>
     /// 指定されたチャンクのレコードをKintoneアプリに更新します。
     /// </summary>
-    /// <param name="chunk"></param>
-    /// <param name="enableSingleRetryOnError"></param>
-    /// <returns></returns>
+    /// <param name="chunk">更新対象のKintoneモデルのチャンク</param>
+    /// <param name="enableSingleRetryOnError">エラー発生時に単一レコードの再試行を有効にするかどうか</param>
+    /// <returns>更新結果を含むKintoneWriteResultオブジェクト</returns>
     private async Task<KintoneWriteResult<T>> UpdateChunkAsync(IList<T> chunk, bool enableSingleRetryOnError) {
         var result = new KintoneWriteResult<T>();
 
@@ -270,9 +270,9 @@ public class KintoneTypedCrudService<T>(
     /// <summary>
     /// Kintoneモデルのレコードを削除します。
     /// </summary>
-    /// <param name="ids"></param>
-    /// <param name="validateExistence"></param>
-    /// <returns></returns>
+    /// <param name="ids">削除対象のレコードIDのリスト</param>
+    /// <param name="validateExistence">レコードの存在確認を行うかどうか</param>
+    /// <returns>削除結果を含むKintoneDeleteResultオブジェクト</returns>
     public async Task<KintoneDeleteResult> DeleteAsync(IList<string> ids, bool validateExistence = true) {
         var models = ids.Select(id => new T { RecordID = id }).ToList();
         return await this.DeleteAsync(models, validateExistence);
@@ -281,9 +281,9 @@ public class KintoneTypedCrudService<T>(
     /// <summary>
     /// Kintoneモデルのレコードを削除します。
     /// </summary>
-    /// <param name="models"></param>
-    /// <param name="validateExistence"></param>
-    /// <returns></returns>
+    /// <param name="models">削除対象のKintoneモデルのリスト</param>
+    /// <param name="validateExistence">レコードの存在確認を行うかどうか</param>
+    /// <returns>削除結果を含むKintoneDeleteResultオブジェクト</returns>
     public async Task<KintoneDeleteResult> DeleteAsync(IList<T> models, bool validateExistence = true) {
         try {
             this._logger?.LogInformation("DeleteAsync() - Start");
@@ -329,8 +329,8 @@ public class KintoneTypedCrudService<T>(
     /// <summary>
     /// 指定されたチャンクのレコードをKintoneアプリから削除します。
     /// </summary>
-    /// <param name="chunk"></param>
-    /// <returns></returns>
+    /// <param name="chunk">削除対象のKintoneモデルのチャンク</param>
+    /// <returns>削除結果を含むKintoneDeleteResultオブジェクト</returns>
     private async Task<KintoneDeleteResult> DeleteChunkAsync(IList<T> chunk) {
         var result = new KintoneDeleteResult();
         var idList = chunk.Select(m => m.RecordID).Where(id => !string.IsNullOrWhiteSpace(id)).Select(id => id!).ToList();
@@ -360,8 +360,8 @@ public class KintoneTypedCrudService<T>(
     /// <summary>
     /// 指定されたモデルのうち、Kintoneアプリに存在するものを取得します。
     /// </summary>
-    /// <param name="models"></param>
-    /// <returns></returns>
+    /// <param name="models">存在確認対象のKintoneモデルのリスト</param>
+    /// <returns>存在するKintoneモデルのリスト</returns>
     private async Task<IList<T>> PrepareValidatedTargets(IList<T> models) {
         var ids = models.Select(x => x.RecordID).ToList();
         return (await this.FindAsync(ids, fieldCodes: ["RecordID"])).ToList();
@@ -370,9 +370,9 @@ public class KintoneTypedCrudService<T>(
     /// <summary>
     /// 指定されたオリジナルリストに対して、見つからなかったレコードの削除失敗情報を収集します。
     /// </summary>
-    /// <param name="original"></param>
-    /// <param name="found"></param>
-    /// <returns></returns>
+    /// <param name="original">オリジナルのKintoneモデルのリスト</param>
+    /// <param name="found">存在が確認されたKintoneモデルのリスト</param>
+    /// <returns>削除失敗情報のリスト</returns>
     private List<KintoneDeleteFailure> CollectNotFoundFailures(IList<T> original, IList<T> found) {
         var foundIds = found.Select(x => x.RecordID).ToHashSet();
         return original
@@ -387,9 +387,9 @@ public class KintoneTypedCrudService<T>(
     /// <summary>
     /// Kintoneモデルのレコードを保存します。
     /// </summary>
-    /// <param name="records"></param>
-    /// <param name="enableSingleRetryOnError"></param>
-    /// <returns></returns>
+    /// <param name="records">保存対象のKintoneモデルのリスト</param>
+    /// <param name="enableSingleRetryOnError">エラー発生時に単一の再試行を有効にするかどうか</param>
+    /// <returns>保存結果を含むKintoneWriteResultオブジェクト</returns>
     public async Task<KintoneWriteResult<T>> SaveAsync(IList<T> records, bool enableSingleRetryOnError = false) {
         try {
             this._logger?.LogInformation("SaveAsync() - Start");
@@ -420,10 +420,10 @@ public class KintoneTypedCrudService<T>(
     /// <summary>
     /// Kintoneモデルのレコードを保存します。作成に失敗したレコードは更新として再試行されます。
     /// </summary>
-    /// <param name="records"></param>
-    /// <param name="enableSingleRetryOnError"></param>
-    /// <param name="enableCreateToUpdateRetry"></param>
-    /// <returns></returns>
+    /// <param name="records">保存対象のKintoneモデルのリスト</param>
+    /// <param name="enableSingleRetryOnError">エラー発生時に単一の再試行を有効にするかどうか</param>
+    /// <param name="enableCreateToUpdateRetry">作成に失敗したレコードを更新として再試行するかどうか</param>
+    /// <returns>保存結果を含むKintoneWriteResultオブジェクト</returns>
     public async Task<KintoneWriteResult<T>> SaveWithRetryAsync(IList<T> records, bool enableSingleRetryOnError = false, bool enableCreateToUpdateRetry = true) {
         try {
             this._logger?.LogInformation("SaveWithRetryAsync() - Start");
@@ -481,9 +481,9 @@ public class KintoneTypedCrudService<T>(
     /// <summary>
     /// レスポンスJSONを解析して更新されたレコードのリストを返します。
     /// </summary>
-    /// <param name="records"></param>
-    /// <param name="responseJson"></param>
-    /// <returns></returns>
+    /// <param name="records">更新対象のKintoneモデルのリスト</param>
+    /// <param name="responseJson">Kintone APIからのレスポンスJSON</param>
+    /// <returns>更新されたKintoneモデルのリスト</returns>
     private static List<T> ParseUpdatedRecords(IList<T> records, string responseJson) {
         var indexResponse = KintoneRecordIndexesResponse.Parse(responseJson);
         var indexes = indexResponse.ToIndexes();
@@ -504,8 +504,8 @@ public class KintoneTypedCrudService<T>(
     /// <summary>
     /// レコードを作成対象と更新対象に分割します。
     /// </summary>
-    /// <param name="records"></param>
-    /// <returns></returns>
+    /// <param name="records">分割対象のKintoneモデルのリスト</param>
+    /// <returns>作成対象と更新対象に分割されたKintoneモデルのリスト</returns>
     private static (List<T> createTargets, List<T> updateTargets) SplitRecords(IList<T> records) {
         var createTargets = new List<T>();
         var updateTargets = new List<T>();

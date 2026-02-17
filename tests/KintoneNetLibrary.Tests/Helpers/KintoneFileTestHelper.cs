@@ -10,15 +10,34 @@ using SixLabors.ImageSharp.Processing;
 
 namespace KintoneNetLibrary.Tests.Helpers;
 
+/// <summary>
+/// テスト用のファイルを作成するためのヘルパークラス。
+/// </summary>
 public static class KintoneFileTestHelper {
+    /// <summary>
+    /// 文字列のSHA-256ハッシュを計算します。ファイルの内容が正しく保存されているかを検証するために使用します。
+    /// </summary>
+    /// <param name="data">ハッシュを計算する文字列</param>
+    /// <returns>計算されたSHA-256ハッシュの16進数文字列</returns>
     public static string ComputeSha256Hash(string data) {
         var encoding = Encoding.GetEncoding("UTF-8");
         return ComputeSha256Hash(encoding.GetBytes(data));
     }
+
+    /// <summary>
+    /// バイト配列のSHA-256ハッシュを計算します。ファイルの内容が正しく保存されているかを検証するために使用します。
+    /// </summary>
+    /// <param name="data">ハッシュを計算するバイト配列</param>
+    /// <returns>計算されたSHA-256ハッシュの16進数文字列</returns>
     public static string ComputeSha256Hash(byte[] data) {
         var hashBytes = SHA256.HashData(data);
         return Convert.ToHexStringLower(hashBytes);
     }
+
+    /// <summary>
+    /// テスト用のPDFファイルを作成します。内容は非常にシンプルで、"Hello PDF"というテキストが含まれています。ファイルの内容が正しく保存されているかを検証するために使用します。
+    /// </summary>
+    /// <returns>作成されたPDFファイルのパス</returns>
     public static string CreateSamplePdfFile() {
         var filePath = "Files/sample.pdf";
         Directory.CreateDirectory("Files");
@@ -50,6 +69,11 @@ public static class KintoneFileTestHelper {
 
         return filePath;
     }
+
+    /// <summary>
+    /// テスト用のCSVファイルを作成します。内容は非常にシンプルで、3行のデータが含まれています。ファイルの内容が正しく保存されているかを検証するために使用します。
+    /// </summary>
+    /// <returns>作成されたCSVファイルのパス</returns>
     public static string CreateSampleCsvFile() {
         var filePath = "Files/sample.csv";
         Directory.CreateDirectory("Files");
@@ -69,6 +93,11 @@ public static class KintoneFileTestHelper {
         File.WriteAllLines(filePath, lines, Encoding.UTF8);
         return filePath;
     }
+
+    /// <summary>
+    /// テスト用のPNGファイルを作成します。内容は非常にシンプルで、白い背景に"Hello PNG"というテキストが描かれています。ファイルの内容が正しく保存されているかを検証するために使用します。
+    /// </summary>
+    /// <returns>作成されたPNGファイルのパス</returns>
     public static string CreateSamplePngFile() {
         var filePath = "Files/sample.png";
         Directory.CreateDirectory("Files");
@@ -98,6 +127,11 @@ public static class KintoneFileTestHelper {
 
         return filePath;
     }
+
+    /// <summary>
+    /// テスト用のExcelファイルを作成します。内容は非常にシンプルで、3行のデータが含まれています。ファイルの内容が正しく保存されているかを検証するために使用します。
+    /// </summary>
+    /// <returns>作成されたExcelファイルのパス</returns>
     public static string CreateSampleExcelFile() {
         var filePath = "Files/sample.xlsx";
         Directory.CreateDirectory("Files");
@@ -129,16 +163,11 @@ public static class KintoneFileTestHelper {
 
         return filePath;
     }
-    // public static string CreateSampleTxtFile() {
-    //     var filePath = "Files/test1.txt";
-    //     Directory.CreateDirectory("Files");
 
-    //     if (!File.Exists(filePath)) {
-    //         File.WriteAllText(filePath, "This is a sample text file for upload/download test.", Encoding.UTF8);
-    //     }
-
-    //     return filePath;
-    // }
+    /// <summary>
+    /// テスト用のテキストファイルを作成します。内容は非常にシンプルで、"This is a sample text file for upload/download test."というテキストが含まれています。ファイルの内容が正しく保存されているかを検証するために使用します。
+    /// </summary>
+    /// <returns>作成されたテキストファイルのパス</returns>
     public static string CreateSampleTxtFile() {
         var filePath = "Files/sample.txt";
         Directory.CreateDirectory("Files");
@@ -154,6 +183,10 @@ public static class KintoneFileTestHelper {
         return filePath;
     }
 
+    /// <summary>
+    /// テスト用のZIPファイルを作成します。内容は非常にシンプルで、1つのテキストファイルが含まれています。ファイルの内容が正しく保存されているかを検証するために使用します。
+    /// </summary>
+    /// <returns>作成されたZIPファイルのパス</returns>
     public static string CreateSampleZipFile() {
         var filePath = "Files/sample.zip";
         Directory.CreateDirectory("Files");

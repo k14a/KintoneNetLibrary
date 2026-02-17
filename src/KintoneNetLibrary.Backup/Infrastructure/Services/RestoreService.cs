@@ -15,18 +15,15 @@ using static KintoneNetLibrary.Domain.Common.KintoneConstants;
 namespace KintoneNetLibrary.Backup.Infrastructure.Services;
 
 /// <summary>
-/// リストアサービス
+/// バックアップデータから Kintone アプリにレコードをリストアするサービスクラスです。
 /// </summary>
-/// <remarks>
-/// コンストラクタ
-/// </remarks>
-/// <param name="schemaProvider"></param>
-/// <param name="httpClient"></param>
-/// <param name="logger"></param>
+/// <param name="schemaProvider">スキーマプロバイダー</param>
+/// <param name="accessFactory">Kintoneアクセスファクトリー</param>
+/// <param name="httpClientFactory">HTTPクライアントファクトリー</param>
+/// <param name="logger">ロガー</param>
 public sealed class RestoreService(
     ISchemaProvider schemaProvider,
     IKintoneAccessFactory accessFactory,
-    // HttpClient? httpClient = null,
     IHttpClientFactory httpClientFactory,
     ILogger<RestoreService>? logger = null) : IRestoreService {
 
@@ -37,7 +34,6 @@ public sealed class RestoreService(
     private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
     private readonly ILogger? _logger = logger;
     private readonly RestoreResult _result = new();
-    public RestoreOptions Options { get; set; } = default!;
     private static readonly HashSet<string> _readonlyFieldTypes = [
         "CREATOR",
         "MODIFIER",
@@ -49,10 +45,15 @@ public sealed class RestoreService(
     ];
 
     /// <summary>
+    /// リストアオプション
+    /// </summary>
+    public RestoreOptions Options { get; set; } = default!;
+
+    /// <summary>
     /// リストアを実行します
     /// </summary>
-    /// <returns></returns>
-    /// <exception cref="NotSupportedException"></exception>
+    /// <returns>リストア結果</returns>
+    /// <exception cref="NotSupportedException">サポートされていない操作が指定された場合にスローされます。</exception>
     public async Task<RestoreResult> RunRestoreAsync() {
         this._logger?.LogInformation("リストア 開始: App={App}", this.Options.AppID);
         this.EnsureApiInitialized();
@@ -119,9 +120,6 @@ public sealed class RestoreService(
         ArgumentNullException.ThrowIfNull(this.Options);
         var access = new ApiTokenAccess(this.Options.SubDomain, this.Options.ApiToken);
 
-        // this._httpClient ??= new HttpClient {
-        //     BaseAddress = new Uri($"https://{access.Domain}/k/v1/")
-        // };
         var httpClient = this._httpClientFactory.CreateClient();
 
         this._api = new KintoneApi(access: access, appID: this.Options.AppID, httpClient: httpClient);
@@ -130,9 +128,9 @@ public sealed class RestoreService(
     /// <summary>
     /// manifest.json を読み込みます
     /// </summary>
-    /// <returns></returns>
-    /// <exception cref="FileNotFoundException"></exception>
-    /// <exception cref="InvalidOperationException"></exception>
+    /// <returns>バックアップマニフェスト</returns>
+    /// <exception cref="FileNotFoundException">manifest.json が見つからない場合にスローされます</exception>
+    /// <exception cref="InvalidOperationException">manifest.json の読み込みに失敗した場合にスローされます</exception>
     private async Task<BackupManifest> LoadManifestAsync() {
         var path = Path.Combine(this.Options.BackupRootPath.FullName, "manifest.json");
 
@@ -161,8 +159,9 @@ public sealed class RestoreService(
     /// <summary>
     /// fields.json を読み込みます
     /// </summary>
-    /// <returns></returns>
-    /// <exception cref="FileNotFoundException"></exception>
+    /// <returns>フィールドスキーマの JSON ノード</returns>
+    /// <exception cref="FileNotFoundException">fields.json が見つからない場合にスローされます</exception>
+    /// <exception cref="InvalidOperationException">fields.json の読み込みに失敗した場合にスローされます</exception>
     private async Task<JsonNode> LoadFieldSchemaAsync() {
         var path = Path.Combine(this.Options.BackupRootPath.FullName, "fields.json");
         if (!File.Exists(path)) {
@@ -175,9 +174,9 @@ public sealed class RestoreService(
     /// <summary>
     /// バックアップデータを読み込みます
     /// </summary>
-    /// <param name="parts"></param>
-    /// <returns></returns>
-    /// <exception cref="NotImplementedException"></exception>
+    /// <param name="parts">分割ファイルのリスト</param>
+    /// <returns>分割ファイルのパスの列挙</returns>
+    /// <exception cref="FileNotFoundException">バックアップデータファイルが見つからない場合にスローされます</exception>
     private IEnumerable<string> GetPartFiles(IList<string> partFiles) {
         var dataDir = Path.Combine(this.Options.BackupRootPath.FullName, "data");
 
@@ -192,6 +191,13 @@ public sealed class RestoreService(
         }
     }
 
+    /// <summary>
+    /// 分割ファイルからレコードデータを読み込みます
+    /// </summary>
+    /// <param name="partFilePath">分割ファイルのパス</param>
+    /// <returns>レコードデータのリスト</returns>
+    /// <exception cref="FileNotFoundException">分割ファイルが見つからない場合にスローされます</exception>
+    /// <exception cref="InvalidOperationException">分割ファイルの読み込みに失敗した場合にスローされます</exception>
     private async Task<List<JsonNode>> LoadPartRecordsAsync(string partFilePath) {
         if (!File.Exists(partFilePath)) {
             throw new FileNotFoundException($"分割ファイルが見つかりません: {partFilePath}");
@@ -217,9 +223,9 @@ public sealed class RestoreService(
     /// <summary>
     /// 添付ファイルの fileKey を置換します
     /// </summary>
-    /// <param name="records"></param>
-    /// <returns></returns>
-    /// <exception cref="InvalidOperationException"></exception>
+    /// <param name="records">レコードデータのリスト</param>
+    /// <returns>更新されたレコードデータのリスト</returns>
+    /// <exception cref="InvalidOperationException">fileKey の置換に失敗した場合にスローされます</exception>
     private async Task<List<JsonNode>> ReplaceFileKeysAsync(List<JsonNode> records) {
         if (this.Options.DryRun) {
             foreach (var record in records) {
@@ -282,8 +288,7 @@ public sealed class RestoreService(
     /// <summary>
     /// レコード復元を実行します
     /// </summary>
-    /// <param name="records"></param>
-    /// <returns></returns>
+    /// <param name="records">レコードデータのリスト</param>
     private async Task RestoreRecordsAsync(List<JsonNode> records) {
         switch (this.Options.Mode) {
             case RestoreMode.FullReplace:
@@ -303,9 +308,8 @@ public sealed class RestoreService(
     /// <summary>
     /// レコードを一括インサートします
     /// </summary>
-    /// <param name="records"></param>
-    /// <param name="skipExisting"></param>
-    /// <returns></returns>
+    /// <param name="records">レコードデータのリスト</param>
+    /// <param name="skipExisting">既存レコードをスキップするかどうか</param>
     private async Task RestoreRecordsCreateOnlyAsync(List<JsonNode> records, bool skipExisting = false) {
         if (this.Options.DryRun) {
             int count = 0;
@@ -360,8 +364,7 @@ public sealed class RestoreService(
     /// <summary>
     /// レコードを一括アップサートします
     /// </summary>
-    /// <param name="records"></param>
-    /// <returns></returns>
+    /// <param name="records">レコードデータのリスト</param>
     private async Task RestoreRecordsUpsertAsync(List<JsonNode> records) {
         if (this.Options.DryRun) {
             int postCount = 0;
@@ -439,7 +442,7 @@ public sealed class RestoreService(
     /// <summary>
     /// レコード内の $id フィールドを削除します
     /// </summary>
-    /// <param name="obj"></param>
+    /// <param name="obj">レコードデータのオブジェクト</param>
     private void RemoveRecordIdFields(JsonObject obj) {
         // $id を削除
         obj.Remove("$id");
@@ -467,7 +470,7 @@ public sealed class RestoreService(
     /// <summary>
     /// 読み取り専用フィールドを削除します
     /// </summary>
-    /// <param name="record"></param>
+    /// <param name="record">レコードデータのオブジェクト</param>
     private void RemoveReadonlyFields(JsonObject record) {
         var toRemove = new List<string>();
 
@@ -488,8 +491,7 @@ public sealed class RestoreService(
     /// <summary>
     /// レコードを一括登録します
     /// </summary>
-    /// <param name="batch"></param>
-    /// <returns></returns>
+    /// <param name="batch">レコードデータのリスト</param>
     private async Task InsertBatchAsync(List<JsonNode> batch) {
         if (batch.Count == 0) { return; }
 
@@ -506,8 +508,7 @@ public sealed class RestoreService(
     /// <summary>
     /// レコードを一括更新します
     /// </summary>
-    /// <param name="batch"></param>
-    /// <returns></returns>
+    /// <param name="batch">レコードデータのリスト</param>
     private async Task UpdateBatchAsync(List<JsonNode> batch) {
         if (batch.Count == 0) { return; }
 
@@ -524,9 +525,9 @@ public sealed class RestoreService(
     /// <summary>
     /// バックアップディレクトリの妥当性を検証します
     /// </summary>
-    /// <param name="manifest"></param>
-    /// <exception cref="DirectoryNotFoundException"></exception>
-    /// <exception cref="FileNotFoundException"></exception>
+    /// <param name="manifest">バックアップマニフェスト</param>
+    /// <exception cref="DirectoryNotFoundException">バックアップディレクトリが存在しない場合にスローされます</exception>
+    /// <exception cref="FileNotFoundException">必要なファイルが存在しない場合にスローされます</exception>
     private void ValidateBackupDirectory(BackupManifest manifest) {
         var root = this.Options.BackupRootPath;
 
@@ -586,9 +587,9 @@ public sealed class RestoreService(
     /// <summary>
     /// スキーマ検証を実行します
     /// </summary>
-    /// <param name="backupSchema"></param>
+    /// <param name="backupSchema">バックアップのスキーマ情報</param>
     /// <returns></returns>
-    /// <exception cref="InvalidOperationException"></exception>
+    /// <exception cref="InvalidOperationException">スキーマ検証に失敗した場合にスローされます</exception>
     private async Task ValidateSchemaAsync(JsonNode backupSchema) {
         if (this.Options.Force) {
             this._logger?.LogWarning("Force オプションが指定されているため、スキーマ検証をスキップします");
@@ -643,7 +644,6 @@ public sealed class RestoreService(
     /// <summary>
     /// 既存レコードを全削除します
     /// </summary>
-    /// <returns></returns>
     private async Task DeleteAllRecordsAsync() {
         if (this.Options.DryRun) {
             this._logger?.LogWarning("DryRun: 全レコード削除が実行される予定です（実際には削除されません）");

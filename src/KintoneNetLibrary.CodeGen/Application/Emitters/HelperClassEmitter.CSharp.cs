@@ -9,10 +9,7 @@ namespace KintoneNetLibrary.CodeGen.Application.Emitters;
 /// <summary>
 /// C# ヘルパークラスエミッター
 /// </summary>
-/// <remarks>
-/// コンストラクター
-/// </remarks>
-/// <param name="logger"></param>
+/// <param name="logger">ロガー</param>
 public class CSharpHelperClassEmitter(ILogger<CSharpHelperClassEmitter> logger) : IHelperClassEmitter {
     private readonly string _baseTemplate = ReadTemplate("EntityInfoBaseTemplate.txt");
     private readonly string _derivedTemplate = ReadTemplate("EntityInfoDerivedTemplate.txt");
@@ -22,8 +19,8 @@ public class CSharpHelperClassEmitter(ILogger<CSharpHelperClassEmitter> logger) 
     /// <summary>
     /// ヘルパークラス群を生成する
     /// </summary>
-    /// <param name="options"></param>
-    /// <returns></returns>
+    /// <param name="options">コードエミッターオプション</param>
+    /// <returns>生成されたヘルパークラスの一覧</returns>
     public IEnumerable<GeneratedHelperClass> EmitHelperClasses(CodeEmitterOptions options) {
         var helperOptions = options as CSharpEmitterOptions
             ?? throw new InvalidOperationException("Invalid options type.");
@@ -53,11 +50,11 @@ public class CSharpHelperClassEmitter(ILogger<CSharpHelperClassEmitter> logger) 
     /// <summary>
     /// テンプレートからヘルパークラスを生成する
     /// </summary>
-    /// <param name="template"></param>
-    /// <param name="className"></param>
-    /// <param name="summary"></param>
-    /// <param name="options"></param>
-    /// <returns></returns>
+    /// <param name="template">テンプレート文字列</param>
+    /// <param name="className">クラス名</param>
+    /// <param name="summary">クラスの概要</param>
+    /// <param name="options">C# エミッターオプション</param>
+    /// <returns>生成されたヘルパークラス</returns>
     private GeneratedHelperClass EmitFromTemplate(string template, string className, string summary, CSharpEmitterOptions options) {
         var code = template
             .Replace("{{Namespace}}", options.Namespace)
@@ -73,9 +70,9 @@ public class CSharpHelperClassEmitter(ILogger<CSharpHelperClassEmitter> logger) 
     /// <summary>
     /// テンプレートを読み込む
     /// </summary>
-    /// <param name="fileName"></param>
-    /// <returns></returns>
-    /// <exception cref="InvalidOperationException"></exception>
+    /// <param name="fileName">テンプレートファイル名</param>
+    /// <returns>テンプレートの内容</returns>
+    /// <exception cref="InvalidOperationException">テンプレートが見つからない場合にスローされます。</exception>
     private static string ReadTemplate(string fileName) {
         var assembly = typeof(CSharpHelperClassEmitter).Assembly;
         var resourceName = assembly

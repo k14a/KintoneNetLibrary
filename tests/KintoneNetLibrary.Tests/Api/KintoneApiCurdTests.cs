@@ -12,7 +12,13 @@ using Xunit;
 
 namespace KintoneNetLibrary.Tests.Api;
 
+/// <summary>
+/// KintoneApi の基本的な CRUD 操作をテストするクラス。
+/// </summary>
 public class KintoneApiCrudTests {
+    /// <summary>
+    /// レコードの作成、読み取り、削除が正常に行えることを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task CanCreateReadDeleteRecord() {
         var api = KintoneTestHelper.CreateApi();
@@ -43,6 +49,10 @@ public class KintoneApiCrudTests {
         var deleteResult = await api.DeleteAsync(deleteJson);
         Assert.NotNull(deleteResult);
     }
+
+    /// <summary>
+    /// 複数レコードの作成、読み取り、削除が正常に行えることを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task CanCreateReadDeleteMultipleRecords() {
         var api = KintoneTestHelper.CreateApi();
@@ -75,6 +85,10 @@ public class KintoneApiCrudTests {
         var deleteResult = await api.DeleteAsync(deleteJson);
         Assert.NotNull(deleteResult);
     }
+
+    /// <summary>
+    /// fieldCodes を指定して特定のフィールドのみを取得できることを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task CanReadWithFieldCodes() {
         var api = KintoneTestHelper.CreateApi();
@@ -105,6 +119,10 @@ public class KintoneApiCrudTests {
         var deleteResult = await api.DeleteAsync(deleteJson);
         Assert.NotNull(deleteResult);
     }
+
+    /// <summary>
+    /// レコードの作成、更新、検索、削除が一連の流れで正常に行えることを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task CanCreateUpdateFindDeleteRecord() {
         var api = KintoneTestHelper.CreateApi();
@@ -137,6 +155,10 @@ public class KintoneApiCrudTests {
         var deleteResult = await api.DeleteAsync(deleteJson);
         Assert.NotNull(deleteResult);
     }
+
+    /// <summary>
+    /// UUIDなどのフィールドを updateKey として指定してレコードを更新できることを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task CanUpdateByKey() {
         var api = KintoneTestHelper.CreateApi();
@@ -179,6 +201,10 @@ public class KintoneApiCrudTests {
         var deleteResult = await api.DeleteAsync(deleteJson);
         Assert.NotNull(deleteResult);
     }
+
+    /// <summary>
+    /// クエリを指定してレコードを検索できることを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task FindByQueryAsyncShouldReturnFilteredRecords() {
         var api = KintoneTestHelper.CreateApi();
@@ -212,6 +238,10 @@ public class KintoneApiCrudTests {
         var deleteResult = await api.DeleteAsync(deleteJson);
         Assert.NotNull(deleteResult);
     }
+
+    /// <summary>
+    /// FindAllAsync がカーソルAPIを使用して複数ページにわたるレコードを正しく取得できることを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task FindAllAsyncCursorPagingWorksCorrectly() {
         // Arrange
@@ -249,6 +279,10 @@ public class KintoneApiCrudTests {
         var deleteResult = await api.DeleteAsync(deleteJson);
         Assert.NotNull(deleteResult);
     }
+
+    /// <summary>
+    /// FindByQueryAsync がクエリ指定で複数ページにわたるレコードを正しく取得できることを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task FindAsyncQueryExceedsPageSizeWorksCorrectly() {
         // Arrange
@@ -285,6 +319,12 @@ public class KintoneApiCrudTests {
         var deleteResult = await api.DeleteAsync(deleteJson);
         Assert.NotNull(deleteResult);
     }
+
+    /// <summary>
+    /// FindByQueryAsync で order by を指定したクエリが正しく動作することを確認するテスト。
+    /// </summary>
+    /// <param name="recordCount">作成するレコードの数</param>
+    /// <param name="pageSize">カーソルのページサイズ</param>
     [Theory]
     [InlineData(5, 2)] // カーソル使用
     [InlineData(2, 5)] // カーソル不使用
@@ -324,6 +364,12 @@ public class KintoneApiCrudTests {
         var deleteResult = await api.DeleteAsync(deleteJson);
         Assert.NotNull(deleteResult);
     }
+
+    /// <summary>
+    /// FindByQueryAsync で複雑な条件を指定したクエリが正しく動作することを確認するテスト。
+    /// </summary>
+    /// <param name="recordCount">作成するレコードの数</param>
+    /// <param name="pageSize">カーソルのページサイズ</param>
     [Theory]
     [InlineData(5, 2)] // カーソル使用（pageSize < recordCount）
     [InlineData(5, 10)] // カーソル不使用（pageSize >= recordCount）
@@ -358,6 +404,12 @@ public class KintoneApiCrudTests {
         var deleteResult = await api.DeleteAsync(deleteJson);
         Assert.NotNull(deleteResult);
     }
+
+    /// <summary>
+    /// FindByQueryAsync でヒットしないクエリを指定した場合に、正しく空の結果が返ることを確認するテスト。
+    /// </summary>
+    /// <param name="recordCount">作成するレコードの数</param>
+    /// <param name="pageSize">カーソルのページサイズ</param>
     [Theory]
     [InlineData(5, 2)]   // カーソル使用（pageSize < recordCount）
     [InlineData(5, 10)]  // カーソル不使用（pageSize >= recordCount）
@@ -392,6 +444,12 @@ public class KintoneApiCrudTests {
         var deleteResult = await api.DeleteAsync(deleteJson);
         Assert.NotNull(deleteResult);
     }
+
+    /// <summary>
+    /// FindByQueryAsync で不正なクエリを指定した場合に、KintoneException が発生することを確認するテスト。
+    /// </summary>
+    /// <param name="recordCount">作成するレコードの数</param>
+    /// <param name="pageSize">カーソルのページサイズ</param>
     [Theory]
     [InlineData(5, 2)]   // カーソル使用（pageSize < recordCount）
     [InlineData(5, 10)]  // カーソル不使用（pageSize >= recordCount）
@@ -429,6 +487,12 @@ public class KintoneApiCrudTests {
         var deleteResult = await api.DeleteAsync(deleteJson);
         Assert.NotNull(deleteResult);
     }
+
+    /// <summary>
+    /// FindByQueryAsync を同じクエリで複数回実行した場合に、常に同じ結果が返ることを確認するテスト。
+    /// </summary>
+    /// <param name="recordCount">作成するレコードの数</param>
+    /// <param name="pageSize">カーソルのページサイズ</param>
     [Theory]
     [InlineData(5, 2)]   // カーソル使用（pageSize < recordCount）
     [InlineData(5, 10)]  // カーソル不使用（pageSize >= recordCount）
@@ -471,6 +535,12 @@ public class KintoneApiCrudTests {
         var deleteResult = await api.DeleteAsync(deleteJson);
         Assert.NotNull(deleteResult);
     }
+
+    /// <summary>
+    /// FindByQueryAsync でクエリを指定せずに全件取得した場合に、すべてのレコードが正しく取得できることを確認するテスト。
+    /// </summary>
+    /// <param name="recordCount">作成するレコードの数</param>
+    /// <param name="pageSize">カーソルのページサイズ</param>
     [Theory]
     [InlineData(5, 2)]  // カーソル使用（pageSize < recordCount）
     [InlineData(5, 10)] // カーソル不使用（pageSize >= recordCount）
@@ -507,6 +577,12 @@ public class KintoneApiCrudTests {
         var deleteResult = await api.DeleteAsync(deleteJson);
         Assert.NotNull(deleteResult);
     }
+
+    /// <summary>
+    /// FindByQueryAsync でクエリを指定して複数ページにわたるレコードを取得する際に、カーソルAPIが正しく使用されていることを確認するテスト。
+    /// </summary>
+    /// <param name="recordCount">作成するレコードの数</param>
+    /// <param name="pageSize">カーソルのページサイズ</param>
     [Theory]
     [InlineData(500, 100)]  // カーソル使用（pageSize < recordCount）
     [InlineData(499, 500)]  // カーソル不使用（pageSize >= recordCount）
@@ -550,6 +626,12 @@ public class KintoneApiCrudTests {
             Assert.NotNull(deleteResult);
         }
     }
+
+    /// <summary>
+    /// FindByQueryAsync で in 条件を指定して複数ページにわたるレコードを取得する際に、カーソルAPIが正しく使用されていることを確認するテスト。
+    /// </summary>
+    /// <param name="cursorPageSize">カーソルのページサイズ</param>
+    /// <param name="dummyPageSize">ダミーのページサイズ（使用されない）</param>
     [Theory]
     [InlineData(5, 2)]  // カーソル使用：recordCount = 4, pageSize = 2 → カーソル使用される
     [InlineData(5, 10)] // カーソル不使用：recordCount = 4, pageSize = 10 → 1ページで済むためカーソル不要
@@ -590,6 +672,12 @@ public class KintoneApiCrudTests {
             Assert.NotNull(deleteResult);
         }
     }
+
+    /// <summary>
+    /// FindByQueryAsync で in 条件を指定して複数ページにわたるレコードを取得する際に、カーソルAPIが正しく使用されていることを確認するテスト。
+    /// </summary>
+    /// <param name="cursorPageSize">カーソルのページサイズ</param>
+    /// <param name="dummyPageSize">ダミーのページサイズ（使用されない）</param>
     [Theory]
     [InlineData(5, 2)]  // カーソル使用：レコード数 > pageSize
     [InlineData(5, 10)] // カーソル不使用：pageSize >= レコード数
@@ -629,6 +717,12 @@ public class KintoneApiCrudTests {
             Assert.NotNull(deleteResult);
         }
     }
+
+    /// <summary>
+    /// FindByQueryAsync で not in 条件を指定して複数ページにわたるレコードを取得する際に、カーソルAPIが正しく使用されていることを確認するテスト。
+    /// </summary>
+    /// <param name="cursorPageSize">カーソルのページサイズ</param>
+    /// <param name="dummyPageSize">ダミーのページサイズ（使用されない）</param>
     [Theory]
     [InlineData(5, 2)]  // カーソル使用：レコード数 > pageSize
     [InlineData(5, 10)] // カーソル不使用：pageSize >= レコード数
@@ -669,6 +763,12 @@ public class KintoneApiCrudTests {
             Assert.NotNull(deleteResult);
         }
     }
+
+    /// <summary>
+    /// FindByQueryAsync で not equal 条件を指定して複数ページにわたるレコードを取得する際に、カーソルAPIが正しく使用されていることを確認するテスト。
+    /// </summary>
+    /// <param name="cursorPageSize">カーソルのページサイズ</param>
+    /// <param name="dummyPageSize">ダミーのページサイズ（使用されない）</param>
     [Theory]
     [InlineData(5, 2)]  // カーソル使用（pageSize < recordCount）
     [InlineData(5, 10)] // カーソル不使用（pageSize >= recordCount）
@@ -727,6 +827,12 @@ public class KintoneApiCrudTests {
             Assert.NotNull(deleteResult);
         }
     }
+
+    /// <summary>
+    /// FindByQueryAsync で Price >= 0 の条件を指定して複数ページにわたるレコードを取得する際に、Price が null のレコードがヒットしないことを確認するテスト。
+    /// </summary>
+    /// <param name="cursorPageSize">カーソルのページサイズ</param>
+    /// <param name="dummyPageSize">ダミーのページサイズ（使用されない）</param>
     [Theory]
     [InlineData(5, 2)]  // カーソル使用（pageSize < recordCount）
     [InlineData(5, 10)] // カーソル不使用（pageSize >= recordCount）
@@ -777,6 +883,12 @@ public class KintoneApiCrudTests {
             Assert.NotNull(deleteResult);
         }
     }
+
+    /// <summary>
+    /// FindByQueryAsync で ReleaseDate > "2024-01-01T00:00:00Z" の条件を指定して複数ページにわたるレコードを取得する際に、カーソルAPIが正しく使用されていることを確認するテスト。
+    /// </summary>
+    /// <param name="pageSize">カーソルのページサイズ</param>
+    /// <param name="recordCount">レコードの総数</param>
     [Theory]
     [InlineData(5, 2)]  // カーソル使用（pageSize < recordCount）
     [InlineData(5, 10)] // カーソル不使用（pageSize >= recordCount）
@@ -850,6 +962,11 @@ public class KintoneApiCrudTests {
             Assert.NotNull(deleteResult);
         }
     }
+
+    /// <summary>
+    /// FindByQueryAsync でラジオボタンフィールドの値を条件に指定して複数ページにわたるレコードを取得する際に、カーソルAPIが正しく使用されていることを確認するテスト。
+    /// </summary>
+    /// <param name="recommendation">ラジオボタンフィールドの値</param>
     [Theory]
     [InlineData("5")] // 強く勧めたい
     [InlineData("3")] // どちらでもない
@@ -900,6 +1017,11 @@ public class KintoneApiCrudTests {
             await KintoneTestHelper.DeleteRecordsInChunksAsync(api, created);
         }
     }
+
+    /// <summary>
+    /// FindByQueryAsync でチェックボックスフィールドの値を条件に指定して複数ページにわたるレコードを取得する際に、カーソルAPIが正しく使用されていることを確認するテスト。
+    /// </summary>
+    /// <param name="selections">チェックボックスフィールドの値</param>
     [Theory]
     [MemberData(nameof(CheckBoxTestData))]
     public async Task CreateUpdateAndFindCheckBoxFieldWorksCorrectly(string[] selections) {
@@ -949,6 +1071,13 @@ public class KintoneApiCrudTests {
             await KintoneTestHelper.DeleteRecordsInChunksAsync(api, created);
         }
     }
+
+    /// <summary>
+    /// FindByQueryAsync でリンク型フィールド（Webアドレス、電話番号、メールアドレス）を条件に指定して複数ページにわたるレコードを取得する際に、カーソルAPIが正しく使用されていることを確認するテスト。
+    /// </summary>
+    /// <param name="webAddress">Webアドレスフィールドの値</param>
+    /// <param name="telephone">電話番号フィールドの値</param>
+    /// <param name="email">メールアドレスフィールドの値</param>
     [Theory]
     [MemberData(nameof(LinkFieldTestData))]
     public async Task CreateUpdateAndFindLinkFieldsWorksCorrectly(string webAddress, string telephone, string email) {
@@ -1004,6 +1133,10 @@ public class KintoneApiCrudTests {
             await KintoneTestHelper.DeleteRecordsInChunksAsync(api, created);
         }
     }
+
+    /// <summary>
+    /// FindByQueryAsync で日付型フィールドと時刻型フィールドを条件に指定して複数ページにわたるレコードを取得する際に、カーソルAPIが正しく使用されていることを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task CreateAndFindAsyncWithDateAndTimeFieldsWorksCorrectly() {
         // Arrange
@@ -1063,6 +1196,10 @@ public class KintoneApiCrudTests {
             await KintoneTestHelper.DeleteRecordsInChunksAsync(api, created);
         }
     }
+
+    /// <summary>
+    /// FindByQueryAsync で複数選択フィールドを条件に指定して複数ページにわたるレコードを取得する際に、カーソルAPIが正しく使用されていることを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task CreateAndUpdateAsyncWithMultiSelectWorksCorrectly() {
         // Arrange
@@ -1116,6 +1253,10 @@ public class KintoneApiCrudTests {
             Assert.NotNull(deleteResult);
         }
     }
+
+    /// <summary>
+    /// FindByQueryAsync で複数選択フィールドを条件に指定して複数ページにわたるレコードを取得する際に、登録後と更新後の両方でカーソルAPIが正しく使用されていることを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task CreateAndUpdateAsyncWithMultiSelectAddAndRemoveWorksCorrectly() {
         // Arrange
@@ -1183,6 +1324,10 @@ public class KintoneApiCrudTests {
             Assert.NotNull(deleteResult);
         }
     }
+
+    /// <summary>
+    /// FindByQueryAsync でサブテーブルのフィールドを条件に指定して複数ページにわたるレコードを取得する際に、登録後と更新後の両方でカーソルAPIが正しく使用されていることを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task CreateAndUpdateAsyncWithSubTableWorksCorrectly() {
         // Arrange
@@ -1262,6 +1407,10 @@ public class KintoneApiCrudTests {
             Assert.NotNull(deleteResult);
         }
     }
+
+    /// <summary>
+    /// FindByQueryAsync でリッチエディタ型フィールドを条件に指定して複数ページにわたるレコードを取得する際に、登録後と更新後の両方でカーソルAPIが正しく使用されていることを確認するテスト。
+    /// </summary>
     [Fact]
     public async Task CreateAndUpdateAsyncWithRichTextFieldWorksCorrectly() {
         // Arrange
@@ -1319,27 +1468,48 @@ public class KintoneApiCrudTests {
     }
 
     #region <<Protected method>>
-    public static IEnumerable<object[]> CheckBoxTestData => new List<object[]> {
-        new object[] { new[] { "チェック1", "チェック3" } },
-        new object[] { new[] { "チェック2" } },
-        new object[] { Array.Empty<string>() },
-    };
-    public static IEnumerable<object[]> LinkFieldTestData => new List<object[]> {
-        new object[] { "https://example.com/", "+81-90-1234-5678", "test@example.com" },
-        new object[] { "http://openai.com/", "03-1234-5678", "contact@openai.com" },
-        new object[] { string.Empty, string.Empty, string.Empty } // 空も許容
-    };
+    /// <summary>
+    /// チェックボックスフィールドのテストデータ。複数選択、単一選択、未選択のパターンを用意。
+    /// </summary>
+    public static IEnumerable<object[]> CheckBoxTestData => [
+        [new[] { "チェック1", "チェック3" }],
+        [new[] { "チェック2" }],
+        [Array.Empty<string>()],
+    ];
+
+    /// <summary>
+    /// リンク型フィールド（Webアドレス、電話番号、メールアドレス）のテストデータ。通常の値と空の値のパターンを用意。
+    /// </summary>
+    public static IEnumerable<object[]> LinkFieldTestData => [
+        ["https://example.com/", "+81-90-1234-5678", "test@example.com"],
+        ["http://openai.com/", "03-1234-5678", "contact@openai.com"],
+        [string.Empty, string.Empty, string.Empty] // 空も許容
+    ];
     #endregion
 }
 
+/// <summary>
+/// ユーザー選択フィールド、グループ選択フィールド、組織選択フィールドのテストケースをまとめたクラス。
+/// </summary>
 public static class KintoneFieldTestCases {
+    /// <summary>
+    /// フィールド名とKintoneFieldTypeのマッピング。ユーザー選択、グループ選択、組織選択の各フィールドタイプをテストする際に使用する。
+    /// </summary>
     public static readonly Dictionary<string, KintoneFieldType> FieldMap = new() {
         { "UserSelect", KintoneFieldType.UserSelect },
         { "GroupSelect", KintoneFieldType.GroupSelect },
         { "DivisionSelect", KintoneFieldType.OrganizationSelect }
     };
 }
+
+/// <summary>
+/// ユーザー選択フィールド、グループ選択フィールド、組織選択フィールドの値の変換が正しく行われることを確認するテストクラス。
+/// </summary>
 public class UserSelectionFieldTests {
+    /// <summary>
+    /// ユーザー選択フィールド、グループ選択フィールド、組織選択フィールドのJSON値をC#のList<KintoneUser>に変換する際に、コードと表示名が正しくマッピングされることを確認するテスト。
+    /// </summary>
+    /// <param name="fieldName">テスト対象のフィールド名</param>
     [Theory]
     [InlineData("UserSelect")]
     [InlineData("GroupSelect")]

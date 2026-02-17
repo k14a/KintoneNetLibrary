@@ -5,20 +5,19 @@ using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.Infrastructure.Converters;
 
-// コメントは日本語で記述
 /// <summary>
 /// KintoneのレコードをC#のモデルに変換するためのJsonConverter
 /// </summary>
-/// <typeparam name="T"></typeparam>
+/// <typeparam name="T">変換するモデルの型</typeparam>
 public class KintoneRecordConverter<T> : JsonConverter<T> where T : KintoneModelBase<T>, new() {
     /// <summary>
     /// KintoneのレコードJSONをC#のモデルに変換します
     /// </summary>
-    /// <param name="reader"></param>
-    /// <param name="typeToConvert"></param>
-    /// <param name="options"></param>
-    /// <returns></returns>
-    /// <exception cref="JsonException"></exception>
+    /// <param name="reader">JSONリーダー</param>
+    /// <param name="typeToConvert">変換する型</param>
+    /// <param name="options">JsonSerializerのオプション</param>
+    /// <returns>変換されたモデル</returns>
+    /// <exception cref="JsonException">変換に失敗した場合にスローされます</exception>
     public override T? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
         using var jsonDoc = JsonDocument.ParseValue(ref reader);
         var root = jsonDoc.RootElement;
@@ -72,9 +71,9 @@ public class KintoneRecordConverter<T> : JsonConverter<T> where T : KintoneModel
     /// <summary>
     /// C#のモデルをKintoneのレコードJSONに変換します（未実装）
     /// </summary>
-    /// <param name="writer"></param>
-    /// <param name="value"></param>
-    /// <param name="options"></param>
+    /// <param name="writer">JSONライター</param>
+    /// <param name="value">変換するモデル</param>
+    /// <param name="options">JsonSerializerのオプション</param>
     /// <exception cref="NotImplementedException"></exception>
     public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options) {
         throw new NotImplementedException("書き込みはまだ未実装です");
@@ -84,22 +83,22 @@ public class KintoneRecordConverter<T> : JsonConverter<T> where T : KintoneModel
 /// <summary>
 /// KintoneRecordConverterのファクトリクラス
 /// </summary>
-/// <typeparam name="T"></typeparam>
+/// <typeparam name="T">変換するモデルの型</typeparam>
 public class KintoneRecordConverterFactory<T> : JsonConverterFactory where T : KintoneModelBase<T>, new() {
     /// <summary>
     /// 指定された型が変換可能かどうかを判定します
     /// </summary>
-    /// <param name="typeToConvert"></param>
-    /// <returns></returns>
+    /// <param name="typeToConvert">判定する型</param>
+    /// <returns>変換可能な場合はtrue、それ以外の場合はfalse</returns>
     public override bool CanConvert(Type typeToConvert) {
         return typeof(T).IsAssignableFrom(typeToConvert);
     }
     /// <summary>
     /// 指定された型に対するJsonConverterを作成します
     /// </summary>
-    /// <param name="typeToConvert"></param>
-    /// <param name="options"></param>
-    /// <returns></returns>
+    /// <param name="typeToConvert">作成する型</param>
+    /// <param name="options">JsonSerializerのオプション</param>
+    /// <returns>作成されたJsonConverter</returns>
     public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options) {
         var converterType = typeof(KintoneRecordConverter<>).MakeGenericType(typeToConvert);
         return (JsonConverter?)Activator.CreateInstance(converterType);

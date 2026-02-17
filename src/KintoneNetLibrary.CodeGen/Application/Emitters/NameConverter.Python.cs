@@ -29,6 +29,12 @@ public class PythonNameConverter : INameConverter {
         "Status", "Category", "Assignee"
     ];
 
+    /// <summary>
+    /// クラス名に変換する
+    /// </summary>
+    /// <param name="label">ラベル</param>
+    /// <param name="code">コード</param>
+    /// <returns>変換後のクラス名</returns>
     public string ToClassName(string label, string code) {
         var baseName = SelectBaseName(label, code);
         if (Dictionary.TryGetValue(baseName, out var mapped)) {
@@ -46,6 +52,12 @@ public class PythonNameConverter : INameConverter {
         return safe.ToPascalCase();
     }
 
+    /// <summary>
+    /// プロパティ名に変換する
+    /// </summary>
+    /// <param name="label">ラベル</param>
+    /// <param name="code">コード</param>
+    /// <returns>変換後のプロパティ名</returns>
     public string ToPropertyName(string label, string code) {
         var baseName = SelectBaseName(label, code);
 
@@ -79,10 +91,18 @@ public class PythonNameConverter : INameConverter {
     }
 
     /// <summary>
-    /// FieldCode を優先し、Label は fallback とする
+    /// ベース名を選択する（code があれば code、なければ label）
     /// </summary>
+    /// <param name="label">ラベル</param>
+    /// <param name="code">コード</param>
+    /// <returns>ベース名</returns>
     private static string SelectBaseName(string label, string code) => !string.IsNullOrWhiteSpace(code) ? code : label;
 
+    /// <summary>
+    /// 文字列を安全な識別子に変換する
+    /// </summary>
+    /// <param name="text">変換対象の文字列</param>
+    /// <returns>安全な識別子</returns>
     private static string Sanitize(string text) {
         var sanitized = Regex.Replace(text, @"[^A-Za-z0-9_]", "_");
         sanitized = Regex.Replace(sanitized, "_+", "_");

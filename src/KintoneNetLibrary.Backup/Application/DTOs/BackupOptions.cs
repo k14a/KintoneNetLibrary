@@ -1,18 +1,24 @@
 namespace KintoneNetLibrary.Backup.Application.DTOs;
 
+/// <summary>
+/// バックアップオプションクラス
+/// </summary>
 public sealed class BackupOptions {
     /// <summary>
     /// Kintone サブドメイン(必須)
     /// </summary>
     public required string SubDomain { get; init; }
+
     /// <summary>
     /// アプリID(必須)
     /// </summary>
     public required int AppID { get; init; }
+
     /// <summary>
     /// APIトークン(必須)
     /// </summary>
     public required string ApiToken { get; init; }
+
     /// <summary>
     /// 出力先パス(必須)
     /// </summary>
@@ -23,6 +29,7 @@ public sealed class BackupOptions {
     /// NULL の場合、全レコードを取得します
     /// </summary>
     public string? Query { get; init; }
+
     /// <summary>
     /// 取得するフィールドコードのリスト
     /// null の場合は全フィールドを取得します

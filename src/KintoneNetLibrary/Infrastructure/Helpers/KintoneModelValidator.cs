@@ -12,11 +12,11 @@ internal static class KintoneModelValidator {
     /// <summary>
     /// モデルの構造を検証します
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="model"></param>
-    /// <param name="errors"></param>
-    /// <param name="bulk"></param>
-    /// <returns></returns>
+    /// <typeparam name="T">検証対象のモデルの型</typeparam>
+    /// <param name="model">検証対象のモデル</param>
+    /// <param name="errors">検証エラーのリスト</param>
+    /// <param name="bulk">一括検証対象のモデルのリスト</param>
+    /// <returns>検証結果（エラーがなければtrue、エラーがあればfalse）</returns>
     public static bool TryValidateModelStructure<T>(T model, out List<string> errors, IList<T>? bulk = null)
         where T : KintoneModelBase<T>, new() {
         errors = [];
@@ -43,12 +43,13 @@ internal static class KintoneModelValidator {
 
         return errors.Count == 0;
     }
+
     /// <summary>
     /// モデルのキー整合性を検証します
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="model"></param>
-    /// <exception cref="InvalidOperationException"></exception>
+    /// <typeparam name="T">検証対象のモデルの型</typeparam>
+    /// <param name="model">検証対象のモデル</param>
+    /// <exception cref="InvalidOperationException">キー整合性が不正な場合にスローされます</exception>
     public static void ValidateKeyIntegrity<T>(T model) where T : KintoneModelBase<T>, new() {
         // 1. IsKey プロパティの重複チェック
         var keyProps = GetKeyProperties<T>();
@@ -72,12 +73,13 @@ internal static class KintoneModelValidator {
             );
         }
     }
+
     /// <summary>
     /// モデルのキー値の一意性を検証します
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="models"></param>
-    /// <exception cref="InvalidOperationException"></exception>
+    /// <typeparam name="T">検証対象のモデルの型</typeparam>
+    /// <param name="models">検証対象のモデルのリスト</param>
+    /// <exception cref="InvalidOperationException">キー値の重複が存在する場合にスローされます</exception>
     public static void ValidateKeyValueUniqueness<T>(IList<T> models) where T : KintoneModelBase<T>, new() {
         var keyProp = GetKeyProperties<T>().FirstOrDefault();
 
@@ -96,12 +98,13 @@ internal static class KintoneModelValidator {
             throw new InvalidOperationException($"同じキー値が複数存在します: {string.Join(", ", duplicateKeys)}");
         }
     }
+
     /// <summary>
     /// リンクフィールドの値を検証します
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="model"></param>
-    /// <exception cref="InvalidOperationException"></exception>
+    /// <typeparam name="T">検証対象のモデルの型</typeparam>
+    /// <param name="model">検証対象のモデル</param>
+    /// <exception cref="InvalidOperationException">リンクフィールドの値が不正な場合にスローされます</exception>
     public static void ValidateLinkFields<T>(T model) where T : KintoneModelBase<T>, new() {
         var props = typeof(T).GetProperties();
 
@@ -138,12 +141,13 @@ internal static class KintoneModelValidator {
             }
         }
     }
+
     /// <summary>
     /// モデルの構造化フィールドを検証します
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="model"></param>
-    /// <exception cref="InvalidOperationException"></exception>
+    /// <typeparam name="T">検証対象のモデルの型</typeparam>
+    /// <param name="model">検証対象のモデル</param>
+    /// <exception cref="InvalidOperationException">構造化フィールドの値が不正な場合にスローされます</exception>
     public static void ValidateStructuredFields<T>(T model) where T : KintoneModelBase<T>, new() {
         var props = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
@@ -188,22 +192,22 @@ internal static class KintoneModelValidator {
     /// <summary>
     /// サブテーブル型のプロパティかどうかを判定します
     /// </summary>
-    /// <param name="type"></param>
-    /// <returns></returns>
+    /// <param name="type">判定対象の型</param>
+    /// <returns>サブテーブル型の場合はtrue、それ以外はfalse</returns>
     private static bool IsValidSubTableType(Type type) {
         return type.IsGenericType &&
                type.GetGenericTypeDefinition() == typeof(List<>);
     }
+
     /// <summary>
     /// モデルのキー属性付きプロパティを取得します
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <returns></returns>
+    /// <typeparam name="T">検証対象のモデルの型</typeparam>
+    /// <returns>キー属性付きプロパティのリスト</returns>
     private static List<PropertyInfo> GetKeyProperties<T>() {
-        return typeof(T)
+        return [.. typeof(T)
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Where(p => p.GetCustomAttribute<KintoneItemAttribute>()?.IsKey == true)
-            .ToList();
+            .Where(p => p.GetCustomAttribute<KintoneItemAttribute>()?.IsKey == true)];
     }
 
 }

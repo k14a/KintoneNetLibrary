@@ -1,11 +1,11 @@
 using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.Infrastructure.Api.DTOs;
-// コメントは日本語で記述
+
 /// <summary>
 /// Kintoneのレスポンスをラップするクラス
 /// </summary>
-/// <typeparam name="T"></typeparam>
+/// <typeparam name="T">Kintoneのレコードデータの型</typeparam>
 public class KintoneResponseWrapper<T> where T : KintoneModelBase<T>, new() {
     /// <summary>
     /// Kintoneのレコードデータ
@@ -16,7 +16,7 @@ public class KintoneResponseWrapper<T> where T : KintoneModelBase<T>, new() {
 /// <summary>
 /// Kintoneのレスポンスリストをラップするクラス
 /// </summary>
-/// <typeparam name="T"></typeparam>
+/// <typeparam name="T">Kintoneのレコードデータの型</typeparam>
 public class KintoneResponseListWrapper<T> where T : KintoneModelBase<T>, new() {
     /// <summary>
     /// Kintoneのレコードデータリスト

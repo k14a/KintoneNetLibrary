@@ -11,9 +11,10 @@ namespace KintoneNetLibrary.CodeGen.Application.Emitters;
 /// <summary>
 /// C# サブテーブルエミッター
 /// </summary>
-/// <param name="converterFactory"></param>
-/// <param name="mapperFactory"></param>
-/// <param name="xml"></param>
+/// <param name="converterFactory">名前変換ファクトリ</param>
+/// <param name="mapperFactory">型マッパーファクトリ</param>
+/// <param name="xml">XML コメントビルダー</param>
+/// <param name="logger">ロガー</param>
 public class CSharpSubTableEmitter(
     INameConverterFactory converterFactory,
     ITypeMapperFactory mapperFactory,
@@ -29,10 +30,10 @@ public class CSharpSubTableEmitter(
     /// <summary>
     /// サブテーブルモデルを生成する
     /// </summary>
-    /// <param name="name"></param>
-    /// <param name="subTable"></param>
-    /// <param name="options"></param>
-    /// <returns></returns>
+    /// <param name="name">サブテーブル名</param>
+    /// <param name="subTable">サブテーブルスキーマ</param>
+    /// <param name="options">エミッターオプション</param>
+    /// <returns>生成されたサブテーブルモデル</returns>
     public GeneratedSubTableModel EmitSubTable(string name, KintoneSubTableSchema subTable, CSharpEmitterOptions options) {
         var sb = new StringBuilder();
 
@@ -71,8 +72,8 @@ public class CSharpSubTableEmitter(
     /// <summary>
     /// 一意なクラス名を生成する
     /// </summary>
-    /// <param name="baseName"></param>
-    /// <returns></returns>
+    /// <param name="baseName">基底となるクラス名</param>
+    /// <returns>一意なクラス名</returns>
     private string MakeUniqueClassName(string baseName) {
         var className = baseName;
         var index = 1;
@@ -87,8 +88,8 @@ public class CSharpSubTableEmitter(
     /// <summary>
     /// using セクションを出力する
     /// </summary>
-    /// <param name="sb"></param>
-    /// <param name="options"></param>
+    /// <param name="sb">文字列ビルダー</param>
+    /// <param name="options">エミッターオプション</param>
     private void EmitUsingSection(StringBuilder sb, CSharpEmitterOptions options) {
         sb.AppendLine("using System;");
         if (options.UseKintoneNetLibrary) {
@@ -101,9 +102,9 @@ public class CSharpSubTableEmitter(
     /// <summary>
     /// クラス名を出力する
     /// </summary>
-    /// <param name="sb"></param>
-    /// <param name="className"></param>
-    /// <param name="options"></param>
+    /// <param name="sb">文字列ビルダー</param>
+    /// <param name="className">クラス名</param>
+    /// <param name="options">エミッターオプション</param>
     private void EmitClassName(StringBuilder sb, string className, CSharpEmitterOptions options) {
         sb.Append($"public partial class {className}");
         if (options.UseKintoneNetLibrary) {
@@ -115,9 +116,9 @@ public class CSharpSubTableEmitter(
     /// <summary>
     /// プロパティを出力する
     /// </summary>
-    /// <param name="sb"></param>
-    /// <param name="field"></param>
-    /// <param name="options"></param>
+    /// <param name="sb">文字列ビルダー</param>
+    /// <param name="field">フィールドスキーマ</param>
+    /// <param name="options">エミッターオプション</param>
     private void EmitProperty(StringBuilder sb, KintoneFieldSchema field, CSharpEmitterOptions options) {
         var propName = this._converter.ToPropertyName(field.Label, field.FieldCode);
         var typeName = this._types.MapType(field, options.UseKintoneNetLibrary);
@@ -135,9 +136,9 @@ public class CSharpSubTableEmitter(
     /// <summary>
     /// 属性を出力する
     /// </summary>
-    /// <param name="sb"></param>
-    /// <param name="field"></param>
-    /// <param name="options"></param>
+    /// <param name="sb">文字列ビルダー</param>
+    /// <param name="field">フィールドスキーマ</param>
+    /// <param name="options">エミッターオプション</param>
     private void EmitAttributes(StringBuilder sb, KintoneFieldSchema field, CSharpEmitterOptions options) {
         if (options.UseKintoneNetLibrary) {
             sb.AppendLine($"    [KintoneItem(FieldCode = \"{field.FieldCode}\")]");

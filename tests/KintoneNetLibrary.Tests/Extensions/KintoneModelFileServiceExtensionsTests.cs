@@ -8,7 +8,13 @@ using Xunit;
 
 namespace KintoneNetLibrary.Tests.Extensions;
 
+/// <summary>
+/// KintoneModelFileServiceExtensionsの拡張メソッドをテストするクラスです。SampleModelクラスを定義し、UploadFilesAsyncとDownloadFilesAsyncの動作を検証するテストメソッドを含みます。モックサービスを使用して、ファイルのアップロードとダウンロードが正しく呼び出されることを確認します。
+/// </summary>
 public class KintoneModelFileServiceExtensionsTests {
+    /// <summary>
+    /// SampleModelは、KintoneModelBaseを継承したサンプルモデルクラスです。AttachmentsとImagesの2つのファイルフィールドを持ち、KintoneItem属性でファイルフィールドであることを指定しています。AccessプロパティとAppIDプロパティも定義しています。
+    /// </summary>
     public class SampleModel : KintoneModelBase<SampleModel> {
         public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
         public override int AppID { get; init; } = 11111;
@@ -19,7 +25,10 @@ public class KintoneModelFileServiceExtensionsTests {
         public List<KintoneFile> Images { get; set; }
     }
 
-    [Fact(DisplayName = "拡張メソッドUploadFilesAsyncがUploadとMapを正しく呼び出す")]
+    /// <summary>
+    /// UploadFilesAsyncの拡張メソッドが、サービスのUploadFilesAsyncとMapUploadedFilesToModelAsyncを正しく呼び出すことをテストします。モックサービスを使用して、ファイルのアップロードとモデルへのマッピングが正しい引数で呼び出されることを検証し、期待される結果が返されることを確認します。
+    /// </summary>
+    [Fact]
     public async Task UploadFilesExtensionCallsUploadAndMapCorrectly() {
         // Arrange
         var model = new SampleModel();
@@ -52,7 +61,12 @@ public class KintoneModelFileServiceExtensionsTests {
         mockService.Verify(s => s.UploadFilesAsync(model, files), Times.Once);
         mockService.Verify(s => s.MapUploadedFilesToModelAsync(model, files), Times.Once);
     }
-    [Fact(DisplayName = "DownloadFilesAsyncはFileKeyありのKintoneFileのみ抽出してDownload呼び出す")]
+
+    /// <summary>
+    /// DownloadFilesAsyncの拡張メソッドが、FileKeyがあるKintoneFileのみを抽出してサービスのDownloadFilesAsyncを正しく呼び出すことをテストします。モックサービスを使用して、正しいファイルが抽出されてダウンロードが呼び出されることを検証し、期待される結果が返されることを確認します。
+    /// </summary>
+    /// <returns></returns>
+    [Fact]
     public async Task DownloadFilesExtensionFiltersFilesAndCallsDownloadCorrectly() {
         // Arrange
         var model = new SampleModel {

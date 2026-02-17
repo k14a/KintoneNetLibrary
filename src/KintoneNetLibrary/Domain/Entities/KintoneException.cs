@@ -50,7 +50,7 @@ public class KintoneException : Exception {
 
     /// <summary>
     /// KintoneExceptionのコンストラクタ
-    /// このコンストラクタは、エラーメッセージを指定して初期化します。  
+    /// このコンストラクタは、エラーメッセージを指定して初期化します。
     /// </summary>
     /// <param name="message">エラーメッセージ</param>
     public KintoneException(string message) : base(message) { }

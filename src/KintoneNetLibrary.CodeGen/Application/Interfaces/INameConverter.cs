@@ -7,16 +7,17 @@ public interface INameConverter {
     /// <summary>
     /// クラス名に変換する
     /// </summary>
-    /// <param name="label"></param>
-    /// <param name="code"></param>
-    /// <returns></returns>
+    /// <param name="label">Kintone フィールドのラベル</param>
+    /// <param name="code">Kintone フィールドのコード</param>
+    /// <returns>変換後のクラス名</returns>
     string ToClassName(string label, string code);
+
     /// <summary>
     /// プロパティ名に変換する
     /// </summary>
-    /// <param name="label"></param>
-    /// <param name="code"></param>
-    /// <returns></returns>
+    /// <param name="label">Kintone フィールドのラベル</param>
+    /// <param name="code">Kintone フィールドのコード</param>
+    /// <returns>変換後のプロパティ名</returns>
     string ToPropertyName(string label, string code);
 }
 

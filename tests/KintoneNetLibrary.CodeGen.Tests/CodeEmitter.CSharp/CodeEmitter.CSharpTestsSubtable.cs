@@ -5,48 +5,119 @@ using KintoneNetLibrary.CodeGen.Domain.Models;
 using KintoneNetLibrary.CodeGen.Domain.Options;
 using KintoneNetLibrary.CodeGen.Domain.Schemas;
 using KintoneNetLibrary.Domain.Enums;
-using KintoneNetLibrary.Infrastructure.Interfaces;
+using KintoneNetLibrary.Domain.Interfaces;
 using Snapshooter.Xunit;
-using Xunit;
 
 namespace KintoneNetLibrary.CodeGen.Tests.CodeEmitter.CSharp;
 
+/// <summary>
+/// C# コードエミッタのサブテーブル型生成に関するテストクラス。
+/// </summary>
 public class CSharpCodeEmitterSubTableTests {
     // --- Fake 実装群 ---
+    /// <summary>
+    /// C# 用の名前変換を提供するファクトリーのフェイク実装。
+    /// </summary>
     private class FakeNameConverterFactory : INameConverterFactory {
+        /// <summary>
+        /// 指定された言語に対して C# 用の名前変換器を生成する。
+        /// </summary>
+        /// <param name="lang">生成する言語</param>
+        /// <returns>作成された名前変換インスタンス</returns>
         public INameConverter Create(GenerateLanguages lang) => new CSharpNameConverter();
     }
 
+    /// <summary>
+    /// C# 用の型マッピングを提供するファクトリーのフェイク実装。
+    /// </summary>
     private class FakeTypeMapperFactory : ITypeMapperFactory {
+        /// <summary>
+        /// 指定された言語に対して C# 用の型マッパーを生成する。
+        /// </summary>
+        /// <param name="lang">生成する言語</param>
+        /// <returns>作成された型マッパーインスタンス</returns>
         public ITypeMapper Create(GenerateLanguages lang) => new CSharpTypeMapper();
     }
 
+    /// <summary>
+    /// XML コメントの生成を提供するビルダークラスのフェイク実装。
+    /// </summary>
     private class FakeXmlCommentBuilder : IXmlCommentBuilder {
-        public string BuildForField(KintoneFieldSchema field)
-            => $"    /// <summary>{field.Label}</summary>";
+        /// <summary>
+        /// 指定されたフィールドのラベルを使用して XML コメントの summary タグを生成する。
+        /// </summary>
+        /// <param name="field">XML コメントを構築するフィールドスキーマ</param>
+        /// <returns>構築されたXMLコメント文字列</returns>
+        public string BuildForField(KintoneFieldSchema field) => $"    /// <summary>{field.Label}</summary>";
 
-        public string BuildForSubTable(KintoneSubTableSchema sub)
-            => $"    /// <summary>{sub.Label}</summary>";
+        /// <summary>
+        /// 指定されたサブテーブルのラベルを使用して XML コメントの summary タグを生成する。
+        /// </summary>
+        /// <param name="sub">XML コメントを構築するサブテーブルスキーマ</param>
+        /// <returns>構築されたXMLコメント文字列</returns>
+        public string BuildForSubTable(KintoneSubTableSchema sub) => $"    /// <summary>{sub.Label}</summary>";
     }
 
+    /// <summary>
+    /// サブテーブルのコード生成を提供するエミッタのフェイク実装。
+    /// </summary>
     private class FakeSubTableEmitter : ISubTableEmitter {
+        /// <summary>
+        /// サブテーブルのコードを生成するためのメソッド。ここでは空文字列を返すフェイク実装となっている。
+        /// </summary>
+        /// <param name="fieldCode">サブテーブルのフィールドコード</param>
+        /// <param name="schema">サブテーブルのスキーマ情報</param>
+        /// <param name="options">C# エミッタのオプション</param>
+        /// <returns>生成されたサブテーブルのコード文字列</returns>
         public string EmitSubTable(string fieldCode, KintoneSubTableSchema schema, CSharpEmitterOptions options) => string.Empty;
 
+        /// <summary>
+        /// サブテーブルのコード生成に必要な情報を含むモデルを生成するためのメソッド。ここでは空のモデルを返すフェイク実装となっている。
+        /// </summary>
+        /// <param name="name">生成するモデルの名前</param>
+        /// <param name="subTable">サブテーブルのスキーマ情報</param>
+        /// <param name="options">C# エミッタのオプション</param>
+        /// <returns>生成されたサブテーブルモデル</returns>
         GeneratedSubTableModel ISubTableEmitter.EmitSubTable(string name, KintoneSubTableSchema subTable, CSharpEmitterOptions options) => new();
     }
 
+    /// <summary>
+    /// コード生成に必要なヘルパークラスのコードを生成するエミッタのフェイク実装。
+    /// </summary>
     private class FakeHelperEmitter : IHelperClassEmitter {
+        /// <summary>
+        /// コード生成に必要なヘルパークラスのコードを生成するためのメソッド。ここでは空のリストを返すフェイク実装となっている。
+        /// </summary>
+        /// <param name="options">C# エミッタのオプション</param>
+        /// <returns>生成されたヘルパークラスのコード文字列のリスト</returns>
         public IEnumerable<string> EmitHelperClasses(CSharpEmitterOptions options) => [];
 
+        /// <summary>
+        /// コード生成に必要なヘルパークラスのモデルを生成するためのメソッド。ここでは空のリストを返すフェイク実装となっている。
+        /// </summary>
+        /// <param name="options">コードエミッタのオプション</param>
+        /// <returns>生成されたヘルパークラスのモデルのリスト</returns>
         public IEnumerable<GeneratedHelperClass> EmitHelperClasses(CodeEmitterOptions options) => [];
     }
 
+    /// <summary>
+    /// コード生成に使用する日時を固定するためのフェイククロック実装。常に2024年1月1日を返すようになっている。
+    /// </summary>
     private class FakeClock : IDateTimeProvider {
+        /// <summary>
+        /// 現在の日時を返すプロパティ。ここでは常に2024年1月1日を返すフェイク実装となっている。
+        /// </summary>
         public DateTime Now => new(2024, 1, 1);
 
+        /// <summary>
+        /// UTC 現在の日時を返すプロパティ。ここでは常に2024年1月1日を返すフェイク実装となっている。
+        /// </summary>
         public DateTime UtcNow => new(2024, 1, 1);
     }
 
+    /// <summary>
+    /// サブテーブルを含むアプリスキーマを使用してコードを生成し、生成されたコードがスナップショットと一致することを検証するテストメソッド。
+    /// </summary>
     [Fact]
     public void EmitWithSubTableMatchesSnapshot() {
         var emitter = new CSharpCodeEmitter(

@@ -24,7 +24,7 @@ public class KintoneIndex {
     public string RevisionString { get; set; } = "-1";
 
     /// <summary>
-    /// レコードのリビジョン    
+    /// レコードのリビジョン
     /// このプロパティは、Kintoneのレコードのバージョンを整数として表します。
     /// 文字列形式のリビジョンを整数に変換して返します。
     /// もし変換に失敗した場合は、-1を返します。
