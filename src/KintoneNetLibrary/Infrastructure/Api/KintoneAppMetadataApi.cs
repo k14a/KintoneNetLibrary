@@ -198,5 +198,5 @@ public class KintoneAppMetadataApi(IHttpClientFactory httpClientFactory, ILogger
     /// <summary>
     /// スキップするフィールドタイプのセット
     /// </summary>
-    private static readonly HashSet<string> _skippedFieldTypes = [with(StringComparer.OrdinalIgnoreCase), "GROUP", "SPACER", "HR"];
+    private static readonly HashSet<string> _skippedFieldTypes = new(StringComparer.OrdinalIgnoreCase) { "GROUP", "SPACER", "HR" };
 }

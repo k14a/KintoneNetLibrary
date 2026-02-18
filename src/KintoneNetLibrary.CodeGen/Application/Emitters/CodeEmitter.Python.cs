@@ -4,7 +4,7 @@ using KintoneNetLibrary.CodeGen.Domain.Enums;
 using KintoneNetLibrary.CodeGen.Domain.Models;
 using KintoneNetLibrary.CodeGen.Domain.Options;
 using KintoneNetLibrary.CodeGen.Domain.Schemas;
-using KintoneNetLibrary.CodeGen.Domain.Services;
+using KintoneNetLibrary.CodeGen.Infrastructure.Services;
 using KintoneNetLibrary.Domain.Enums;
 using KintoneNetLibrary.Domain.Interfaces;
 using KintoneNetLibrary.Infrastructure.Helpers;

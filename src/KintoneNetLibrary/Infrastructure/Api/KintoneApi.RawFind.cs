@@ -364,7 +364,7 @@ public partial class KintoneApi : IKintoneApi {
 
         // 小規模データはそのまま Stream に書く
         var bytes = Encoding.UTF8.GetBytes(json);
-        await output.WriteAsync(bytes, 0, bytes.Length);
+        await output.WriteAsync(bytes);
     }
 
     /// <summary>
@@ -452,7 +452,7 @@ public partial class KintoneApi : IKintoneApi {
 
                     if (insideRecords && reader.TokenType == JsonTokenType.StartObject) {
                         // ★ チャンクをまたいでも壊れない JSON オブジェクト読み取り
-                        using var doc = this.ReadOneJsonObject(ref reader, stream, ref state, ref leftover);
+                        using var doc = ReadOneJsonObject(ref reader, stream, ref state, ref leftover);
                         onRecord(doc.RootElement.Clone());
                     }
                 }
@@ -480,7 +480,7 @@ public partial class KintoneApi : IKintoneApi {
     /// <param name="leftover">前のチャンクからの残りのデータ</param>
     /// <returns></returns>
     /// <exception cref="JsonException"></exception>
-    private JsonDocument ReadOneJsonObject(
+    private static JsonDocument ReadOneJsonObject(
         ref Utf8JsonReader reader,
         Stream stream,
         ref JsonReaderState state,

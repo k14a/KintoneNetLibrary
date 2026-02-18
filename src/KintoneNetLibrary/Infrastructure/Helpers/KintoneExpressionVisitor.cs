@@ -31,7 +31,7 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
     /// </summary>
     /// <param name="expr">式</param>
     /// <returns>変換解除後の式</returns>
-    private Expression UnwrapConvert(Expression expr) {
+    private static Expression UnwrapConvert(Expression expr) {
         while (expr is UnaryExpression unary && expr.NodeType == ExpressionType.Convert) {
             expr = unary.Operand;
         }
@@ -54,12 +54,12 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
         }
 
         // Convert を解除して中身を取り出す
-        var left = this.UnwrapConvert(node.Left);
-        var right = this.UnwrapConvert(node.Right);
+        var left = UnwrapConvert(node.Left);
+        var right = UnwrapConvert(node.Right);
 
         // 左右の MemberExpression を抽出
-        bool isLeftMember = this.TryUnwrapMemberExpression(left, out var leftMember);
-        bool isRightMember = this.TryUnwrapMemberExpression(right, out var rightMember);
+        bool isLeftMember = TryUnwrapMemberExpression(left, out var leftMember);
+        bool isRightMember = TryUnwrapMemberExpression(right, out var rightMember);
 
         if (isLeftMember && !isRightMember) {
             this.Visit(leftMember); // フィールド
@@ -83,7 +83,7 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
     /// <param name="expr">式</param>
     /// <param name="memberExpr">アンラップされたMemberExpression</param>
     /// <returns>アンラップに成功した場合はtrue、それ以外はfalse</returns>
-    private bool TryUnwrapMemberExpression(Expression expr, out MemberExpression? memberExpr) {
+    private static bool TryUnwrapMemberExpression(Expression expr, out MemberExpression? memberExpr) {
         memberExpr = null;
 
         while (expr is MemberExpression me) {
@@ -107,7 +107,7 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
     protected override Expression VisitMember(MemberExpression node) {
         // x.ReleaseDate! のような UnaryExpression 経由の MemberAccess に対応
         if (node.Expression is ParameterExpression) {
-            var fieldName = this.GetFieldNameFromMemberExpression(node);
+            var fieldName = GetFieldNameFromMemberExpression(node);
             this._queryBuilder.Append(fieldName);
             return node;
         }
@@ -166,7 +166,7 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
     /// <exception cref="NotSupportedException">サポートされていない式の場合にスローされます</exception>
     protected override Expression VisitNew(NewExpression node) {
         // コンストラクタ式を評価して値を取得
-        var value = this.EvaluateExpression(node);
+        var value = EvaluateExpression(node);
 
         if (value != null) {
             this._queryBuilder.Append(this.FormatValue(value));
@@ -180,9 +180,9 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
     /// </summary>
     /// <param name="node">メンバー式のノード</param>
     /// <returns>メンバー名</returns>
-    private string GetMemberName(MemberExpression node) {
+    private static string GetMemberName(MemberExpression node) {
         if (node.Expression is MemberExpression inner) {
-            return $"{this.GetMemberName(inner)}.{node.Member.Name}";
+            return $"{GetMemberName(inner)}.{node.Member.Name}";
         }
 
         return node.Member.Name;
@@ -192,7 +192,7 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
     /// </summary>
     /// <param name="expr">評価する式</param>
     /// <returns>評価結果の値</returns>
-    private object? EvaluateExpression(Expression expr) {
+    private static object? EvaluateExpression(Expression expr) {
         try {
             var lambda = Expression.Lambda(expr);
             var compiled = lambda.Compile();
@@ -231,9 +231,9 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
 
             if (collection != null && memberAccess != null) {
                 try {
-                    var fieldName = this.GetFieldNameFromMemberExpression(memberAccess);
+                    var fieldName = GetFieldNameFromMemberExpression(memberAccess);
 
-                    var evaluated = this.EvaluateExpression(collection);
+                    var evaluated = EvaluateExpression(collection);
 
                     if (evaluated is IEnumerable<object> values) {
                         this._queryBuilder.Append($"{fieldName} in (");
@@ -269,12 +269,12 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
                 // predicate の中身が list.Contains(s) か確認
                 if (predicateMethodCall.Method.Name == "Contains") {
                     // list.Contains(s) の list 部分を評価して値を取得
-                    var values = this.EvaluateExpression(predicateMethodCall.Object ?? predicateMethodCall.Arguments[0]) as IEnumerable<object>;
+                    var values = EvaluateExpression(predicateMethodCall.Object ?? predicateMethodCall.Arguments[0]) as IEnumerable<object>;
 
                     if (values != null) {
                         // collectionExpr はフィールドアクセスと想定
                         if (collectionExpr is MemberExpression memberExpr) {
-                            var fieldName = this.GetFieldNameFromMemberExpression(memberExpr);
+                            var fieldName = GetFieldNameFromMemberExpression(memberExpr);
 
                             this._queryBuilder.Append($"{fieldName} in (");
                             this._queryBuilder.Append(string.Join(", ", values.Select(v => this.FormatValue(v))));
@@ -330,7 +330,7 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
     /// <param name="expr">評価する式</param>
     /// <returns>取得したフィールド名</returns>
     /// <exception cref="NotSupportedException">サポートされていない式の場合にスローされます</exception>
-    private string GetFieldNameFromMemberExpression(Expression expr) {
+    private static string GetFieldNameFromMemberExpression(Expression expr) {
         return expr switch {
             MemberExpression memberExpr => memberExpr.Member.Name,
             KintoneSpecialFieldExpression specialExpr => specialExpr.FieldName,

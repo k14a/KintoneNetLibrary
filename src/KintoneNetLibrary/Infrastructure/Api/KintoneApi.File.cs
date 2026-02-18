@@ -241,7 +241,7 @@ public partial class KintoneApi : IKintoneApi {
     public async Task DownloadFileAsync(string fileKey, FileInfo destination) {
         var bytes = await this.DownloadFileAsync(fileKey);
         using var fs = destination.OpenWrite();
-        await fs.WriteAsync(bytes, 0, bytes.Length);
+        await fs.WriteAsync(bytes);
     }
     #endregion
 

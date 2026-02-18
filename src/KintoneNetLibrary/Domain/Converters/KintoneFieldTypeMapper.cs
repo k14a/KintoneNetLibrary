@@ -10,12 +10,11 @@ public static class KintoneFieldTypeMapper {
     /// <summary>
     /// kintone 側で値を持たないフィールドタイプ（スキップ対象）
     /// </summary>
-    private static readonly HashSet<string> SkipTypes = [
-        with(StringComparer.OrdinalIgnoreCase),
-        "GROUP",
-        "SPACER",
-        "HR"
-    ];
+    private static readonly HashSet<string> SkipTypes = new(StringComparer.OrdinalIgnoreCase) {
+            "GROUP",
+            "SPACER",
+            "HR"
+    };
 
     /// <summary>
     /// kintone の type → KintoneFieldType のマッピング表

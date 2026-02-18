@@ -298,7 +298,7 @@ public class KintoneTypedCrudService<T>(
 
             var result = new KintoneDeleteResult();
             if (validateExistence) {
-                var failures = this.CollectNotFoundFailures(models, target);
+                var failures = KintoneTypedCrudService<T>.CollectNotFoundFailures(models, target);
                 result.Failed.AddRange(failures);
             }
 
@@ -373,7 +373,7 @@ public class KintoneTypedCrudService<T>(
     /// <param name="original">オリジナルのKintoneモデルのリスト</param>
     /// <param name="found">存在が確認されたKintoneモデルのリスト</param>
     /// <returns>削除失敗情報のリスト</returns>
-    private List<KintoneDeleteFailure> CollectNotFoundFailures(IList<T> original, IList<T> found) {
+    private static List<KintoneDeleteFailure> CollectNotFoundFailures(IList<T> original, IList<T> found) {
         var foundIds = found.Select(x => x.RecordID).ToHashSet();
         return original
             .Where(x => !foundIds.Contains(x.RecordID))
