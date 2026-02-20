@@ -20,7 +20,8 @@ namespace KintoneNetLibrary.CodeGen.Application.Emitters;
 /// <param name="subTableEmitter">サブテーブルエミッター</param>
 /// <param name="helperEmitter">ヘルパークラスエミッター</param>
 public class CSharpCodeEmitter(
-    INameConverterFactory converterFactory,
+    // INameConverterFactory converterFactory,
+    INameConverter nameConverter,
     ITypeMapperFactory mapperFactory,
     IXmlCommentBuilder xml,
     ISubTableEmitter subTableEmitter,
@@ -28,7 +29,8 @@ public class CSharpCodeEmitter(
     IDateTimeProvider? clock = null,
     ILogger<CSharpCodeEmitter>? logger = null) : ICodeEmitter {
 
-    private readonly INameConverter _converter = converterFactory.Create(GenerateLanguages.CSharp);
+    // private readonly INameConverter _converter = converterFactory.Create(GenerateLanguages.CSharp);
+    private readonly INameConverter _converter = nameConverter;
     private readonly ITypeMapper _mapper = mapperFactory.Create(GenerateLanguages.CSharp);
     private readonly IXmlCommentBuilder _xml = xml;
     private readonly ISubTableEmitter _subTableEmitter = subTableEmitter;

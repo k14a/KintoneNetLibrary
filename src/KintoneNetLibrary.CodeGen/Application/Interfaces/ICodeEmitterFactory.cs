@@ -10,6 +10,7 @@ public interface ICodeEmitterFactory {
     /// コードエミッターの作成
     /// </summary>
     /// <param name="lang">生成するコードの言語</param>
+    /// <param name="nameConverter">使用する名前変換</param>
     /// <returns>作成されたコードエミッター</returns>
-    ICodeEmitter Create(GenerateLanguages lang);
+    ICodeEmitter Create(GenerateLanguages lang, INameConverter nameConverter);
 }

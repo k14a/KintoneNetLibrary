@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using KintoneNetLibrary.CodeGen.Application.Interfaces;
+using KintoneNetLibrary.CodeGen.Domain.Models;
 using KintoneNetLibrary.Extensions;
 
 namespace KintoneNetLibrary.CodeGen.Application.Emitters;
@@ -7,7 +8,9 @@ namespace KintoneNetLibrary.CodeGen.Application.Emitters;
 /// <summary>
 /// Python 用名前変換（安全・一貫性・壊れない）
 /// </summary>
-public class PythonNameConverter : INameConverter {
+public class PythonNameConverter : INameConverter, INameTableApplicable {
+    private NameTable? _nameTable;
+
     // 日本語 → 意味ベース変換（任意）
     private static readonly Dictionary<string, string> Dictionary = new() {
         { "顧客", "customer" },
@@ -28,6 +31,18 @@ public class PythonNameConverter : INameConverter {
         "CreatedTime", "UpdatedTime", "Creator", "Modifier",
         "Status", "Category", "Assignee"
     ];
+
+    /// <summary>
+    /// 変換テーブルを適用します。
+    /// これにより、変換テーブルに基づいた名前変換が優先されるようになります。
+    /// 例えば、フィールドコード "customer" に対して、変換テーブルで "CustomerName" とマッピングされていれば、
+    /// ToPropertyName("customer", "顧客") は "CustomerName" を返すようになります。
+    /// 変換テーブルにないフィールドコードは、従来のロジックで変換されます。
+    /// </summary>
+    /// <param name="table"></param>
+    public void LoadNameTable(NameTable table) {
+        this._nameTable = table;
+    }
 
     /// <summary>
     /// クラス名に変換する
@@ -59,6 +74,13 @@ public class PythonNameConverter : INameConverter {
     /// <param name="code">コード</param>
     /// <returns>変換後のプロパティ名</returns>
     public string ToPropertyName(string label, string code) {
+        if (this._nameTable != null) {
+            var mapping = this._nameTable.TryGet(code);
+            if (mapping != null && !string.IsNullOrWhiteSpace(mapping.Property)) {
+                return mapping.Property;
+            }
+        }
+
         var baseName = SelectBaseName(label, code);
 
         if (string.IsNullOrWhiteSpace(baseName)) {

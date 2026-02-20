@@ -20,12 +20,14 @@ namespace KintoneNetLibrary.CodeGen.Application.Emitters;
 /// <param name="clock">日時プロバイダー</param>
 /// <param name="logger">ロガー</param>
 public class PythonCodeEmitter(
-    INameConverterFactory converterFactory,
+    // INameConverterFactory converterFactory,
+    INameConverter nameConverter,
     ITypeMapperFactory mapperFactory,
     IDateTimeProvider? clock = null,
     ILogger<PythonCodeEmitter>? logger = null) : ICodeEmitter {
 
-    private readonly INameConverter _converter = converterFactory.Create(GenerateLanguages.Python);
+    // private readonly INameConverter _converter = converterFactory.Create(GenerateLanguages.Python);
+    private readonly INameConverter _converter = nameConverter;
     private readonly ITypeMapper _mapper = mapperFactory.Create(GenerateLanguages.Python);
     private readonly IDateTimeProvider _clock = clock ?? new SystemDateTimeProvider();
     private readonly ILogger<PythonCodeEmitter>? _logger = logger;

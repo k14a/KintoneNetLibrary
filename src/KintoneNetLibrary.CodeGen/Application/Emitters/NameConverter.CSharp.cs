@@ -2,13 +2,15 @@ using System.Text;
 using System.Text.RegularExpressions;
 using KintoneNetLibrary.Extensions;
 using KintoneNetLibrary.CodeGen.Application.Interfaces;
+using KintoneNetLibrary.CodeGen.Domain.Models;
 
 namespace KintoneNetLibrary.CodeGen.Application.Emitters;
 
 /// <summary>
 /// 名前変換
 /// </summary>
-public class CSharpNameConverter : INameConverter {
+public class CSharpNameConverter : INameConverter, INameTableApplicable {
+    private NameTable? _nameTable;
     private static readonly Dictionary<string, string> Dictionary = new() {
         { "顧客", "Customer" },
         { "担当者", "Assignee" },
@@ -32,6 +34,17 @@ public class CSharpNameConverter : INameConverter {
         ["作業者"] = ("Assignee", "KintoneUser"),
     };
 
+    /// <summary>
+    /// 変換テーブルを適用します。
+    /// これにより、変換テーブルに基づいた名前変換が優先されるようになります。
+    /// 例えば、フィールドコード "customer" に対して、変換テーブルで "CustomerName" とマッピングされていれば、
+    /// ToPropertyName("customer", "顧客") は "CustomerName" を返すようになります。
+    /// 変換テーブルにないフィールドコードは、従来のロジックで変換されます。
+    /// </summary>
+    /// <param name="table">適用する変換テーブル</param>
+    public void LoadNameTable(NameTable table) {
+        this._nameTable = table;
+    }
 
     /// <summary>
     /// クラス名に変換する
@@ -47,8 +60,17 @@ public class CSharpNameConverter : INameConverter {
     /// <param name="label">ラベル</param>
     /// <param name="code">コード</param>
     /// <returns>変換後のプロパティ名</returns>
-    public string ToPropertyName(string label, string code) => MakeSafeIdentifier(this.Convert(label, code));
+    public string ToPropertyName(string label, string code) {
+        // 1. 変換テーブルがある場合は優先
+        if (this._nameTable != null) {
+            var mapping = this._nameTable.TryGet(code);
+            if (mapping != null && !string.IsNullOrWhiteSpace(mapping.Property)) {
+                return mapping.Property;
+            }
+        }
 
+        return MakeSafeIdentifier(this.Convert(label, code));
+    }
     /// <summary>
     /// 変換ロジック本体
     /// </summary>
@@ -138,72 +160,72 @@ public class CSharpNameConverter : INameConverter {
         }.Contains(name);
     }
 
-    /// <summary>
-    /// 簡易ローマ字変換
-    /// </summary>
-    /// <param name="text">変換対象の文字列</param>
-    /// <returns>ローマ字に変換された文字列</returns>
-    [Obsolete("Use KintoneNetLibrary.Extensions.StringExtensions.ToRoman instead")]
-    internal static string ToRoman(string text) {
-        if (string.IsNullOrEmpty(text)) { return string.Empty; }
+    // /// <summary>
+    // /// 簡易ローマ字変換
+    // /// </summary>
+    // /// <param name="text">変換対象の文字列</param>
+    // /// <returns>ローマ字に変換された文字列</returns>
+    // [Obsolete("Use KintoneNetLibrary.Extensions.StringExtensions.ToRoman instead")]
+    // internal static string ToRoman(string text) {
+    //     if (string.IsNullOrEmpty(text)) { return string.Empty; }
 
-        var sb = new StringBuilder();
+    //     var sb = new StringBuilder();
 
-        // 変換マップの定義（2文字の拗音を先に定義する）
-        var map = new Dictionary<string, string> {
-            // 拗音（2文字）
-            {"きゃ", "kya"}, {"きゅ", "kyu"}, {"きょ", "kyo"},
-            {"しゃ", "sha"}, {"しゅ", "shu"}, {"しょ", "sho"},
-            {"ちゃ", "cha"}, {"ちゅ", "chu"}, {"ちょ", "cho"},
-            {"にゃ", "nya"}, {"にゅ", "nyu"}, {"にょ", "nyo"},
-            {"ひゃ", "hya"}, {"ひゅ", "hyu"}, {"ひょ", "hyo"},
-            {"みゃ", "mya"}, {"みゅ", "myu"}, {"みょ", "myo"},
-            {"りゃ", "rya"}, {"りゅ", "ryu"}, {"りょ", "ryo"},
-            {"ぎゃ", "gya"}, {"ぎゅ", "gyu"}, {"ぎょ", "gyo"},
-            {"じゃ", "ja"},  {"じゅ", "ju"},  {"じょ", "jo"},
-            {"びゃ", "bya"}, {"びゅ", "byu"}, {"びょ", "byo"},
-            {"ぴゃ", "pya"}, {"ぴゅ", "pyu"}, {"ぴょ", "pyo"},
+    //     // 変換マップの定義（2文字の拗音を先に定義する）
+    //     var map = new Dictionary<string, string> {
+    //         // 拗音（2文字）
+    //         {"きゃ", "kya"}, {"きゅ", "kyu"}, {"きょ", "kyo"},
+    //         {"しゃ", "sha"}, {"しゅ", "shu"}, {"しょ", "sho"},
+    //         {"ちゃ", "cha"}, {"ちゅ", "chu"}, {"ちょ", "cho"},
+    //         {"にゃ", "nya"}, {"にゅ", "nyu"}, {"にょ", "nyo"},
+    //         {"ひゃ", "hya"}, {"ひゅ", "hyu"}, {"ひょ", "hyo"},
+    //         {"みゃ", "mya"}, {"みゅ", "myu"}, {"みょ", "myo"},
+    //         {"りゃ", "rya"}, {"りゅ", "ryu"}, {"りょ", "ryo"},
+    //         {"ぎゃ", "gya"}, {"ぎゅ", "gyu"}, {"ぎょ", "gyo"},
+    //         {"じゃ", "ja"},  {"じゅ", "ju"},  {"じょ", "jo"},
+    //         {"びゃ", "bya"}, {"びゅ", "byu"}, {"びょ", "byo"},
+    //         {"ぴゃ", "pya"}, {"ぴゅ", "pyu"}, {"ぴょ", "pyo"},
 
-            // 1文字
-            {"あ", "a"},  {"い", "i"},   {"う", "u"},   {"え", "e"},  {"お", "o"},
-            {"か", "ka"}, {"き", "ki"},  {"く", "ku"},  {"け", "ke"}, {"こ", "ko"},
-            {"さ", "sa"}, {"し", "shi"}, {"す", "su"},  {"せ", "se"}, {"そ", "so"},
-            {"た", "ta"}, {"ち", "chi"}, {"つ", "tsu"}, {"て", "te"}, {"と", "to"},
-            {"な", "na"}, {"に", "ni"},  {"ぬ", "nu"},  {"ね", "ne"}, {"の", "no"},
-            {"は", "ha"}, {"ひ", "hi"},  {"ふ", "fu"},  {"へ", "he"}, {"ほ", "ho"},
-            {"ま", "ma"}, {"み", "mi"},  {"む", "mu"},  {"め", "me"}, {"も", "mo"},
-            {"や", "ya"}, {"ゆ", "yu"},  {"よ", "yo"},
-            {"ら", "ra"}, {"り", "ri"},  {"る", "ru"},  {"れ", "re"}, {"ろ", "ro"},
-            {"わ", "wa"}, {"を", "wo"},  {"ん", "n"},
+    //         // 1文字
+    //         {"あ", "a"},  {"い", "i"},   {"う", "u"},   {"え", "e"},  {"お", "o"},
+    //         {"か", "ka"}, {"き", "ki"},  {"く", "ku"},  {"け", "ke"}, {"こ", "ko"},
+    //         {"さ", "sa"}, {"し", "shi"}, {"す", "su"},  {"せ", "se"}, {"そ", "so"},
+    //         {"た", "ta"}, {"ち", "chi"}, {"つ", "tsu"}, {"て", "te"}, {"と", "to"},
+    //         {"な", "na"}, {"に", "ni"},  {"ぬ", "nu"},  {"ね", "ne"}, {"の", "no"},
+    //         {"は", "ha"}, {"ひ", "hi"},  {"ふ", "fu"},  {"へ", "he"}, {"ほ", "ho"},
+    //         {"ま", "ma"}, {"み", "mi"},  {"む", "mu"},  {"め", "me"}, {"も", "mo"},
+    //         {"や", "ya"}, {"ゆ", "yu"},  {"よ", "yo"},
+    //         {"ら", "ra"}, {"り", "ri"},  {"る", "ru"},  {"れ", "re"}, {"ろ", "ro"},
+    //         {"わ", "wa"}, {"を", "wo"},  {"ん", "n"},
 
-            // 濁音・半濁音
-            {"が", "ga"}, {"ぎ", "gi"}, {"ぐ", "gu"}, {"げ", "ge"}, {"ご", "go"},
-            {"ざ", "za"}, {"じ", "ji"}, {"ず", "zu"}, {"ぜ", "ze"}, {"ぞ", "zo"},
-            {"だ", "da"}, {"ぢ", "ji"}, {"づ", "zu"}, {"で", "de"}, {"ど", "do"},
-            {"ば", "ba"}, {"び", "bi"}, {"ぶ", "bu"}, {"べ", "be"}, {"ぼ", "bo"},
-            {"ぱ", "pa"}, {"ぴ", "pi"}, {"ぷ", "pu"}, {"ぺ", "pe"}, {"ぽ", "po"},
+    //         // 濁音・半濁音
+    //         {"が", "ga"}, {"ぎ", "gi"}, {"ぐ", "gu"}, {"げ", "ge"}, {"ご", "go"},
+    //         {"ざ", "za"}, {"じ", "ji"}, {"ず", "zu"}, {"ぜ", "ze"}, {"ぞ", "zo"},
+    //         {"だ", "da"}, {"ぢ", "ji"}, {"づ", "zu"}, {"で", "de"}, {"ど", "do"},
+    //         {"ば", "ba"}, {"び", "bi"}, {"ぶ", "bu"}, {"べ", "be"}, {"ぼ", "bo"},
+    //         {"ぱ", "pa"}, {"ぴ", "pi"}, {"ぷ", "pu"}, {"ぺ", "pe"}, {"ぽ", "po"},
 
-            // 特殊記号
-            {"ー", "-"}, {"っ", ""} // 「っ」は次の文字で判定するためここでは空
-        };
+    //         // 特殊記号
+    //         {"ー", "-"}, {"っ", ""} // 「っ」は次の文字で判定するためここでは空
+    //     };
 
-        for (int i = 0; i < text.Length; i++) {
-            if (i + 1 < text.Length && map.TryGetValue(text.Substring(i, 2), out var doubleChar)) {
-                // 1. 2文字の組み合わせ（拗音）をチェック
-                sb.Append(doubleChar);
-                i++; // 2文字分進める
-            } else if (text[i] == 'っ' && i + 1 < text.Length) {
-                // 2. 「っ」の処理（次の文字の最初の子音を重ねる）
-                // 次の文字を1文字チェックして、そのローマ字の先頭を重ねる
-                if (map.TryGetValue(text.Substring(i + 1, 1), out var next)) {
-                    sb.Append(next[0]);
-                }
-            } else if (map.TryGetValue(text[i].ToString(), out var singleChar)) {
-                // 3. 通常の1文字チェック
-                sb.Append(singleChar);
-            }
-        }
+    //     for (int i = 0; i < text.Length; i++) {
+    //         if (i + 1 < text.Length && map.TryGetValue(text.Substring(i, 2), out var doubleChar)) {
+    //             // 1. 2文字の組み合わせ（拗音）をチェック
+    //             sb.Append(doubleChar);
+    //             i++; // 2文字分進める
+    //         } else if (text[i] == 'っ' && i + 1 < text.Length) {
+    //             // 2. 「っ」の処理（次の文字の最初の子音を重ねる）
+    //             // 次の文字を1文字チェックして、そのローマ字の先頭を重ねる
+    //             if (map.TryGetValue(text.Substring(i + 1, 1), out var next)) {
+    //                 sb.Append(next[0]);
+    //             }
+    //         } else if (map.TryGetValue(text[i].ToString(), out var singleChar)) {
+    //             // 3. 通常の1文字チェック
+    //             sb.Append(singleChar);
+    //         }
+    //     }
 
-        return sb.ToString();
-    }
+    //     return sb.ToString();
+    // }
 }
