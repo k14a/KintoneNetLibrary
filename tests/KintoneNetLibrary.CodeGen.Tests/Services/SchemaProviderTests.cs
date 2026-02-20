@@ -4,6 +4,7 @@ using KintoneNetLibrary.Domain.Enums;
 using KintoneNetLibrary.Application.Interfaces;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace KintoneNetLibrary.CodeGen.Tests.Services;
 

@@ -14,8 +14,9 @@ namespace KintoneNetLibrary.CodeGen.Infrastructure.Services;
 /// </summary>
 /// <param name="metadataApi"></param>
 /// <param name="logger"></param>
-public class SchemaProvider(IKintoneAppMetadataApi metadataApi, ILogger<SchemaProvider> logger) : ISchemaProvider {
+public class SchemaProvider(IKintoneAppMetadataApi metadataApi, IMetadataConverter converter, ILogger<SchemaProvider> logger) : ISchemaProvider {
     private readonly IKintoneAppMetadataApi _metadataApi = metadataApi;
+    private readonly IMetadataConverter _converter = converter;
     private readonly ILogger<SchemaProvider> _logger = logger;
     private string? _domain;
 
@@ -32,7 +33,7 @@ public class SchemaProvider(IKintoneAppMetadataApi metadataApi, ILogger<SchemaPr
         var metadata = await this.GetMetadataAsync(domain, apiToken, appId);
         this._logger.LogInformation("Metadata fetched. Converting to schema...");
 
-        var schema = this.ConvertMetadataToSchema(metadata);
+        var schema = this._converter.Convert(metadata);
         this._logger.LogInformation("Schema conversion completed.");
 
         return schema;
@@ -60,38 +61,6 @@ public class SchemaProvider(IKintoneAppMetadataApi metadataApi, ILogger<SchemaPr
     /// </summary>
     /// <param name="subDomain">Kintoneのサブドメイン</param>
     public void SetDomain(string subDomain) => this._domain = $"{subDomain}.cybozu.com";
-
-    /// <summary>
-    /// Kintoneアプリのメタデータをスキーマに変換します。
-    /// </summary>
-    /// <param name="metadata">Kintoneアプリのメタデータ</param>
-    /// <returns>変換後のスキーマ情報</returns>
-    private KintoneAppSchema ConvertMetadataToSchema(KintoneAppMetadata metadata) {
-        return new KintoneAppSchema {
-            AppId = metadata.AppId,
-            Revision = metadata.Revision,
-            Fields = [.. metadata.Fields.Where(f => f.FieldType != KintoneFieldType.SubTable).Select(f => new KintoneFieldSchema {
-                FieldCode = f.FieldCode,
-                Label = f.FieldLabel,
-                FieldType = f.FieldType,
-                Required = f.Required,
-                Options = f.Options == null ? [] : [.. f.Options], // ドロップダウンなど
-                // 必要に応じて追加
-            })],
-            SubTables = [.. metadata.Fields.Where(st => st.FieldType == KintoneFieldType.SubTable).Select(st => new KintoneSubTableSchema {
-                FieldCode = st.FieldCode,
-                Label = st.FieldLabel,
-                Fields = [.. st.SubFields!.Select(sf => new KintoneFieldSchema {
-                    FieldCode = sf.FieldCode,
-                    Label = sf.FieldLabel,
-                    FieldType = sf.FieldType,
-                    Required = sf.Required,
-                    Options = sf.Options == null ? [] : [.. sf.Options], // ドロップダウンなど
-                    // 必要に応じて追加
-                })]
-            })]
-        };
-    }
 
     /// <summary>
     /// 指定されたバックアップスキーマと現在のスキーマを比較し、差分を取得します。

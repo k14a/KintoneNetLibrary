@@ -84,12 +84,12 @@ public sealed class BackupResult : IOperationResult {
     public IList<string> PartFiles { get; set; } = [];
 
     /// <summary>
-    /// バックアップ方式
+    /// バックアップデータファイル数
     /// </summary>
     public int Parts => this.PartFiles.Count;
 
     /// <summary>
-    /// バックアップ方式
+    /// バックアップデータの分割サイズ（例: 1ファイルあたりのレコード数）。
     /// </summary>
     public int SplitSize { get; set; }
 }
