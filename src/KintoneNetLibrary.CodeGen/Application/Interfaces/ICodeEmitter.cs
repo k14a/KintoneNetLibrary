@@ -14,6 +14,8 @@ public interface ICodeEmitter {
     /// </summary>
     GenerateLanguages Language { get; }
 
+    void SetNameConverter(INameConverter converter);
+
     /// <summary>
     /// コード生成を実行します
     /// </summary>

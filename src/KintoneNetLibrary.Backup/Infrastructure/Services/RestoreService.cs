@@ -7,6 +7,7 @@ using KintoneNetLibrary.Backup.Domain.Enums;
 using KintoneNetLibrary.CodeGen.Application.Interfaces;
 using KintoneNetLibrary.Domain.Access;
 using KintoneNetLibrary.Domain.Converters;
+using KintoneNetLibrary.Domain.Interfaces;
 using KintoneNetLibrary.Infrastructure.Api;
 using Microsoft.Extensions.Http.Logging;
 using Microsoft.Extensions.Logging;
@@ -25,6 +26,7 @@ public sealed class RestoreService(
     ISchemaProvider schemaProvider,
     IKintoneAccessFactory accessFactory,
     IHttpClientFactory httpClientFactory,
+    IFieldParser fieldParser,
     ILogger<RestoreService>? logger = null) : IRestoreService {
 
     private IKintoneApi? _api;
@@ -32,6 +34,7 @@ public sealed class RestoreService(
     private readonly ISchemaProvider _schemaProvider = schemaProvider;
     // private HttpClient? _httpClient = httpClient;
     private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
+    private readonly IFieldParser _fieldParser = fieldParser;
     private readonly ILogger? _logger = logger;
     private readonly RestoreResult _result = new();
     private static readonly HashSet<string> _readonlyFieldTypes = [
@@ -598,7 +601,7 @@ public sealed class RestoreService(
 
         // リストア先アプリのスキーマを取得
         var access = this._accessFactory.CreateApiTokenAccess(this.Options.SubDomain, this.Options.ApiToken);
-        var metadataApi = new KintoneAppMetadataApi(this._httpClientFactory, this._logger as ILogger<KintoneAppMetadataApi>);
+        var metadataApi = new KintoneAppMetadataApi(this._httpClientFactory, this._fieldParser, this._logger as ILogger<KintoneAppMetadataApi>);
         var currentSchema = await metadataApi.GetAppMetadataAsync(
             access.Domain,
             this.Options.ApiToken,

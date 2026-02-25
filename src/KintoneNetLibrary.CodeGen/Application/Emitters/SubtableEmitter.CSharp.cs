@@ -16,16 +16,21 @@ namespace KintoneNetLibrary.CodeGen.Application.Emitters;
 /// <param name="xml">XML コメントビルダー</param>
 /// <param name="logger">ロガー</param>
 public class CSharpSubTableEmitter(
-    INameConverterFactory converterFactory,
+    // INameConverterFactory converterFactory,
     ITypeMapperFactory mapperFactory,
     IXmlCommentBuilder xml,
     ILogger<CSharpSubTableEmitter> logger) : ISubTableEmitter {
 
-    private readonly INameConverter _converter = converterFactory.Create(GenerateLanguages.CSharp);
+    // private readonly INameConverter _converter = converterFactory.Create(GenerateLanguages.CSharp);
+    private INameConverter? _converter;
     private readonly ITypeMapper _types = mapperFactory.Create(GenerateLanguages.CSharp);
     private readonly IXmlCommentBuilder _xml = xml;
     private readonly ILogger<CSharpSubTableEmitter> _logger = logger;
-    private readonly HashSet<string> _generatedClassNames = [];
+    private readonly HashSet<string> _generatedClassNames = new HashSet<string>();
+
+    public void SetNameConverter(INameConverter converter) {
+        this._converter ??= converter;
+    }
 
     /// <summary>
     /// サブテーブルモデルを生成する
@@ -44,16 +49,18 @@ public class CSharpSubTableEmitter(
         sb.AppendLine();
 
         // class name
-        name = this._converter.ToClassName(name, string.Empty);
-        name = this.MakeUniqueClassName(name);
-        var className = $"SubTable{name}";
+        var rawName = this._converter!.ToClassName(name, string.Empty, true);
+        if (rawName == "_") {
+            rawName = $"SubTable{rawName}";
+        }
+        rawName = this.MakeUniqueClassName(rawName);
+        var className = rawName;
 
         // XML コメント（サブテーブル用）
         sb.AppendLine(this._xml.BuildForSubTable(subTable));
 
         // class header
         this.EmitClassName(sb, className, options);
-        // sb.AppendLine($"public partial class {className}");
         sb.AppendLine("{");
 
         // properties
@@ -120,8 +127,20 @@ public class CSharpSubTableEmitter(
     /// <param name="field">フィールドスキーマ</param>
     /// <param name="options">エミッターオプション</param>
     private void EmitProperty(StringBuilder sb, KintoneFieldSchema field, CSharpEmitterOptions options) {
-        var propName = this._converter.ToPropertyName(field.Label, field.FieldCode);
+        var propName = this._converter!.ToPropertyName(field.Label, field.FieldCode);
         var typeName = this._types.MapType(field, options.UseKintoneNetLibrary);
+
+        // 変換失敗（"_"）を検知
+        if (propName == "_") {
+            propName = $"__PropertyNameConversionFailed_{field.FieldCode}__";
+
+            sb.AppendLine("    // TODO: サブテーブルのプロパティ名の変換に失敗しました。修正してください。");
+
+            this._logger?.LogWarning(
+                "サブテーブルのプロパティ生成に失敗しました。ラベル：{label}/フィールドコード：{fieldCode}",
+                field.Label, field.FieldCode
+            );
+        }
 
         // XML コメント
         sb.AppendLine(this._xml.BuildForField(field));
@@ -129,7 +148,16 @@ public class CSharpSubTableEmitter(
         // KintoneItemAttribute
         this.EmitAttributes(sb, field, options);
 
-        sb.AppendLine($"    public {typeName} {propName} {{ get; set; }}");
+        // 初期化が必要な型の場合は初期化コードを追加
+        string initializer = "";
+        // List<T>は常に「new()」
+        if (typeName.StartsWith("List<")) {
+            initializer = " = new();";
+        } else if (typeName == "string") {
+            initializer = " = string.Empty;";
+        }
+
+        sb.AppendLine($"    public {typeName} {propName} {{ get; set; }}{initializer}");
         sb.AppendLine();
     }
 

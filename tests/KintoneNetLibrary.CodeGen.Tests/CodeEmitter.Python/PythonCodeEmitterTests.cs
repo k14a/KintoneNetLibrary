@@ -1,6 +1,7 @@
 using KintoneNetLibrary.CodeGen.Application.Emitters;
 using KintoneNetLibrary.CodeGen.Application.Interfaces;
 using KintoneNetLibrary.CodeGen.Domain.Enums;
+using KintoneNetLibrary.CodeGen.Domain.Models;
 using KintoneNetLibrary.CodeGen.Domain.Options;
 using KintoneNetLibrary.CodeGen.Domain.Schemas;
 using KintoneNetLibrary.Domain.Enums;
@@ -24,7 +25,7 @@ public class PythonCodeEmitterTests {
         /// </summary>
         /// <param name="lang">生成する言語</param>
         /// <returns>作成された名前変換インスタンス</returns>
-        public INameConverter Create(GenerateLanguages lang) => new PythonNameConverter();
+        public INameConverter Create(GenerateLanguages lang, NameTable? nameTable) => new PythonNameConverter();
     }
 
     /// <summary>

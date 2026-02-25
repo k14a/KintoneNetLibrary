@@ -1,4 +1,5 @@
 using System.Text;
+using Humanizer;
 using KintoneNetLibrary.CodeGen.Application.Interfaces;
 using KintoneNetLibrary.CodeGen.Domain.Enums;
 using KintoneNetLibrary.CodeGen.Domain.Models;
@@ -20,8 +21,7 @@ namespace KintoneNetLibrary.CodeGen.Application.Emitters;
 /// <param name="subTableEmitter">サブテーブルエミッター</param>
 /// <param name="helperEmitter">ヘルパークラスエミッター</param>
 public class CSharpCodeEmitter(
-    // INameConverterFactory converterFactory,
-    INameConverter nameConverter,
+    // INameConverter nameConverter,
     ITypeMapperFactory mapperFactory,
     IXmlCommentBuilder xml,
     ISubTableEmitter subTableEmitter,
@@ -29,8 +29,7 @@ public class CSharpCodeEmitter(
     IDateTimeProvider? clock = null,
     ILogger<CSharpCodeEmitter>? logger = null) : ICodeEmitter {
 
-    // private readonly INameConverter _converter = converterFactory.Create(GenerateLanguages.CSharp);
-    private readonly INameConverter _converter = nameConverter;
+    private INameConverter? _converter;
     private readonly ITypeMapper _mapper = mapperFactory.Create(GenerateLanguages.CSharp);
     private readonly IXmlCommentBuilder _xml = xml;
     private readonly ISubTableEmitter _subTableEmitter = subTableEmitter;
@@ -42,6 +41,10 @@ public class CSharpCodeEmitter(
     /// 対応する生成言語
     /// </summary>
     public GenerateLanguages Language => GenerateLanguages.CSharp;
+
+    public void SetNameConverter(INameConverter converter) {
+        this._converter ??= converter;
+    }
 
     /// <summary>
     /// Kintone アプリスキーマから C# コードを生成する
@@ -61,6 +64,7 @@ public class CSharpCodeEmitter(
             };
 
             // 2. サブテーブル生成
+            this._subTableEmitter.SetNameConverter(this._converter!);
             foreach (var sub in schema.SubTables) {
                 result.SubTableModels.Add(
                     this._subTableEmitter.EmitSubTable(sub.FieldCode, sub, csOptions)
@@ -181,7 +185,7 @@ public class CSharpCodeEmitter(
     /// <param name="field">Kintone フィールドスキーマ</param>
     /// <param name="options">C# エミッターオプション</param>
     private void EmitProperty(StringBuilder sb, KintoneFieldSchema field, CSharpEmitterOptions options) {
-        var propName = this._converter.ToPropertyName(field.Label, field.FieldCode);
+        var propName = this._converter!.ToPropertyName(field.Label, field.FieldCode);
         var typeName = this._mapper.MapType(field, options.UseKintoneNetLibrary);
 
         // 変換失敗（"_"）を検知
@@ -203,8 +207,17 @@ public class CSharpCodeEmitter(
         // KintoneItemAttribute
         this.EmitAttributes(sb, field, options);
 
+        // 初期化が必要な型の場合は初期化コードを追加
+        string initializer = "";
+        // List<T>は常に「new()」
+        if (typeName.StartsWith("List<")) {
+            initializer = " = new();";
+        } else if (typeName == "string") {
+            initializer = " = string.Empty;";
+        }
+
         // プロパティ本体
-        sb.AppendLine($"    public {typeName} {propName} {{ get; set; }}");
+        sb.AppendLine($"    public {typeName} {propName} {{ get; set; }}{initializer}");
         sb.AppendLine();
     }
 
@@ -215,8 +228,22 @@ public class CSharpCodeEmitter(
     /// <param name="schema">Kintone サブテーブルスキーマ</param>
     /// <param name="options">C# エミッターオプション</param>
     private void EmitSubTables(StringBuilder sb, KintoneSubTableSchema schema, CSharpEmitterOptions options) {
-        var propName = this._converter.ToPropertyName(schema.Label, schema.FieldCode);
-        var classNameSub = this._converter.ToClassName(schema.Label, schema.FieldCode);
+        // 単数形のプロパティ名（NameTable 優先）
+        var propNameSingular = this._converter!.ToPropertyName(schema.Label, schema.FieldCode, true);
+
+        // fallback: "_" の場合は SubTable prefix を付ける
+        if (propNameSingular == "_") {
+            propNameSingular = $"SubTable_{schema.FieldCode}";
+        }
+
+        // Humanizer で複数形化
+        var propNamePlural = propNameSingular.Pluralize();
+
+        // サブクラス名（Row クラス名）
+        var classNameSub = this._converter!.ToClassName(schema.Label, schema.FieldCode, true);
+        if (classNameSub == "_") {
+            classNameSub = $"SubTable_{schema.FieldCode}";
+        }
 
         // XML コメント
         sb.AppendLine(this._xml.BuildForSubTable(schema));
@@ -227,7 +254,7 @@ public class CSharpCodeEmitter(
         }
 
         // プロパティ本体
-        sb.AppendLine($"    public List<SubTable{classNameSub}> {propName} {{ get; set; }}");
+        sb.AppendLine($"    public List<{classNameSub}> {propNamePlural} {{ get; set; }}");
         sb.AppendLine();
     }
 

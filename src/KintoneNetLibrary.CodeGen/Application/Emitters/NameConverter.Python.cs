@@ -50,7 +50,7 @@ public class PythonNameConverter : INameConverter, INameTableApplicable {
     /// <param name="label">ラベル</param>
     /// <param name="code">コード</param>
     /// <returns>変換後のクラス名</returns>
-    public string ToClassName(string label, string code) {
+    public string ToClassName(string label, string code, bool tableTemplate = false) {
         var baseName = SelectBaseName(label, code);
         if (Dictionary.TryGetValue(baseName, out var mapped)) {
             return mapped.ToPascalCase();
@@ -73,7 +73,7 @@ public class PythonNameConverter : INameConverter, INameTableApplicable {
     /// <param name="label">ラベル</param>
     /// <param name="code">コード</param>
     /// <returns>変換後のプロパティ名</returns>
-    public string ToPropertyName(string label, string code) {
+    public string ToPropertyName(string label, string code, bool tableTemplate = false) {
         if (this._nameTable != null) {
             var mapping = this._nameTable.TryGet(code);
             if (mapping != null && !string.IsNullOrWhiteSpace(mapping.Property)) {
@@ -82,9 +82,16 @@ public class PythonNameConverter : INameConverter, INameTableApplicable {
         }
 
         var baseName = SelectBaseName(label, code);
+        if (baseName.IsAscii()) {
+            return baseName.ToSnakeCase();
+        }
+
+        if (tableTemplate) {
+            return string.Empty;
+        }
 
         if (string.IsNullOrWhiteSpace(baseName)) {
-            return "INVALID_FIELD_NAME";
+            return tableTemplate ? string.Empty : "INVALID_FIELD_NAME";
         }
 
         // システムフィールドは固定名
@@ -109,7 +116,7 @@ public class PythonNameConverter : INameConverter, INameTableApplicable {
         }
 
         // プロパティ名を特定できない場合はエラーを出すためのinvalid nameを返す
-        return "INVALID_FIELD_NAME";
+        return tableTemplate ? string.Empty : "INVALID_FIELD_NAME";
     }
 
     /// <summary>

@@ -24,7 +24,7 @@ public class CSharpCodeEmitterRecordTests {
         /// </summary>
         /// <param name="lang">生成する言語</param>
         /// <returns>作成された名前変換インスタンス</returns>
-        public INameConverter Create(GenerateLanguages lang) => new CSharpNameConverter();
+        public INameConverter Create(GenerateLanguages lang, NameTable? nameTable) => new CSharpNameConverter();
     }
 
     /// <summary>

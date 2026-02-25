@@ -21,13 +21,13 @@ namespace KintoneNetLibrary.CodeGen.Application.Emitters;
 /// <param name="logger">ロガー</param>
 public class PythonCodeEmitter(
     // INameConverterFactory converterFactory,
-    INameConverter nameConverter,
+    // INameConverter nameConverter,
     ITypeMapperFactory mapperFactory,
     IDateTimeProvider? clock = null,
     ILogger<PythonCodeEmitter>? logger = null) : ICodeEmitter {
 
     // private readonly INameConverter _converter = converterFactory.Create(GenerateLanguages.Python);
-    private readonly INameConverter _converter = nameConverter;
+    private INameConverter _converter;
     private readonly ITypeMapper _mapper = mapperFactory.Create(GenerateLanguages.Python);
     private readonly IDateTimeProvider _clock = clock ?? new SystemDateTimeProvider();
     private readonly ILogger<PythonCodeEmitter>? _logger = logger;
@@ -37,6 +37,10 @@ public class PythonCodeEmitter(
     /// 対応する生成言語
     /// </summary>
     public GenerateLanguages Language => GenerateLanguages.Python;
+
+    public void SetNameConverter(INameConverter converter) {
+        this._converter = converter;
+    }
 
     /// <summary>
     /// コード生成を実行します

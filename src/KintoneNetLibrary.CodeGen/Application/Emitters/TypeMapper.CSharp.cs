@@ -75,18 +75,19 @@ public class CSharpTypeMapper : ITypeMapper {
     /// <param name="field">Kintone フィールドスキーマ</param>
     /// <returns>対応する C# 型</returns>
     private string MapLibrary(KintoneFieldSchema field) {
+        var required = field.Required;
         return field.FieldType switch {
-            KintoneFieldType.SingleLineText => "string",
-            KintoneFieldType.MultiLineText => "string",
-            KintoneFieldType.RichText => "string",
+            KintoneFieldType.SingleLineText => required ? "string" : "string?",
+            KintoneFieldType.MultiLineText => required ? "string" : "string?",
+            KintoneFieldType.RichText => required ? "string" : "string?",
 
             KintoneFieldType.Number => field.DecimalPlaces > 0 ? "decimal?" : "int?",
 
             KintoneFieldType.Calc => "string",
 
-            KintoneFieldType.Date => "KintoneDateOnly",
-            KintoneFieldType.DateTime => "KintoneDateTime",
-            KintoneFieldType.Time => "KintoneTimeOnly",
+            KintoneFieldType.Date => required ? "KintoneDateOnly" : "KintoneDateOnly?",
+            KintoneFieldType.DateTime => required ? "KintoneDateTime" : "KintoneDateTime?",
+            KintoneFieldType.Time => required ? "KintoneTimeOnly" : "KintoneTimeOnly?",
             KintoneFieldType.CheckBox => "List<string>",
             KintoneFieldType.MultiSelect => "List<string>",
             KintoneFieldType.RadioButton => "string",
@@ -98,9 +99,9 @@ public class CSharpTypeMapper : ITypeMapper {
 
             KintoneFieldType.File => "List<KintoneFile>",
 
-            KintoneFieldType.LinkUrl => "string",
-            KintoneFieldType.LinkTelephone => "string",
-            KintoneFieldType.LinkEmail => "string",
+            KintoneFieldType.LinkUrl => required ? "string" : "string?",
+            KintoneFieldType.LinkTelephone => required ? "string" : "string?",
+            KintoneFieldType.LinkEmail => required ? "string" : "string?",
 
             KintoneFieldType.Creator => "KintoneUser",
             KintoneFieldType.Modifier => "KintoneUser",
@@ -109,7 +110,7 @@ public class CSharpTypeMapper : ITypeMapper {
             KintoneFieldType.Status => "string",
             KintoneFieldType.Category => "string",
 
-            _ => "string",
+            _ => field.Required ? "string" : "string?",
         };
     }
 

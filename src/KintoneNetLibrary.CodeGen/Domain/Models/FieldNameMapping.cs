@@ -25,7 +25,7 @@ public class FieldNameMapping {
     /// <summary>
     /// プロパティ名（AI が埋める or ユーザーが編集）
     /// </summary>
-    public string Property { get; set; } = string.Empty;
+    public string? Property { get; set; }
 
     /// <summary>
     /// Kintone のフィールドタイプ（AI が埋める or ユーザーが編集）

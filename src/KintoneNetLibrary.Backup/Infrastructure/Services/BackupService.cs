@@ -8,7 +8,9 @@ using KintoneNetLibrary.CodeGen.Application.Interfaces;
 using KintoneNetLibrary.Domain.Access;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Domain.Enums;
+using KintoneNetLibrary.Domain.Interfaces;
 using KintoneNetLibrary.Infrastructure.Api;
+using KintoneNetLibrary.Infrastructure.Services;
 using Microsoft.Extensions.Logging;
 
 namespace KintoneNetLibrary.Backup.Infrastructure.Services;
@@ -24,12 +26,14 @@ public sealed class BackupService(
     ISchemaProvider schemaProvider,
     IKintoneAccessFactory _accessFactory,
     IHttpClientFactory httpClientFactory,
+    IFieldParser fieldParser,
     ILogger<BackupService>? logger = null) : IBackupService {
 
     private IKintoneApi? _api;
     private readonly ISchemaProvider _schemaProvider = schemaProvider;
     private readonly IKintoneAccessFactory _accessFactory = _accessFactory;
     private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
+    private readonly IFieldParser _fieldParser = fieldParser;
     private JsonSerializerOptions? _jsonOptions;
     private readonly ILogger<BackupService>? _logger = logger;
     private int _partIndex = 0;
@@ -644,7 +648,7 @@ public sealed class BackupService(
         this._logger?.LogInformation("フィールドスキーマを保存しています…");
 
         var access = this._accessFactory.CreateApiTokenAccess(this.Options.SubDomain, this.Options.ApiToken);
-        var metadataApi = new KintoneAppMetadataApi(this._httpClientFactory, this._logger as ILogger<KintoneAppMetadataApi>);
+        var metadataApi = new KintoneAppMetadataApi(this._httpClientFactory, this._fieldParser, this._logger as ILogger<KintoneAppMetadataApi>);
         var json = await metadataApi.GetFieldsJsonAsync(access.Domain, this.Options.ApiToken, metadata.AppId);
 
         var dir = this.Options.OutputPath.FullName;

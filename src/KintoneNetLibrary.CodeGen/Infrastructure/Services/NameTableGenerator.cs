@@ -1,6 +1,7 @@
 using KintoneNetLibrary.CodeGen.Application.Interfaces;
 using KintoneNetLibrary.CodeGen.Domain.Models;
 using KintoneNetLibrary.CodeGen.Domain.Schemas;
+using KintoneNetLibrary.Domain.Enums;
 
 namespace KintoneNetLibrary.CodeGen.Infrastructure.Services;
 
@@ -22,7 +23,7 @@ public class NameTableGenerator : INameTableGenerator {
                 Label = field.Label,
                 FieldType = field.FieldType,
                 SubTable = null,
-                Property = string.Empty
+                Property = null,
             };
 
             table[field.FieldCode] = mapping;
@@ -30,12 +31,20 @@ public class NameTableGenerator : INameTableGenerator {
 
         // --- サブテーブルフィールド ---
         foreach (var sub in schema.SubTables) {
+            var subMapping = new FieldNameMapping {
+                Label = sub.Label,
+                FieldType = KintoneFieldType.SubTable,
+                SubTable = null,
+                Property = null,
+            };
+            table[sub.FieldCode] = subMapping;
+
             foreach (var field in sub.Fields) {
                 var mapping = new FieldNameMapping {
                     Label = field.Label,
                     FieldType = field.FieldType,
                     SubTable = sub.FieldCode,
-                    Property = string.Empty
+                    Property = null,
                 };
 
                 table[field.FieldCode] = mapping;

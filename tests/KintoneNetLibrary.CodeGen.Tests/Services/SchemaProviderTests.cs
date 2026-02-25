@@ -5,6 +5,7 @@ using KintoneNetLibrary.Application.Interfaces;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Microsoft.Extensions.Logging.Abstractions;
+using KintoneNetLibrary.CodeGen.Application.Interfaces;
 
 namespace KintoneNetLibrary.CodeGen.Tests.Services;
 
@@ -14,6 +15,7 @@ namespace KintoneNetLibrary.CodeGen.Tests.Services;
 public class SchemaProviderTests {
     private readonly SchemaProvider _provider;
     private readonly Mock<IKintoneAppMetadataApi> _mockApi;
+    private readonly Mock<IMetadataConverter> _mockConverter;
 
     /// <summary>
     /// SchemaProviderTests クラスのコンストラクタ。テストクラスのインスタンスが生成される際に、必要な依存関係をモックして SchemaProvider のインスタンスを初期化する。これにより、SchemaProvider のメソッドをテストする際に、実際の API 呼び出しを行わずに、モックされたデータを使用してテストを実行できるようになる。
@@ -22,11 +24,13 @@ public class SchemaProviderTests {
     public SchemaProviderTests() {
         var logger = Mock.Of<ILogger<SchemaProvider>>();
         this._mockApi = new Mock<IKintoneAppMetadataApi>();
+        this._mockConverter = new Mock<IMetadataConverter>();
 
         // SchemaProvider が DI で IKintoneAppMetadataApi を受け取る前提
         this._provider = new SchemaProvider(
             logger: logger,
-            metadataApi: this._mockApi.Object
+            metadataApi: this._mockApi.Object,
+            converter: this._mockConverter.Object
         );
 
         this._provider.SetDomain("example");
@@ -133,6 +137,7 @@ public class SchemaProviderTests {
         var logger = Mock.Of<ILogger<SchemaProvider>>();
         var provider = new SchemaProvider(
             this._mockApi.Object,
+            this._mockConverter.Object,
             logger
         );
 
@@ -203,7 +208,8 @@ public class SchemaProviderTests {
 
         var provider = new SchemaProvider(
             logger: Mock.Of<ILogger<SchemaProvider>>(),
-            metadataApi: fakeApi
+            metadataApi: fakeApi,
+            converter: this._mockConverter.Object
         );
 
         provider.SetDomain("example");

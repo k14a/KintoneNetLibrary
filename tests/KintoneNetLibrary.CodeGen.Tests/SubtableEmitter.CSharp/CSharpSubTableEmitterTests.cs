@@ -1,6 +1,7 @@
 using KintoneNetLibrary.CodeGen.Application.Emitters;
 using KintoneNetLibrary.CodeGen.Application.Interfaces;
 using KintoneNetLibrary.CodeGen.Domain.Enums;
+using KintoneNetLibrary.CodeGen.Domain.Models;
 using KintoneNetLibrary.CodeGen.Domain.Options;
 using KintoneNetLibrary.CodeGen.Domain.Schemas;
 using KintoneNetLibrary.Domain.Enums;
@@ -23,7 +24,7 @@ public class CSharpSubTableEmitterTests {
         /// </summary>
         /// <param name="lang">生成する言語</param>
         /// <returns>CSharpNameConverter のインスタンス</returns>
-        public INameConverter Create(GenerateLanguages lang) => new CSharpNameConverter();
+        public INameConverter Create(GenerateLanguages lang, NameTable? nameTable) => new CSharpNameConverter();
     }
 
     /// <summary>

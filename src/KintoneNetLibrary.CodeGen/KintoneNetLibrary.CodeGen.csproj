@@ -13,4 +13,8 @@
   <ItemGroup>
     <EmbeddedResource Include="Application\Emitters\Templates\*.txt" />
   </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Humanizer" Version="3.0.1" />
+  </ItemGroup>
 </Project>
