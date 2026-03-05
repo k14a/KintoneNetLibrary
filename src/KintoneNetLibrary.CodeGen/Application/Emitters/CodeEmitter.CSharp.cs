@@ -266,7 +266,7 @@ public class CSharpCodeEmitter(
     /// <param name="options">C# エミッターオプション</param>
     private void EmitAttributes(StringBuilder sb, KintoneFieldSchema field, CSharpEmitterOptions options) {
         if (options.UseKintoneNetLibrary) {
-            sb.AppendLine($"    [KintoneItem(FieldCode = \"{field.FieldCode}\")]");
+            sb.AppendLine($"    [KintoneItem(FieldCode = \"{field.FieldCode}\", FieldType = KintoneFieldType.{field.FieldType})]");
         }
     }
 }

@@ -101,6 +101,18 @@ public static class KintoneValueConverter {
                         Code = u.GetProperty("code").GetString() ?? "",
                         Name = u.GetProperty("name").GetString() ?? ""
                     }).ToList(),
+            (Type t, JsonValueKind.Array) when typeof(IEnumerable<KintoneGroup>).IsAssignableFrom(t) =>
+                valueElement.EnumerateArray()
+                    .Select(u => new KintoneGroup {
+                        Code = u.GetProperty("code").GetString() ?? "",
+                        Name = u.GetProperty("name").GetString() ?? ""
+                    }).ToList(),
+            (Type t, JsonValueKind.Array) when typeof(IEnumerable<KintoneOrganization>).IsAssignableFrom(t) =>
+                valueElement.EnumerateArray()
+                    .Select(u => new KintoneOrganization {
+                        Code = u.GetProperty("code").GetString() ?? "",
+                        Name = u.GetProperty("name").GetString() ?? ""
+                    }).ToList(),
             _ => throw new NotSupportedException($"Unsupported value conversion to {targetType.Name} from kind: {valueElement.ValueKind}")
         };
     }
