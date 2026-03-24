@@ -48,6 +48,14 @@ public class KintoneDateOnly : IKintoneFieldConverter {
     }
 
     /// <summary>
+    /// 指定された日付の値で KintoneDateOnly クラスの新しいインスタンスを初期化します。
+    /// </summary>
+    /// <param name="value">日付の値</param>
+    public KintoneDateOnly(DateTime value) {
+        this.Value = DateOnly.FromDateTime(value);
+    }
+
+    /// <summary>
     /// KintoneDateOnly の文字列形式を返します。
     /// </summary>
     /// <returns></returns>
