@@ -1,14 +1,14 @@
+using System.Net.Mail;
 using System.Reflection;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Domain.Enums;
 
 namespace KintoneNetLibrary.Infrastructure.Helpers;
 
-// コメントは日本語で記述
 /// <summary>
 /// Kintone モデルのバリデーションを行うヘルパークラス
 /// </summary>
-internal static class KintoneModelValidator {
+public static class KintoneModelValidator {
     /// <summary>
     /// モデルの構造を検証します
     /// </summary>
@@ -41,6 +41,12 @@ internal static class KintoneModelValidator {
             }
         }
 
+        try {
+            ValidateRequiredFields(model);
+        } catch (Exception ex) {
+            errors.Add(ex.Message);
+        }
+
         return errors.Count == 0;
     }
 
@@ -58,6 +64,11 @@ internal static class KintoneModelValidator {
             throw new InvalidOperationException(
                 $"モデル '{typeof(T).Name}' には IsKey が複数あります（{string.Join(", ", keyProps.Select(p => p.Name))}）"
             );
+        }
+
+        if (!string.IsNullOrWhiteSpace(model.RecordID)) {
+            // RecordID が指定されている場合は IsKeyは不要
+            return;
         }
 
         if (keyProps.Count == 0) {
@@ -134,7 +145,9 @@ internal static class KintoneModelValidator {
                     break;
 
                 case KintoneFieldType.LinkEmail:
-                    if (!value.Contains("@") || value.StartsWith("@") || value.EndsWith("@")) {
+                    try {
+                        var addr = new MailAddress(value);
+                    } catch {
                         throw new InvalidOperationException($"'{prop.Name}' はメールアドレスとして無効です: {value}");
                     }
                     break;
@@ -182,9 +195,42 @@ internal static class KintoneModelValidator {
 
                 case KintoneFieldType.SubTable:
                     if (!IsValidSubTableType(prop.PropertyType)) {
-                        throw new InvalidOperationException($"サブテーブル '{prop.Name}' は List<T> 型で定義する必要があります。現在の型: {prop.PropertyType.FullName}");
+                        throw new InvalidOperationException(
+                            $"サブテーブル '{prop.Name}' は List<T> 型で定義する必要があります。現在の型: {prop.PropertyType.FullName}");
                     }
+
+                    // Row 型を取得
+                    var rowType = prop.PropertyType.GetGenericArguments()[0];
+
+                    // Row 型が KintoneSubTableBase を継承しているかチェック
+                    if (!typeof(KintoneSubTableBase).IsAssignableFrom(rowType)) {
+                        throw new InvalidOperationException($"サブテーブル '{prop.Name}' の行型 '{rowType.Name}' は KintoneSubTableBase を継承していません。");
+                    }
+
+                    // Row 内のフィールドを検証
+                    ValidateSubTableRowStructure(rowType);
                     break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// モデルの必須フィールドが適切に設定されているか検証します
+    /// </summary>
+    /// <typeparam name="T">検証対象のモデルの型</typeparam>
+    /// <param name="model">検証対象のモデル</param>
+    /// <exception cref="InvalidOperationException">必須フィールドの値が未設定の場合にスローされます</exception>
+    public static void ValidateRequiredFields<T>(T model) where T : KintoneModelBase<T>, new() {
+        var props = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+        foreach (var prop in props) {
+            var attr = prop.GetCustomAttribute<KintoneItemAttribute>();
+            if (attr == null || !attr.IsRequired) { continue; }
+
+            var value = prop.GetValue(model);
+
+            if (value == null || (value is string s && string.IsNullOrWhiteSpace(s))) {
+                throw new InvalidOperationException($"必須フィールド '{prop.Name}' の値が未設定です。");
             }
         }
     }
@@ -210,4 +256,40 @@ internal static class KintoneModelValidator {
             .Where(p => p.GetCustomAttribute<KintoneItemAttribute>()?.IsKey == true)];
     }
 
+    /// <summary>
+    /// サブテーブルの行の構造を検証します
+    /// </summary>
+    /// <param name="rowType">サブテーブルの行の型</param>
+    /// <exception cref="InvalidOperationException">構造が不正な場合にスローされます</exception>
+    private static void ValidateSubTableRowStructure(Type rowType) {
+        var props = rowType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+        foreach (var prop in props) {
+            var attr = prop.GetCustomAttribute<KintoneItemAttribute>() ?? throw new InvalidOperationException(
+                $"サブテーブル行 '{rowType.Name}' のプロパティ '{prop.Name}' に KintoneItemAttribute がありません。");
+
+            // SubTable 内の構造化フィールドも再帰的にチェック
+            switch (attr.FieldType) {
+                case KintoneFieldType.File:
+                    if (prop.PropertyType != typeof(IList<KintoneFile>)) {
+                        throw new InvalidOperationException(
+                            $"サブテーブル行 '{rowType.Name}' の File フィールド '{prop.Name}' は IList<KintoneFile> 型である必要があります。");
+                    }
+                    break;
+
+                case KintoneFieldType.CheckBox:
+                case KintoneFieldType.MultiSelect:
+                case KintoneFieldType.Category:
+                    if (prop.PropertyType != typeof(IList<string>)) {
+                        throw new InvalidOperationException(
+                            $"サブテーブル行 '{rowType.Name}' の複数選択フィールド '{prop.Name}' は IList<string> 型である必要があります。");
+                    }
+                    break;
+
+                case KintoneFieldType.SubTable:
+                    throw new InvalidOperationException(
+                        $"サブテーブルの中にサブテーブル '{prop.Name}' は定義できません。");
+            }
+        }
+    }
 }

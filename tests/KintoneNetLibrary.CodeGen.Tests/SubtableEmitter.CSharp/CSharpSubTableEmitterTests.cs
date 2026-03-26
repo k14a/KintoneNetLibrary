@@ -116,7 +116,6 @@ public class CSharpSubTableEmitterTests {
     public void EmitSubTable_GeneratesExpectedCode() {
         // Arrange
         var emitter = new CSharpSubTableEmitter(
-            new FakeNameConverterFactory(),
             new FakeTypeMapperFactory(),
             new FakeXmlCommentBuilder(),
             new FakeLogger()
@@ -154,7 +153,6 @@ public class CSharpSubTableEmitterTests {
     public void EmitSubTable_GeneratesUniqueClassNames_WhenDuplicated() {
         // Arrange
         var emitter = new CSharpSubTableEmitter(
-            new FakeNameConverterFactory(),
             new FakeTypeMapperFactory(),
             new FakeXmlCommentBuilder(),
             new FakeLogger()

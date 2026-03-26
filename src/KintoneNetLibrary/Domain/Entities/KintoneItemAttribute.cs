@@ -38,6 +38,10 @@ public class KintoneItemAttribute(
     /// </summary>
     public bool IsKey { get; set; } = isKey;
     /// <summary>
+    /// 必須項目かどうか
+    /// </summary>
+    public bool IsRequired { get; set; }
+    /// <summary>
     /// Kintone側のデータタイプ
     /// </summary>
     public KintoneFieldType FieldType { get; set; } = fieldType;

@@ -98,6 +98,12 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     public bool IgnoreRevision { get; set; }
 
     /// <summary>
+    /// レコードの表示URLを取得します
+    /// <remarks>レコードのURLは、Kintoneアカウントのドメイン、アプリID、およびレコードIDを組み合わせて構築されます。</remarks>
+    /// </summary>
+    public string ShowUrl => $"https://{this.Account.Domain}/k/{this.AppID}/show#record={this.RecordID}";
+
+    /// <summary>
     /// Kintoneモデルのプロパティ名とアイテム名の変換情報
     /// <remarks>プロパティ名とアイテム名の変換は、Kintoneのフィールドコードと一致させるために使用されます。</remarks>
     /// </summary>

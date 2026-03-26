@@ -71,6 +71,10 @@ public class CSharpCodeEmitterNullableTests {
         /// <returns>生成されたサブテーブルのコード</returns>
         public string EmitSubTable(string fieldCode, KintoneSubTableSchema schema, CSharpEmitterOptions options) => string.Empty;
 
+        public void SetNameConverter(INameConverter converter) {
+            throw new NotImplementedException();
+        }
+
         /// <summary>
         /// サブテーブルのコードを生成するためのモデルを構築する。
         /// </summary>
@@ -121,7 +125,6 @@ public class CSharpCodeEmitterNullableTests {
     [Fact]
     public void Emit_NullableEnabled_MatchesSnapshot() {
         var emitter = new CSharpCodeEmitter(
-            new FakeNameConverterFactory(),
             new FakeTypeMapperFactory(),
             new FakeXmlCommentBuilder(),
             new FakeSubTableEmitter(),

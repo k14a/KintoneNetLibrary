@@ -71,6 +71,10 @@ public class CSharpCodeEmitterAllTypesTests {
         /// <returns>変換されたコード文字列</returns>
         public string EmitSubTable(string fieldCode, KintoneSubTableSchema schema, CSharpEmitterOptions options) => string.Empty;
 
+        public void SetNameConverter(INameConverter converter) {
+            throw new NotImplementedException();
+        }
+
         /// <summary>
         /// サブテーブルのフィールドコードをコードに変換して返す。実際の実装では、サブテーブルのフィールドをコードに変換するロジックが必要になるが、テスト用のフェイク実装では単純に空文字列を返すだけにする。
         /// </summary>
@@ -121,7 +125,6 @@ public class CSharpCodeEmitterAllTypesTests {
     [Fact]
     public void EmitAllFieldTypesMatchesSnapshot() {
         var emitter = new CSharpCodeEmitter(
-            new FakeNameConverterFactory(),
             new FakeTypeMapperFactory(),
             new FakeXmlCommentBuilder(),
             new FakeSubTableEmitter(),

@@ -29,7 +29,7 @@ public class KintoneWriteResult<T> where T : KintoneModelBase<T>, new() {
     /// <summary>
     /// 書き込みに失敗したレコードが存在する場合、例外をスローします
     /// </summary>
-    /// <exception cref="KintoneWriteException{T}"></exception>
+    /// <exception cref="KintoneWriteException{T}">書き込みに失敗したレコードが存在する場合にスローされる例外</exception>
     public void ThrowIfAnyFailed() {
         if (this.HasFailures) {
             throw new KintoneWriteException<T>(this.Failed);

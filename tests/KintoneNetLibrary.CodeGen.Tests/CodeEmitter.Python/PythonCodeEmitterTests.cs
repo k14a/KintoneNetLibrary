@@ -113,7 +113,6 @@ public class PythonCodeEmitterTests {
     public void Emit_PythonModel_MatchesSnapshot() {
         // Arrange
         var emitter = new PythonCodeEmitter(
-            new FakeNameConverterFactory(),
             new FakeTypeMapperFactory(),
             new FakeClock(),
             new FakeLogger()

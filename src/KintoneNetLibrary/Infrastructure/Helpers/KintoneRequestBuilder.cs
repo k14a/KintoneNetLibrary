@@ -52,9 +52,6 @@ public static class KintoneRequestBuilder {
         var records = new List<Dictionary<string, object>>();
 
         foreach (var model in models) {
-            // ToKintoneRecord によってアップロード対象フィールドを取得
-            var recordFields = model.ToKintoneRecord();
-
             var recordWrapper = new Dictionary<string, object>();
 
             // id または updateKey を指定
@@ -67,6 +64,17 @@ public static class KintoneRequestBuilder {
                 var fieldCode = keyProp.GetCustomAttribute<KintoneItemAttribute>()!.FieldCode;
                 var value = keyProp.GetValue(model) ?? throw new InvalidOperationException($"Update key property '{fieldCode}' has null value.");
                 recordWrapper["updateKey"] = new { field = fieldCode, value = value };
+            }
+
+            var recordFields = model.ToKintoneRecord();
+            var keyFieldCodes = model.GetType()
+                .GetProperties()
+                .Where(p => p.GetCustomAttribute<KintoneItemAttribute>()?.IsKey == true)
+                .Select(p => p.GetCustomAttribute<KintoneItemAttribute>()!.FieldCode)
+                .ToHashSet();
+
+            foreach (var key in keyFieldCodes) {
+                recordFields.Remove(key);
             }
 
             recordWrapper["record"] = recordFields;

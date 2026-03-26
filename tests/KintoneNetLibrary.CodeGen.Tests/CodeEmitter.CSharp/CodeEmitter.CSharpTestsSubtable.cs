@@ -71,6 +71,10 @@ public class CSharpCodeEmitterSubTableTests {
         /// <returns>生成されたサブテーブルのコード文字列</returns>
         public string EmitSubTable(string fieldCode, KintoneSubTableSchema schema, CSharpEmitterOptions options) => string.Empty;
 
+        public void SetNameConverter(INameConverter converter) {
+            throw new NotImplementedException();
+        }
+
         /// <summary>
         /// サブテーブルのコード生成に必要な情報を含むモデルを生成するためのメソッド。ここでは空のモデルを返すフェイク実装となっている。
         /// </summary>
@@ -121,7 +125,6 @@ public class CSharpCodeEmitterSubTableTests {
     [Fact]
     public void EmitWithSubTableMatchesSnapshot() {
         var emitter = new CSharpCodeEmitter(
-            new FakeNameConverterFactory(),
             new FakeTypeMapperFactory(),
             new FakeXmlCommentBuilder(),
             new FakeSubTableEmitter(),
