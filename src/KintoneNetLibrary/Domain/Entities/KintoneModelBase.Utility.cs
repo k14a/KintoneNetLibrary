@@ -16,15 +16,40 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
             return true;
         }
 
+        return this.HasUpdateKey();
+    }
+
+    /// <summary>
+    /// 更新キーが設定されているかどうかを判定します。
+    /// </summary>
+    /// <returns></returns>
+    public virtual bool HasUpdateKey() {
         return this.GetType().GetProperties()
             .Where(p => p.GetCustomAttribute<KintoneItemAttribute>()?.IsKey == true)
             .Any(p => p.GetValue(this) is string s ? !string.IsNullOrEmpty(s) : p.GetValue(this) is not null);
     }
+
+    /// <summary>
+    /// 更新キーの値を取得します。更新キーが複数ある場合は、最初に見つかったものを返します。
+    /// 更新キーが設定されていない場合はnullを返します。
+    /// </summary>
+    /// <returns>更新キーの値、またはnull</returns>
+    public virtual string? GetUpdateKeyValue() {
+        var keyProp = this.GetType().GetProperties()
+            .FirstOrDefault(p => p.GetCustomAttribute<KintoneItemAttribute>()?.IsKey == true);
+
+        if (keyProp == null) { return null; }
+
+        var value = keyProp.GetValue(this);
+        return value?.ToString();
+    }
+
     /// <summary>
     /// 更新キーまたはIDからIDを再取得します。
     /// </summary>
     /// <returns></returns>
     protected virtual Task RefreshIdFromKeyAsync() => Task.CompletedTask;
+
     /// <summary>
     /// インデックス情報を適用します。
     /// </summary>

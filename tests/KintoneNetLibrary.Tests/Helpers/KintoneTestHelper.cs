@@ -114,7 +114,7 @@ public static class KintoneTestHelper {
 
         var httpClient = httpClientFactory.CreateClient("Kintone");
         var apiLogger = loggerFactory.CreateLogger<KintoneApi>();
-        var factory = new KintoneApiFactory(httpClient, apiLogger);
+        var factory = new KintoneApiFactory(httpClientFactory, apiLogger);
         var repository = new KintoneRepository(factory);
 
         var serviceLogger = loggerFactory.CreateLogger<KintoneTypedCrudService<T>>();

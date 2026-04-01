@@ -8,6 +8,7 @@ using static KintoneNetLibrary.Domain.Common.KintoneConstants;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using KintoneNetLibrary.Application.Interfaces;
+using System.Reflection;
 
 namespace KintoneNetLibrary.Application.UseCases.Services;
 /// <summary>
@@ -132,7 +133,7 @@ public class KintoneTypedCrudService<T>(
     /// <param name="fieldCodes">取得するフィールドコードのリスト（オプション）</param>
     /// <returns>検索結果のKintoneモデルのリスト</returns>
     /// <exception cref="KintoneException"></exception>
-    public async Task<IEnumerable<T>> FindAsync(IList<string>? ids = null, string? query = null, IList<string>? fieldCodes = null) {
+    public async Task<IEnumerable<T>> FindAsync(IList<string>? ids = null, string? query = null, KintoneQuery<T>? kintoneQuery = null, IList<string>? fieldCodes = null) {
         try {
             this._logger?.LogInformation("FindAsync() - Start");
 
@@ -141,14 +142,14 @@ public class KintoneTypedCrudService<T>(
             if (ids != null && ids.Any()) {
                 // IDが1件なら単一取得
                 if (ids.Count == 1) {
-                    var json = await this._repository.FindByIDAsync<T>(model, ids[0]);
+                    var json = await this._repository.FindByIDAsync(model, ids[0]);
                     if (string.IsNullOrEmpty(json)) { return []; }
 
                     var record = KintoneResponseParser.ParseRecord<T>(json);
                     return [record];
 
                 } else {
-                    var json = await this._repository.FindByIDsAsync<T>(model, ids, fieldCodes);
+                    var json = await this._repository.FindByIDsAsync(model, ids, fieldCodes);
                     if (string.IsNullOrEmpty(json)) { return []; }
 
                     var records = KintoneResponseParser.ParseRecords<T>(json);
@@ -156,7 +157,14 @@ public class KintoneTypedCrudService<T>(
                 }
 
             } else if (!string.IsNullOrEmpty(query)) {
-                var json = await this._repository.FindByQueryAsync<T>(model, query);
+                var json = await this._repository.FindByQueryAsync(model, query);
+                if (string.IsNullOrEmpty(json)) { return []; }
+
+                var records = KintoneResponseParser.ParseRecords<T>(json);
+                return records ?? [];
+
+            } else if (kintoneQuery != null) {
+                var json = await this._repository.FindByKintoneQueryAsync(model, kintoneQuery, fieldCodes);
                 if (string.IsNullOrEmpty(json)) { return []; }
 
                 var records = KintoneResponseParser.ParseRecords<T>(json);
@@ -164,7 +172,7 @@ public class KintoneTypedCrudService<T>(
 
             } else {
                 // 全件取得
-                var json = await this._repository.FindAllAsync<T>(model, fieldCodes);
+                var json = await this._repository.FindAllAsync(model, fieldCodes);
                 if (string.IsNullOrEmpty(json)) { return []; }
 
                 var records = KintoneResponseParser.ParseRecords<T>(json);
@@ -396,7 +404,7 @@ public class KintoneTypedCrudService<T>(
 
             var result = new KintoneWriteResult<T>();
 
-            var (createTargets, updateTargets) = SplitRecords(records);
+            var (createTargets, updateTargets) = await this.SplitRecordsAsync(records);
 
             if (createTargets.Count > 0) {
                 var createResult = await this.CreateAsync(createTargets, enableSingleRetryOnError);
@@ -430,16 +438,17 @@ public class KintoneTypedCrudService<T>(
 
             var result = new KintoneWriteResult<T>();
 
-            var createTargets = new List<T>();
-            var updateTargets = new List<T>();
+            var (createTargets, updateTargets) = await this.SplitRecordsAsync(records);
+            // var createTargets = new List<T>();
+            // var updateTargets = new List<T>();
 
-            foreach (var record in records) {
-                if (record.HasUpdateKeyOrID()) {
-                    updateTargets.Add(record);
-                } else {
-                    createTargets.Add(record);
-                }
-            }
+            // foreach (var record in records) {
+            //     if (record.HasUpdateKeyOrID()) {
+            //         updateTargets.Add(record);
+            //     } else {
+            //         createTargets.Add(record);
+            //     }
+            // }
 
             // create 処理
             if (createTargets.Count > 0) {
@@ -486,18 +495,15 @@ public class KintoneTypedCrudService<T>(
     /// <returns>更新されたKintoneモデルのリスト</returns>
     private static List<T> ParseUpdatedRecords(IList<T> records, string responseJson) {
         var indexResponse = KintoneRecordIndexesResponse.Parse(responseJson);
-        var indexes = indexResponse.ToIndexes();
 
-        // var recordList = records.ToList();
         var result = new List<T>();
-
-        for (int i = 0; i < Math.Min(records.Count, indexes.IDs.Count); i++) {
+        foreach (var i in Enumerable.Range(0, Math.Min(records.Count, indexResponse.Records.Count))) {
             var model = records[i];
-            model.RecordID = indexes.IDs[i] ?? string.Empty;
-            model.Revision = int.TryParse(indexes.Revisions[i], out var revision) ? revision : -1;
+            var indexItem = indexResponse.Records[i];
+            model.RecordID = indexItem.ID ?? string.Empty;
+            model.Revision = indexItem.Revision;
             result.Add(model);
         }
-
         return result;
     }
 
@@ -512,6 +518,57 @@ public class KintoneTypedCrudService<T>(
 
         foreach (var record in records) {
             if (record.HasUpdateKeyOrID()) {
+                updateTargets.Add(record);
+            } else {
+                createTargets.Add(record);
+            }
+        }
+
+        return (createTargets, updateTargets);
+    }
+
+    private async Task<(List<T> createTargets, List<T> updateTargets)> SplitRecordsAsync(IList<T> records) {
+        var keyed = records.Where(r => r.HasUpdateKey()).ToList();
+
+        if (keyed.Count == 0) {
+            return (records.ToList(), new List<T>());
+        }
+
+        var keyValues = keyed
+            .Select(r => r.GetUpdateKeyValue())
+            .Where(v => v != null)
+            .Distinct()
+            .ToList();
+
+        var keyProp = typeof(T)
+            .GetProperties()
+            .First(p => p.GetCustomAttribute<KintoneItemAttribute>()?.IsKey == true);
+
+        var attr = keyProp.GetCustomAttribute<KintoneItemAttribute>();
+        var keyPropName = !string.IsNullOrWhiteSpace(attr?.FieldCode)
+            ? attr.FieldCode
+            : keyProp.Name;
+
+        var query = new KintoneQuery<T>().In(keyPropName, keyValues);
+
+        var existing = await this.FindAsync(kintoneQuery: query);
+
+        var existingMap = existing.ToDictionary(
+            r => r.GetUpdateKeyValue(),
+            r => (r.RecordID, r.Revision)
+        );
+
+        var createTargets = new List<T>();
+        var updateTargets = new List<T>();
+
+        foreach (var record in records) {
+            var key = record.GetUpdateKeyValue();
+
+            if (record.HasUpdateKey() &&
+                key != null &&
+                existingMap.TryGetValue(key, out var info)) {
+                record.RecordID = info.RecordID;
+                record.Revision = info.Revision;
                 updateTargets.Add(record);
             } else {
                 createTargets.Add(record);

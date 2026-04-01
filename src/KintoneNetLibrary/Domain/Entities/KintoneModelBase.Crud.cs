@@ -12,7 +12,8 @@ namespace KintoneNetLibrary.Domain.Entities;
 /// Kintoneモデルの基本クラス（CRUD操作用）
 /// </summary>
 /// <typeparam name="TSelf"></typeparam>
-public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase where TSelf : KintoneModelBase<TSelf>, new() {
+public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase where TSelf : KintoneModelBase<TSelf>, new()
+{
     /// <summary>
     /// CRUDサービスのインスタンス
     /// </summary>
@@ -30,7 +31,8 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// <param name="enableSingleRetryOnError">エラー発生時に単一の再試行を有効にするかどうか</param>
     /// <returns>作成結果</returns>
     /// <exception cref="KintoneException">Kintone APIのエラーが発生した場合にスローされます。</exception>
-    public async Task<KintoneWriteResult<TSelf>> CreateAsync(bool enableSingleRetryOnError = false) {
+    public async Task<KintoneWriteResult<TSelf>> CreateAsync(bool enableSingleRetryOnError = false)
+    {
         return await this.Service.CreateAsync([(TSelf)this], enableSingleRetryOnError);
     }
 
@@ -43,7 +45,8 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// <param name="enableSingleRetryOnError">エラー発生時に単一の再試行を有効にするかどうか</param>
     /// <returns>更新結果</returns>
     /// <exception cref="KintoneException">Kintone APIのエラーが発生した場合にスローされます。</exception>
-    public async Task<KintoneWriteResult<TSelf>> UpdateAsync(bool enableSingleRetryOnError = false) {
+    public async Task<KintoneWriteResult<TSelf>> UpdateAsync(bool enableSingleRetryOnError = false)
+    {
         return await this.Service.UpdateAsync([(TSelf)this], enableSingleRetryOnError);
     }
 
@@ -56,7 +59,8 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// <param name="validateExistence">削除前にレコードの存在を検証するかどうか</param>
     /// <returns>削除結果</returns>
     /// <exception cref="KintoneException">Kintone APIのエラーが発生した場合にスローされます。</exception>
-    public async Task<KintoneDeleteResult> DeleteAsync(bool validateExistence = true) {
+    public async Task<KintoneDeleteResult> DeleteAsync(bool validateExistence = true)
+    {
         return await this.Service.DeleteAsync([(TSelf)this], validateExistence);
     }
 
@@ -69,7 +73,8 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// <param name="enableSingleRetryOnError">エラー発生時に単一の再試行を有効にするかどうか</param>
     /// <returns>保存結果</returns>
     /// <exception cref="KintoneException">Kintone APIのエラーが発生した場合にスローされます。</exception>
-    public async Task<KintoneWriteResult<TSelf>> SaveAsync(bool enableSingleRetryOnError = false) {
+    public async Task<KintoneWriteResult<TSelf>> SaveAsync(bool enableSingleRetryOnError = false)
+    {
         return await this.Service.SaveAsync([(TSelf)this], enableSingleRetryOnError);
     }
 
@@ -83,7 +88,8 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// <param name="enableCreateToUpdateRetry">新規作成から更新への再試行を有効にするかどうか</param>
     /// <returns>保存結果</returns>
     /// <exception cref="KintoneException">Kintone APIのエラーが発生した場合にスローされます。</exception>
-    public async Task<KintoneWriteResult<TSelf>> SaveWithRetryAsync(bool enableSingleRetryOnError = false, bool enableCreateToUpdateRetry = true) {
+    public async Task<KintoneWriteResult<TSelf>> SaveWithRetryAsync(bool enableSingleRetryOnError = false, bool enableCreateToUpdateRetry = true)
+    {
         return await this.Service.SaveWithRetryAsync([(TSelf)this], enableSingleRetryOnError, enableCreateToUpdateRetry);
     }
 
@@ -97,7 +103,8 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// <param name="enableSingleRetryOnError">エラー発生時に単一の再試行を有効にするかどうか</param>
     /// <returns>一括作成結果</returns>
     /// <exception cref="KintoneException">Kintone APIのエラーが発生した場合にスローされます。</exception>
-    public static async Task<KintoneWriteResult<TSelf>> CreateBulkAsync(IList<TSelf> models, bool enableSingleRetryOnError = false) {
+    public static async Task<KintoneWriteResult<TSelf>> CreateBulkAsync(IList<TSelf> models, bool enableSingleRetryOnError = false)
+    {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         return await service.CreateAsync(models, enableSingleRetryOnError);
     }
@@ -112,11 +119,13 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// <param name="enableSingleRetryOnError">エラー発生時に単一の再試行を有効にするかどうか</param>
     /// <returns>単一作成結果</returns>
     /// <exception cref="KintoneException">Kintone APIのエラーが発生した場合にスローされます。</exception>
-    public static async Task<KintoneWriteResult<TSelf>> CreateSingleAsync(IList<TSelf> models, bool enableSingleRetryOnError = false) {
+    public static async Task<KintoneWriteResult<TSelf>> CreateSingleAsync(IList<TSelf> models, bool enableSingleRetryOnError = false)
+    {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         var mergedResult = new KintoneWriteResult<TSelf>();
 
-        foreach (var model in models) {
+        foreach (var model in models)
+        {
             var result = await service.CreateAsync([model], enableSingleRetryOnError);
             mergedResult.Merge(result);
         }
@@ -134,7 +143,8 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// <param name="enableSingleRetryOnError">エラー発生時に単一の再試行を有効にするかどうか</param>
     /// <returns>一括更新結果</returns>
     /// <exception cref="KintoneException">Kintone APIのエラーが発生した場合にスローされます。</exception>
-    public static async Task<KintoneWriteResult<TSelf>> UpdateBulkAsync(IList<TSelf> models, bool enableSingleRetryOnError = false) {
+    public static async Task<KintoneWriteResult<TSelf>> UpdateBulkAsync(IList<TSelf> models, bool enableSingleRetryOnError = false)
+    {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         return await service.UpdateAsync(models, enableSingleRetryOnError);
     }
@@ -149,11 +159,13 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// <param name="enableSingleRetryOnError">エラー発生時に単一の再試行を有効にするかどうか</param>
     /// <returns>単一更新結果</returns>
     /// <exception cref="KintoneException">Kintone APIのエラーが発生した場合にスローされます。</exception>
-    public static async Task<KintoneWriteResult<TSelf>> UpdateSingleAsync(IList<TSelf> models, bool enableSingleRetryOnError = false) {
+    public static async Task<KintoneWriteResult<TSelf>> UpdateSingleAsync(IList<TSelf> models, bool enableSingleRetryOnError = false)
+    {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         var mergedResult = new KintoneWriteResult<TSelf>();
 
-        foreach (var model in models) {
+        foreach (var model in models)
+        {
             var result = await service.UpdateAsync([model], enableSingleRetryOnError);
             mergedResult.Merge(result);
         }
@@ -171,7 +183,8 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// <param name="validateExistence">削除前にレコードの存在を検証するかどうか</param>
     /// <returns>削除結果</returns>
     /// <exception cref="KintoneException">Kintone APIのエラーが発生した場合にスローされます。</exception>
-    public static async Task<KintoneDeleteResult> DeleteBulkAsync(IList<string> ids, bool validateExistence = true) {
+    public static async Task<KintoneDeleteResult> DeleteBulkAsync(IList<string> ids, bool validateExistence = true)
+    {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         return await service.DeleteAsync<TSelf>(ids, validateExistence);
     }
@@ -186,7 +199,8 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// <param name="validateExistence">削除前にレコードの存在を検証するかどうか</param>
     /// <returns>削除結果</returns>
     /// <exception cref="KintoneException">Kintone APIのエラーが発生した場合にスローされます。</exception>
-    public static async Task<KintoneDeleteResult> DeleteBulkAsync(IList<TSelf> models, bool validateExistence = true) {
+    public static async Task<KintoneDeleteResult> DeleteBulkAsync(IList<TSelf> models, bool validateExistence = true)
+    {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         return await service.DeleteAsync(models, validateExistence);
     }
@@ -201,11 +215,13 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// <param name="validateExistence">削除前にレコードの存在を検証するかどうか</param>
     /// <returns>削除結果</returns>
     /// <exception cref="KintoneException">Kintone APIのエラーが発生した場合にスローされます。</exception>
-    public static async Task<KintoneDeleteResult> DeleteSingleAsync(IList<string> ids, bool validateExistence = true) {
+    public static async Task<KintoneDeleteResult> DeleteSingleAsync(IList<string> ids, bool validateExistence = true)
+    {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         var mergedResult = new KintoneDeleteResult();
 
-        foreach (var id in ids) {
+        foreach (var id in ids)
+        {
             var result = await service.DeleteAsync<TSelf>([id], validateExistence);
             mergedResult.Succeeded.AddRange(result.Succeeded);
             mergedResult.Failed.AddRange(result.Failed);
@@ -224,11 +240,13 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// <param name="validateExistence">削除前にレコードの存在を検証するかどうか</param>
     /// <returns>削除結果</returns>
     /// <exception cref="KintoneException">Kintone APIのエラーが発生した場合にスローされます。</exception>
-    public static async Task<KintoneDeleteResult> DeleteSingleAsync(IList<TSelf> models, bool validateExistence = true) {
+    public static async Task<KintoneDeleteResult> DeleteSingleAsync(IList<TSelf> models, bool validateExistence = true)
+    {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         var mergedResult = new KintoneDeleteResult();
 
-        foreach (var model in models) {
+        foreach (var model in models)
+        {
             var result = await service.DeleteAsync([model], validateExistence);
             mergedResult.Succeeded.AddRange(result.Succeeded);
             mergedResult.Failed.AddRange(result.Failed);
@@ -247,7 +265,8 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// <param name="enableSingleRetryOnError">エラー発生時に単一の再試行を有効にするかどうか</param>
     /// <returns>一括保存結果</returns>
     /// <exception cref="KintoneException">Kintone APIのエラーが発生した場合にスローされます。</exception>
-    public static async Task<KintoneWriteResult<TSelf>> SaveBulkAsync(IList<TSelf> models, bool enableSingleRetryOnError = false) {
+    public static async Task<KintoneWriteResult<TSelf>> SaveBulkAsync(IList<TSelf> models, bool enableSingleRetryOnError = false)
+    {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         return await service.SaveAsync(models, enableSingleRetryOnError);
     }
@@ -262,11 +281,13 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// <param name="enableSingleRetryOnError">エラー発生時に単一の再試行を有効にするかどうか</param>
     /// <returns>単一保存結果</returns>
     /// <exception cref="KintoneException">Kintone APIのエラーが発生した場合にスローされます。</exception>
-    public static async Task<KintoneWriteResult<TSelf>> SaveSingleAsync(IList<TSelf> models, bool enableSingleRetryOnError = false) {
+    public static async Task<KintoneWriteResult<TSelf>> SaveSingleAsync(IList<TSelf> models, bool enableSingleRetryOnError = false)
+    {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         var mergedResult = new KintoneWriteResult<TSelf>();
 
-        foreach (var model in models) {
+        foreach (var model in models)
+        {
             var result = await service.SaveAsync([model], enableSingleRetryOnError);
             mergedResult.Merge(result);
         }
@@ -285,7 +306,8 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// <param name="enableCreateToUpdateRetry">新規作成から更新への再試行を有効にするかどうか</param>
     /// <returns>保存結果</returns>
     /// <exception cref="KintoneException">Kintone APIのエラーが発生した場合にスローされます。</exception>
-    public static async Task<KintoneWriteResult<TSelf>> SaveWithRetryBulkAsync(IList<TSelf> models, bool enableSingleRetryOnError = false, bool enableCreateToUpdateRetry = true) {
+    public static async Task<KintoneWriteResult<TSelf>> SaveWithRetryBulkAsync(IList<TSelf> models, bool enableSingleRetryOnError = false, bool enableCreateToUpdateRetry = true)
+    {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         return await service.SaveWithRetryAsync(models, enableSingleRetryOnError, enableCreateToUpdateRetry);
     }
@@ -301,11 +323,13 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// <param name="enableCreateToUpdateRetry">新規作成から更新への再試行を有効にするかどうか</param>
     /// <returns>保存結果</returns>
     /// <exception cref="KintoneException">Kintone APIのエラーが発生した場合にスローされます。</exception>
-    public static async Task<KintoneWriteResult<TSelf>> SaveWithRetrySingleAsync(IList<TSelf> models, bool enableSingleRetryOnError = false, bool enableCreateToUpdateRetry = true) {
+    public static async Task<KintoneWriteResult<TSelf>> SaveWithRetrySingleAsync(IList<TSelf> models, bool enableSingleRetryOnError = false, bool enableCreateToUpdateRetry = true)
+    {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         var mergedResult = new KintoneWriteResult<TSelf>();
 
-        foreach (var model in models) {
+        foreach (var model in models)
+        {
             var result = await service.SaveWithRetryAsync([model], enableSingleRetryOnError, enableCreateToUpdateRetry);
             mergedResult.Merge(result);
         }
@@ -322,7 +346,8 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// <param name="id">検索するレコードのID</param>
     /// <returns>検索結果のレコード</returns>
     /// <exception cref="KintoneException">Kintone APIのエラーが発生した場合にスローされます。</exception>
-    public static async Task<TSelf?> FindByIDAsync(string id) {
+    public static async Task<TSelf?> FindByIDAsync(string id)
+    {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         var result = await service.FindAsync<TSelf>([id], fieldCodes: null);
         return result.FirstOrDefault();
@@ -337,7 +362,8 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// <param name="ids">検索するレコードのIDのリスト</param>
     /// <returns>検索結果のレコードのリスト</returns>
     /// <exception cref="KintoneException">Kintone APIのエラーが発生した場合にスローされます。</exception>
-    public static async Task<List<TSelf>> FindByIDsAsync(IList<string> ids) {
+    public static async Task<List<TSelf>> FindByIDsAsync(IList<string> ids)
+    {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         return [.. await service.FindAsync<TSelf>([.. ids], fieldCodes: null)];
     }
@@ -353,7 +379,8 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// <exception cref="KintoneException">Kintone APIのエラーが発生した場合にスローされます。</exception>
     /// <exception cref="ArgumentException">キーが設定されていない場合にスローされます。</exception>
     /// <exception cref="InvalidOperationException">キーの値が複数存在する場合にスローされます。</exception>
-    public static async Task<TSelf?> FindByKeyAsync(TSelf model) {
+    public static async Task<TSelf?> FindByKeyAsync(TSelf model)
+    {
         KintoneModelValidator.ValidateKeyIntegrity(model);
 
         var keyProp = typeof(TSelf)
@@ -393,9 +420,11 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// <exception cref="KintoneException">Kintone APIのエラーが発生した場合にスローされます。</exception>
     /// <exception cref="ArgumentException">キーが設定されていない場合にスローされます。</exception>
     /// <exception cref="InvalidOperationException">キーの値が複数存在する場合にスローされます。</exception>
-    public static async Task<List<TSelf>> FindByKeysAsync(IList<TSelf> models) {
+    public static async Task<List<TSelf>> FindByKeysAsync(IList<TSelf> models)
+    {
         var modelList = models.ToList();
-        foreach (var model in modelList) {
+        foreach (var model in modelList)
+        {
             KintoneModelValidator.ValidateKeyIntegrity(model);
         }
         KintoneModelValidator.ValidateKeyValueUniqueness(modelList);
@@ -458,7 +487,8 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// <exception cref="TimeoutException">クエリの実行がタイムアウトした場合にスローされます。</exception>
     /// <exception cref="Exception">その他のエラーが発生した場合にスローされます。</exception>
     /// <exception cref="AggregateException">複数の例外が発生した場合にスローされます。</exception>
-    public static async Task<List<TSelf>> FindByQueryAsync(string query) {
+    public static async Task<List<TSelf>> FindByQueryAsync(string query)
+    {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         return [.. await service.FindAsync<TSelf>(query: query)];
     }
@@ -474,7 +504,8 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// <exception cref="TimeoutException">検索の実行がタイムアウトした場合にスローされます。</exception>
     /// <exception cref="Exception">その他のエラーが発生した場合にスローされます。</exception>
     /// <exception cref="AggregateException">複数の例外が発生した場合にスローされます。</exception>
-    public static async Task<List<TSelf>> FindAllAsync() {
+    public static async Task<List<TSelf>> FindAllAsync()
+    {
         var service = KintoneServiceLocator.Resolve<IKintoneModelCrudService>();
         return [.. await service.FindAsync<TSelf>()];
     }
@@ -495,7 +526,8 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// <exception cref="TimeoutException">フィールドセレクターの作成がタイムアウトした場合にスローされます。</exception>
     /// <exception cref="Exception">その他のエラーが発生した場合にスローされます。</exception>
     /// <exception cref="AggregateException">複数の例外が発生した場合にスローされます。</exception>
-    private static Expression<Func<TSelf, TValue>> CreateFieldSelector<TValue>(PropertyInfo prop) {
+    private static Expression<Func<TSelf, TValue>> CreateFieldSelector<TValue>(PropertyInfo prop)
+    {
         var param = Expression.Parameter(typeof(TSelf), "x");
         var body = Expression.Property(param, prop.Name);
         return Expression.Lambda<Func<TSelf, TValue>>(body, param);
@@ -516,7 +548,8 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// <exception cref="TimeoutException">変換の実行がタイムアウトした場合にスローされます。</exception>
     /// <exception cref="Exception">その他のエラーが発生した場合にスローされます。</exception>
     /// <exception cref="AggregateException">複数の例外が発生した場合にスローされます。</exception>
-    private static object ConvertExpression(LambdaExpression source, Type targetType) {
+    private static object ConvertExpression(LambdaExpression source, Type targetType)
+    {
         var method = typeof(Expression)
             .GetMethods(BindingFlags.Public | BindingFlags.Static)
             .First(m => m.Name == "Lambda" && m.IsGenericMethod && m.GetParameters().Length == 2);

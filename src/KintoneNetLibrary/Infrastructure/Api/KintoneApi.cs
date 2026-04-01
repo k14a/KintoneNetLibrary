@@ -1,9 +1,7 @@
 ﻿using System.Net.Http.Headers;
 using System.Reflection;
-using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using KintoneNetLibrary.Domain.Common;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Infrastructure.Converters;
@@ -79,7 +77,7 @@ public partial class KintoneApi : IKintoneApi {
     public KintoneApi(
         KintoneAccessBase access,
         int appID,
-        HttpClient? httpClient = null,
+        HttpClient httpClient,
         ILogger<KintoneApi>? logger = null,
         JsonSerializerOptions? jsonOptions = null) {
 
@@ -88,12 +86,8 @@ public partial class KintoneApi : IKintoneApi {
         this._access = access;
         this._appID = appID;
         this._logger = logger;
-        this._httpClient = httpClient ?? new HttpClient();
+        this._httpClient = httpClient;
         this._jsonOptions = jsonOptions ?? DefaultJsonOptions.Default;
-
-        if (!string.IsNullOrWhiteSpace(this._access.Domain)) {
-            this._httpClient.BaseAddress = new Uri($"https://{this._access.Domain.TrimEnd('/')}/k/v1/");
-        }
 
         this.EnsureDefaultHeaders();
     }

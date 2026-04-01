@@ -1,3 +1,4 @@
+using KintoneNetLibrary.Application.UseCases;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Domain.Interfaces;
 using KintoneNetLibrary.Infrastructure.Api;
@@ -28,8 +29,8 @@ public class KintoneRepository(IKintoneApiFactory factory) : IKintoneRepository 
     /// <typeparam name="T">モデルの型</typeparam>
     /// <param name="records">作成対象のレコードリスト</param>
     /// <returns>作成結果の JSON 文字列</returns>
-    public Task<string> CreateRecordsAsync<T>(IList<T> records) where T : KintoneModelBase<T>, new() {
-        return this.ExecuteCudAsync(records, (api, json) => api.CreateAsync(json), KintoneRequestBuilder.BuildCreateJson);
+    public async Task<string> CreateRecordsAsync<T>(IList<T> records) where T : KintoneModelBase<T>, new() {
+        return await this.ExecuteCudAsync(records, (api, json) => api.CreateAsync(json), KintoneRequestBuilder.BuildCreateJson);
     }
 
     /// <summary>
@@ -38,8 +39,8 @@ public class KintoneRepository(IKintoneApiFactory factory) : IKintoneRepository 
     /// <typeparam name="T">モデルの型</typeparam>
     /// <param name="records">更新対象のレコードリスト</param>
     /// <returns>更新結果の JSON 文字列</returns>
-    public Task<string> UpdateRecordsAsync<T>(IList<T> records) where T : KintoneModelBase<T>, new() {
-        return this.ExecuteCudAsync(records, (api, json) => api.UpdateAsync<T>(json), KintoneRequestBuilder.BuildUpdateJson);
+    public async Task<string> UpdateRecordsAsync<T>(IList<T> records) where T : KintoneModelBase<T>, new() {
+        return await this.ExecuteCudAsync(records, (api, json) => api.UpdateAsync<T>(json), KintoneRequestBuilder.BuildUpdateJson);
     }
 
     /// <summary>
@@ -48,8 +49,8 @@ public class KintoneRepository(IKintoneApiFactory factory) : IKintoneRepository 
     /// <typeparam name="T">モデルの型</typeparam>
     /// <param name="records">削除対象のレコードリスト</param>
     /// <returns>削除結果の JSON 文字列</returns>
-    public Task<string> DeleteRecordsAsync<T>(IList<T> records) where T : KintoneModelBase<T>, new() {
-        return this.ExecuteCudAsync(records, (api, json) => api.DeleteAsync(json), KintoneRequestBuilder.BuildDeleteJson);
+    public async Task<string> DeleteRecordsAsync<T>(IList<T> records) where T : KintoneModelBase<T>, new() {
+        return await this.ExecuteCudAsync(records, (api, json) => api.DeleteAsync(json), KintoneRequestBuilder.BuildDeleteJson);
     }
 
     /// <summary>
@@ -59,8 +60,8 @@ public class KintoneRepository(IKintoneApiFactory factory) : IKintoneRepository 
     /// <param name="model">モデルのインスタンス</param>
     /// <param name="id">検索対象のレコードID</param>
     /// <returns>検索結果の JSON 文字列</returns>
-    public Task<string?> FindByIDAsync<T>(T model, string id) where T : KintoneModelBase<T>, new() {
-        return this.ExecuteFindAsync(model, api => api.FindByIDAsync<T>(id));
+    public async Task<string?> FindByIDAsync<T>(T model, string id) where T : KintoneModelBase<T>, new() {
+        return await this.ExecuteFindAsync(model, api => api.FindByIDAsync<T>(id));
     }
 
     /// <summary>
@@ -71,8 +72,8 @@ public class KintoneRepository(IKintoneApiFactory factory) : IKintoneRepository 
     /// <param name="ids">検索対象のレコードIDリスト</param>
     /// <param name="fieldCodes">取得対象のフィールドコードリスト</param>
     /// <returns>検索結果の JSON 文字列</returns>
-    public Task<string?> FindByIDsAsync<T>(T model, IList<string> ids, IList<string>? fieldCodes = null) where T : KintoneModelBase<T>, new() {
-        return this.ExecuteFindAsync(model, api => api.FindByIDsAsync<T>(ids, fieldCodes));
+    public async Task<string?> FindByIDsAsync<T>(T model, IList<string> ids, IList<string>? fieldCodes = null) where T : KintoneModelBase<T>, new() {
+        return await this.ExecuteFindAsync(model, api => api.FindByIDsAsync<T>(ids, fieldCodes));
     }
 
     /// <summary>
@@ -82,8 +83,8 @@ public class KintoneRepository(IKintoneApiFactory factory) : IKintoneRepository 
     /// <param name="model">モデルのインスタンス</param>
     /// <param name="fieldCodes">取得対象のフィールドコードリスト</param>
     /// <returns>検索結果の JSON 文字列</returns>
-    public Task<string?> FindAllAsync<T>(T model, IList<string>? fieldCodes = null) where T : KintoneModelBase<T>, new() {
-        return this.ExecuteFindAsync(model, api => api.FindAllAsync<T>(fieldCodes));
+    public async Task<string?> FindAllAsync<T>(T model, IList<string>? fieldCodes = null) where T : KintoneModelBase<T>, new() {
+        return await this.ExecuteFindAsync(model, api => api.FindAllAsync<T>(fieldCodes));
     }
 
     /// <summary>
@@ -94,8 +95,20 @@ public class KintoneRepository(IKintoneApiFactory factory) : IKintoneRepository 
     /// <param name="field">検索対象のフィールドコード</param>
     /// <param name="value">検索対象の値</param>
     /// <returns>検索結果の JSON 文字列</returns>
-    public Task<string?> FindByFieldAsync<T>(T model, string field, string value) where T : KintoneModelBase<T>, new() {
-        return this.ExecuteFindAsync(model, api => api.FindByFieldAsync<T>(field, value));
+    public async Task<string?> FindByFieldAsync<T>(T model, string field, string value) where T : KintoneModelBase<T>, new() {
+        return await this.ExecuteFindAsync(model, api => api.FindByFieldAsync<T>(field, value));
+    }
+
+    /// <summary>
+    /// KintoneQuery でレコードを検索
+    /// </summary>
+    /// <typeparam name="T">モデルの型</typeparam>
+    /// <param name="model">モデルのインスタンス</param>
+    /// <param name="query">検索するKintoneQuery</param>
+    /// <param name="fieldCodes">取得するフィールドコードのリスト</param>
+    /// <returns>検索結果の JSON 文字列</returns>
+    public async Task<string?> FindByKintoneQueryAsync<T>(T model, KintoneQuery<T> query, IList<string>? fieldCodes = null) where T : KintoneModelBase<T>, new() {
+        return await this.ExecuteFindAsync(model, api => api.FindByKintoneQueryAsync<T>(query, fieldCodes));
     }
 
     /// <summary>
@@ -105,8 +118,8 @@ public class KintoneRepository(IKintoneApiFactory factory) : IKintoneRepository 
     /// <param name="model">モデルのインスタンス</param>
     /// <param name="queryStr">検索対象のクエリ文字列</param>
     /// <returns>検索結果の JSON 文字列</returns>
-    public Task<string?> FindByQueryAsync<T>(T model, string queryStr) where T : KintoneModelBase<T>, new() {
-        return this.ExecuteFindAsync(model, api => api.FindByQueryAsync<T>(queryStr));
+    public async Task<string?> FindByQueryAsync<T>(T model, string queryStr) where T : KintoneModelBase<T>, new() {
+        return await this.ExecuteFindAsync(model, api => api.FindByQueryAsync<T>(queryStr));
     }
 
     /// <summary>
@@ -174,5 +187,4 @@ public class KintoneRepository(IKintoneApiFactory factory) : IKintoneRepository 
         var api = this.ResolveApi(model);
         return await apiCall(api);
     }
-
 }

@@ -1,7 +1,6 @@
 using KintoneNetLibrary.Infrastructure.Api;
 using KintoneNetLibrary.Domain.Entities;
 using Microsoft.Extensions.Logging;
-using System.Net.Http;
 using KintoneNetLibrary.Domain.Interfaces;
 
 namespace KintoneNetLibrary.Infrastructure.Factories;
@@ -9,10 +8,10 @@ namespace KintoneNetLibrary.Infrastructure.Factories;
 /// <summary>
 /// KintoneApiのファクトリクラス
 /// </summary>
-/// <param name="httpClient">HTTPクライアント</param>
+/// <param name="httpClientFactory">HTTPクライアントファクトリ</param>
 /// <param name="logger">ロガー</param>
-public class KintoneApiFactory(HttpClient httpClient, ILogger<KintoneApi> logger) : IKintoneApiFactory {
-    private readonly HttpClient _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+public class KintoneApiFactory(IHttpClientFactory httpClientFactory, ILogger<KintoneApi> logger) : IKintoneApiFactory {
+    private readonly IHttpClientFactory _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
     private readonly ILogger<KintoneApi> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
     /// <summary>
@@ -22,6 +21,7 @@ public class KintoneApiFactory(HttpClient httpClient, ILogger<KintoneApi> logger
     /// <param name="model">モデルのインスタンス</param>
     /// <returns>生成されたKintoneApiのインスタンス</returns>
     public KintoneApi Create<T>(T model) where T : KintoneModelBase<T>, new() {
-        return new KintoneApi(model.Access, model.AppID, this._httpClient, this._logger);
+        var client = this._httpClientFactory.CreateClient("Kintone");
+        return new KintoneApi(model.Access, model.AppID, client, this._logger);
     }
 }

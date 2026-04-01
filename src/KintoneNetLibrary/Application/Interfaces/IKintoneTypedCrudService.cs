@@ -1,3 +1,4 @@
+using KintoneNetLibrary.Application.UseCases;
 using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.Application.Interfaces;
@@ -18,10 +19,11 @@ public interface IKintoneTypedCrudService<T> where T : KintoneModelBase<T>, new(
     /// </summary>
     /// <param name="ids">検索するレコードのIDリスト（オプション）</param>
     /// <param name="query">検索クエリ（オプション）</param>
+    /// <param name="kintoneQuery">Kintoneクエリオブジェクト（オプション）</param>
     /// <param name="fieldCodes">取得するフィールドコードのリスト（オプション）</param>
     /// <returns>検索結果のレコードのリスト</returns>
     /// <exception cref="KintoneException"></exception>
-    Task<IEnumerable<T>> FindAsync(IList<string>? ids = null, string? query = null, IList<string>? fieldCodes = null);
+    Task<IEnumerable<T>> FindAsync(IList<string>? ids = null, string? query = null, KintoneQuery<T>? kintoneQuery = null, IList<string>? fieldCodes = null);
     /// <summary>
     /// Kintoneモデルのレコードを更新します。
     /// </summary>

@@ -74,7 +74,7 @@ public class KintoneModelCrudService(IServiceProvider provider) : IKintoneModelC
     public Task<IEnumerable<T>> FindAsync<T>(IList<string>? ids = null, string? query = null, IList<string>? fieldCodes = null) where T : KintoneModelBase<T>, new() {
         // Typed CRUD を解決して委譲
         var typed = this._provider.GetRequiredService<IKintoneTypedCrudService<T>>();
-        return typed.FindAsync(ids, query, fieldCodes);
+        return typed.FindAsync(ids, query, fieldCodes: fieldCodes);
     }
 
     /// <summary>

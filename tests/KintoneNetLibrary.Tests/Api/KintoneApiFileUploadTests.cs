@@ -293,7 +293,9 @@ public partial class KintoneApiFileUploadTests {
     /// </summary>
     [Fact]
     public async Task UploadFileAsyncNullStreamThrowsArgumentNullException() {
-        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123);
+        var httpClient = KintoneHttpTestHelper.CreateMockHttpClient(_ =>
+            throw new InvalidOperationException("このコードには到達しないはずです。"));
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
 
         Stream? nullStream = null;
         var fileName = "dummy.txt";

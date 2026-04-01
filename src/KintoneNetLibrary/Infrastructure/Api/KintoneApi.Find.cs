@@ -7,8 +7,8 @@ using KintoneNetLibrary.Infrastructure.Converters;
 using KintoneNetLibrary.Infrastructure.Helpers;
 using KintoneNetLibrary.Infrastructure.Internal;
 using static KintoneNetLibrary.Domain.Common.KintoneConstants;
-using KintoneNetLibrary.Domain.Common;
 using KintoneNetLibrary.Application.Interfaces;
+using System.Reflection;
 
 namespace KintoneNetLibrary.Infrastructure.Api;
 
@@ -106,6 +106,17 @@ public partial class KintoneApi : IKintoneApi {
     public async Task<string?> FindByFieldAsync<T>(string field, string value) where T : KintoneModelBase<T>, new() {
         var query = new KintoneQuery<T>().WhereEquals(field, value);
         return await this.FindBaseJsonAsync(query);
+    }
+
+    /// <summary>
+    /// KintoneQueryで検索
+    /// </summary>
+    /// <typeparam name="T">取得するレコードの型</typeparam>
+    /// <param name="query">検索するKintoneQuery</param>
+    /// <param name="fieldCodes">取得するフィールドコードのリスト</param>
+    /// <returns>取得したレコードのJSON文字列</returns>
+    public async Task<string?> FindByKintoneQueryAsync<T>(KintoneQuery<T> query, IList<string>? fieldCodes = null) where T : KintoneModelBase<T>, new() {
+        return await this.FindBaseJsonAsync(query, fieldCodes: fieldCodes);
     }
 
     /// <summary>

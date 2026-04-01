@@ -5,72 +5,40 @@ namespace KintoneNetLibrary.Application.UseCases;
 
 public partial class KintoneQuery<T> where T : KintoneModelBase<T>, new() {
     #region <<Public methods>>
-    /// <summary>
-    /// フィールドの値が指定された値のリストに含まれるかを確認します。
-    /// </summary>
-    /// <remarks>
-    /// このメソッドは、指定されたフィールドの値が、与えられた値のリストに含まれるかを確認します。
-    /// Kintone のクエリでは、フィールドの値が null の場合は、"is null" を使用して確認します。
-    /// また、値のリストが空の場合は、常に false を返します。
-    /// </remarks>
-    /// <typeparam name="TValue">値の型</typeparam>
-    /// <param name="fieldSelector">フィールドを指定する式</param>
-    /// <param name="values">値のリスト</param>
-    /// <returns>KintoneQuery インスタンス</returns>
-    /// <exception cref="ArgumentNullException">フィールドセレクターまたは値のリストが null の場合にスローされます。</exception>
-    /// <exception cref="ArgumentException">フィールドセレクターが有効なフィールドを指定していない場合にスローされます。</exception>
     public KintoneQuery<T> In<TValue>(Expression<Func<T, TValue>> fieldSelector, IEnumerable<TValue> values) {
         return this.AddInCondition(fieldSelector, values, negate: false);
     }
 
     /// <summary>
-    /// フィールドの値が指定された値のリストに含まれるかを確認します。
+    /// 指定したフィールドが、与えられた値のいずれかと等しいという条件をクエリに追加します。
+    /// 例: .In(r => r.Status, "Open", "In Progress") は、Status フィールドが "Open" または "In Progress" のレコードを対象とします。
     /// </summary>
-    /// <remarks>
-    /// このメソッドは、指定されたフィールドの値が、与えらた値のリストに含まれるかを確認します。
-    /// Kintone のクエリでは、フィールドの値が null の場合は、"is null" を使用して確認します。
-    /// また、値のリストが空の場合は、常に false を返します。
-    /// </remarks>
-    /// <typeparam name="TValue">値の型</typeparam>
-    /// <param name="fieldSelector">フィールドを指定する式</param>
-    /// <param name="values">値のリスト</param>
-    /// <returns>KintoneQuery インスタンス</returns>
-    /// <exception cref="ArgumentNullException">フィールドセレクターまたは値のリストが null の場合にスローされます。</exception>
-    /// <exception cref="ArgumentException">フィールドセレクターが有効なフィールドを指定していない場合にスローされます。</exception>
+    /// <param name="fieldName">条件を適用するフィールドの名前</param>
+    /// <param name="values">フィールドが一致する値のコレクション</param>
+    /// <returns>更新されたKintoneQueryオブジェクト</returns>
+    /// <exception cref="ArgumentException"></exception>
+    public KintoneQuery<T> In(string fieldName, IEnumerable<string> values) {
+        if (string.IsNullOrWhiteSpace(fieldName)) {
+            throw new ArgumentException("Field name cannot be null or empty", nameof(fieldName));
+        }
+
+        var valueList = values.ToList();
+        if (valueList.Count == 0) {
+            throw new ArgumentException("Values collection cannot be empty", nameof(values));
+        }
+
+        var formattedValues = valueList.Select(v => FormatValue(v));
+        var joinedValues = string.Join(", ", formattedValues);
+        var condition = $"{fieldName} in ({joinedValues})";
+        return this;
+    }
+
     public KintoneQuery<T> In<TValue>(Expression<Func<T, TValue>> fieldSelector, params TValue[] values) => this.In(fieldSelector, (IEnumerable<TValue>)values);
 
-    /// <summary>
-    /// フィールドの値が指定された値のリストに含まれないかを確認します。
-    /// </summary>
-    /// <remarks>
-    /// このメソッドは、指定されたフィールドの値が、与えられた値のリストに含まれないかを確認します。
-    /// Kintone のクエリでは、フィールドの値が null の場合は、"is null" を使用して確認します。
-    /// また、値のリストが空の場合は、常に false を返します。
-    /// </remarks>
-    /// <typeparam name="TValue">値の型</typeparam>
-    /// <param name="fieldSelector">フィールドを指定する式</param>
-    /// <param name="values">値のリスト</param>
-    /// <returns>KintoneQuery インスタンス</returns>
-    /// <exception cref="ArgumentNullException">フィールドセレクターまたは値のリストが null の場合にスローされます。</exception>
-    /// <exception cref="ArgumentException">フィールドセレクターが有効なフィールドを指定していない場合にスローされます。</exception>
     public KintoneQuery<T> NotIn<TValue>(Expression<Func<T, TValue>> fieldSelector, IEnumerable<TValue> values) {
         return this.AddInCondition(fieldSelector, values, negate: true);
     }
 
-    /// <summary>
-    /// フィールドの値が指定された値のリストに含まれないかを確認します。
-    /// </summary>
-    /// <remarks>
-    /// このメソッドは、指定されたフィールドの値が、与えらた値のリストに含まれないかを確認します。
-    /// Kintone のクエリでは、フィールドの値が null の場合は、"is null" を使用して確認します。
-    /// また、値のリストが空の場合は、常に false を返します。
-    /// </remarks>
-    /// <typeparam name="TValue">値の型</typeparam>
-    /// <param name="fieldSelector">フィールドを指定する式</param>
-    /// <param name="values">値のリスト</param>
-    /// <returns>KintoneQuery インスタンス</returns>
-    /// <exception cref="ArgumentNullException">フィールドセレクターまたは値のリストが null の場合にスローされます。</exception>
-    /// <exception cref="ArgumentException">フィールドセレクターが有効なフィールドを指定していない場合にスローされます。</exception>
     public KintoneQuery<T> NotIn<TValue>(Expression<Func<T, TValue>> fieldSelector, params TValue[] values) {
         return this.NotIn(fieldSelector, values.AsEnumerable());
     }
