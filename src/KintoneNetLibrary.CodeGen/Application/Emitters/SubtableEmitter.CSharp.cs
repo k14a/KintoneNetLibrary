@@ -15,19 +15,17 @@ namespace KintoneNetLibrary.CodeGen.Application.Emitters;
 /// <param name="mapperFactory">型マッパーファクトリ</param>
 /// <param name="xml">XML コメントビルダー</param>
 /// <param name="logger">ロガー</param>
-public class CSharpSubTableEmitter(
-    // INameConverterFactory converterFactory,
-    ITypeMapperFactory mapperFactory,
-    IXmlCommentBuilder xml,
-    ILogger<CSharpSubTableEmitter> logger) : ISubTableEmitter {
-
-    // private readonly INameConverter _converter = converterFactory.Create(GenerateLanguages.CSharp);
+public class CSharpSubTableEmitter(ITypeMapperFactory mapperFactory, IXmlCommentBuilder xml, ILogger<CSharpSubTableEmitter> logger) : ISubTableEmitter {
     private INameConverter? _converter;
     private readonly ITypeMapper _types = mapperFactory.Create(GenerateLanguages.CSharp);
     private readonly IXmlCommentBuilder _xml = xml;
     private readonly ILogger<CSharpSubTableEmitter> _logger = logger;
     private readonly HashSet<string> _generatedClassNames = new HashSet<string>();
 
+    /// <summary>
+    /// 名前変換ファクトリを設定する
+    /// </summary>
+    /// <param name="converter">名前変換ファクトリ</param>
     public void SetNameConverter(INameConverter converter) {
         this._converter ??= converter;
     }

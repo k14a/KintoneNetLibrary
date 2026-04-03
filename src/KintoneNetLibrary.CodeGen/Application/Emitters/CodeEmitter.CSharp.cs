@@ -21,7 +21,6 @@ namespace KintoneNetLibrary.CodeGen.Application.Emitters;
 /// <param name="subTableEmitter">サブテーブルエミッター</param>
 /// <param name="helperEmitter">ヘルパークラスエミッター</param>
 public class CSharpCodeEmitter(
-    // INameConverter nameConverter,
     ITypeMapperFactory mapperFactory,
     IXmlCommentBuilder xml,
     ISubTableEmitter subTableEmitter,

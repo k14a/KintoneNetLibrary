@@ -1,4 +1,3 @@
-using KintoneNetLibrary.CodeGen.Application.Interfaces;
 using KintoneNetLibrary.CodeGen.Domain.Enums;
 
 namespace KintoneNetLibrary.CodeGen.Application.Interfaces;

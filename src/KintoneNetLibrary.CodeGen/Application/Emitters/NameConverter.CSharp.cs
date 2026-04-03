@@ -1,4 +1,3 @@
-using System.Text;
 using System.Text.RegularExpressions;
 using KintoneNetLibrary.Extensions;
 using KintoneNetLibrary.CodeGen.Application.Interfaces;
@@ -11,6 +10,9 @@ namespace KintoneNetLibrary.CodeGen.Application.Emitters;
 /// </summary>
 public class CSharpNameConverter : INameConverter, INameTableApplicable {
     private NameTable? _nameTable;
+    /// <summary>
+    /// 日本語フィールド名を意味ベースで英語に変換するための辞書
+    /// </summary>
     private static readonly Dictionary<string, string> Dictionary = new() {
         { "顧客", "Customer" },
         { "担当者", "Assignee" },
@@ -24,6 +26,9 @@ public class CSharpNameConverter : INameConverter, INameTableApplicable {
         { "名", "Name" },
         // 必要に応じて追加
     };
+    /// <summary>
+    /// Kintone のシステムフィールドコードのセット。これらは固定のプロパティ名にマッピングされるべきで、変換テーブルや一般的なルールの対象外とするために定義しています。
+    /// </summary>
     private static readonly Dictionary<string, (string PropertyName, string CsType)> SystemFields = new() {
         ["作成者"] = ("Creator", "KintoneUser"),
         ["更新者"] = ("Modifier", "KintoneUser"),

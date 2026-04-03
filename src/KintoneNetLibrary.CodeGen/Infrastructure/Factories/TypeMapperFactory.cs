@@ -1,7 +1,6 @@
 using KintoneNetLibrary.CodeGen.Application.Emitters;
 using KintoneNetLibrary.CodeGen.Application.Interfaces;
 using KintoneNetLibrary.CodeGen.Domain.Enums;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace KintoneNetLibrary.CodeGen.Infrastructure.Factories;
 

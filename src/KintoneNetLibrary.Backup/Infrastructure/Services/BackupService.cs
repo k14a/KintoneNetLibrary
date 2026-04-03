@@ -10,7 +10,6 @@ using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Domain.Enums;
 using KintoneNetLibrary.Domain.Interfaces;
 using KintoneNetLibrary.Infrastructure.Api;
-using KintoneNetLibrary.Infrastructure.Services;
 using Microsoft.Extensions.Logging;
 
 namespace KintoneNetLibrary.Backup.Infrastructure.Services;
@@ -683,6 +682,11 @@ public sealed class BackupService(
         }
     }
 
+    /// <summary>
+    /// レイアウトスキーマを保存します
+    /// </summary>
+    /// <param name="metadata">アプリのメタデータ</param>
+    /// <returns>非同期操作のタスク</returns>
     private async Task<bool> SaveLayoutSchemaAsync(KintoneAppMetadata metadata) {
         if (!this.Options.IncludeFieldSchema) {
             this._logger?.LogInformation("レイアウトスキーマのバックアップはスキップされました");
@@ -718,6 +722,7 @@ public sealed class BackupService(
 
             this._logger?.LogInformation("レイアウトスキーマを保存しました: {Path}", filePath);
             return true;
+
         } catch (Exception ex) {
             this._logger?.LogError(ex, "レイアウトスキーマの保存に失敗しました");
             return false;
@@ -743,5 +748,4 @@ public sealed class BackupService(
 
         doc.WriteTo(writer);
     }
-
 }

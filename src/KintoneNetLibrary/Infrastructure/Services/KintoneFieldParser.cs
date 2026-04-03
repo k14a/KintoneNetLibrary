@@ -10,6 +10,11 @@ namespace KintoneNetLibrary.Infrastructure.Services;
 /// KintoneフィールドのメタデータをJSONから解析するための実装クラス
 /// </summary>
 public class KintoneFieldParser : IKintoneFieldParser {
+    /// <summary>
+    /// KintoneフィールドのJSON要素を解析して、フィールドのメタデータを取得します。
+    /// </summary>
+    /// <param name="properties">フィールドのJSON要素</param>
+    /// <returns>解析されたフィールドのメタデータのリスト</returns>
     public List<KintoneFieldMetadata> Parse(JsonElement properties) {
         var fields = new List<KintoneFieldMetadata>();
 
@@ -73,6 +78,13 @@ public class KintoneFieldParser : IKintoneFieldParser {
         return fields;
     }
 
+    /// <summary>
+    /// フィールドのJSON要素から選択肢のリストを抽出します。
+    /// 選択肢が存在しない場合は空のリストを返します。
+    /// 解析対象のフィールドタイプは、ドロップダウン、ラジオボタン、チェックボックスなどです。
+    /// </summary>
+    /// <param name="field">フィールドのJSON要素</param>
+    /// <returns>選択肢のリスト</returns>
     private static List<string> ExtractOptions(JsonElement field) {
         if (!field.TryGetProperty("options", out var optionsJson)) {
             return [];

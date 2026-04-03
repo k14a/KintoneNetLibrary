@@ -5,10 +5,21 @@ using KintoneNetLibrary.Domain.Interfaces;
 
 namespace KintoneNetLibrary.CodeGen.Infrastructure.Services;
 
+/// <summary>
+/// Kintoneアプリのスキーマ情報から、コード生成に必要なメタデータを読み込むサービス実装
+/// </summary>
+/// <param name="fieldParser">フィールドパーサー</param>
+/// <param name="layoutParser">レイアウトパーサー</param>
 public class MetadataLoader(IKintoneFieldParser fieldParser, IKintoneLayoutParser layoutParser) : IMetadataLoader {
     private readonly IKintoneFieldParser _fieldParser = fieldParser;
     private readonly IKintoneLayoutParser _layoutParser = layoutParser;
 
+    /// <summary>
+    /// Kintoneアプリのスキーマ情報から、コード生成に必要なメタデータを読み込みます。
+    /// </summary>
+    /// <param name="fieldsJsonPath">fields.json のパス</param>
+    /// <param name="layoutJsonPath">layout.json のパス</param>
+    /// <returns>読み込んだメタデータ</returns>
     public async Task<KintoneAppMetadata> LoadAsync(string fieldsJsonPath, string layoutJsonPath) {
         // -----------------------------
         // 1. fields.json を読み込む

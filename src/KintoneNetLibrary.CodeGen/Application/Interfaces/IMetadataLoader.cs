@@ -2,6 +2,9 @@ using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.CodeGen.Application.Interfaces;
 
+/// <summary>
+/// Kintoneアプリのメタデータをロードするインターフェース
+/// </summary>
 public interface IMetadataLoader {
     /// <summary>
     /// Kintoneアプリのメタデータをロードします。

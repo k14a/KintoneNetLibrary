@@ -1,7 +1,6 @@
 using System.Text;
 using KintoneNetLibrary.CodeGen.Application.Interfaces;
 using KintoneNetLibrary.CodeGen.Domain.Schemas;
-using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Domain.Enums;
 using Microsoft.Extensions.Logging;
 
@@ -12,6 +11,7 @@ namespace KintoneNetLibrary.CodeGen.Application.Emitters;
 /// </summary>
 public class CSharpXmlCommentBuilder(ILogger<CSharpXmlCommentBuilder> logger) : IXmlCommentBuilder {
     private readonly ILogger<CSharpXmlCommentBuilder> _logger = logger;
+
     /// <summary>
     /// フィールド用 XML コメントを生成する
     /// </summary>

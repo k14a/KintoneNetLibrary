@@ -1,5 +1,3 @@
-using System.Runtime.CompilerServices;
-using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Domain.Enums;
 
 namespace KintoneNetLibrary.Domain.Entities;
@@ -9,6 +7,7 @@ namespace KintoneNetLibrary.Domain.Entities;
 /// </summary>
 public abstract class KintoneAccessBase {
     private string _domain = string.Empty;
+
     /// <summary>
     /// Kintone 接続情報を生成する
     /// </summary>
@@ -75,6 +74,11 @@ public abstract class KintoneAccessBase {
     /// <returns>ゲストアプリID</returns>
     protected virtual int ExtractGuestAppID() => throw new NotImplementedException();
 
+    /// <summary>
+    /// サブドメインまたはドメインを正規化する
+    /// </summary>
+    /// <param name="subDomainOrDomain">サブドメインまたはドメイン</param>
+    /// <returns>正規化されたドメイン</returns>
     private static string NormalizeDomain(string subDomainOrDomain) {
         if (string.IsNullOrWhiteSpace(subDomainOrDomain)) {
             return string.Empty;

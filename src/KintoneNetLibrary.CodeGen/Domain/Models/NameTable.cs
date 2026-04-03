@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace KintoneNetLibrary.CodeGen.Domain.Models;
 
 public class NameTable : Dictionary<string, FieldNameMapping> {

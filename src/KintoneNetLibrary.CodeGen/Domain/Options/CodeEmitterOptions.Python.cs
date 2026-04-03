@@ -28,7 +28,7 @@ public class PythonEmitterOptions : CodeEmitterOptions {
     /// オプションのデフォルト値を設定する
     /// </summary>
     /// <param name="appId">アプリケーションの ID</param>
-    public void EnsureDefaults(int appId) {
+    public override void EnsureDefaults(int appId) {
         base.EnsureDefaults(appId);
 
         this.ModuleName ??= "kintone_models";

@@ -11,7 +11,9 @@ namespace KintoneNetLibrary.CodeGen.Application.Emitters;
 public class PythonNameConverter : INameConverter, INameTableApplicable {
     private NameTable? _nameTable;
 
-    // 日本語 → 意味ベース変換（任意）
+    /// <summary>
+    /// 日本語フィールド名を意味ベースで英語に変換するための辞書
+    /// </summary>
     private static readonly Dictionary<string, string> Dictionary = new() {
         { "顧客", "customer" },
         { "担当者", "assignee" },
@@ -26,7 +28,9 @@ public class PythonNameConverter : INameConverter, INameTableApplicable {
         { "明細", "meisai" },
     };
 
-    // システムフィールド（FieldCode ベース）
+    /// <summary>
+    /// Kintone のシステムフィールドコードのセット。これらは固定のプロパティ名にマッピングされるべきで、変換テーブルや一般的なルールの対象外とするために定義しています。
+    /// </summary>
     private static readonly HashSet<string> SystemFieldCodes = [
         "CreatedTime", "UpdatedTime", "Creator", "Modifier",
         "Status", "Category", "Assignee"
@@ -82,38 +86,24 @@ public class PythonNameConverter : INameConverter, INameTableApplicable {
         }
 
         var baseName = SelectBaseName(label, code);
-        if (baseName.IsAscii()) {
-            return baseName.ToSnakeCase();
-        }
+        if (baseName.IsAscii()) { return baseName.ToSnakeCase(); }
 
-        if (tableTemplate) {
-            return string.Empty;
-        }
+        if (tableTemplate) { return string.Empty; }
 
-        if (string.IsNullOrWhiteSpace(baseName)) {
-            return tableTemplate ? string.Empty : "INVALID_FIELD_NAME";
-        }
+        if (string.IsNullOrWhiteSpace(baseName)) { return tableTemplate ? string.Empty : "INVALID_FIELD_NAME"; }
 
         // システムフィールドは固定名
-        if (SystemFieldCodes.Contains(code)) {
-            return code.ToSnakeCase();
-        }
+        if (SystemFieldCodes.Contains(code)) { return code.ToSnakeCase(); }
 
-        if (code.IsAscii()) {
-            return baseName.ToSnakeCase();
-        }
+        if (code.IsAscii()) { return baseName.ToSnakeCase(); }
 
-        if (Dictionary.TryGetValue(baseName, out var mapped)) {
-            return mapped.ToSnakeCase();
-        }
+        if (Dictionary.TryGetValue(baseName, out var mapped)) { return mapped.ToSnakeCase(); }
 
         // romanize → sanitize → snake_case
         var roman = baseName.ToRoman();
         var safe = Sanitize(roman);
 
-        if (!string.IsNullOrWhiteSpace(safe)) {
-            return safe.ToSnakeCase();
-        }
+        if (!string.IsNullOrWhiteSpace(safe)) { return safe.ToSnakeCase(); }
 
         // プロパティ名を特定できない場合はエラーを出すためのinvalid nameを返す
         return tableTemplate ? string.Empty : "INVALID_FIELD_NAME";

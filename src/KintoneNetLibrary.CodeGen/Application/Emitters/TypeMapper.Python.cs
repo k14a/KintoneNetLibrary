@@ -9,9 +9,13 @@ namespace KintoneNetLibrary.CodeGen.Application.Emitters;
 /// Python 型マッパー（安全・一貫性・壊れない）
 /// </summary>
 public class PythonTypeMapper : ITypeMapper {
-    public string Map(KintoneFieldMetadata field) {
-        throw new NotImplementedException();
-    }
+    /// <summary>
+    /// Kintone フィールドを Python 型にマップする（非実装）
+    /// </summary>
+    /// <param name="field">Kintone フィールドメタデータ</param>
+    /// <returns>対応する Python 型</returns>
+    /// <exception cref="NotImplementedException">このメソッドは未実装です。</exception>
+    public string Map(KintoneFieldMetadata field) { throw new NotImplementedException(); }
 
     /// <summary>
     /// Kintone フィールドを Python 型にマップする

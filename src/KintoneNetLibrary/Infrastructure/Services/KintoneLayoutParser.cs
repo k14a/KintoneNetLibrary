@@ -26,6 +26,19 @@ public class KintoneLayoutParser : IKintoneLayoutParser {
         return metadata;
     }
 
+    /// <summary>
+    /// レイアウトJSONの配列を解析して、レイアウトブロックのリストを取得します。
+    /// レイアウトブロックはROW、SUBTABLE、GROUPのいずれかになります。
+    /// フィールドはコードとタイプのみを保持し、詳細なフィールド情報は含まれません。
+    /// 想定外のタイプがあった場合は無視されます。
+    /// </summary>
+    /// <param name="layoutArray">レイアウトJSONの配列要素</param>
+    /// <returns>レイアウトブロックのリスト</returns>
+    /// <remarks>
+    /// - ROW: フィールドの配列を持ちます。フィールドはコードとタイプのみを保持します。
+    /// - SUBTABLE: コードとフィールドの配列を持ちます。フィールドはコードとタイプのみを保持します。
+    /// - GROUP: コードとレイアウトブロックの配列を持ちます。レイアウトブロックは再帰的に同じ構造になります。
+    /// </remarks>
     private List<KintoneLayoutBlock> ParseLayoutArray(JsonElement layoutArray) {
         var list = new List<KintoneLayoutBlock>();
 
@@ -54,6 +67,11 @@ public class KintoneLayoutParser : IKintoneLayoutParser {
         return list;
     }
 
+    /// <summary>
+    /// ROWタイプのレイアウトブロックを解析して、KintoneLayoutRowオブジェクトを作成します。
+    /// </summary>
+    /// <param name="element">ROWタイプのレイアウトブロックのJSON要素</param>
+    /// <returns>解析されたKintoneLayoutRowオブジェクト</returns>
     private static KintoneLayoutRow ParseRow(JsonElement element) {
         var row = new KintoneLayoutRow { Type = "ROW" };
 
@@ -66,7 +84,12 @@ public class KintoneLayoutParser : IKintoneLayoutParser {
         return row;
     }
 
-    private KintoneLayoutSubTable ParseSubTable(JsonElement element) {
+    /// <summary>
+    /// SUBTABLEタイプのレイアウトブロックを解析して、KintoneLayoutSubTableオブジェクトを作成します。
+    /// </summary>
+    /// <param name="element">SUBTABLEタイプのレイアウトブロックのJSON要素</param>
+    /// <returns>解析されたKintoneLayoutSubTableオブジェクト</returns>
+    private static KintoneLayoutSubTable ParseSubTable(JsonElement element) {
         var sub = new KintoneLayoutSubTable {
             Type = "SUBTABLE",
             Code = element.GetProperty("code").GetString() ?? ""
@@ -81,6 +104,11 @@ public class KintoneLayoutParser : IKintoneLayoutParser {
         return sub;
     }
 
+    /// <summary>
+    /// GROUPタイプのレイアウトブロックを解析して、KintoneLayoutGroupオブジェクトを作成します。
+    /// </summary>
+    /// <param name="element">GROUPタイプのレイアウトブロックのJSON要素</param>
+    /// <returns>解析されたKintoneLayoutGroupオブジェクト</returns>
     private KintoneLayoutGroup ParseGroup(JsonElement element) {
         var group = new KintoneLayoutGroup {
             Type = "GROUP",
@@ -94,6 +122,11 @@ public class KintoneLayoutParser : IKintoneLayoutParser {
         return group;
     }
 
+    /// <summary>
+    /// フィールドのJSON要素を解析して、KintoneLayoutFieldオブジェクトを作成します。
+    /// </summary>
+    /// <param name="element">フィールドのJSON要素</param>
+    /// <returns>解析されたKintoneLayoutFieldオブジェクト</returns>
     private static KintoneLayoutField ParseField(JsonElement element) {
         var field = new KintoneLayoutField {
             Type = element.GetProperty("type").GetString() ?? ""

@@ -3,6 +3,9 @@ using KintoneNetLibrary.CodeGen.Domain.Schemas;
 
 namespace KintoneNetLibrary.CodeGen.Application.Interfaces;
 
+/// <summary>
+/// フィールドコードとC#プロパティ名のマッピングテーブルを生成するインターフェース
+/// </summary>
 public interface INameTableGenerator {
     /// <summary>
     /// Kintoneアプリのスキーマ情報からフィールドコードとC#プロパティ名のマッピングテーブルを生成します。

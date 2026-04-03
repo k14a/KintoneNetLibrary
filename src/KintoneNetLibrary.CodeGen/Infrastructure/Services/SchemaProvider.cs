@@ -2,8 +2,6 @@ using Microsoft.Extensions.Logging;
 using KintoneNetLibrary.CodeGen.Application.Interfaces;
 using KintoneNetLibrary.CodeGen.Domain.Schemas;
 using KintoneNetLibrary.Domain.Entities;
-using KintoneNetLibrary.Domain.Access;
-using KintoneNetLibrary.Infrastructure.Api;
 using KintoneNetLibrary.Domain.Enums;
 using KintoneNetLibrary.Application.Interfaces;
 

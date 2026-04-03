@@ -1,4 +1,3 @@
-using KintoneNetLibrary.CodeGen.Application.Emitters;
 using KintoneNetLibrary.CodeGen.Application.Interfaces;
 using KintoneNetLibrary.CodeGen.Domain.Enums;
 
@@ -29,5 +28,4 @@ public class CodeEmitterFactory(IEnumerable<ICodeEmitter> emitters) : ICodeEmitt
 
         throw new NotSupportedException($"Unsupported language: {lang}");
     }
-    // public ICodeEmitter Create(GenerateLanguages lang, INameConverter nameConverter) => this._emitters[lang];
 }

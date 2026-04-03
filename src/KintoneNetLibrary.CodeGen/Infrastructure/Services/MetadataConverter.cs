@@ -5,7 +5,15 @@ using KintoneNetLibrary.Domain.Enums;
 
 namespace KintoneNetLibrary.CodeGen.Infrastructure.Services;
 
+/// <summary>
+/// Kintoneアプリのスキーマ情報から、コード生成に必要なメタデータを変換するサービス実装
+/// </summary>
 public class MetadataConverter : IMetadataConverter {
+    /// <summary>
+    /// Kintoneアプリのスキーマ情報から、コード生成に必要なメタデータを変換します。
+    /// </summary>
+    /// <param name="metadata">変換元のメタデータ</param>
+    /// <returns>変換後のスキーマ情報</returns>
     public KintoneAppSchema Convert(KintoneAppMetadata metadata) {
         var layout = metadata.Layout;
         var schema = new KintoneAppSchema {
@@ -26,6 +34,12 @@ public class MetadataConverter : IMetadataConverter {
         return schema;
     }
 
+    /// <summary>
+    /// layout.json のブロックを再帰的に処理して、schema にフィールドを追加します。
+    /// </summary>
+    /// <param name="schema">変換先のスキーマ情報</param>
+    /// <param name="block">処理するレイアウトブロック</param>
+    /// <param name="fieldDict">フィールドコードをキーとしたフィールドメタデータの辞書</param>
     private void AddFieldsFromLayoutBlock(KintoneAppSchema schema, KintoneLayoutBlock block, Dictionary<string, KintoneFieldMetadata> fieldDict) {
         switch (block) {
             case KintoneLayoutRow row:
@@ -72,6 +86,11 @@ public class MetadataConverter : IMetadataConverter {
         }
     }
 
+    /// <summary>
+    /// KintoneFieldMetadata を KintoneFieldSchema に変換します。
+    /// </summary>
+    /// <param name="meta">変換元のフィールドメタデータ</param>
+    /// <returns>変換後のフィールドスキーマ</returns>
     private KintoneFieldSchema ConvertField(KintoneFieldMetadata meta) {
         return new KintoneFieldSchema {
             FieldCode = meta.FieldCode,

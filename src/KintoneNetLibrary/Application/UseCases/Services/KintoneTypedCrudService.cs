@@ -439,16 +439,6 @@ public class KintoneTypedCrudService<T>(
             var result = new KintoneWriteResult<T>();
 
             var (createTargets, updateTargets) = await this.SplitRecordsAsync(records);
-            // var createTargets = new List<T>();
-            // var updateTargets = new List<T>();
-
-            // foreach (var record in records) {
-            //     if (record.HasUpdateKeyOrID()) {
-            //         updateTargets.Add(record);
-            //     } else {
-            //         createTargets.Add(record);
-            //     }
-            // }
 
             // create 処理
             if (createTargets.Count > 0) {
@@ -549,12 +539,13 @@ public class KintoneTypedCrudService<T>(
             ? attr.FieldCode
             : keyProp.Name;
 
-        var query = new KintoneQuery<T>().In(keyPropName, keyValues);
+        // var query = new KintoneQuery<T>().In(keyPropName, keyValues);
+        var query = CreateInQuery(keyPropName, keyValues);
 
-        var existing = await this.FindAsync(kintoneQuery: query);
+        var existing = await this.FindAsync(query: query);
 
         var existingMap = existing.ToDictionary(
-            r => r.GetUpdateKeyValue(),
+            r => r.GetUpdateKeyValue()!,
             r => (r.RecordID, r.Revision)
         );
 
@@ -577,4 +568,23 @@ public class KintoneTypedCrudService<T>(
 
         return (createTargets, updateTargets);
     }
+
+    private static string CreateInQuery(string fieldName, List<string?>? values) {
+        if (string.IsNullOrWhiteSpace(fieldName)) {
+            throw new ArgumentException("Field name cannot be null or empty", nameof(fieldName));
+        }
+        if (values == null || values.Count == 0) {
+            throw new ArgumentException("Values collection cannot be null or empty", nameof(values));
+        }
+
+        var valueList = values.ToList();
+        if (valueList.Count == -1) {
+            throw new ArgumentException("Values collection cannot be empty", nameof(values));
+        }
+
+        var formattedValues = valueList.Select(v => $"\"{v}\"");
+        var joinedValues = string.Join(", ", formattedValues);
+        return $"{fieldName} in ({joinedValues})";
+    }
+
 }

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using KintoneNetLibrary.Domain.Entities;
+﻿using System.Linq.Expressions;
 using KintoneNetLibrary.Infrastructure.Helpers;
 
 namespace KintoneNetLibrary.Application.UseCases;

@@ -1,5 +1,4 @@
 using System.Text.Json;
-using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.Infrastructure.Converters;
 

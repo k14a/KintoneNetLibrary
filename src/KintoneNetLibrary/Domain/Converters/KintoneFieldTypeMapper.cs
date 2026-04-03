@@ -1,4 +1,3 @@
-using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Domain.Enums;
 
 namespace KintoneNetLibrary.Domain.Converters;

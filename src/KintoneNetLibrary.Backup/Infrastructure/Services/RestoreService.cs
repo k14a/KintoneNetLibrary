@@ -9,7 +9,6 @@ using KintoneNetLibrary.Domain.Access;
 using KintoneNetLibrary.Domain.Converters;
 using KintoneNetLibrary.Domain.Interfaces;
 using KintoneNetLibrary.Infrastructure.Api;
-using Microsoft.Extensions.Http.Logging;
 using Microsoft.Extensions.Logging;
 using static KintoneNetLibrary.Domain.Common.KintoneConstants;
 
@@ -32,7 +31,6 @@ public sealed class RestoreService(
     private IKintoneApi? _api;
     private readonly IKintoneAccessFactory _accessFactory = accessFactory;
     private readonly ISchemaProvider _schemaProvider = schemaProvider;
-    // private HttpClient? _httpClient = httpClient;
     private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
     private readonly IKintoneFieldParser _fieldParser = fieldParser;
     private readonly ILogger? _logger = logger;

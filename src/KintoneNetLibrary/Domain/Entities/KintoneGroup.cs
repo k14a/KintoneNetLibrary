@@ -1,5 +1,3 @@
-using KintoneNetLibrary.Domain.Entities;
-
 namespace KintoneNetLibrary.Domain.Entities;
 
 /// <summary>

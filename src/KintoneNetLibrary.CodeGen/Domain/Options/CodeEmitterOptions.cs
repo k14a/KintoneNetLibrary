@@ -44,7 +44,7 @@ public abstract class CodeEmitterOptions {
     /// オプションのデフォルト値を設定する
     /// </summary>
     /// <param name="appId">アプリケーションの ID</param>
-    public void EnsureDefaults(int appId) {
+    public virtual void EnsureDefaults(int appId) {
         // MainClassName が null の場合は App{Id}
         this.MainClassName ??= $"App{appId}";
     }
