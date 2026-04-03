@@ -9,11 +9,11 @@ namespace KintoneNetLibrary.CodeGen.Infrastructure.Services;
 
 public class LocalJsonSchemaProvider(
     string jsonPath,
-    IFieldParser fieldParser,
+    IKintoneFieldParser fieldParser,
     IMetadataConverter converter,
     ILogger<LocalJsonSchemaProvider> logger) : ISchemaProvider {
 
-    private readonly IFieldParser _fieldParser = fieldParser;
+    private readonly IKintoneFieldParser _fieldParser = fieldParser;
     private readonly IMetadataConverter _converter = converter;
     private readonly ILogger<LocalJsonSchemaProvider> _logger = logger;
     private readonly string _jsonPath = jsonPath;

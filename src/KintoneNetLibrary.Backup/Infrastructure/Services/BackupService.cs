@@ -26,14 +26,14 @@ public sealed class BackupService(
     ISchemaProvider schemaProvider,
     IKintoneAccessFactory _accessFactory,
     IHttpClientFactory httpClientFactory,
-    IFieldParser fieldParser,
+    IKintoneFieldParser fieldParser,
     ILogger<BackupService>? logger = null) : IBackupService {
 
     private IKintoneApi? _api;
     private readonly ISchemaProvider _schemaProvider = schemaProvider;
     private readonly IKintoneAccessFactory _accessFactory = _accessFactory;
     private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
-    private readonly IFieldParser _fieldParser = fieldParser;
+    private readonly IKintoneFieldParser _fieldParser = fieldParser;
     private JsonSerializerOptions? _jsonOptions;
     private readonly ILogger<BackupService>? _logger = logger;
     private int _partIndex = 0;
@@ -68,6 +68,7 @@ public sealed class BackupService(
             var access = this._accessFactory.CreateApiTokenAccess(this.Options.SubDomain, this.Options.ApiToken);
             var metadata = await this._schemaProvider.GetMetadataAsync(access.Domain, this.Options.ApiToken, this.Options.AppID);
             await this.SaveFieldSchemaAsync(metadata);
+            await this.SaveLayoutSchemaAsync(metadata);
             result.SchemaSaved = true;
 
             // 3) 添付ファイルダウンロード（Stream）
@@ -103,7 +104,7 @@ public sealed class BackupService(
         // this._httpClient ??= new HttpClient {
         //     BaseAddress = new Uri($"https://{access.Domain}/k/v1/")
         // };
-        var httpClient = this._httpClientFactory.CreateClient();
+        var httpClient = this._httpClientFactory.CreateClient("Kintone");
 
         this._jsonOptions ??= new JsonSerializerOptions() {
             WriteIndented = this.Options.Pretty,
@@ -111,7 +112,7 @@ public sealed class BackupService(
                 ? null
                 : JavaScriptEncoder.UnsafeRelaxedJsonEscaping
         };
-        this._api = new KintoneApi(access: access, appID: this.Options.AppID, httpClient: httpClient, jsonOptions: this._jsonOptions);
+        this._api = new KintoneApi(access: access, appID: this.Options.AppID, httpClientFactory: this._httpClientFactory, jsonOptions: this._jsonOptions);
 
         // BatchSize が指定されていれば KintoneApi に反映
         if (this.Options.BatchSize is int size) {
@@ -678,6 +679,47 @@ public sealed class BackupService(
 
         } catch (Exception ex) {
             this._logger?.LogError(ex, "フィールドスキーマの保存に失敗しました");
+            return false;
+        }
+    }
+
+    private async Task<bool> SaveLayoutSchemaAsync(KintoneAppMetadata metadata) {
+        if (!this.Options.IncludeFieldSchema) {
+            this._logger?.LogInformation("レイアウトスキーマのバックアップはスキップされました");
+            return false;
+        }
+
+        this._logger?.LogInformation("レイアウトスキーマを保存しています…");
+
+        var access = this._accessFactory.CreateApiTokenAccess(this.Options.SubDomain, this.Options.ApiToken);
+        var metadataApi = new KintoneAppMetadataApi(this._httpClientFactory, this._fieldParser, this._logger as ILogger<KintoneAppMetadataApi>);
+        var json = await metadataApi.GetLayoutJsonAsync(access.Domain, this.Options.ApiToken, metadata.AppId);
+
+        var dir = this.Options.OutputPath.FullName;
+        Directory.CreateDirectory(dir);
+
+        var filePath = Path.Combine(dir, "layout.json");
+
+        if (File.Exists(filePath) && !this.Options.Overwrite) {
+            this._logger?.LogWarning("layout.json が既に存在するためスキップされました: {Path}", filePath);
+            return false;
+        }
+
+        try {
+            using var doc = JsonDocument.Parse(json);
+
+            using var fs = File.Create(filePath);
+            using var writer = new Utf8JsonWriter(fs, new JsonWriterOptions {
+                Indented = this._jsonOptions!.WriteIndented,
+                Encoder = this._jsonOptions!.Encoder
+            });
+
+            doc.WriteTo(writer);
+
+            this._logger?.LogInformation("レイアウトスキーマを保存しました: {Path}", filePath);
+            return true;
+        } catch (Exception ex) {
+            this._logger?.LogError(ex, "レイアウトスキーマの保存に失敗しました");
             return false;
         }
     }

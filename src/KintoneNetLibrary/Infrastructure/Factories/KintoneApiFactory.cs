@@ -21,7 +21,7 @@ public class KintoneApiFactory(IHttpClientFactory httpClientFactory, ILogger<Kin
     /// <param name="model">モデルのインスタンス</param>
     /// <returns>生成されたKintoneApiのインスタンス</returns>
     public KintoneApi Create<T>(T model) where T : KintoneModelBase<T>, new() {
-        var client = this._httpClientFactory.CreateClient("Kintone");
-        return new KintoneApi(model.Access, model.AppID, client, this._logger);
+        // var client = this._httpClientFactory.CreateClient("Kintone");
+        return new KintoneApi(model.Access, model.AppID, this._httpClientFactory, this._logger);
     }
 }

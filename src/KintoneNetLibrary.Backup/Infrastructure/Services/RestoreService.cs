@@ -26,7 +26,7 @@ public sealed class RestoreService(
     ISchemaProvider schemaProvider,
     IKintoneAccessFactory accessFactory,
     IHttpClientFactory httpClientFactory,
-    IFieldParser fieldParser,
+    IKintoneFieldParser fieldParser,
     ILogger<RestoreService>? logger = null) : IRestoreService {
 
     private IKintoneApi? _api;
@@ -34,7 +34,7 @@ public sealed class RestoreService(
     private readonly ISchemaProvider _schemaProvider = schemaProvider;
     // private HttpClient? _httpClient = httpClient;
     private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
-    private readonly IFieldParser _fieldParser = fieldParser;
+    private readonly IKintoneFieldParser _fieldParser = fieldParser;
     private readonly ILogger? _logger = logger;
     private readonly RestoreResult _result = new();
     private static readonly HashSet<string> _readonlyFieldTypes = [
@@ -125,7 +125,7 @@ public sealed class RestoreService(
 
         var httpClient = this._httpClientFactory.CreateClient();
 
-        this._api = new KintoneApi(access: access, appID: this.Options.AppID, httpClient: httpClient);
+        this._api = new KintoneApi(access: access, appID: this.Options.AppID, httpClientFactory: this._httpClientFactory);
     }
 
     /// <summary>

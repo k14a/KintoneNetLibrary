@@ -6,7 +6,10 @@ using KintoneNetLibrary.Domain.Interfaces;
 
 namespace KintoneNetLibrary.Infrastructure.Services;
 
-public class FieldParser : IFieldParser {
+/// <summary>
+/// KintoneフィールドのメタデータをJSONから解析するための実装クラス
+/// </summary>
+public class KintoneFieldParser : IKintoneFieldParser {
     public List<KintoneFieldMetadata> Parse(JsonElement properties) {
         var fields = new List<KintoneFieldMetadata>();
 
@@ -70,7 +73,7 @@ public class FieldParser : IFieldParser {
         return fields;
     }
 
-    private List<string> ExtractOptions(JsonElement field) {
+    private static List<string> ExtractOptions(JsonElement field) {
         if (!field.TryGetProperty("options", out var optionsJson)) {
             return [];
         }

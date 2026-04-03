@@ -70,14 +70,14 @@ public partial class KintoneApi : IKintoneApi {
     /// </summary>
     /// <param name="access">Kintoneへのアクセス情報を保持するオブジェクト</param>
     /// <param name="appID">KintoneアプリケーションID</param>
-    /// <param name="httpClient">HTTPクライアント</param>
+    /// <param name="httpClientFactory">HTTPクライアントファクトリ</param>
     /// <param name="logger">ロガー</param>
     /// <param name="jsonOptions">JSONシリアライズオプション</param>
     /// <exception cref="ArgumentNullException">accessがnullの場合にスローされます</exception>
     public KintoneApi(
         KintoneAccessBase access,
         int appID,
-        HttpClient httpClient,
+        IHttpClientFactory httpClientFactory,
         ILogger<KintoneApi>? logger = null,
         JsonSerializerOptions? jsonOptions = null) {
 
@@ -86,7 +86,7 @@ public partial class KintoneApi : IKintoneApi {
         this._access = access;
         this._appID = appID;
         this._logger = logger;
-        this._httpClient = httpClient;
+        this._httpClient = httpClientFactory.CreateClient("Kintone");
         this._jsonOptions = jsonOptions ?? DefaultJsonOptions.Default;
 
         this.EnsureDefaultHeaders();

@@ -75,16 +75,15 @@ public sealed class BackupResult : IOperationResult {
     /// <summary>
     /// IOperationResult インターフェースの実装
     /// </summary>
-    /// </summary>
     IReadOnlyList<string> IOperationResult.Errors => this.Errors;
 
     /// <summary>
-    /// IOperationResult インターフェースの実装
+    /// バックアップが複数のファイルに分割された場合の、各ファイルのパスリスト。
     /// </summary>
     public IList<string> PartFiles { get; set; } = [];
 
     /// <summary>
-    /// バックアップデータファイル数
+    /// バックアップが複数のファイルに分割された場合の、分割されたファイルの数。
     /// </summary>
     public int Parts => this.PartFiles.Count;
 

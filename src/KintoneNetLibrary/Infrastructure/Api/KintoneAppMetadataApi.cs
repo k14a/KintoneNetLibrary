@@ -3,8 +3,6 @@ using KintoneNetLibrary.Application.Interfaces;
 using KintoneNetLibrary.Infrastructure.Internal;
 using KintoneNetLibrary.Domain.Entities;
 using System.Text.Json;
-using KintoneNetLibrary.Domain.Converters;
-using KintoneNetLibrary.Domain.Enums;
 using KintoneNetLibrary.Infrastructure.Converters;
 using KintoneNetLibrary.Domain.Interfaces;
 
@@ -14,14 +12,12 @@ namespace KintoneNetLibrary.Infrastructure.Api;
 /// kintoneのアプリメタデータAPIクライアント実装
 /// </summary>
 /// <param name="httpClientFactory">HTTPクライアントファクトリ</param>
+/// <param name="fieldParser"></param>
 /// <param name="logger">ロガー</param>
-public class KintoneAppMetadataApi(
-    IHttpClientFactory httpClientFactory,
-    IFieldParser fieldParser,
-    ILogger<KintoneAppMetadataApi> logger) : IKintoneAppMetadataApi {
+public class KintoneAppMetadataApi(IHttpClientFactory httpClientFactory, IKintoneFieldParser fieldParser, ILogger<KintoneAppMetadataApi> logger) : IKintoneAppMetadataApi {
 
     private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
-    private readonly IFieldParser _fieldParser = fieldParser;
+    private readonly IKintoneFieldParser _fieldParser = fieldParser;
     private readonly ILogger<KintoneAppMetadataApi> _logger = logger;
 
     // ---------------------------------------------------------
@@ -60,7 +56,7 @@ public class KintoneAppMetadataApi(
     /// <returns>レスポンスのJSON文字列</returns>
     /// <exception cref="KintoneException">APIリクエストが失敗した場合にスローされます</exception>
     private async Task<string> SendGetAsync(Uri uri, string apiToken) {
-        var client = this._httpClientFactory.CreateClient();
+        var client = this._httpClientFactory.CreateClient("Kintone");
         using var request = new HttpRequestMessage(HttpMethod.Get, uri);
         ApplyAuth(request, apiToken);
 

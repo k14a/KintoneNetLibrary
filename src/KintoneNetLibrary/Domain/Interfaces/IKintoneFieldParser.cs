@@ -6,7 +6,7 @@ namespace KintoneNetLibrary.Domain.Interfaces;
 /// <summary>
 /// KintoneフィールドのメタデータをJSONから解析するためのインターフェース
 /// </summary>
-public interface IFieldParser {
+public interface IKintoneFieldParser {
     /// <summary>
     /// JSONのプロパティからKintoneフィールドのメタデータを解析してリストとして返します。
     /// </summary>
