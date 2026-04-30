@@ -33,8 +33,10 @@ public partial class KintoneApiFileUploadTests {
                 Content = new StringContent(responseJson, Encoding.UTF8, "application/json")
             };
         });
+        var factory = new Mock<IHttpClientFactory>();
+        factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
 
-        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, factory.Object);
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes("Dummy Content"));
 
@@ -66,7 +68,10 @@ public partial class KintoneApiFileUploadTests {
             };
         });
 
-        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
+        var factory = new Mock<IHttpClientFactory>();
+        factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
+
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, factory.Object);
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes("Too large!"));
 
@@ -88,7 +93,10 @@ public partial class KintoneApiFileUploadTests {
                 Content = new StringContent("{\"fileKey\": \"dummyKey\"}")
             });
 
-        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient) {
+        var factory = new Mock<IHttpClientFactory>();
+        factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
+
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, factory.Object) {
             MaxUploadFileSize = 10 // 非常に小さく設定
         };
 
@@ -107,7 +115,10 @@ public partial class KintoneApiFileUploadTests {
         var httpClient = KintoneHttpTestHelper.CreateMockHttpClient(_ =>
             throw new InvalidOperationException("HTTPリクエストは呼ばれないはずです"));
 
-        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient) {
+        var factory = new Mock<IHttpClientFactory>();
+        factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
+
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, factory.Object) {
             // 制限値を意図的に小さくする（10バイト）
             MaxUploadFileSize = 10
         };
@@ -133,7 +144,10 @@ public partial class KintoneApiFileUploadTests {
             throw new InvalidOperationException("送信される前に例外が発生するため、このコードは到達しないはずです。");
         });
 
-        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient: httpClient);
+        var factory = new Mock<IHttpClientFactory>();
+        factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
+
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, factory.Object);
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => api.UploadFileAsync(stream, "dummy.txt"));
 
@@ -156,7 +170,10 @@ public partial class KintoneApiFileUploadTests {
             return responseMessage;
         });
 
-        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
+        var factory = new Mock<IHttpClientFactory>();
+        factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
+
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, factory.Object);
         var ex = await Record.ExceptionAsync(() => api.UploadFileAsync(slowStream, "slow.txt"));
 
         Assert.Null(ex);
@@ -178,7 +195,10 @@ public partial class KintoneApiFileUploadTests {
             };
         });
 
-        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
+        var factory = new Mock<IHttpClientFactory>();
+        factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
+
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, factory.Object);
 
         var ex = await Assert.ThrowsAsync<HttpRequestException>(() => api.UploadFileAsync(faultyStream, "faulty.txt"));
 
@@ -196,7 +216,10 @@ public partial class KintoneApiFileUploadTests {
         var httpClient = KintoneHttpTestHelper.CreateMockHttpClient(_ =>
             throw new InvalidOperationException("このコードには到達しないはずです。"));
 
-        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
+        var factory = new Mock<IHttpClientFactory>();
+        factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
+
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, factory.Object);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             api.UploadFileAsync(emptyStream, "empty.txt"));
@@ -225,7 +248,10 @@ public partial class KintoneApiFileUploadTests {
                 Content = new StringContent(errorJson, Encoding.UTF8, "application/json")
             });
 
-        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
+        var factory = new Mock<IHttpClientFactory>();
+        factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
+
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, factory.Object);
 
         var ex = await Assert.ThrowsAsync<KintoneException>(() => api.UploadFileAsync(stream, "error.txt"));
 
@@ -280,7 +306,10 @@ public partial class KintoneApiFileUploadTests {
             };
         });
 
-        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
+        var factory = new Mock<IHttpClientFactory>();
+        factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
+
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, factory.Object);
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes("dummy"));
         var fileKey = await api.UploadFileAsync(stream, fileName);
@@ -295,7 +324,10 @@ public partial class KintoneApiFileUploadTests {
     public async Task UploadFileAsyncNullStreamThrowsArgumentNullException() {
         var httpClient = KintoneHttpTestHelper.CreateMockHttpClient(_ =>
             throw new InvalidOperationException("このコードには到達しないはずです。"));
-        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
+        var factory = new Mock<IHttpClientFactory>();
+        factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
+
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, factory.Object);
 
         Stream? nullStream = null;
         var fileName = "dummy.txt";
@@ -318,8 +350,10 @@ public partial class KintoneApiFileUploadTests {
                 Content = new StringContent(jsonWithNullFileKey, Encoding.UTF8, "application/json")
             };
         });
+        var factory = new Mock<IHttpClientFactory>();
+        factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
 
-        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, factory.Object);
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes("dummy"));
         var fileName = "file.txt";
@@ -362,7 +396,10 @@ public partial class KintoneApiFileUploadTests {
             return response;
         });
 
-        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
+        var factory = new Mock<IHttpClientFactory>();
+        factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
+
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, factory.Object);
 
         // Act
         var result = await api.UploadFileAsync(stream, longFileName);
@@ -397,7 +434,10 @@ public partial class KintoneApiFileUploadTests {
             return response;
         });
 
-        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
+        var factory = new Mock<IHttpClientFactory>();
+        factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
+
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, factory.Object);
 
         // Act
         var fileKey = await api.UploadFileAsync(stream, fileName);
@@ -448,7 +488,10 @@ public partial class KintoneApiFileUploadTests {
             return response;
         });
 
-        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
+        var factory = new Mock<IHttpClientFactory>();
+        factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
+
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, factory.Object);
 
         // Act
         var fileKey = await api.UploadFileAsync(stream, fileName);
@@ -487,7 +530,10 @@ public partial class KintoneApiFileUploadTests {
             return response;
         });
 
-        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
+        var factory = new Mock<IHttpClientFactory>();
+        factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
+
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, factory.Object);
 
         // Act
         var fileKey = await api.UploadFileAsync(stream, testFileName);
@@ -506,7 +552,10 @@ public partial class KintoneApiFileUploadTests {
         var handler = new CancelledHandler(); // 先ほど定義したキャンセル対応のモック
         var httpClient = new HttpClient(handler);
 
-        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
+        var factory = new Mock<IHttpClientFactory>();
+        factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
+
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, factory.Object);
 
         // テスト用ファイルストリーム（中身は不要）
         var dummyFileStream = new MemoryStream(new byte[] { 1, 2, 3 });
@@ -544,7 +593,10 @@ public partial class KintoneApiFileUploadTests {
             Timeout = TimeSpan.FromMilliseconds(100) // タイムアウトを極端に短く
         };
 
-        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
+        var factory = new Mock<IHttpClientFactory>();
+        factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
+
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, factory.Object);
 
         var dummyContent = new MemoryStream(Encoding.UTF8.GetBytes("dummy data"));
         var fileName = "test.txt";
@@ -577,7 +629,10 @@ public partial class KintoneApiFileUploadTests {
             });
 
         var httpClient = new HttpClient(handlerMock.Object);
-        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
+        var factory = new Mock<IHttpClientFactory>();
+        factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
+
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, factory.Object);
 
         var dummyContent = new MemoryStream(Encoding.UTF8.GetBytes("dummy data"));
         var fileName = "test.txt";
@@ -613,7 +668,10 @@ public partial class KintoneApiFileUploadTests {
             });
 
         var httpClient = new HttpClient(handlerMock.Object);
-        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
+        var factory = new Mock<IHttpClientFactory>();
+        factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
+
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, factory.Object);
 
         // Act & Assert
         var ex = await Assert.ThrowsAsync<HttpRequestException>(async () => {

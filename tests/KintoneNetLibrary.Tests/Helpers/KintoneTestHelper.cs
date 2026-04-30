@@ -13,6 +13,7 @@ using KintoneNetLibrary.Tests.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Moq;
 
 namespace KintoneNetLibrary.Tests.Helpers;
 
@@ -29,8 +30,10 @@ public static class KintoneTestHelper {
         var cli = new HttpClient {
             BaseAddress = new Uri($"https://{cfg.Domain}/k/v1/")
         };
+        var factory = new Mock<IHttpClientFactory>();
+        factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(cli);
         var access = new ApiTokenAccess(cfg.Domain, cfg.ApiToken);
-        return new KintoneApi(access, cfg.AppID, cli);
+        return new KintoneApi(access, cfg.AppID, factory.Object);
     }
 
     /// <summary>

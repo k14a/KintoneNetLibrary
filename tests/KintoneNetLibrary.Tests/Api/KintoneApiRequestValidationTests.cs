@@ -8,6 +8,7 @@ using KintoneNetLibrary.Domain.Access;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Infrastructure.Api;
 using KintoneNetLibrary.Tests.Helpers;
+using Moq;
 using Xunit;
 
 namespace KintoneNetLibrary.Tests.Api;
@@ -33,7 +34,10 @@ public class KintoneApiRequestValidationTests {
             };
         });
 
-        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
+        var factory = new Mock<IHttpClientFactory>();
+        factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
+
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, factory.Object);
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes("Test Content"));
         await api.UploadFileAsync(stream, "sample.txt");
@@ -67,8 +71,10 @@ public class KintoneApiRequestValidationTests {
                 Content = new StringContent(dummyContent, Encoding.UTF8, "application/octet-stream")
             };
         });
+        var factory = new Mock<IHttpClientFactory>();
+        factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
 
-        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, httpClient);
+        var api = new KintoneApi(new ApiTokenAccess("dummyAppId", "dummyToken"), 123, factory.Object);
         using var stream = await api.DownloadFileStreamAsync("dummyKey");
 
         using var reader = new StreamReader(stream, Encoding.UTF8);
