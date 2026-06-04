@@ -208,6 +208,8 @@ public partial class KintoneQuery<T> where T : KintoneModelBase<T>, new() {
     /// <param name="field">フィールド名</param>
     /// <param name="from">範囲の開始値</param>
     /// <param name="to">範囲の終了値</param>
+    /// <param name="inclusiveLower">開始値を範囲に含む場合は true（&gt;= / &gt;）</param>
+    /// <param name="inclusiveUpper">終了値を範囲に含む場合は true（&lt;= / &lt;）</param>
     /// <returns>KintoneQuery インスタンス</returns>
     /// <exception cref="ArgumentNullException">フィールド名が null の場合にスローされます。</exception>
     /// <exception cref="ArgumentException">フィールド名が空文字列の場合にスローされます。</exception>

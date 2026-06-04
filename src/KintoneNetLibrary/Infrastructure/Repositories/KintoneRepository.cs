@@ -104,6 +104,7 @@ public class KintoneRepository(IKintoneApiFactory factory) : IKintoneRepository 
     /// <typeparam name="T">モデルの型</typeparam>
     /// <param name="model">モデルのインスタンス</param>
     /// <param name="queryStr">検索対象のクエリ文字列</param>
+    /// <param name="fieldCodes">取得するフィールドコードのリスト（nullの場合は全フィールド）</param>
     /// <returns>検索結果の JSON 文字列</returns>
     public async Task<string?> FindByQueryAsync<T>(T model, string queryStr, IList<string>? fieldCodes = null) where T : KintoneModelBase<T>, new() {
         return await this.ExecuteFindAsync(model, api => api.FindByQueryAsync<T>(queryStr, fieldCodes));

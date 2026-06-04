@@ -181,6 +181,7 @@ public class KintoneDateTime : IKintoneFieldConverter {
     /// </summary>
     /// <param name="raw">生の文字列値</param>
     /// <param name="fieldType">Kintoneフィールドタイプ</param>
+    /// <param name="result">パース成功時に設定されるKintoneDateTimeインスタンス</param>
     /// <returns>パースに成功した場合はtrue、失敗した場合はfalse</returns>
     /// <exception cref="ArgumentException">無効なKintoneFieldTypeの場合</exception>
     /// <exception cref="ArgumentNullException">rawがnullの場合</exception>

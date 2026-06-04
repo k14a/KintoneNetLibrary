@@ -129,7 +129,8 @@ public class KintoneTypedCrudService<T>(
     /// Kintoneモデルのレコードを検索します。
     /// </summary>
     /// <param name="ids">検索対象のレコードIDのリスト（オプション）</param>
-    /// <param name="query">検索クエリ（オプション）</param>
+    /// <param name="query">検索クエリ文字列（オプション）</param>
+    /// <param name="kintoneQuery">型安全なクエリビルダー（オプション）</param>
     /// <param name="fieldCodes">取得するフィールドコードのリスト（オプション）</param>
     /// <returns>検索結果のKintoneモデルのリスト</returns>
     /// <exception cref="KintoneException"></exception>

@@ -242,6 +242,7 @@ public class KintoneModelFileService<T>(IKintoneRepository repository, ILogger<K
     /// </summary>
     /// <remarks>モデル内のKintoneFileリストを使用して、複数のファイルをダウンロードします。</remarks>
     /// <param name="model">ダウンロード対象のKintoneモデル</param>
+    /// <param name="files">ダウンロードするKintoneFileのリスト</param>
     /// <param name="targetDirectory">ダウンロード先のディレクトリ（nullの場合は一時ディレクトリを使用）</param>
     /// <param name="overwrite">既存ファイルを上書きするかどうか</param>
     /// <param name="throwIfExists">既存ファイルが存在する場合に例外をスローするかどうか</param>
@@ -280,6 +281,7 @@ public class KintoneModelFileService<T>(IKintoneRepository repository, ILogger<K
     /// <remarks>モデル内のKintoneFileを使用して、ファイルをダウンロードし、指定されたパスに保存します。</remarks>
     /// <param name="model">ダウンロード対象のKintoneモデル</param>
     /// <param name="file">ダウンロードするKintoneFile</param>
+    /// <param name="targetDirectory">ダウンロード先のディレクトリ（nullの場合は一時ディレクトリを使用）</param>
     /// <param name="overwrite">既存ファイルを上書きするかどうか</param>
     /// <param name="throwIfExists">既存ファイルが存在する場合に例外をスローするかどうか</param>
     /// <returns>ダウンロードされたファイルのFileInfo</returns>

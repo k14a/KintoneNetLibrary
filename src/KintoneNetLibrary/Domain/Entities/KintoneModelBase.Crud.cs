@@ -8,7 +8,6 @@ namespace KintoneNetLibrary.Domain.Entities;
 /// <summary>
 /// Kintoneモデルの基本クラス（CRUD操作用）
 /// </summary>
-/// <typeparam name="TSelf"></typeparam>
 public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase where TSelf : KintoneModelBase<TSelf>, new() {
     /// <summary>
     /// レコードを作成します。

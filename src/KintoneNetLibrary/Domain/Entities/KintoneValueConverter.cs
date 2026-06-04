@@ -13,6 +13,7 @@ public static class KintoneValueConverter {
     /// <param name="valueElement">Kintoneのフィールド値を表すJsonElement</param>
     /// <param name="fieldType">Kintoneのフィールドタイプ</param>
     /// <param name="targetType">変換先のC#の型</param>
+    /// <param name="jsonOptions">JSONシリアライズオプション（省略時はデフォルト設定を使用）</param>
     /// <returns>変換されたC#のオブジェクト</returns>
     /// <exception cref="NotSupportedException">サポートされていない変換が要求された場合にスローされます</exception>
     public static object? ConvertToCSharp(JsonElement valueElement, KintoneFieldType fieldType, Type targetType, System.Text.Json.JsonSerializerOptions? jsonOptions = null) {
