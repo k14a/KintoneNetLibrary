@@ -2,8 +2,6 @@ using KintoneNetLibrary.Domain.Access;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Domain.Enums;
 using KintoneNetLibrary.Domain.Interfaces;
-using KintoneNetLibrary.Infrastructure.Helpers;
-using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Xunit;
 
@@ -42,12 +40,8 @@ public class KintoneModelBaseDeleteAsyncTests {
             .Setup(s => s.DeleteAsync(It.Is<IList<DummyModel>>(list => list.Count == 1 && list[0] == model), true))
             .ReturnsAsync(expectedResult);
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await model.DeleteAsync();
+        var result = await model.DeleteAsync(mockService.Object);
 
         // Assert
         Assert.Single(result.Succeeded);
@@ -72,12 +66,8 @@ public class KintoneModelBaseDeleteAsyncTests {
             .Setup(s => s.DeleteAsync(It.Is<IList<DummyModel>>(list => list.Count == 1 && list[0] == model), false))
             .ReturnsAsync(expectedResult);
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await model.DeleteAsync(validateExistence: false);
+        var result = await model.DeleteAsync(mockService.Object, validateExistence: false);
 
         // Assert
         Assert.Single(result.Succeeded);
@@ -106,12 +96,8 @@ public class KintoneModelBaseDeleteAsyncTests {
             .Setup(s => s.DeleteAsync(It.Is<IList<DummyModel>>(list => list.Count == 1 && list[0] == model), true))
             .ReturnsAsync(expectedResult);
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await model.DeleteAsync();
+        var result = await model.DeleteAsync(mockService.Object);
 
         // Assert
         Assert.Empty(result.Succeeded);
@@ -140,20 +126,14 @@ public class KintoneModelBaseDeleteAsyncTests {
             .Setup(s => s.DeleteAsync(It.IsAny<IList<DummyModel>>(), It.IsAny<bool>()))
             .ReturnsAsync(expectedResult);
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Reset();
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await DummyModel.DeleteBulkAsync(models, false);
+        var result = await DummyModel.DeleteBulkAsync(mockService.Object, models, false);
 
         // Assert
         Assert.NotNull(result);
         Assert.Equal(2, result.Succeeded.Count);
         Assert.False(result.HasFailures);
 
-        // Verify: モックが1回呼ばれたことを確認（同じ一致条件を使う）
         mockService.Verify(s => s.DeleteAsync(It.IsAny<IList<DummyModel>>(), It.IsAny<bool>()), Times.Once);
     }
 
@@ -166,7 +146,7 @@ public class KintoneModelBaseDeleteAsyncTests {
         var models = new List<DummyModel> {
             new() { RecordID = "1003", FieldA = "Retry1" },
             new() { RecordID = "1004", FieldA = "Retry2" },
-            new() { RecordID = "9999", FieldA = "NonExistent" } // 存在しないID
+            new() { RecordID = "9999", FieldA = "NonExistent" }
         };
 
         var expectedResult = new KintoneDeleteResult {
@@ -179,21 +159,15 @@ public class KintoneModelBaseDeleteAsyncTests {
             .Setup(s => s.DeleteAsync(It.IsAny<IList<DummyModel>>(), It.IsAny<bool>()))
             .ReturnsAsync(expectedResult);
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Reset();
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await DummyModel.DeleteBulkAsync(models, validateExistence: true);
+        var result = await DummyModel.DeleteBulkAsync(mockService.Object, models, validateExistence: true);
 
         // Assert
         Assert.NotNull(result);
         Assert.Equal(2, result.Succeeded.Count);
         Assert.Single(result.Failed);
-        Assert.True(result.HasFailures); // 部分失敗を検出
+        Assert.True(result.HasFailures);
 
-        // Verify: モックが1回呼ばれたことを確認
         mockService.Verify(s => s.DeleteAsync(It.IsAny<IList<DummyModel>>(), true), Times.Once);
     }
 
@@ -214,20 +188,14 @@ public class KintoneModelBaseDeleteAsyncTests {
             .Setup(s => s.DeleteAsync<DummyModel>(ids, false))
             .ReturnsAsync(expectedResult);
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Reset();
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await DummyModel.DeleteBulkAsync(ids, validateExistence: false);
+        var result = await DummyModel.DeleteBulkAsync(mockService.Object, ids, validateExistence: false);
 
         // Assert
         Assert.NotNull(result);
         Assert.Equal(2, result.Succeeded.Count);
         Assert.False(result.HasFailures);
 
-        // Verify: モックが正しく呼ばれたことを確認
         mockService.Verify(s => s.DeleteAsync<DummyModel>(ids, false), Times.Once);
     }
 
@@ -237,7 +205,7 @@ public class KintoneModelBaseDeleteAsyncTests {
     [Fact]
     public async Task DeleteBulkAsyncWithThreeIdsTwoSucceededOneFailedReturnsPartialResult() {
         // Arrange
-        var ids = new List<string> { "1003", "1004", "9999" }; // "9999" は存在しないID
+        var ids = new List<string> { "1003", "1004", "9999" };
 
         var expectedResult = new KintoneDeleteResult {
             Succeeded = ["1003", "1004"],
@@ -255,21 +223,15 @@ public class KintoneModelBaseDeleteAsyncTests {
             .Setup(s => s.DeleteAsync<DummyModel>(ids, true))
             .ReturnsAsync(expectedResult);
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Reset();
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await DummyModel.DeleteBulkAsync(ids, validateExistence: true);
+        var result = await DummyModel.DeleteBulkAsync(mockService.Object, ids, validateExistence: true);
 
         // Assert
         Assert.NotNull(result);
         Assert.Equal(2, result.Succeeded.Count);
         Assert.Single(result.Failed);
-        Assert.True(result.HasFailures); // 部分失敗を検出
+        Assert.True(result.HasFailures);
 
-        // Verify: モックが1回呼ばれたことを確認
         mockService.Verify(s => s.DeleteAsync<DummyModel>(ids, true), Times.Once);
     }
 
@@ -282,8 +244,6 @@ public class KintoneModelBaseDeleteAsyncTests {
         var ids = new List<string> { "1003", "1004" };
 
         var mockService = new Mock<IKintoneModelCrudService>();
-
-        // 各IDに対して個別に成功レスポンスを返すよう設定
         mockService
             .Setup(s => s.DeleteAsync<DummyModel>(It.Is<IList<string>>(x => x.SequenceEqual(new[] { "1003" })), true))
             .ReturnsAsync(new KintoneDeleteResult { Succeeded = ["1003"] });
@@ -291,20 +251,14 @@ public class KintoneModelBaseDeleteAsyncTests {
             .Setup(s => s.DeleteAsync<DummyModel>(It.Is<IList<string>>(x => x.SequenceEqual(new[] { "1004" })), true))
             .ReturnsAsync(new KintoneDeleteResult { Succeeded = ["1004"] });
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Reset();
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await DummyModel.DeleteSingleAsync(ids, validateExistence: true);
+        var result = await DummyModel.DeleteSingleAsync(mockService.Object, ids, validateExistence: true);
 
         // Assert
         Assert.NotNull(result);
         Assert.Equal(2, result.Succeeded.Count);
         Assert.False(result.HasFailures);
 
-        // Verify: 各IDに対して1回ずつ呼ばれたことを確認
         mockService.Verify(s => s.DeleteAsync<DummyModel>(It.Is<IList<string>>(x => x.SequenceEqual(new[] { "1003" })), true), Times.Once);
         mockService.Verify(s => s.DeleteAsync<DummyModel>(It.Is<IList<string>>(x => x.SequenceEqual(new[] { "1004" })), true), Times.Once);
     }
@@ -318,19 +272,16 @@ public class KintoneModelBaseDeleteAsyncTests {
         var models = new List<DummyModel> {
             new() { RecordID = "1003", FieldA = "Retry1" },
             new() { RecordID = "1004", FieldA = "Retry2" },
-            new() { RecordID = "9999", FieldA = "NonExistent" } // 存在しないID
+            new() { RecordID = "9999", FieldA = "NonExistent" }
         };
 
         var mockService = new Mock<IKintoneModelCrudService>();
-
-        // 成功レスポンス設定
         mockService
             .Setup(s => s.DeleteAsync<DummyModel>(It.Is<IList<DummyModel>>(x => x.Count == 1 && x[0].RecordID == "1003"), true))
             .ReturnsAsync(new KintoneDeleteResult { Succeeded = ["1003"] });
         mockService
             .Setup(s => s.DeleteAsync<DummyModel>(It.Is<IList<DummyModel>>(x => x.Count == 1 && x[0].RecordID == "1004"), true))
             .ReturnsAsync(new KintoneDeleteResult { Succeeded = ["1004"] });
-        // 失敗レスポンス設定
         mockService
             .Setup(s => s.DeleteAsync<DummyModel>(It.Is<IList<DummyModel>>(x => x.Count == 1 && x[0].RecordID == "9999"), true))
             .ReturnsAsync(new KintoneDeleteResult {
@@ -343,13 +294,8 @@ public class KintoneModelBaseDeleteAsyncTests {
                 ]
             });
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Reset();
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await DummyModel.DeleteSingleAsync(models, validateExistence: true);
+        var result = await DummyModel.DeleteSingleAsync(mockService.Object, models, validateExistence: true);
 
         // Assert
         Assert.NotNull(result);
@@ -357,7 +303,6 @@ public class KintoneModelBaseDeleteAsyncTests {
         Assert.Single(result.Failed);
         Assert.True(result.HasFailures);
 
-        // Verify: 各モデルに対して1回ずつ呼ばれたことを確認
         mockService.Verify(s => s.DeleteAsync<DummyModel>(It.Is<IList<DummyModel>>(x => x.Count == 1 && x[0].RecordID == "1003"), true), Times.Once);
         mockService.Verify(s => s.DeleteAsync<DummyModel>(It.Is<IList<DummyModel>>(x => x.Count == 1 && x[0].RecordID == "1004"), true), Times.Once);
         mockService.Verify(s => s.DeleteAsync<DummyModel>(It.Is<IList<DummyModel>>(x => x.Count == 1 && x[0].RecordID == "9999"), true), Times.Once);
@@ -375,8 +320,6 @@ public class KintoneModelBaseDeleteAsyncTests {
         };
 
         var mockService = new Mock<IKintoneModelCrudService>();
-
-        // 各モデルに対して個別に成功レスポンスを返すよう設定
         mockService
             .Setup(s => s.DeleteAsync<DummyModel>(It.Is<IList<DummyModel>>(x => x.Count == 1 && x[0].RecordID == "1003"), true))
             .ReturnsAsync(new KintoneDeleteResult { Succeeded = ["1003"] });
@@ -384,20 +327,14 @@ public class KintoneModelBaseDeleteAsyncTests {
             .Setup(s => s.DeleteAsync<DummyModel>(It.Is<IList<DummyModel>>(x => x.Count == 1 && x[0].RecordID == "1004"), true))
             .ReturnsAsync(new KintoneDeleteResult { Succeeded = ["1004"] });
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Reset();
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await DummyModel.DeleteSingleAsync(models, validateExistence: true);
+        var result = await DummyModel.DeleteSingleAsync(mockService.Object, models, validateExistence: true);
 
         // Assert
         Assert.NotNull(result);
         Assert.Equal(2, result.Succeeded.Count);
         Assert.False(result.HasFailures);
 
-        // Verify: 各モデルに対して1回ずつ呼ばれたことを確認
         mockService.Verify(s => s.DeleteAsync<DummyModel>(It.Is<IList<DummyModel>>(x => x.Count == 1 && x[0].RecordID == "1003"), true), Times.Once);
         mockService.Verify(s => s.DeleteAsync<DummyModel>(It.Is<IList<DummyModel>>(x => x.Count == 1 && x[0].RecordID == "1004"), true), Times.Once);
     }
@@ -408,18 +345,15 @@ public class KintoneModelBaseDeleteAsyncTests {
     [Fact]
     public async Task DeleteSingleAsyncWithThreeIdsTwoSucceededOneFailedReturnsPartialResult() {
         // Arrange
-        var ids = new List<string> { "1003", "1004", "9999" }; // "9999" は存在しないID
+        var ids = new List<string> { "1003", "1004", "9999" };
 
         var mockService = new Mock<IKintoneModelCrudService>();
-
-        // 成功レスポンス設定
         mockService
             .Setup(s => s.DeleteAsync<DummyModel>(It.Is<IList<string>>(x => x.SequenceEqual(new[] { "1003" })), true))
             .ReturnsAsync(new KintoneDeleteResult { Succeeded = ["1003"] });
         mockService
             .Setup(s => s.DeleteAsync<DummyModel>(It.Is<IList<string>>(x => x.SequenceEqual(new[] { "1004" })), true))
             .ReturnsAsync(new KintoneDeleteResult { Succeeded = ["1004"] });
-        // 失敗レスポンス設定
         mockService
             .Setup(s => s.DeleteAsync<DummyModel>(It.Is<IList<string>>(x => x.SequenceEqual(new[] { "9999" })), true))
             .ReturnsAsync(new KintoneDeleteResult {
@@ -432,13 +366,8 @@ public class KintoneModelBaseDeleteAsyncTests {
                 ]
             });
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Reset();
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await DummyModel.DeleteSingleAsync(ids, validateExistence: true);
+        var result = await DummyModel.DeleteSingleAsync(mockService.Object, ids, validateExistence: true);
 
         // Assert
         Assert.NotNull(result);
@@ -446,7 +375,6 @@ public class KintoneModelBaseDeleteAsyncTests {
         Assert.Single(result.Failed);
         Assert.True(result.HasFailures);
 
-        // Verify: 各IDに対して1回ずつ呼ばれたことを確認
         mockService.Verify(s => s.DeleteAsync<DummyModel>(It.Is<IList<string>>(x => x.SequenceEqual(new[] { "1003" })), true), Times.Once);
         mockService.Verify(s => s.DeleteAsync<DummyModel>(It.Is<IList<string>>(x => x.SequenceEqual(new[] { "1004" })), true), Times.Once);
         mockService.Verify(s => s.DeleteAsync<DummyModel>(It.Is<IList<string>>(x => x.SequenceEqual(new[] { "9999" })), true), Times.Once);

@@ -53,24 +53,62 @@
 ## 3. 設計上の問題
 
 ### 3-1. Service Locator パターンの使用（アンチパターン）
-- [ ] **対象ファイル**: [`src/KintoneNetLibrary/Infrastructure/Helpers/KintoneServiceLocator.cs`](src/KintoneNetLibrary/Infrastructure/Helpers/KintoneServiceLocator.cs), [`src/KintoneNetLibrary/Domain/Entities/KintoneModelBase.Crud.cs`](src/KintoneNetLibrary/Domain/Entities/KintoneModelBase.Crud.cs)
+- [x] **対象ファイル**: [`src/KintoneNetLibrary/Infrastructure/Helpers/KintoneServiceLocator.cs`](src/KintoneNetLibrary/Infrastructure/Helpers/KintoneServiceLocator.cs), [`src/KintoneNetLibrary/Domain/Entities/KintoneModelBase.Crud.cs`](src/KintoneNetLibrary/Domain/Entities/KintoneModelBase.Crud.cs)
 - **問題**: Domain エンティティ（`KintoneModelBase<TSelf>`）内で `KintoneServiceLocator.Resolve<T>()` を直接呼び出している。依存性が隠蔽され、テスト困難・初期化順序依存が生じる。
 - **対応方針**: エンティティから CRUD 操作を分離し、アプリケーションサービス（またはコンストラクタ注入）経由で呼び出す設計に変更する。
 
+#### 設計変更の概要
+**問題**: `KintoneModelBase` の CRUD メソッドが `KintoneModelContext`（Domain 層のグローバル静的リゾルバー）経由でサービスを取得しており、依存が隠蔽されている。
+
+**方針**: 全 CRUD メソッドに `IKintoneModelCrudService service` パラメーターを追加し、呼び出し側が明示的にサービスを渡す設計に変更する（Service Locator → Explicit Dependency）。
+
+```csharp
+// 変更前
+await model.SaveAsync();
+await BookModel.FindAllAsync();
+
+// 変更後
+await model.SaveAsync(service);
+await BookModel.FindAllAsync(service);
+```
+
+**変更ファイル**:
+- `Domain/Entities/KintoneModelBase.Crud.cs` — 全メソッドに `service` パラメーターを追加、`Service` プロパティ削除
+- `Domain/Common/KintoneModelContext.cs` — 削除
+- `Infrastructure/Helpers/KintoneServiceLocator.cs` — 削除（`Resolve<T>()` も未使用のため）
+- テスト 5 ファイル（75 箇所）— `KintoneServiceLocator.Initialize(...)` の setup を削除し、モックを直接渡す形式に変更
+
 ### 3-2. `IKintoneApi` インターフェースが大きすぎる（ISP 違反）
-- [ ] **対象ファイル**: [`src/KintoneNetLibrary/Application/Interfaces/IKintoneApi.cs`](src/KintoneNetLibrary/Application/Interfaces/IKintoneApi.cs)
+- [x] **対象ファイル**: [`src/KintoneNetLibrary/Application/Interfaces/IKintoneApi.cs`](src/KintoneNetLibrary/Application/Interfaces/IKintoneApi.cs)
 - **問題**: 1 つのインターフェースに Find（型付き・Raw・Stream）/CRUD/File/Cursor の全操作が含まれており、インターフェース分離原則に反する。
 - **対応方針**: 責任ごとに分割する（例: `IKintoneRecordReadApi`, `IKintoneRecordWriteApi`, `IKintoneFileApi`, `IKintoneCursorApi`）。
 
 ### 3-3. `KintoneModelCrudService.cs` のメソッドコメントと実装の不一致
-- [ ] **対象ファイル**: [`src/KintoneNetLibrary/Infrastructure/Services/KintoneModelCrudService.cs:29-34`](src/KintoneNetLibrary/Infrastructure/Services/KintoneModelCrudService.cs#L29)
+- [x] **対象ファイル**: [`src/KintoneNetLibrary/Infrastructure/Services/KintoneModelCrudService.cs:29-34`](src/KintoneNetLibrary/Infrastructure/Services/KintoneModelCrudService.cs#L29)
 - **問題**: `DeleteAsync` メソッドのサマリーコメントが「既存のレコードを更新します」になっており、戻り値説明も「削除結果のインデックス情報」と「更新」が混在している。
 - **対応方針**: コメントを正しく修正する（「既存のレコードを削除します」）。
 
 ### 3-4. `KintoneModelBase` に責任が集中しすぎている
-- [ ] **対象ファイル**: [`src/KintoneNetLibrary/Domain/Entities/`](src/KintoneNetLibrary/Domain/Entities/) （7 ファイルに分割済みだが依然として肥大）
+- [x] **対象ファイル**: [`src/KintoneNetLibrary/Domain/Entities/`](src/KintoneNetLibrary/Domain/Entities/) （7 ファイルに分割済みだが依然として肥大）
 - **問題**: Kintoneアクセス情報の管理・CRUD操作・JSON変換・レコード構築・ユーティリティ機能が 1 つのクラスに集約されており、SRP に反する。
 - **対応方針**: 段階的にリファクタリングし、CRUD 操作は外部サービスに委譲する（→ 項目 3-1 と連動）。
+
+#### 設計変更の概要
+**現状**: `KintoneModelBase.JsonLoader.cs` および `KintoneSubTableBase.cs` が
+`KintoneValueConverter`（Infrastructure）を参照しており、Clean Architecture の依存方向に違反している。
+
+**方針**: `KintoneValueConverter` を `Infrastructure/Converters/` から `Domain/Entities/` へ移動する
+（1-4 での `NameConverter` 移動と同様の対応）。
+
+**変更ファイル**:
+- `Domain/Entities/KintoneValueConverter.cs` — 新規作成（移動）、namespace を `Domain.Entities` に変更
+- `Infrastructure/Converters/KintoneValueConverter.cs` — 削除
+- `Domain/Entities/KintoneModelBase.JsonLoader.cs` — `using` を Infrastructure → Domain に変更
+- `Domain/Entities/KintoneSubTableBase.cs` — 同上
+- `Infrastructure/Converters/KintoneRecordConverter.cs` — 同上
+
+**備考**: 現在の 7 partial ファイル構成（Crud / Conversion / Hooks / JsonLoader / RecordBuilder / Utility）は
+SRP の段階的分離として適切であり、これ以上の責任分離は破壊的変更を伴うため今回は対象外とする。
 
 ---
 

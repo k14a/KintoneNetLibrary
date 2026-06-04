@@ -2,8 +2,6 @@ using KintoneNetLibrary.Domain.Access;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Domain.Enums;
 using KintoneNetLibrary.Domain.Interfaces;
-using KintoneNetLibrary.Infrastructure.Helpers;
-using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Xunit;
 
@@ -44,12 +42,8 @@ public class KintoneModelBaseSaveTests {
             .Setup(s => s.SaveAsync(It.Is<IList<DummyModel>>(arr => arr.Count == 1 && arr[0] == model), It.IsAny<bool>()))
             .ReturnsAsync(expectedResult);
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await model.SaveAsync();
+        var result = await model.SaveAsync(mockService.Object);
 
         // Assert
         Assert.Single(result.Succeeded);
@@ -79,12 +73,8 @@ public class KintoneModelBaseSaveTests {
             .Setup(s => s.SaveAsync(It.Is<IList<DummyModel>>(arr => arr.Count == 1 && arr[0] == model), It.IsAny<bool>()))
             .ReturnsAsync(expectedResult);
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await model.SaveAsync();
+        var result = await model.SaveAsync(mockService.Object);
 
         // Assert
         Assert.Empty(result.Succeeded);
@@ -108,12 +98,8 @@ public class KintoneModelBaseSaveTests {
             .Setup(s => s.SaveAsync(It.Is<IList<DummyModel>>(arr => arr.Count == 1 && arr[0] == model), true))
             .ReturnsAsync(new KintoneWriteResult<DummyModel> { Succeeded = [model] });
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await model.SaveAsync(enableSingleRetryOnError: true);
+        var result = await model.SaveAsync(mockService.Object, enableSingleRetryOnError: true);
 
         // Assert
         Assert.Single(result.Succeeded);
@@ -138,12 +124,8 @@ public class KintoneModelBaseSaveTests {
             .Setup(s => s.SaveWithRetryAsync(It.Is<IList<DummyModel>>(arr => arr.Count == 1 && arr[0] == model), false, true))
             .ReturnsAsync(expectedResult);
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await model.SaveWithRetryAsync();
+        var result = await model.SaveWithRetryAsync(mockService.Object);
 
         // Assert
         Assert.Single(result.Succeeded);
@@ -159,11 +141,6 @@ public class KintoneModelBaseSaveTests {
         // Arrange
         var model = new DummyModel { RecordID = "3333", FieldA = "RetryMe", FieldB = 456 };
 
-        var failure = new KintoneWriteFailure<DummyModel> {
-            Record = model,
-            ErrorMessage = "Temporary network error",
-        };
-
         var successResult = new KintoneWriteResult<DummyModel> {
             Succeeded = [model]
         };
@@ -173,12 +150,8 @@ public class KintoneModelBaseSaveTests {
             .SetupSequence(s => s.SaveWithRetryAsync(It.Is<IList<DummyModel>>(arr => arr.Count == 1 && arr[0] == model), true, true))
             .ReturnsAsync(successResult);
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await model.SaveWithRetryAsync(true, true);
+        var result = await model.SaveWithRetryAsync(mockService.Object, true, true);
 
         // Assert
         Assert.Single(result.Succeeded);
@@ -208,12 +181,8 @@ public class KintoneModelBaseSaveTests {
             .Setup(s => s.SaveWithRetryAsync(It.Is<IList<DummyModel>>(arr => arr.Count == 1 && arr[0] == model), true, true))
             .ReturnsAsync(failureResult);
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await model.SaveWithRetryAsync(true, true);
+        var result = await model.SaveWithRetryAsync(mockService.Object, true, true);
 
         // Assert
         Assert.Empty(result.Succeeded);
@@ -231,15 +200,6 @@ public class KintoneModelBaseSaveTests {
         // Arrange
         var model = new DummyModel { RecordID = "9999", FieldA = "FallbackToUpdate", FieldB = 789 };
 
-        var createFailure = new KintoneWriteResult<DummyModel> {
-            Failed = [
-                new KintoneWriteFailure<DummyModel> {
-                    Record = model,
-                    ErrorMessage = "Record already exists"
-                }
-            ]
-        };
-
         var updateSuccess = new KintoneWriteResult<DummyModel> {
             Succeeded = [model]
         };
@@ -247,15 +207,10 @@ public class KintoneModelBaseSaveTests {
         var mockService = new Mock<IKintoneModelCrudService>();
         mockService
             .SetupSequence(s => s.SaveWithRetryAsync(It.Is<IList<DummyModel>>(arr => arr.Count == 1 && arr[0] == model), true, true))
-            // .ReturnsAsync(createFailure)  // First attempt: Create fails
-            .ReturnsAsync(updateSuccess); // Retry: Update succeeds
-
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
+            .ReturnsAsync(updateSuccess);
 
         // Act
-        var result = await model.SaveWithRetryAsync(true, true);
+        var result = await model.SaveWithRetryAsync(mockService.Object, true, true);
 
         // Assert
         Assert.Single(result.Succeeded);
@@ -283,14 +238,10 @@ public class KintoneModelBaseSaveTests {
         var mockService = new Mock<IKintoneModelCrudService>();
         mockService
             .Setup(s => s.SaveWithRetryAsync(It.Is<IList<DummyModel>>(arr => arr.Count == 1 && arr[0] == model), true, false))
-            .ReturnsAsync(createFailure); // Only one attempt: Create fails
-
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
+            .ReturnsAsync(createFailure);
 
         // Act
-        var result = await model.SaveWithRetryAsync(true, false);
+        var result = await model.SaveWithRetryAsync(mockService.Object, true, false);
 
         // Assert
         Assert.Empty(result.Succeeded);
@@ -320,12 +271,8 @@ public class KintoneModelBaseSaveTests {
             .Setup(s => s.SaveAsync(models, false))
             .ReturnsAsync(successResult);
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await DummyModel.SaveBulkAsync(models);
+        var result = await DummyModel.SaveBulkAsync(mockService.Object, models);
 
         // Assert
         Assert.Equal(2, result.Succeeded.Count);
@@ -357,12 +304,8 @@ public class KintoneModelBaseSaveTests {
             .Setup(s => s.SaveAsync(It.Is<IList<DummyModel>>(list => list.Contains(model1) && list.Contains(model2)), true))
             .ReturnsAsync(partialResult);
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await DummyModel.SaveBulkAsync([model1, model2], enableSingleRetryOnError: true);
+        var result = await DummyModel.SaveBulkAsync(mockService.Object, [model1, model2], enableSingleRetryOnError: true);
 
         // Assert
         Assert.Single(result.Succeeded);
@@ -401,12 +344,8 @@ public class KintoneModelBaseSaveTests {
             .Setup(s => s.SaveAsync(models, false))
             .ReturnsAsync(failureResult);
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await DummyModel.SaveBulkAsync(models);
+        var result = await DummyModel.SaveBulkAsync(mockService.Object, models);
 
         // Assert
         Assert.Empty(result.Succeeded);
@@ -440,14 +379,10 @@ public class KintoneModelBaseSaveTests {
             .Setup(s => s.SaveAsync(It.Is<IList<DummyModel>>(l => l.Count == 1 && l[0] == model2), false))
             .ReturnsAsync(success2);
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         var models = new List<DummyModel> { model1, model2 };
 
         // Act
-        var result = await DummyModel.SaveSingleAsync(models);
+        var result = await DummyModel.SaveSingleAsync(mockService.Object, models);
 
         // Assert
         Assert.Equal(2, result.Succeeded.Count);
@@ -487,14 +422,10 @@ public class KintoneModelBaseSaveTests {
             .Setup(s => s.SaveAsync(It.Is<IList<DummyModel>>(l => l.Count == 1 && l[0] == model2), false))
             .ReturnsAsync(failureResult);
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         var models = new List<DummyModel> { model1, model2 };
 
         // Act
-        var result = await DummyModel.SaveSingleAsync(models);
+        var result = await DummyModel.SaveSingleAsync(mockService.Object, models);
 
         // Assert
         Assert.Single(result.Succeeded);
@@ -540,14 +471,10 @@ public class KintoneModelBaseSaveTests {
             .Setup(s => s.SaveAsync(It.Is<IList<DummyModel>>(l => l.Count == 1 && l[0] == model2), false))
             .ReturnsAsync(failure2);
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         var models = new List<DummyModel> { model1, model2 };
 
         // Act
-        var result = await DummyModel.SaveSingleAsync(models);
+        var result = await DummyModel.SaveSingleAsync(mockService.Object, models);
 
         // Assert
         Assert.Empty(result.Succeeded);
@@ -579,12 +506,8 @@ public class KintoneModelBaseSaveTests {
             .Setup(s => s.SaveWithRetryAsync(models, true, true))
             .ReturnsAsync(expectedResult);
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await DummyModel.SaveWithRetryBulkAsync(models, enableSingleRetryOnError: true, enableCreateToUpdateRetry: true);
+        var result = await DummyModel.SaveWithRetryBulkAsync(mockService.Object, models, enableSingleRetryOnError: true, enableCreateToUpdateRetry: true);
 
         // Assert
         Assert.Equal(2, result.Succeeded.Count);
@@ -619,12 +542,8 @@ public class KintoneModelBaseSaveTests {
             .Setup(s => s.SaveWithRetryAsync(models, false, true))
             .ReturnsAsync(expectedResult);
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await DummyModel.SaveWithRetryBulkAsync(models, enableSingleRetryOnError: false, enableCreateToUpdateRetry: true);
+        var result = await DummyModel.SaveWithRetryBulkAsync(mockService.Object, models, enableSingleRetryOnError: false, enableCreateToUpdateRetry: true);
 
         // Assert
         Assert.Single(result.Succeeded);
@@ -665,12 +584,8 @@ public class KintoneModelBaseSaveTests {
             .Setup(s => s.SaveWithRetryAsync(models, false, false))
             .ReturnsAsync(expectedResult);
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await DummyModel.SaveWithRetryBulkAsync(models, enableSingleRetryOnError: false, enableCreateToUpdateRetry: false);
+        var result = await DummyModel.SaveWithRetryBulkAsync(mockService.Object, models, enableSingleRetryOnError: false, enableCreateToUpdateRetry: false);
 
         // Assert
         Assert.Empty(result.Succeeded);
@@ -691,37 +606,17 @@ public class KintoneModelBaseSaveTests {
         var model = new DummyModel { RecordID = "10001", FieldA = "Retryable", FieldB = 5 };
         var models = new List<DummyModel> { model };
 
-        // 初回失敗 → リトライ成功を模擬
-        var initialFailure = new KintoneWriteResult<DummyModel> {
-            Failed = [
-                new KintoneWriteFailure<DummyModel> {
-                    Record = model,
-                    ErrorMessage = "Record already exists"
-                }
-            ]
-        };
         var retrySuccess = new KintoneWriteResult<DummyModel> {
             Succeeded = [model]
         };
 
         var mockService = new Mock<IKintoneModelCrudService>();
-
-        // 呼び出し回数をカウントして、1回目は失敗、2回目は成功を返す
-        // int callCount = 0;
         mockService
             .Setup(s => s.SaveWithRetryAsync(models, true, true))
             .ReturnsAsync(retrySuccess);
-        // .ReturnsAsync(() => {
-        //     callCount++;
-        //     return callCount == 1 ? initialFailure : retrySuccess;
-        // });
-
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
 
         // Act
-        var result = await DummyModel.SaveWithRetryBulkAsync(models, enableSingleRetryOnError: true, enableCreateToUpdateRetry: true);
+        var result = await DummyModel.SaveWithRetryBulkAsync(mockService.Object, models, enableSingleRetryOnError: true, enableCreateToUpdateRetry: true);
 
         // Assert
         Assert.Single(result.Succeeded);
@@ -750,18 +645,12 @@ public class KintoneModelBaseSaveTests {
         };
 
         var mockService = new Mock<IKintoneModelCrudService>();
-
-        // 何度呼ばれても失敗を返す
         mockService
             .Setup(s => s.SaveWithRetryAsync(models, true, true))
             .ReturnsAsync(failureResult);
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await DummyModel.SaveWithRetryBulkAsync(models, enableSingleRetryOnError: true, enableCreateToUpdateRetry: true);
+        var result = await DummyModel.SaveWithRetryBulkAsync(mockService.Object, models, enableSingleRetryOnError: true, enableCreateToUpdateRetry: true);
 
         // Assert
         Assert.Empty(result.Succeeded);
@@ -797,12 +686,8 @@ public class KintoneModelBaseSaveTests {
             .Setup(s => s.SaveWithRetryAsync(It.Is<IList<DummyModel>>(l => l.Count == 1 && l[0] == model2), false, true))
             .ReturnsAsync(success2);
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await DummyModel.SaveWithRetrySingleAsync(models, enableSingleRetryOnError: false, enableCreateToUpdateRetry: true);
+        var result = await DummyModel.SaveWithRetrySingleAsync(mockService.Object, models, enableSingleRetryOnError: false, enableCreateToUpdateRetry: true);
 
         // Assert
         Assert.Equal(2, result.Succeeded.Count);
@@ -843,12 +728,8 @@ public class KintoneModelBaseSaveTests {
             .Setup(s => s.SaveWithRetryAsync(It.Is<IList<DummyModel>>(l => l[0] == model2), false, true))
             .ReturnsAsync(failureResult);
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await DummyModel.SaveWithRetrySingleAsync(models, enableSingleRetryOnError: false, enableCreateToUpdateRetry: true);
+        var result = await DummyModel.SaveWithRetrySingleAsync(mockService.Object, models, enableSingleRetryOnError: false, enableCreateToUpdateRetry: true);
 
         // Assert
         Assert.Single(result.Succeeded);
@@ -870,20 +751,11 @@ public class KintoneModelBaseSaveTests {
         var model2 = new DummyModel { RecordID = "12002", FieldA = "A2", FieldB = 2 };
         var models = new List<DummyModel> { model1, model2 };
 
-        var failure1 = new KintoneWriteFailure<DummyModel> {
-            Record = model1,
-            ErrorMessage = "Save failed for model1"
-        };
-        var failure2 = new KintoneWriteFailure<DummyModel> {
-            Record = model2,
-            ErrorMessage = "Save failed for model2"
-        };
-
         var failureResult1 = new KintoneWriteResult<DummyModel> {
-            Failed = [failure1]
+            Failed = [new KintoneWriteFailure<DummyModel> { Record = model1, ErrorMessage = "Save failed for model1" }]
         };
         var failureResult2 = new KintoneWriteResult<DummyModel> {
-            Failed = [failure2]
+            Failed = [new KintoneWriteFailure<DummyModel> { Record = model2, ErrorMessage = "Save failed for model2" }]
         };
 
         var mockService = new Mock<IKintoneModelCrudService>();
@@ -894,12 +766,8 @@ public class KintoneModelBaseSaveTests {
             .Setup(s => s.SaveWithRetryAsync(It.Is<IList<DummyModel>>(l => l[0] == model2), false, true))
             .ReturnsAsync(failureResult2);
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await DummyModel.SaveWithRetrySingleAsync(models, enableSingleRetryOnError: false, enableCreateToUpdateRetry: true);
+        var result = await DummyModel.SaveWithRetrySingleAsync(mockService.Object, models, enableSingleRetryOnError: false, enableCreateToUpdateRetry: true);
 
         // Assert
         Assert.Empty(result.Succeeded);
@@ -921,34 +789,17 @@ public class KintoneModelBaseSaveTests {
         var model = new DummyModel { RecordID = "12001", FieldA = "A1", FieldB = 1 };
         var models = new List<DummyModel> { model };
 
-        var failureResult = new KintoneWriteResult<DummyModel> {
-            Failed = [
-                new KintoneWriteFailure<DummyModel> {
-                    Record = model,
-                    ErrorMessage = "Initial failure"
-                }
-            ]
-        };
         var successResult = new KintoneWriteResult<DummyModel> {
             Succeeded = [model]
         };
 
-        // var callCount = 0;
         var mockService = new Mock<IKintoneModelCrudService>();
         mockService
             .Setup(s => s.SaveWithRetryAsync(It.Is<IList<DummyModel>>(l => l[0] == model), true, true))
             .ReturnsAsync(successResult);
-        // .ReturnsAsync(() => {
-        //     callCount++;
-        //     return callCount == 1 ? failureResult : successResult;
-        // });
-
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
 
         // Act
-        var result = await DummyModel.SaveWithRetrySingleAsync(models, enableSingleRetryOnError: true, enableCreateToUpdateRetry: true);
+        var result = await DummyModel.SaveWithRetrySingleAsync(mockService.Object, models, enableSingleRetryOnError: true, enableCreateToUpdateRetry: true);
 
         // Assert
         Assert.Single(result.Succeeded);
@@ -967,34 +818,17 @@ public class KintoneModelBaseSaveTests {
         var model = new DummyModel { RecordID = "12001", FieldA = "A1", FieldB = 1 };
         var models = new List<DummyModel> { model };
 
-        var failure1 = new KintoneWriteFailure<DummyModel> {
-            Record = model,
-            ErrorMessage = "Initial failure"
-        };
-        var failure2 = new KintoneWriteFailure<DummyModel> {
-            Record = model,
-            ErrorMessage = "Retry failure"
-        };
-
-        var failureResult1 = new KintoneWriteResult<DummyModel> {
-            Failed = [failure1]
-        };
         var failureResult2 = new KintoneWriteResult<DummyModel> {
-            Failed = [failure2]
+            Failed = [new KintoneWriteFailure<DummyModel> { Record = model, ErrorMessage = "Retry failure" }]
         };
 
-        var callCount = 0;
         var mockService = new Mock<IKintoneModelCrudService>();
         mockService
             .Setup(s => s.SaveWithRetryAsync(It.Is<IList<DummyModel>>(l => l[0] == model), true, true))
             .ReturnsAsync(failureResult2);
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await DummyModel.SaveWithRetrySingleAsync(models, enableSingleRetryOnError: true, enableCreateToUpdateRetry: true);
+        var result = await DummyModel.SaveWithRetrySingleAsync(mockService.Object, models, enableSingleRetryOnError: true, enableCreateToUpdateRetry: true);
 
         // Assert
         Assert.Empty(result.Succeeded);

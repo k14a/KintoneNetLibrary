@@ -2,8 +2,6 @@ using KintoneNetLibrary.Domain.Access;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Domain.Enums;
 using KintoneNetLibrary.Domain.Interfaces;
-using KintoneNetLibrary.Infrastructure.Helpers;
-using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Xunit;
 
@@ -44,12 +42,8 @@ public class KintoneModelBaseUpdateTests {
             .Setup(s => s.UpdateAsync(It.Is<IList<DummyModel>>(arr => arr.Count == 1 && arr[0] == model), false))
             .ReturnsAsync(expectedResult);
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await model.UpdateAsync();
+        var result = await model.UpdateAsync(mockService.Object);
 
         // Assert
         Assert.Single(result.Succeeded);
@@ -79,12 +73,8 @@ public class KintoneModelBaseUpdateTests {
             .Setup(s => s.UpdateAsync(It.Is<IList<DummyModel>>(arr => arr.Count == 1 && arr[0] == model), false))
             .ReturnsAsync(expectedResult);
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await model.UpdateAsync();
+        var result = await model.UpdateAsync(mockService.Object);
 
         // Assert
         Assert.Empty(result.Succeeded);
@@ -107,12 +97,8 @@ public class KintoneModelBaseUpdateTests {
             .Setup(s => s.UpdateAsync(It.Is<IList<DummyModel>>(arr => arr.Count == 1 && arr[0] == model), true))
             .ReturnsAsync(new KintoneWriteResult<DummyModel> { Succeeded = [model] });
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await model.UpdateAsync(enableSingleRetryOnError: true);
+        var result = await model.UpdateAsync(mockService.Object, enableSingleRetryOnError: true);
 
         // Assert
         Assert.Single(result.Succeeded);
@@ -139,12 +125,8 @@ public class KintoneModelBaseUpdateTests {
             .Setup(s => s.UpdateAsync(It.Is<IList<DummyModel>>(arr => arr.SequenceEqual(models)), false))
             .ReturnsAsync(expectedResult);
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await DummyModel.UpdateBulkAsync(models);
+        var result = await DummyModel.UpdateBulkAsync(mockService.Object, models);
 
         // Assert
         Assert.Equal(2, result.Succeeded.Count);
@@ -178,12 +160,8 @@ public class KintoneModelBaseUpdateTests {
             .Setup(s => s.UpdateAsync(It.Is<IList<DummyModel>>(arr => arr.SequenceEqual(models)), false))
             .ReturnsAsync(expectedResult);
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await DummyModel.UpdateBulkAsync(models);
+        var result = await DummyModel.UpdateBulkAsync(mockService.Object, models);
 
         // Assert
         Assert.Equal(2, result.Succeeded.Count);
@@ -211,12 +189,8 @@ public class KintoneModelBaseUpdateTests {
             .Setup(s => s.UpdateAsync(It.Is<IList<DummyModel>>(arr => arr.SequenceEqual(models)), true))
             .ReturnsAsync(new KintoneWriteResult<DummyModel> { Succeeded = models });
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await DummyModel.UpdateBulkAsync(models, enableSingleRetryOnError: true);
+        var result = await DummyModel.UpdateBulkAsync(mockService.Object, models, enableSingleRetryOnError: true);
 
         // Assert
         Assert.Equal(2, result.Succeeded.Count);
@@ -237,12 +211,8 @@ public class KintoneModelBaseUpdateTests {
             .Setup(s => s.UpdateAsync(It.Is<IList<DummyModel>>(arr => arr.Count == 0), false))
             .ReturnsAsync(new KintoneWriteResult<DummyModel>());
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await DummyModel.UpdateBulkAsync(models);
+        var result = await DummyModel.UpdateBulkAsync(mockService.Object, models);
 
         // Assert
         Assert.Empty(result.Succeeded);
@@ -268,12 +238,8 @@ public class KintoneModelBaseUpdateTests {
             .Setup(s => s.UpdateAsync(It.Is<IList<DummyModel>>(arr => arr.Count == 1 && arr[0] == model2), false))
             .ReturnsAsync(new KintoneWriteResult<DummyModel> { Succeeded = [model2] });
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await DummyModel.UpdateSingleAsync(models);
+        var result = await DummyModel.UpdateSingleAsync(mockService.Object, models);
 
         // Assert
         Assert.Equal(2, result.Succeeded.Count);
@@ -310,12 +276,8 @@ public class KintoneModelBaseUpdateTests {
             .Setup(s => s.UpdateAsync(It.Is<IList<DummyModel>>(arr => arr.Count == 1 && arr[0] == model3), false))
             .ReturnsAsync(new KintoneWriteResult<DummyModel> { Succeeded = [model3] });
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await DummyModel.UpdateSingleAsync(models);
+        var result = await DummyModel.UpdateSingleAsync(mockService.Object, models);
 
         // Assert
         Assert.Equal(2, result.Succeeded.Count);
@@ -342,12 +304,8 @@ public class KintoneModelBaseUpdateTests {
             .Setup(s => s.UpdateAsync(It.Is<IList<DummyModel>>(arr => arr.Count == 1), true))
             .ReturnsAsync((IList<DummyModel> arr, bool _) => new KintoneWriteResult<DummyModel> { Succeeded = [arr[0]] });
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await DummyModel.UpdateSingleAsync(models, enableSingleRetryOnError: true);
+        var result = await DummyModel.UpdateSingleAsync(mockService.Object, models, enableSingleRetryOnError: true);
 
         // Assert
         Assert.Equal(2, result.Succeeded.Count);
@@ -365,12 +323,8 @@ public class KintoneModelBaseUpdateTests {
 
         var mockService = new Mock<IKintoneModelCrudService>();
 
-        var services = new ServiceCollection();
-        services.AddSingleton(mockService.Object);
-        KintoneServiceLocator.Initialize(services.BuildServiceProvider());
-
         // Act
-        var result = await DummyModel.UpdateSingleAsync(models);
+        var result = await DummyModel.UpdateSingleAsync(mockService.Object, models);
 
         // Assert
         Assert.Empty(result.Succeeded);

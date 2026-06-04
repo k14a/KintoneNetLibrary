@@ -26,12 +26,12 @@ public class KintoneModelCrudService(IServiceProvider provider) : IKintoneModelC
     }
 
     /// <summary>
-    /// 既存のレコードを更新します
+    /// 既存のレコードを削除します
     /// </summary>
     /// <typeparam name="T">モデルの型</typeparam>
-    /// <param name="models">更新対象のモデルリスト</param>
+    /// <param name="models">削除対象のモデルリスト</param>
     /// <param name="validateExistence">存在確認を行うかどうか</param>
-    /// <returns>削除結果のインデックス情報</returns>
+    /// <returns>削除されたレコードの情報</returns>
     public Task<KintoneDeleteResult> DeleteAsync<T>(IList<T> models, bool validateExistence = true) where T : KintoneModelBase<T>, new() {
         // Typed CRUD を解決して委譲
         var typed = this._provider.GetRequiredService<IKintoneTypedCrudService<T>>();
