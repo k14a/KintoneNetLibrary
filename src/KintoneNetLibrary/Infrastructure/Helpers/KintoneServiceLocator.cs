@@ -1,3 +1,5 @@
+using KintoneNetLibrary.Domain.Common;
+using KintoneNetLibrary.Domain.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace KintoneNetLibrary.Infrastructure.Helpers;
@@ -15,6 +17,7 @@ public static class KintoneServiceLocator {
     /// <exception cref="ArgumentNullException">provider が null の場合にスローされます</exception>
     public static void Initialize(IServiceProvider provider) {
         _provider = provider ?? throw new ArgumentNullException(nameof(provider));
+        KintoneModelContext.Configure(() => _provider.GetRequiredService<IKintoneModelCrudService>());
     }
     /// <summary>
     /// サービスの解決
@@ -33,6 +36,7 @@ public static class KintoneServiceLocator {
     /// </summary>
     public static void Reset() {
         _provider = null;
+        KintoneModelContext.Reset();
     }
 }
 

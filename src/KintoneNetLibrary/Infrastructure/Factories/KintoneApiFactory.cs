@@ -1,7 +1,8 @@
-using KintoneNetLibrary.Infrastructure.Api;
+using KintoneNetLibrary.Application.Interfaces;
 using KintoneNetLibrary.Domain.Entities;
-using Microsoft.Extensions.Logging;
 using KintoneNetLibrary.Domain.Interfaces;
+using KintoneNetLibrary.Infrastructure.Api;
+using Microsoft.Extensions.Logging;
 
 namespace KintoneNetLibrary.Infrastructure.Factories;
 
@@ -20,7 +21,7 @@ public class KintoneApiFactory(IHttpClientFactory httpClientFactory, ILogger<Kin
     /// <typeparam name="T">KintoneModelBaseを継承したモデルの型</typeparam>
     /// <param name="model">モデルのインスタンス</param>
     /// <returns>生成されたKintoneApiのインスタンス</returns>
-    public KintoneApi Create<T>(T model) where T : KintoneModelBase<T>, new() {
+    public IKintoneApi Create<T>(T model) where T : KintoneModelBase<T>, new() {
         // var client = this._httpClientFactory.CreateClient("Kintone");
         return new KintoneApi(model.Access, model.AppID, this._httpClientFactory, this._logger);
     }

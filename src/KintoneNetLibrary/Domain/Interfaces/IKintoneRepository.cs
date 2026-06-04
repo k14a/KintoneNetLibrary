@@ -1,5 +1,4 @@
 using KintoneNetLibrary.Domain.Entities;
-using KintoneNetLibrary.Application.UseCases;
 
 namespace KintoneNetLibrary.Domain.Interfaces;
 
@@ -64,22 +63,14 @@ public interface IKintoneRepository {
     /// <returns>検索結果を示す文字列</returns>
     Task<string?> FindByFieldAsync<T>(T model, string field, string value) where T : KintoneModelBase<T>, new();
     /// <summary>
-    /// KintoneQueryでレコードを検索する非同期メソッド
-    /// </summary>
-    /// <typeparam name="T">Kintoneモデルの型</typeparam>
-    /// <param name="model">Kintoneモデルのインスタンス</param>
-    /// <param name="query">検索クエリ</param>
-    /// <param name="fieldCodes">取得するフィールドコードのリスト</param>
-    /// <returns>検索結果を示す文字列</returns>
-    Task<string?> FindByKintoneQueryAsync<T>(T model, KintoneQuery<T> query, IList<string>? fieldCodes = null) where T : KintoneModelBase<T>, new();
-    /// <summary>
     /// クエリでレコードを検索する非同期メソッド
     /// </summary>
     /// <typeparam name="T">Kintoneモデルの型</typeparam>
     /// <param name="model">Kintoneモデルのインスタンス</param>
     /// <param name="queryStr">検索クエリ文字列</param>
+    /// <param name="fieldCodes">取得するフィールドコードのリスト</param>
     /// <returns>検索結果を示す文字列</returns>
-    Task<string?> FindByQueryAsync<T>(T model, string queryStr) where T : KintoneModelBase<T>, new();
+    Task<string?> FindByQueryAsync<T>(T model, string queryStr, IList<string>? fieldCodes = null) where T : KintoneModelBase<T>, new();
     /// <summary>
     /// ファイルをアップロードする非同期メソッド
     /// </summary>

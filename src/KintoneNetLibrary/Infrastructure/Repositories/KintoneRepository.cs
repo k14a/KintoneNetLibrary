@@ -1,7 +1,6 @@
-using KintoneNetLibrary.Application.UseCases;
+using KintoneNetLibrary.Application.Interfaces;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Domain.Interfaces;
-using KintoneNetLibrary.Infrastructure.Api;
 using KintoneNetLibrary.Infrastructure.Helpers;
 
 namespace KintoneNetLibrary.Infrastructure.Repositories;
@@ -19,7 +18,7 @@ public class KintoneRepository(IKintoneApiFactory factory) : IKintoneRepository 
     /// <typeparam name="T">モデルの型</typeparam>
     /// <param name="model">モデルのインスタンス</param>
     /// <returns>対応する KintoneApi のインスタンス</returns>
-    private KintoneApi ResolveApi<T>(T model) where T : KintoneModelBase<T>, new() {
+    private IKintoneApi ResolveApi<T>(T model) where T : KintoneModelBase<T>, new() {
         return this._factory.Create(model);
     }
 
@@ -100,26 +99,14 @@ public class KintoneRepository(IKintoneApiFactory factory) : IKintoneRepository 
     }
 
     /// <summary>
-    /// KintoneQuery でレコードを検索
-    /// </summary>
-    /// <typeparam name="T">モデルの型</typeparam>
-    /// <param name="model">モデルのインスタンス</param>
-    /// <param name="query">検索するKintoneQuery</param>
-    /// <param name="fieldCodes">取得するフィールドコードのリスト</param>
-    /// <returns>検索結果の JSON 文字列</returns>
-    public async Task<string?> FindByKintoneQueryAsync<T>(T model, KintoneQuery<T> query, IList<string>? fieldCodes = null) where T : KintoneModelBase<T>, new() {
-        return await this.ExecuteFindAsync(model, api => api.FindByKintoneQueryAsync<T>(query, fieldCodes));
-    }
-
-    /// <summary>
     /// クエリでレコードを検索
     /// </summary>
     /// <typeparam name="T">モデルの型</typeparam>
     /// <param name="model">モデルのインスタンス</param>
     /// <param name="queryStr">検索対象のクエリ文字列</param>
     /// <returns>検索結果の JSON 文字列</returns>
-    public async Task<string?> FindByQueryAsync<T>(T model, string queryStr) where T : KintoneModelBase<T>, new() {
-        return await this.ExecuteFindAsync(model, api => api.FindByQueryAsync<T>(queryStr));
+    public async Task<string?> FindByQueryAsync<T>(T model, string queryStr, IList<string>? fieldCodes = null) where T : KintoneModelBase<T>, new() {
+        return await this.ExecuteFindAsync(model, api => api.FindByQueryAsync<T>(queryStr, fieldCodes));
     }
 
     /// <summary>
@@ -168,7 +155,7 @@ public class KintoneRepository(IKintoneApiFactory factory) : IKintoneRepository 
     /// <param name="jsonBuilder">JSON 文字列生成のデリゲート</param>
     /// <returns>操作結果の JSON 文字列</returns>
     /// <exception cref="ArgumentException">レコードリストが空の場合にスローされます</exception>
-    private async Task<string> ExecuteCudAsync<T>(IList<T> records, Func<KintoneApi, string, Task<string>> apiInvoker, Func<IList<T>, string> jsonBuilder) where T : KintoneModelBase<T>, new() {
+    private async Task<string> ExecuteCudAsync<T>(IList<T> records, Func<IKintoneApi, string, Task<string>> apiInvoker, Func<IList<T>, string> jsonBuilder) where T : KintoneModelBase<T>, new() {
         if (records.Count == 0) { throw new ArgumentException("Records list cannot be empty.", nameof(records)); }
 
         var api = this.ResolveApi(records[0]);
@@ -183,7 +170,7 @@ public class KintoneRepository(IKintoneApiFactory factory) : IKintoneRepository 
     /// <param name="model">モデルのインスタンス</param>
     /// <param name="apiCall">API 呼び出しのデリゲート</param>
     /// <returns>検索結果の JSON 文字列</returns>
-    private async Task<string?> ExecuteFindAsync<T>(T model, Func<KintoneApi, Task<string>> apiCall) where T : KintoneModelBase<T>, new() {
+    private async Task<string?> ExecuteFindAsync<T>(T model, Func<IKintoneApi, Task<string?>> apiCall) where T : KintoneModelBase<T>, new() {
         var api = this.ResolveApi(model);
         return await apiCall(api);
     }

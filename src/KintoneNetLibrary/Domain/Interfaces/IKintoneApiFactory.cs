@@ -1,4 +1,4 @@
-using KintoneNetLibrary.Infrastructure.Api;
+using KintoneNetLibrary.Application.Interfaces;
 using KintoneNetLibrary.Domain.Entities;
 
 namespace KintoneNetLibrary.Domain.Interfaces;
@@ -13,5 +13,5 @@ public interface IKintoneApiFactory {
     /// <typeparam name="T">Kintoneモデルの型</typeparam>
     /// <param name="model">Kintoneモデルのインスタンス</param>
     /// <returns>Kintone API インスタンス</returns>
-    KintoneApi Create<T>(T model) where T : KintoneModelBase<T>, new();
+    IKintoneApi Create<T>(T model) where T : KintoneModelBase<T>, new();
 }

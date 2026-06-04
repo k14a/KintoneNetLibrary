@@ -164,7 +164,7 @@ public class KintoneTypedCrudService<T>(
                 return records ?? [];
 
             } else if (kintoneQuery != null) {
-                var json = await this._repository.FindByKintoneQueryAsync(model, kintoneQuery, fieldCodes);
+                var json = await this._repository.FindByQueryAsync(model, kintoneQuery.Build(), fieldCodes);
                 if (string.IsNullOrEmpty(json)) { return []; }
 
                 var records = KintoneResponseParser.ParseRecords<T>(json);

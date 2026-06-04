@@ -1,3 +1,4 @@
+using KintoneNetLibrary.Application.UseCases;
 using KintoneNetLibrary.Domain.Entities;
 using System.Text.Json;
 
@@ -105,6 +106,15 @@ public interface IKintoneApi {
     /// <param name="fieldCodes">取得するフィールドコードのリスト（オプション）</param>
     /// <returns></returns>
     Task RawFindByFieldAsStreamAsync(Stream output, string field, string value, IList<string>? fieldCodes = null);
+
+    /// <summary>
+    /// KintoneQueryで検索
+    /// </summary>
+    /// <typeparam name="T">取得するレコードの型</typeparam>
+    /// <param name="query">検索するKintoneQuery</param>
+    /// <param name="fieldCodes">取得するフィールドコードのリスト（オプション）</param>
+    /// <returns>取得されたレコードのJSON文字列</returns>
+    Task<string?> FindByKintoneQueryAsync<T>(KintoneQuery<T> query, IList<string>? fieldCodes = null) where T : KintoneModelBase<T>, new();
 
     /// <summary>
     /// クエリ文字列で検索
