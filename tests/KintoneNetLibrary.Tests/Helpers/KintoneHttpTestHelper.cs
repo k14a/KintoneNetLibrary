@@ -64,7 +64,11 @@ public static class KintoneHttpTestHelper {
 
                 var name = content.Headers.ContentDisposition?.Name?.Trim('"');
                 var fileName = content.Headers.ContentDisposition?.FileName?.Trim('"');
-                newMultipart.Add(newContent, name!, fileName);
+                if (fileName != null) {
+                    newMultipart.Add(newContent, name!, fileName);
+                } else {
+                    newMultipart.Add(newContent, name!);
+                }
             }
 
             foreach (var header in multipart.Headers) {

@@ -7,12 +7,12 @@ public interface IKintoneFileApi {
     /// <summary>
     /// ファイルをアップロードします
     /// </summary>
-    Task<string> UploadFileAsync(Stream stream, string fileName);
+    Task<string> UploadFileAsync(Stream stream, string? fileName);
 
     /// <summary>
     /// ファイルをアップロードします（キャンセルトークン付き）
     /// </summary>
-    Task<string> UploadFileAsync(Stream stream, string fileName, CancellationToken cancellationToken);
+    Task<string> UploadFileAsync(Stream stream, string? fileName, CancellationToken cancellationToken);
 
     /// <summary>
     /// ファイルをアップロードします

@@ -212,7 +212,7 @@ public class KintoneDateTime : IKintoneFieldConverter {
     /// <returns>DateTimeの値</returns>
     /// <exception cref="ArgumentNullException">kdtがnullの場合</exception>
     /// <exception cref="InvalidOperationException">KintoneDateTimeに値が設定されていない場合</exception>
-    public static implicit operator DateTime(KintoneDateTime kdt) {
+    public static implicit operator DateTime(KintoneDateTime? kdt) {
         return kdt?.Value ?? default;
     }
 }

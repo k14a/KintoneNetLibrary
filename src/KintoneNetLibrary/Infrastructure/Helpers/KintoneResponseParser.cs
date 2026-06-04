@@ -53,7 +53,8 @@ public static class KintoneResponseParser {
     /// <param name="json">解析対象の JSON 文字列</param>
     /// <returns>解析結果のモデル</returns>
     /// <exception cref="InvalidOperationException">JSON に 'record' プロパティが存在しない場合にスローされます</exception>
-    public static T ParseRecord<T>(string json) where T : KintoneModelBase<T>, new() {
+    public static T ParseRecord<T>(string? json) where T : KintoneModelBase<T>, new() {
+        ArgumentNullException.ThrowIfNull(json);
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
 
@@ -73,7 +74,8 @@ public static class KintoneResponseParser {
     /// <param name="json">解析対象の JSON 文字列</param>
     /// <returns>解析結果のモデルのリスト</returns>
     /// <exception cref="InvalidOperationException">JSON に 'records' プロパティが存在しない場合にスローされます</exception>
-    public static IList<T> ParseRecords<T>(string json) where T : KintoneModelBase<T>, new() {
+    public static IList<T> ParseRecords<T>(string? json) where T : KintoneModelBase<T>, new() {
+        ArgumentNullException.ThrowIfNull(json);
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
 

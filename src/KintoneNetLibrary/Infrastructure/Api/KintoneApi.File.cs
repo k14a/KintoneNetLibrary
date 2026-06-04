@@ -19,7 +19,7 @@ public partial class KintoneApi : IKintoneApi {
     /// <param name="stream">アップロードするストリーム</param>
     /// <param name="fileName">アップロードするファイル名</param>
     /// <returns>アップロードされたファイルの fileKey</returns>
-    public async Task<string> UploadFileAsync(Stream stream, string fileName) {
+    public async Task<string> UploadFileAsync(Stream stream, string? fileName) {
         return await this.UploadFileInternalAsync(stream, fileName, CancellationToken.None);
     }
     /// <summary>
@@ -29,7 +29,7 @@ public partial class KintoneApi : IKintoneApi {
     /// <param name="fileName">アップロードするファイル名</param>
     /// <param name="cancellationToken">キャンセルトークン</param>
     /// <returns>アップロードされたファイルの fileKey</returns>
-    public async Task<string> UploadFileAsync(Stream stream, string fileName, CancellationToken cancellationToken) {
+    public async Task<string> UploadFileAsync(Stream stream, string? fileName, CancellationToken cancellationToken) {
         return await this.UploadFileInternalAsync(stream, fileName, cancellationToken);
     }
     /// <summary>
@@ -55,7 +55,7 @@ public partial class KintoneApi : IKintoneApi {
     /// <returns>アップロードされたファイルの fileKey</returns>
     /// <exception cref="InvalidOperationException">ストリームがシーク不可能な場合や空のファイルの場合にスローされます</exception>
     /// <exception cref="KintoneException">Kintone API からのエラーが発生した場合にスローされます</exception>
-    private async Task<string> UploadFileInternalAsync(Stream stream, string fileName, CancellationToken cancellationToken) {
+    private async Task<string> UploadFileInternalAsync(Stream stream, string? fileName, CancellationToken cancellationToken) {
         ArgumentNullException.ThrowIfNull(stream);
         fileName ??= "";
 

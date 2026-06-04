@@ -68,7 +68,11 @@ internal static class HttpRequestMessageExtensions {
                 var name = part.Headers.ContentDisposition?.Name?.Trim('"');
                 var fileName = part.Headers.ContentDisposition?.FileName?.Trim('"');
 
-                newMultipart.Add(partClone, name!, fileName);
+                if (fileName != null) {
+                    newMultipart.Add(partClone, name!, fileName);
+                } else {
+                    newMultipart.Add(partClone, name!);
+                }
             }
 
             foreach (var header in multipart.Headers) {

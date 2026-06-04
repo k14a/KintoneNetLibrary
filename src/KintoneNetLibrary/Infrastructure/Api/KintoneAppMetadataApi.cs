@@ -14,11 +14,11 @@ namespace KintoneNetLibrary.Infrastructure.Api;
 /// <param name="httpClientFactory">HTTPクライアントファクトリ</param>
 /// <param name="fieldParser"></param>
 /// <param name="logger">ロガー</param>
-public class KintoneAppMetadataApi(IHttpClientFactory httpClientFactory, IKintoneFieldParser fieldParser, ILogger<KintoneAppMetadataApi> logger) : IKintoneAppMetadataApi {
+public class KintoneAppMetadataApi(IHttpClientFactory httpClientFactory, IKintoneFieldParser fieldParser, ILogger<KintoneAppMetadataApi>? logger = null) : IKintoneAppMetadataApi {
 
     private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
     private readonly IKintoneFieldParser _fieldParser = fieldParser;
-    private readonly ILogger<KintoneAppMetadataApi> _logger = logger;
+    private readonly ILogger<KintoneAppMetadataApi>? _logger = logger;
 
     // ---------------------------------------------------------
     // 共通ユーティリティ（BaseKintoneApi の代替）

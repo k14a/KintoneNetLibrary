@@ -37,7 +37,7 @@ public class KintoneApiCrudTests {
         Assert.Single(createParsed);
 
         // Read（検索条件は ID）
-        var recordId = createParsed.First().ID;
+        var recordId = createParsed.First().ID!;
         var found = await api.FindByIDAsync<BookModel>(recordId);
         var record = KintoneResponseParser.ParseRecord<BookModel>(found);
         Assert.NotNull(record);
