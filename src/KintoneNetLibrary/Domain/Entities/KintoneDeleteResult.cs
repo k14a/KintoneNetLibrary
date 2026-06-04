@@ -1,7 +1,8 @@
 using System.Text.Json;
-using KintoneNetLibrary.Domain.Interfaces;
-using KintoneNetLibrary.Utils;
 using KintoneNetLibrary.Domain.Common;
+using KintoneNetLibrary.Domain.Interfaces;
+using KintoneNetLibrary.Extensions;
+using KintoneNetLibrary.Utils;
 
 namespace KintoneNetLibrary.Domain.Entities;
 
@@ -35,6 +36,15 @@ public class KintoneDeleteResult {
         if (this.HasFailures) {
             throw new KintoneDeleteException(this.Failed);
         }
+    }
+
+    /// <summary>
+    /// 他のKintoneDeleteResultの内容をマージします
+    /// </summary>
+    /// <param name="other">マージするKintoneDeleteResult</param>
+    public void Merge(KintoneDeleteResult other) {
+        this.Succeeded.AddRange(other.Succeeded);
+        this.Failed.AddRange(other.Failed);
     }
 
     /// <summary>

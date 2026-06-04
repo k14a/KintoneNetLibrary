@@ -115,14 +115,14 @@ SRP の段階的分離として適切であり、これ以上の責任分離は�
 ## 4. 重複コード
 
 ### 4-1. `BulkAsync` / `SingleAsync` の実装パターンが重複している
-- [ ] **対象ファイル**: [`src/KintoneNetLibrary/Domain/Entities/KintoneModelBase.Crud.cs`](src/KintoneNetLibrary/Domain/Entities/KintoneModelBase.Crud.cs)
+- [x] **対象ファイル**: [`src/KintoneNetLibrary/Domain/Entities/KintoneModelBase.Crud.cs`](src/KintoneNetLibrary/Domain/Entities/KintoneModelBase.Crud.cs)
 - **問題**: `CreateBulkAsync`/`CreateSingleAsync`、`UpdateBulkAsync`/`UpdateSingleAsync`、`DeleteBulkAsync`/`DeleteSingleAsync`、`SaveBulkAsync`/`SaveSingleAsync`、`SaveWithRetryBulkAsync`/`SaveWithRetrySingleAsync` で、「Single 版は Bulk 版をループで呼ぶ」という同じパターンが 5 回繰り返されている。
-- **対応方針**: `ExecuteInBatchOrSingle<T>(models, operation, isBulk)` のような共通メソッドに集約する。
+- **対応方針**: プライベートヘルパー `RunSingleWriteAsync`（書き込み系4種）と `RunSingleDeleteAsync<TItem>`（削除系2種）に集約した。あわせて `KintoneDeleteResult` に `Merge` メソッドを追加。
 
 ### 4-2. 各 `BulkAsync` と `SingleAsync` 内での `KintoneServiceLocator.Resolve` の重複呼び出し
-- [ ] **対象ファイル**: [`src/KintoneNetLibrary/Domain/Entities/KintoneModelBase.Crud.cs`](src/KintoneNetLibrary/Domain/Entities/KintoneModelBase.Crud.cs)
+- [x] **対象ファイル**: [`src/KintoneNetLibrary/Domain/Entities/KintoneModelBase.Crud.cs`](src/KintoneNetLibrary/Domain/Entities/KintoneModelBase.Crud.cs)
 - **問題**: 全 static メソッドがそれぞれ `KintoneServiceLocator.Resolve<IKintoneModelCrudService>()` を呼び出している（インスタンスメソッドは `this.Service` プロパティを使用）。
-- **対応方針**: 項目 3-1 の対応と合わせて解消する。
+- **対応方針**: 項目 3-1 にて `KintoneServiceLocator` を削除し、明示的サービス引数に変更済みのため解消。
 
 ---
 
