@@ -34,7 +34,7 @@ public partial class KintoneApi : IKintoneApi {
 
         using var response = await this._httpClient.SendAsync(request);
         var json = await response.Content.ReadAsStringAsync();
-        this._logger?.LogTrace(json);
+        if (this._logger != null) { _logTraceException(this._logger, json, null); }
 
         if (!response.IsSuccessStatusCode) {
             throw new KintoneException(KintoneErrorConverter.Parse(json));
@@ -126,7 +126,7 @@ public partial class KintoneApi : IKintoneApi {
     /// <param name="fieldCodes">取得するフィールドコードのリスト</param>
     /// <returns>取得したレコードのJSON文字列</returns>
     public async Task<string?> FindByQueryAsync<T>(string queryStr, IList<string>? fieldCodes = null) where T : KintoneModelBase<T>, new() {
-        KintoneQueryValidator.ValidateLikeClause(queryStr, msg => this._logger?.LogWarning(msg));
+        KintoneQueryValidator.ValidateLikeClause(queryStr, msg => { if (this._logger != null) { _logWarningException(this._logger, msg, null); } });
         var query = new KintoneQuery<T>().SetQuery(queryStr);
         return await this.FindBaseJsonAsync(query, fieldCodes: fieldCodes);
     }

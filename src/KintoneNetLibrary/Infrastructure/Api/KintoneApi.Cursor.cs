@@ -83,12 +83,12 @@ public partial class KintoneApi : IKintoneApi
         var response = await this._httpClient.SendAsync(request);
         var json = await response.Content.ReadAsStringAsync();
 
-        this._logger?.LogDebug("FetchCursorRawJson received: {Json}", json);
+        if (this._logger != null) { _logDebugException(this._logger, $"FetchCursorRawJson received: {json}", null); }
 
         if (!response.IsSuccessStatusCode)
         {
             var error = KintoneErrorConverter.Parse(json);
-            this._logger?.LogError("FetchCursorRawJson failed: {Message}", error.Message);
+            if (this._logger != null) { _logErrorException(this._logger, $"FetchCursorRawJson failed: {error.Message}", null); }
             throw new KintoneException(error);
         }
 
@@ -153,7 +153,7 @@ public partial class KintoneApi : IKintoneApi
 
         if (!response.IsSuccessStatusCode)
         {
-            this._logger?.LogError("DeleteCursorJsonAsync failed: {Json}", responseJson);
+            if (this._logger != null) { _logErrorException(this._logger, $"DeleteCursorJsonAsync failed: {responseJson}", null); }
             throw new KintoneException(KintoneErrorConverter.Parse(responseJson));
         }
 
@@ -207,7 +207,7 @@ public partial class KintoneApi : IKintoneApi
             }
             catch (KintoneException ex) when (ex.Detail.Contains("GAIA_CN01"))
             {
-                this._logger?.LogWarning("DeleteCursorJsonAsync failed with GAIA_CN01: {Exception}", ex.ToString());
+                if (this._logger != null) { _logWarningException(this._logger, $"DeleteCursorJsonAsync failed with GAIA_CN01: {ex.Message}", ex); }
             }
         }
     }

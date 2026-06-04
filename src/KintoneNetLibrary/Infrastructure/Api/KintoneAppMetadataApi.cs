@@ -20,6 +20,11 @@ public class KintoneAppMetadataApi(IHttpClientFactory httpClientFactory, IKinton
     private readonly IKintoneFieldParser _fieldParser = fieldParser;
     private readonly ILogger<KintoneAppMetadataApi>? _logger = logger;
 
+    private static readonly Action<ILogger, string, Exception?> _logTrace =
+        LoggerMessage.Define<string>(LogLevel.Trace, new EventId(3001), "{Message}");
+    private static readonly Action<ILogger, string, Exception?> _logError =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(3002), "{Message}");
+
     // ---------------------------------------------------------
     // 共通ユーティリティ（BaseKintoneApi の代替）
     // ---------------------------------------------------------
@@ -63,11 +68,11 @@ public class KintoneAppMetadataApi(IHttpClientFactory httpClientFactory, IKinton
         using var response = await client.SendAsync(request);
         var json = await response.Content.ReadAsStringAsync();
 
-        this._logger?.LogTrace(json);
+        if (this._logger != null) { _logTrace(this._logger, json, null); }
 
         if (!response.IsSuccessStatusCode) {
             var message = $"APIリクエストに失敗しました。StatusCode: {response.StatusCode}, Response: {json}";
-            this._logger?.LogError(message);
+            if (this._logger != null) { _logError(this._logger, message, null); }
             throw new KintoneException(KintoneErrorConverter.Parse(json));
         }
 

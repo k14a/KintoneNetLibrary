@@ -13,6 +13,13 @@ public class KintoneModelFileService<T>(IKintoneRepository repository, ILogger<K
     private readonly IKintoneRepository _repository = repository ?? throw new ArgumentNullException(nameof(repository));
     private readonly ILogger<KintoneModelFileService<T>>? _logger = logger;
 
+    private static readonly Action<ILogger, string, Exception?> _logInfo =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(6001), "{Message}");
+    private static readonly Action<ILogger, string, Exception?> _logWarn =
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(6002), "{Message}");
+    private static readonly Action<ILogger, string, Exception?> _logError =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(6003), "{Message}");
+
     #region <<Upload methods>>
     /// <summary>
     /// モデルのファイルをアップロードし、KintoneFileを更新します。
@@ -50,7 +57,7 @@ public class KintoneModelFileService<T>(IKintoneRepository repository, ILogger<K
         kf.Size = fileInfo.Length;
         kf.ContentType = MimeTypes.GetMimeType(fileInfo.Name) ?? "application/octet-stream"; // MIME タイプの推定
 
-        this._logger?.LogInformation("ファイル '{FileName}' をアップロードし、FileKey をモデルに設定しました。", fileInfo.Name);
+        if (this._logger != null) { _logInfo(this._logger, $"ファイル '{fileInfo.Name}' をアップロードし、FileKey をモデルに設定しました。", null); }
 
         return kf;
     }
@@ -81,7 +88,7 @@ public class KintoneModelFileService<T>(IKintoneRepository repository, ILogger<K
             ContentType = MimeTypes.GetMimeType(file.Name) ?? "application/octet-stream" // MIME タイプの推定
         };
 
-        this._logger?.LogInformation("ファイル '{FileName}' をアップロードしました。FileKey: {FileKey}", file.Name, fileKey);
+        if (this._logger != null) { _logInfo(this._logger, $"ファイル '{file.Name}' をアップロードしました。FileKey: {fileKey}", null); }
 
         return kf;
     }
@@ -123,7 +130,7 @@ public class KintoneModelFileService<T>(IKintoneRepository repository, ILogger<K
             };
 
             resultList.Add(kf);
-            this._logger?.LogInformation("ファイル '{FileName}' をアップロードしました。", file.Name);
+            if (this._logger != null) { _logInfo(this._logger, $"ファイル '{file.Name}' をアップロードしました。", null); }
         }
 
         kintoneFileListProp.SetValue(model, resultList);
@@ -148,7 +155,7 @@ public class KintoneModelFileService<T>(IKintoneRepository repository, ILogger<K
 
         foreach (var file in files) {
             if (!file.Exists) {
-                this._logger?.LogWarning("アップロード対象のファイルが存在しません: {Path}", file.FullName);
+                if (this._logger != null) { _logWarn(this._logger, $"アップロード対象のファイルが存在しません: {file.FullName}", null); }
                 continue;
             }
 
@@ -156,7 +163,7 @@ public class KintoneModelFileService<T>(IKintoneRepository repository, ILogger<K
                 var kf = await this.UploadFileAsync(model, file);
                 result.Add(kf);
             } catch (Exception ex) {
-                this._logger?.LogError(ex, "ファイル '{FileName}' のアップロードに失敗しました。", file.Name);
+                if (this._logger != null) { _logError(this._logger, $"ファイル '{file.Name}' のアップロードに失敗しました。", ex); }
                 // 必要に応じて throw か continue を選択可能（現状は continue）
             }
         }
@@ -188,7 +195,7 @@ public class KintoneModelFileService<T>(IKintoneRepository repository, ILogger<K
 
                 var match = fileList.FirstOrDefault(f => string.Equals(f.Name, kf.Name, StringComparison.OrdinalIgnoreCase));
                 if (match != null && string.IsNullOrEmpty(kf.FileKey)) {
-                    this._logger?.LogInformation("File '{FileName}' をプロパティ '{PropName}' にマッピングしました。", match.Name, prop.Name);
+                    if (this._logger != null) { _logInfo(this._logger, $"File '{match.Name}' をプロパティ '{prop.Name}' にマッピングしました。", null); }
                     kf.FileKey = "[UPLOADED]"; // 実際は UploadFileAsync() の戻り値でセット済みの想定
                 }
 
@@ -200,7 +207,7 @@ public class KintoneModelFileService<T>(IKintoneRepository repository, ILogger<K
                 foreach (var kf in list) {
                     var match = fileList.FirstOrDefault(f => string.Equals(f.Name, kf.Name, StringComparison.OrdinalIgnoreCase));
                     if (match != null && string.IsNullOrEmpty(kf.FileKey)) {
-                        this._logger?.LogInformation("File '{FileName}' をリスト内の KintoneFile にマッピングしました。", match.Name);
+                        if (this._logger != null) { _logInfo(this._logger, $"File '{match.Name}' をリスト内の KintoneFile にマッピングしました。", null); }
                         kf.FileKey = "[UPLOADED]";
                     }
                 }
@@ -257,7 +264,7 @@ public class KintoneModelFileService<T>(IKintoneRepository repository, ILogger<K
 
         foreach (var file in files) {
             if (string.IsNullOrEmpty(file.FileKey)) {
-                this._logger?.LogWarning("FileKeyが未設定のファイルをスキップしました: {FileName}", file.Name);
+                if (this._logger != null) { _logWarn(this._logger, $"FileKeyが未設定のファイルをスキップしました: {file.Name}", null); }
                 continue;
             }
 
@@ -267,7 +274,7 @@ public class KintoneModelFileService<T>(IKintoneRepository repository, ILogger<K
                 result.Add(saved);
 
             } catch (Exception ex) {
-                this._logger?.LogError(ex, "ファイルのダウンロードに失敗しました: {FileName}", file.Name);
+                if (this._logger != null) { _logError(this._logger, $"ファイルのダウンロードに失敗しました: {file.Name}", ex); }
                 // 必要に応じて continue か throw を選択可能（現状は continue）
             }
         }
@@ -366,12 +373,12 @@ public class KintoneModelFileService<T>(IKintoneRepository repository, ILogger<K
                 while (File.Exists(savePath)) {
                     savePath = Path.Combine(dir, $"{baseName}_{suffix++}{ext}");
                 }
-                this._logger?.LogWarning("既存ファイルが存在したため、ファイル名を変更して保存しました: {Path}", savePath);
+                if (this._logger != null) { _logWarn(this._logger, $"既存ファイルが存在したため、ファイル名を変更して保存しました: {savePath}", null); }
             }
         }
 
         await File.WriteAllBytesAsync(savePath, content);
-        this._logger?.LogInformation("ファイルを保存しました: {Path}", savePath);
+        if (this._logger != null) { _logInfo(this._logger, $"ファイルを保存しました: {savePath}", null); }
         return new FileInfo(savePath);
     }
     #endregion

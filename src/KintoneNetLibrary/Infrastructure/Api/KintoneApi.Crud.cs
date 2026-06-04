@@ -28,7 +28,7 @@ public partial class KintoneApi : IKintoneApi {
         var response = await this._httpClient.PostAsync(KintoneApiEndpoints.AddRecords, content);
         var responseJson = await response.Content.ReadAsStringAsync();
 
-        this._logger?.LogDebug("Received response from Kintone: {Response}", responseJson);
+        if (this._logger != null) { _logDebugException(this._logger, $"Received response from Kintone: {responseJson}", null); }
 
         if (!response.IsSuccessStatusCode) {
             throw new KintoneException(KintoneErrorConverter.Parse(responseJson));
@@ -55,7 +55,7 @@ public partial class KintoneApi : IKintoneApi {
         var response = await this._httpClient.PutAsync(KintoneApiEndpoints.UpdateRecords, content);
         var responseJson = await response.Content.ReadAsStringAsync();
 
-        this._logger?.LogDebug("Received response: {Response}", responseJson);
+        if (this._logger != null) { _logDebugException(this._logger, $"Received response: {responseJson}", null); }
 
         if (!response.IsSuccessStatusCode) {
             throw new KintoneException(KintoneErrorConverter.Parse(responseJson));
@@ -79,7 +79,7 @@ public partial class KintoneApi : IKintoneApi {
         var response = await this._httpClient.SendAsync(request);
         var responseJson = await response.Content.ReadAsStringAsync();
 
-        this._logger?.LogDebug("Delete response: {Response}", responseJson);
+        if (this._logger != null) { _logDebugException(this._logger, $"Delete response: {responseJson}", null); }
 
         if (!response.IsSuccessStatusCode) {
             throw new KintoneException(KintoneErrorConverter.Parse(responseJson));

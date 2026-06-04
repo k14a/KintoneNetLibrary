@@ -218,7 +218,7 @@ public partial class KintoneApi : IKintoneApi {
     /// <returns>取得したレコードのJSON文字列</returns>
     public async Task<string?> RawFindByQueryAsync(string queryStr, IList<string>? fieldCodes = null) {
         // LIKE 句のバリデーションは Raw でも同じ
-        KintoneQueryValidator.ValidateLikeClause(queryStr, msg => this._logger?.LogWarning(msg));
+        KintoneQueryValidator.ValidateLikeClause(queryStr, msg => { if (this._logger != null) { _logWarningException(this._logger, msg, null); } });
 
         try {
             return await this.RawFindBaseJsonAsync(queryStr, fieldCodes: fieldCodes);
@@ -239,7 +239,7 @@ public partial class KintoneApi : IKintoneApi {
     /// <param name="fieldCodes">取得するフィールドコードのリスト</param>
     /// <returns></returns>
     public async Task RawFindByQueryAsStreamAsync(Stream output, string queryStr, IList<string>? fieldCodes = null) {
-        KintoneQueryValidator.ValidateLikeClause(queryStr, msg => this._logger?.LogWarning(msg));
+        KintoneQueryValidator.ValidateLikeClause(queryStr, msg => { if (this._logger != null) { _logWarningException(this._logger, msg, null); } });
 
         await this.RawFindBaseJsonAsStreamAsync(output, queryStr, fieldCodes: fieldCodes);
     }

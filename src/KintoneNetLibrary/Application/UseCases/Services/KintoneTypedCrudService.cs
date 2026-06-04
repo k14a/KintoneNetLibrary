@@ -29,6 +29,13 @@ public class KintoneTypedCrudService<T>(
     private readonly JsonSerializerOptions _jsonOptions = jsonOptions ?? DefaultJsonOptions.Default;
     private readonly KintoneExecutionOptions _execOptions = executionOptions?.Value ?? new KintoneExecutionOptions();
 
+    private static readonly Action<ILogger, string, Exception?> _logInfo =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(5001), "{Message}");
+    private static readonly Action<ILogger, string, Exception?> _logWarn =
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(5002), "{Message}");
+    private static readonly Action<ILogger, string, Exception?> _logError =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(5003), "{Message}");
+
     /// <summary>
     /// Kintoneモデルのレコードを作成します。
     /// </summary>
@@ -37,7 +44,7 @@ public class KintoneTypedCrudService<T>(
     /// <returns>作成結果を含むKintoneWriteResultオブジェクト</returns>
     public async Task<KintoneWriteResult<T>> CreateAsync(IList<T> records, bool enableSingleRetryOnError = false) {
         try {
-            this._logger?.LogInformation("CreateAsync() - Start");
+            if (this._logger != null) { _logInfo(this._logger, "CreateAsync() - Start", null); }
 
             var result = new KintoneWriteResult<T>();
             var chunks = records.Chunk(KintoneLimit).ToList();
@@ -62,7 +69,7 @@ public class KintoneTypedCrudService<T>(
             return result;
 
         } finally {
-            this._logger?.LogInformation("CreateAsync() - Finish");
+            if (this._logger != null) { _logInfo(this._logger, "CreateAsync() - Finish", null); }
         }
     }
 
@@ -81,7 +88,7 @@ public class KintoneTypedCrudService<T>(
             result.Succeeded.AddRange(parsed);
 
         } catch (KintoneException ex) {
-            this._logger?.LogWarning("Bulk insert failed: {Summary}", ex.Message);
+            if (this._logger != null) { _logWarn(this._logger, $"Bulk insert failed: {ex.Message}", null); }
 
             if (!enableSingleRetryOnError) {
                 foreach (var record in chunk) {
@@ -101,7 +108,7 @@ public class KintoneTypedCrudService<T>(
                     result.Succeeded.AddRange(parsed);
 
                 } catch (KintoneException singleEx) {
-                    this._logger?.LogError("Single insert failed: {Summary} - Record: {Record}", singleEx.Message, record);
+                    if (this._logger != null) { _logError(this._logger, $"Single insert failed: {singleEx.Message} - Record: {record}", null); }
                     result.Failed.Add(new KintoneWriteFailure<T> {
                         Record = record,
                         ErrorMessage = singleEx.Message,
@@ -111,7 +118,7 @@ public class KintoneTypedCrudService<T>(
             }
 
         } catch (Exception ex) {
-            this._logger?.LogError(ex, "Unexpected error during bulk insert.");
+            if (this._logger != null) { _logError(this._logger, "Unexpected error during bulk insert.", ex); }
 
             foreach (var record in chunk) {
                 result.Failed.Add(new KintoneWriteFailure<T> {
@@ -136,7 +143,7 @@ public class KintoneTypedCrudService<T>(
     /// <exception cref="KintoneException"></exception>
     public async Task<IEnumerable<T>> FindAsync(IList<string>? ids = null, string? query = null, KintoneQuery<T>? kintoneQuery = null, IList<string>? fieldCodes = null) {
         try {
-            this._logger?.LogInformation("FindAsync() - Start");
+            if (this._logger != null) { _logInfo(this._logger, "FindAsync() - Start", null); }
 
             T model = new();
 
@@ -181,15 +188,15 @@ public class KintoneTypedCrudService<T>(
             }
 
         } catch (JsonException ex) {
-            this._logger?.LogError(ex, "JSON deserialization failed in FindAsync<{Model}>", typeof(T).Name);
+            if (this._logger != null) { _logError(this._logger, $"JSON deserialization failed in FindAsync<{typeof(T).Name}>", ex); }
             throw new KintoneException("Failed to parse Kintone JSON response.", ex);
 
         } catch (Exception ex) {
-            this._logger?.LogError(ex, "Unexpected error occurred in FindAsync<{Model}>", typeof(T).Name);
+            if (this._logger != null) { _logError(this._logger, $"Unexpected error occurred in FindAsync<{typeof(T).Name}>", ex); }
             throw new KintoneException("An unexpected error occurred while retrieving Kintone records.", ex);
 
         } finally {
-            this._logger?.LogInformation("FindAsync() - Finish");
+            if (this._logger != null) { _logInfo(this._logger, "FindAsync() - Finish", null); }
         }
     }
 
@@ -201,7 +208,7 @@ public class KintoneTypedCrudService<T>(
     /// <returns>更新結果を含むKintoneWriteResultオブジェクト</returns>
     public async Task<KintoneWriteResult<T>> UpdateAsync(IList<T> records, bool enableSingleRetryOnError = false) {
         try {
-            this._logger?.LogInformation("UpdateAsync() - Start");
+            if (this._logger != null) { _logInfo(this._logger, "UpdateAsync() - Start", null); }
 
             var result = new KintoneWriteResult<T>();
             var chunks = records.Chunk(KintoneLimit).Select(c => c.ToList()).ToList();
@@ -224,7 +231,7 @@ public class KintoneTypedCrudService<T>(
             return result;
 
         } finally {
-            this._logger?.LogInformation("UpdateAsync() - Finish");
+            if (this._logger != null) { _logInfo(this._logger, "UpdateAsync() - Finish", null); }
         }
     }
 
@@ -242,7 +249,7 @@ public class KintoneTypedCrudService<T>(
             var parsed = ParseUpdatedRecords(chunk, responseJson);
             result.Succeeded.AddRange(parsed);
         } catch (KintoneException ex) {
-            this._logger?.LogWarning("Bulk update failed: {Summary}", ex.Message);
+            if (this._logger != null) { _logWarn(this._logger, $"Bulk update failed: {ex.Message}", null); }
 
             if (!enableSingleRetryOnError) {
                 foreach (var record in chunk) {
@@ -263,7 +270,7 @@ public class KintoneTypedCrudService<T>(
                     result.Succeeded.AddRange(parsed);
 
                 } catch (KintoneException singleEx) {
-                    this._logger?.LogError("Single update failed: {Summary} - Record: {Record}", singleEx.Message, record);
+                    if (this._logger != null) { _logError(this._logger, $"Single update failed: {singleEx.Message} - Record: {record}", null); }
                     result.Failed.Add(new KintoneWriteFailure<T> {
                         Record = record,
                         ErrorMessage = singleEx.Message,
@@ -295,7 +302,7 @@ public class KintoneTypedCrudService<T>(
     /// <returns>削除結果を含むKintoneDeleteResultオブジェクト</returns>
     public async Task<KintoneDeleteResult> DeleteAsync(IList<T> models, bool validateExistence = true) {
         try {
-            this._logger?.LogInformation("DeleteAsync() - Start");
+            if (this._logger != null) { _logInfo(this._logger, "DeleteAsync() - Start", null); }
 
             if (models.Count == 0) { return new KintoneDeleteResult(); }
 
@@ -331,7 +338,7 @@ public class KintoneTypedCrudService<T>(
             return result;
 
         } finally {
-            this._logger?.LogInformation("DeleteAsync() - Finish");
+            if (this._logger != null) { _logInfo(this._logger, "DeleteAsync() - Finish", null); }
         }
     }
 
@@ -401,7 +408,7 @@ public class KintoneTypedCrudService<T>(
     /// <returns>保存結果を含むKintoneWriteResultオブジェクト</returns>
     public async Task<KintoneWriteResult<T>> SaveAsync(IList<T> records, bool enableSingleRetryOnError = false) {
         try {
-            this._logger?.LogInformation("SaveAsync() - Start");
+            if (this._logger != null) { _logInfo(this._logger, "SaveAsync() - Start", null); }
 
             var result = new KintoneWriteResult<T>();
 
@@ -422,7 +429,7 @@ public class KintoneTypedCrudService<T>(
             return result;
 
         } finally {
-            this._logger?.LogInformation("SaveAsync() - Finish");
+            if (this._logger != null) { _logInfo(this._logger, "SaveAsync() - Finish", null); }
         }
     }
 
@@ -435,7 +442,7 @@ public class KintoneTypedCrudService<T>(
     /// <returns>保存結果を含むKintoneWriteResultオブジェクト</returns>
     public async Task<KintoneWriteResult<T>> SaveWithRetryAsync(IList<T> records, bool enableSingleRetryOnError = false, bool enableCreateToUpdateRetry = true) {
         try {
-            this._logger?.LogInformation("SaveWithRetryAsync() - Start");
+            if (this._logger != null) { _logInfo(this._logger, "SaveWithRetryAsync() - Start", null); }
 
             var result = new KintoneWriteResult<T>();
 
@@ -474,7 +481,7 @@ public class KintoneTypedCrudService<T>(
             return result;
 
         } finally {
-            this._logger?.LogInformation("SaveWithRetryAsync() - Finish");
+            if (this._logger != null) { _logInfo(this._logger, "SaveWithRetryAsync() - Finish", null); }
         }
     }
 
