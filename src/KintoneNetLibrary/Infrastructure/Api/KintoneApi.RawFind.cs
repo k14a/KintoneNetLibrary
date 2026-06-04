@@ -528,7 +528,7 @@ public partial class KintoneApi : IKintoneApi {
                         break;
 
                     case JsonTokenType.PropertyName:
-                        writer.WritePropertyName(reader.GetString());
+                        writer.WritePropertyName(reader.GetString()!);
                         break;
 
                     case JsonTokenType.String:

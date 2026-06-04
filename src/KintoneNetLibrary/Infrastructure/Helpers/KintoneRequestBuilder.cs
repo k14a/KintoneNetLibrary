@@ -145,7 +145,7 @@ public static class KintoneRequestBuilder {
         }
 
         if (fieldCodes is { Count: > 0 }) {
-            var effectiveFields = EnsureMinimumFields(fieldCodes);
+            var effectiveFields = EnsureMinimumFields(fieldCodes)!;
             for (int i = 0; i < effectiveFields.Count; i++) {
                 parameters.Add($"fields[{i}]={Uri.EscapeDataString(effectiveFields[i])}");
             }
@@ -193,7 +193,7 @@ public static class KintoneRequestBuilder {
     /// </summary>
     /// <param name="fieldCodes">フィールドコードのリスト</param>
     /// <returns>最低限必要なフィールドコードを含むリスト</returns>
-    internal static IList<string> EnsureMinimumFields(IList<string> fieldCodes) {
+    internal static IList<string>? EnsureMinimumFields(IList<string>? fieldCodes) {
         var required = new[] { "$id", "$revision" };
         return fieldCodes != null && fieldCodes.Count > 0 ? required.Union(fieldCodes).Distinct().ToArray() : null;
     }

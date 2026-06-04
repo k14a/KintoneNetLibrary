@@ -260,7 +260,7 @@ public partial class KintoneQuery<T> where T : KintoneModelBase<T>, new() {
     /// <returns>フィールド名</returns>
     /// <exception cref="ArgumentNullException">value が null の場合にスローされます。</exception>
     /// <exception cref="ArgumentException">value が有効なフィールドを指定していない場合にスローされます。</exception>
-    private static string FormatValue(object value) {
+    private static string FormatValue(object? value) {
         return value switch {
             string s => $"\"{s}\"",
             DateTime dt => $"\"{dt:yyyy-MM-ddTHH:mm:ssZ}\"",

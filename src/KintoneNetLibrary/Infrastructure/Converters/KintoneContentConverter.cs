@@ -24,7 +24,7 @@ public static class KintoneContentConverter {
     /// <param name="json">JSON文字列</param>
     /// <returns>変換されたオブジェクト</returns>
     public static T FromJson<T>(string json) {
-        return JsonSerializer.Deserialize<T>(json);
+        return JsonSerializer.Deserialize<T>(json)!;
     }
 
     /// <summary>
@@ -35,7 +35,7 @@ public static class KintoneContentConverter {
     /// <returns>変換されたDictionary</returns>
     public static Dictionary<string, object> ToDictionary<T>(T obj) {
         var json = ToJson(obj);
-        return JsonSerializer.Deserialize<Dictionary<string, object>>(json);
+        return JsonSerializer.Deserialize<Dictionary<string, object>>(json)!;
     }
 
     /// <summary>
@@ -46,6 +46,6 @@ public static class KintoneContentConverter {
     /// <returns>変換されたオブジェクト</returns>
     public static T FromDictionary<T>(Dictionary<string, object> dict) {
         var json = JsonSerializer.Serialize(dict);
-        return JsonSerializer.Deserialize<T>(json);
+        return JsonSerializer.Deserialize<T>(json)!;
     }
 }

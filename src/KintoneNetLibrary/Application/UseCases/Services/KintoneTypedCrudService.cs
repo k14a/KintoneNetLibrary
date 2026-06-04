@@ -372,7 +372,7 @@ public class KintoneTypedCrudService<T>(
     /// <param name="models">存在確認対象のKintoneモデルのリスト</param>
     /// <returns>存在するKintoneモデルのリスト</returns>
     private async Task<IList<T>> PrepareValidatedTargets(IList<T> models) {
-        var ids = models.Select(x => x.RecordID).ToList();
+        var ids = models.Select(x => x.RecordID).OfType<string>().ToList();
         return (await this.FindAsync(ids, fieldCodes: ["RecordID"])).ToList();
     }
 
@@ -387,7 +387,7 @@ public class KintoneTypedCrudService<T>(
         return original
             .Where(x => !foundIds.Contains(x.RecordID))
             .Select(x => new KintoneDeleteFailure {
-                ID = x.RecordID,
+                ID = x.RecordID ?? string.Empty,
                 ErrorMessage = "Record is not found.",
                 Reason = KintoneDeleteFailureReason.RecordNotFound
             }).ToList();

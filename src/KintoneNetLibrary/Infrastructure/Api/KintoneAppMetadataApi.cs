@@ -67,7 +67,7 @@ public class KintoneAppMetadataApi(IHttpClientFactory httpClientFactory, IKinton
 
         if (!response.IsSuccessStatusCode) {
             var message = $"APIリクエストに失敗しました。StatusCode: {response.StatusCode}, Response: {json}";
-            this._logger.LogError(message);
+            this._logger?.LogError(message);
             throw new KintoneException(KintoneErrorConverter.Parse(json));
         }
 

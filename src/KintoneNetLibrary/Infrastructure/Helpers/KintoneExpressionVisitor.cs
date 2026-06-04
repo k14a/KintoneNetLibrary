@@ -92,7 +92,7 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
                 return true;
             }
 
-            expr = me.Expression;
+            expr = me.Expression!;
         }
 
         return false;

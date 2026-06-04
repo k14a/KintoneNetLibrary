@@ -44,7 +44,7 @@ public static partial class KintoneQueryValidator {
     /// <param name="throwOnError">エラー発生時に例外をスローするかどうか</param>
     /// <param name="onWarn">警告を出力するデリゲート（例: msg => logger?.LogWarning(msg)）</param>
     /// <exception cref="InvalidOperationException">存在しないフィールドコードが含まれている場合にスローされます</exception>
-    public static void ValidateFieldCodes<T>(string query, bool throwOnError = true, Action<string> onWarn = null) {
+    public static void ValidateFieldCodes<T>(string query, bool throwOnError = true, Action<string>? onWarn = null) {
         if (string.IsNullOrWhiteSpace(query)) {
             return;
         }
@@ -65,7 +65,7 @@ public static partial class KintoneQueryValidator {
             .GetProperties()
             .Select(p => p.GetCustomAttribute<KintoneItemAttribute>())
             .Where(attr => attr != null)
-            .Select(attr => attr.FieldCode)
+            .Select(attr => attr!.FieldCode)
             .ToHashSet();
 
         // 存在しないフィールドコードを抽出

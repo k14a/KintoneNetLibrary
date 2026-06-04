@@ -18,7 +18,7 @@ public static class KintoneFieldCodeHelper {
         return type.GetProperties()
             .Select(prop => prop.GetCustomAttribute<KintoneItemAttribute>())
             .Where(attr => attr != null && !string.IsNullOrEmpty(attr.FieldCode) && attr.FieldCode.Length <= KintoneConstants.KintoneFieldCodeMaxLength)
-            .Select(attr => attr.FieldCode)
+            .Select(attr => attr!.FieldCode)
             .ToArray();
     }
 }
