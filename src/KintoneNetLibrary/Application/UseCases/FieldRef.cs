@@ -29,7 +29,9 @@ public class FieldRef<T> {
     /// <returns>FieldRef インスタンス</returns>
     /// <exception cref="ArgumentNullException">フィールドセレクターが null の場合にスローされます。</exception>
     /// <exception cref="ArgumentException">フィールドセレクターが有効なフィールドを指定していない場合にスローされます。</exception>
+#pragma warning disable CA1000
     public static FieldRef<T> Create(Expression<Func<T, object>> fieldSelector) {
+#pragma warning restore CA1000
         ArgumentNullException.ThrowIfNull(fieldSelector);
 
         var memberExpr = ExtractMemberExpression(fieldSelector.Body) ?? throw new ArgumentException("フィールドを指定してください。", nameof(fieldSelector));

@@ -21,7 +21,7 @@ public class CSharpXmlCommentBuilderTests {
         /// <typeparam name="TState">スコープの状態の型</typeparam>
         /// <param name="state">スコープの状態</param>
         /// <returns>NullScope のインスタンス</returns>
-        public IDisposable BeginScope<TState>(TState state) => NullScope.Instance;
+        IDisposable? ILogger.BeginScope<TState>(TState state) => NullScope.Instance;
 
         /// <summary>
         /// IsEnabled メソッドは、指定されたログレベルが有効かどうかを判断するためのものですが、テストではすべてのログレベルを無効とする実装となっている。
@@ -43,8 +43,8 @@ public class CSharpXmlCommentBuilderTests {
             LogLevel logLevel,
             EventId eventId,
             TState state,
-            Exception exception,
-            Func<TState, Exception, string> formatter) { }
+            Exception? exception,
+            Func<TState, Exception?, string> formatter) { }
 
         /// <summary>
         /// NullScope クラスは、ILogger のスコープ管理のためのダミー実装であり、IDisposable を実装しているが、Dispose メソッドは何も行わない。

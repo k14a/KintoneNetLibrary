@@ -50,7 +50,7 @@ public class PythonCodeEmitterTests {
         /// <typeparam name="TState">スコープの状態の型</typeparam>
         /// <param name="state">スコープの状態</param>
         /// <returns>スコープの破棄用オブジェクト</returns>
-        public IDisposable BeginScope<TState>(TState state) => NullScope.Instance;
+        IDisposable? ILogger.BeginScope<TState>(TState state) => NullScope.Instance;
 
         /// <summary>
         /// 指定されたログレベルが有効かどうかを常に false を返すことで、すべてのログを無視する。
@@ -72,8 +72,8 @@ public class PythonCodeEmitterTests {
             LogLevel logLevel,
             EventId eventId,
             TState state,
-            Exception exception,
-            Func<TState, Exception, string> formatter) { }
+            Exception? exception,
+            Func<TState, Exception?, string> formatter) { }
 
         /// <summary>
         /// IDisposable の実装で、スコープの開始と終了を管理するためのクラス。実際には何も行わない。

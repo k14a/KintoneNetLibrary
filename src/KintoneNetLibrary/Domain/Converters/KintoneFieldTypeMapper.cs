@@ -30,7 +30,9 @@ public static class KintoneFieldTypeMapper {
             ["DATE"] = KintoneFieldType.Date,
             ["TIME"] = KintoneFieldType.Time,
             ["DATETIME"] = KintoneFieldType.DateTime,
+#pragma warning disable CS0618
             ["LINK"] = KintoneFieldType.Link,
+#pragma warning restore CS0618
             ["FILE"] = KintoneFieldType.File,
             ["USER_SELECT"] = KintoneFieldType.UserSelect,
             ["GROUP_SELECT"] = KintoneFieldType.GroupSelect,

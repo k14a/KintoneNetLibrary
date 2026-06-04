@@ -19,7 +19,6 @@ public partial class KintoneQuery<T> where T : KintoneModelBase<T>, new() {
     private readonly List<string> _orderBys = [];
     private string? _orderBy;
     private int? _limit;
-    private int? _offset;
     #endregion
 
     #region <<Properties>>

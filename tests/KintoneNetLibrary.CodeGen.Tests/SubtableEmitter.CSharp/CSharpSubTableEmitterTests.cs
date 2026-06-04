@@ -68,7 +68,7 @@ public class CSharpSubTableEmitterTests {
         /// <typeparam name="TState">スコープの状態の型</typeparam>
         /// <param name="state">スコープの状態</param>
         /// <returns>常に NullScope のインスタンス</returns>
-        public IDisposable BeginScope<TState>(TState state) => NullScope.Instance;
+        IDisposable? ILogger.BeginScope<TState>(TState state) => NullScope.Instance;
 
         /// <summary>
         /// すべてのログレベルでログ出力を無効にする。常に false を返す。
@@ -90,8 +90,8 @@ public class CSharpSubTableEmitterTests {
             LogLevel logLevel,
             EventId eventId,
             TState state,
-            Exception exception,
-            Func<TState, Exception, string> formatter) { }
+            Exception? exception,
+            Func<TState, Exception?, string> formatter) { }
 
         /// <summary>
         /// IDisposable の実装で、スコープを開始しても何もしない。常に同じ NullScope インスタンスを返す。
