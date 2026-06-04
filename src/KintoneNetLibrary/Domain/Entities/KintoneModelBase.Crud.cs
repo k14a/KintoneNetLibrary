@@ -1,5 +1,4 @@
 using System.Linq.Expressions;
-using System.Reflection;
 using KintoneNetLibrary.Application.UseCases;
 using KintoneNetLibrary.Domain.Interfaces;
 using KintoneNetLibrary.Extensions;
@@ -276,32 +275,12 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// </remarks>
     /// <param name="service">CRUDサービスのインスタンス</param>
     /// <param name="model">検索するモデルのインスタンス</param>
-    /// <returns>検索結果のレコード</returns>
-    public static async Task<TSelf?> FindByKeyAsync(IKintoneModelCrudService service, TSelf model) {
-        KintoneModelValidator.ValidateKeyIntegrity(model);
-
-        var keyProp = typeof(TSelf)
-            .GetProperties()
-            .First(p => p.GetCustomAttribute<KintoneItemAttribute>()?.IsKey == true);
-
-        var keyValue = keyProp.GetValue(model);
+    /// <param name="keySelector">キーフィールドを指定する式（例: x =&gt; x.Code）</param>
+    /// <returns>検索結果のレコード。キー値が null の場合は null。</returns>
+    public static async Task<TSelf?> FindByKeyAsync<TKey>(IKintoneModelCrudService service, TSelf model, Expression<Func<TSelf, TKey>> keySelector) {
+        var keyValue = keySelector.Compile()(model);
         if (keyValue == null) { return null; }
-
-        var keyType = keyProp.PropertyType;
-        var underlyingType = Nullable.GetUnderlyingType(keyType) ?? keyType;
-
-        var method = typeof(KintoneModelBase<TSelf>)
-            .GetMethod("CreateFieldSelector", BindingFlags.NonPublic | BindingFlags.Static)!
-            .MakeGenericMethod(underlyingType);
-
-        var fieldSelector = method.Invoke(null, [keyProp]);
-        var equalMethod = typeof(KintoneQuery<TSelf>)
-            .GetMethod("Equal")!
-            .MakeGenericMethod(underlyingType);
-
-        var query = new KintoneQuery<TSelf>();
-        query = (KintoneQuery<TSelf>)equalMethod.Invoke(query, [fieldSelector, keyValue])!;
-
+        var query = new KintoneQuery<TSelf>().Equal(keySelector, keyValue);
         return (await service.FindAsync<TSelf>(query: query.Build())).FirstOrDefault();
     }
 
@@ -309,58 +288,18 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// レコードをキーのリストで検索します。
     /// </summary>
     /// <remarks>
-    /// このメソッドは、指定されたキーのリストを持つレコードをKintoneから検索します。
+    /// このメソッドは、指定されたキーのリストを持つレコードをKintoneから検索します。null 値のキーはスキップされます。
     /// </remarks>
     /// <param name="service">CRUDサービスのインスタンス</param>
     /// <param name="models">検索するモデルのリスト</param>
+    /// <param name="keySelector">キーフィールドを指定する式（例: x =&gt; x.Code）</param>
     /// <returns>検索結果のレコードのリスト</returns>
-    public static async Task<List<TSelf>> FindByKeysAsync(IKintoneModelCrudService service, IList<TSelf> models) {
-        var modelList = models.ToList();
-        foreach (var model in modelList) {
-            KintoneModelValidator.ValidateKeyIntegrity(model);
-        }
-        KintoneModelValidator.ValidateKeyValueUniqueness(modelList);
-
-        var keyProp = typeof(TSelf)
-            .GetProperties()
-            .First(p => p.GetCustomAttribute<KintoneItemAttribute>()?.IsKey == true);
-
-        var keyValues = modelList
-            .Select(m => keyProp.GetValue(m))
-            .Where(v => v != null)
-            .Distinct()
-            .ToList();
-
-        var keyType = keyProp.PropertyType;
-        var underlyingType = Nullable.GetUnderlyingType(keyType) ?? keyType;
-
-        var method = typeof(KintoneModelBase<TSelf>)
-            .GetMethod("CreateFieldSelector", BindingFlags.NonPublic | BindingFlags.Static)!
-            .MakeGenericMethod(underlyingType);
-
-        var fieldSelector = (LambdaExpression)method.Invoke(null, [keyProp])!;
-        var targetType = typeof(Expression<>)
-            .MakeGenericType(typeof(Func<,>).MakeGenericType(typeof(TSelf), underlyingType));
-
-        var typedSelector = ConvertExpression(fieldSelector, targetType);
-
-        var inMethod = typeof(KintoneQuery<TSelf>)
-            .GetMethods(BindingFlags.Public | BindingFlags.Instance)
-            .First(m => m.Name == "In" && m.IsGenericMethod)
-            .MakeGenericMethod(underlyingType);
-
-        var castMethod = typeof(Enumerable)
-            .GetMethods(BindingFlags.Public | BindingFlags.Static)
-            .First(m => m.Name == "Cast" && m.GetParameters().Length == 1)
-            .MakeGenericMethod(underlyingType);
-
-        var castedValues = castMethod.Invoke(null, [keyValues]);
-
-        var query = new KintoneQuery<TSelf>();
-        query = (KintoneQuery<TSelf>)inMethod.Invoke(query, [typedSelector, castedValues])!;
-
-        var result = await service.FindAsync<TSelf>(query: query.Build());
-        return [.. result];
+    public static async Task<List<TSelf>> FindByKeysAsync<TKey>(IKintoneModelCrudService service, IList<TSelf> models, Expression<Func<TSelf, TKey>> keySelector) {
+        var compile = keySelector.Compile();
+        var keyValues = models.Select(compile).Where(v => v is not null).Distinct().ToList();
+        if (keyValues.Count == 0) { return []; }
+        var query = new KintoneQuery<TSelf>().In(keySelector, keyValues);
+        return [.. await service.FindAsync<TSelf>(query: query.Build())];
     }
 
     /// <summary>
@@ -410,39 +349,4 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
         return merged;
     }
 
-    /// <summary>
-    /// レコードのフィールドセレクターを作成します。
-    /// </summary>
-    /// <remarks>
-    /// このメソッドは、指定されたプロパティ情報を使用してフィールドセレクターを作成します。
-    /// </remarks>
-    /// <typeparam name="TValue">フィールドの値の型</typeparam>
-    /// <param name="prop">プロパティ情報</param>
-    /// <returns>フィールドセレクターの式</returns>
-    private static Expression<Func<TSelf, TValue>> CreateFieldSelector<TValue>(PropertyInfo prop) {
-        var param = Expression.Parameter(typeof(TSelf), "x");
-        var body = Expression.Property(param, prop.Name);
-        return Expression.Lambda<Func<TSelf, TValue>>(body, param);
-    }
-
-    /// <summary>
-    /// 指定された式をターゲット型に変換します。
-    /// </summary>
-    /// <remarks>
-    /// このメソッドは、指定された式をターゲット型の式に変換します。
-    /// </remarks>
-    /// <param name="source">変換元の式</param>
-    /// <param name="targetType">変換先の型</param>
-    /// <returns>変換された式</returns>
-    private static object ConvertExpression(LambdaExpression source, Type targetType) {
-        var method = typeof(Expression)
-            .GetMethods(BindingFlags.Public | BindingFlags.Static)
-            .First(m => m.Name == "Lambda" && m.IsGenericMethod && m.GetParameters().Length == 2);
-
-        var delegateType = targetType.GetGenericArguments()[0]; // Func<TSelf, TValue>
-        var genericMethod = method.MakeGenericMethod(delegateType);
-
-        var parameters = new object[] { source.Body, source.Parameters.ToArray() };
-        return genericMethod.Invoke(null, parameters)!;
-    }
 }

@@ -12,7 +12,7 @@ namespace KintoneNetLibrary.Tests.Entities;
 /// </summary>
 public class KintoneModelBaseFindTests {
     /// <summary>
-    /// テスト用のダミーモデルクラス。KintoneModelBase を継承し、AppID と Access プロパティを実装する。FieldA と FieldB というフィールドを持ち、Find メソッドのテストに使用される。
+    /// テスト用のダミーモデルクラス。FieldA と FieldB というフィールドを持ち、FindByID メソッドのテストに使用される。
     /// </summary>
     public class DummyModel : KintoneModelBase<DummyModel> {
         public override int AppID { get; init; }
@@ -25,7 +25,7 @@ public class KintoneModelBaseFindTests {
     }
 
     /// <summary>
-    /// テスト用のモデルクラス。KintoneModelBase を継承し、AppID と Access プロパティを実装する。Code プロパティに IsKey 属性が付与されており、FindByKeyAsync メソッドのテストに使用される。
+    /// テスト用のモデルクラス。Code プロパティをキーとして FindByKeyAsync メソッドのテストに使用される。
     /// </summary>
     public class KeyedModel : KintoneModelBase<KeyedModel> {
         public override int AppID { get; init; }
@@ -37,55 +37,20 @@ public class KintoneModelBaseFindTests {
     }
 
     /// <summary>
-    /// テスト用のモデルクラス。KintoneModelBase を継承し、AppID と Access プロパティを実装する。IsKey 属性が付与されたプロパティが存在しないため、FindByKeyAsync メソッドの異常系テストに使用される。
-    /// </summary>
-    public class NoKeyModel : KintoneModelBase<NoKeyModel> {
-        public override int AppID { get; init; }
-        public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
-
-        public string Code { get; set; } = default!;
-        public string Name { get; set; } = default!;
-    }
-
-    /// <summary>
-    /// テスト用のモデルクラス。KintoneModelBase を継承し、AppID と Access プロパティを実装する。Code プロパティに IsKey 属性が付与されているが、値が null であるため、FindByKeyAsync メソッドの異常系テストに使用される。
+    /// テスト用のモデルクラス。Code プロパティが null 許容であり、FindByKeyAsync の null キー値動作テストに使用される。
     /// </summary>
     public class NullKeyModel : KintoneModelBase<NullKeyModel> {
         public override int AppID { get; init; }
         public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
 
-        [KintoneItem(IsKey = true)]
         public string? Code { get; set; }
         public string Name { get; set; } = default!;
     }
 
-    /// <summary>
-    /// テスト用のモデルクラス。KintoneModelBase を継承し、AppID と Access プロパティを実装する。Code プロパティに IsKey 属性が付与されているが、値が空文字列であるため、FindByKeyAsync メソッドの異常系テストに使用される。
-    /// </summary>
-    public class EmptyKeyModel : KintoneModelBase<EmptyKeyModel> {
-        public override int AppID { get; init; }
-        public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
-
-        [KintoneItem(IsKey = true)]
-        public string Code { get; set; } = "";
-        public string Name { get; set; } = default!;
-    }
-
-    /// <summary>
-    /// テスト用のモデルクラス。KintoneModelBase を継承し、AppID と Access プロパティを実装する。Code と SubCode の両方に IsKey 属性が付与されているため、FindByKeyAsync メソッドの異常系テストに使用される。
-    /// </summary>
-    public class MultipleKeyModel : KintoneModelBase<MultipleKeyModel> {
-        public override int AppID { get; init; }
-        public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
-
-        [KintoneItem(IsKey = true)]
-        public string Code { get; set; } = default!;
-        [KintoneItem(IsKey = true)]
-        public string SubCode { get; set; } = default!;
-        public string Name { get; set; } = default!;
-    }
-
     #region <<Test methods>>
+
+    // ---- FindByIDAsync ----
+
     /// <summary>
     /// 有効なレコードIDを指定して FindByIDAsync を呼び出すと、対応するモデルが返されることを検証するテスト。
     /// </summary>
@@ -209,6 +174,8 @@ public class KintoneModelBaseFindTests {
         mockService.Verify(s => s.FindAsync<DummyModel>(requestedIds, null, null), Times.Once);
     }
 
+    // ---- FindByKeyAsync ----
+
     /// <summary>
     /// 有効なキーを指定して FindByKeyAsync を呼び出すと、対応するモデルが返されることを検証するテスト。
     /// </summary>
@@ -224,7 +191,7 @@ public class KintoneModelBaseFindTests {
             .ReturnsAsync([expected]);
 
         // Act
-        var result = await KeyedModel.FindByKeyAsync(mockService.Object, input);
+        var result = await KeyedModel.FindByKeyAsync(mockService.Object, input, x => x.Code);
 
         // Assert
         Assert.NotNull(result);
@@ -235,67 +202,20 @@ public class KintoneModelBaseFindTests {
     }
 
     /// <summary>
-    /// IsKey 属性が付与されたプロパティが存在しないモデルで FindByKeyAsync を呼び出すと、InvalidOperationException がスローされることを検証するテスト。
+    /// キー値が null の場合に FindByKeyAsync を呼び出すと、null が返されることを検証するテスト。
     /// </summary>
     [Fact]
-    public async Task FindByKeyAsyncNoKeyAttributeThrowsInvalidOperationException() {
-        // Arrange
-        var model = new NoKeyModel { Code = "X001", Name = "NoKey" };
-
-        // Act & Assert
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => NoKeyModel.FindByKeyAsync(Mock.Of<IKintoneModelCrudService>(), model));
-
-        Assert.Equal("IsKey 属性付きのプロパティが見つかりません。", ex.Message);
-    }
-
-    /// <summary>
-    /// IsKey 属性が付与されたプロパティの値が null または空文字列の場合に FindByKeyAsync を呼び出すと、InvalidOperationException がスローされることを検証するテスト。
-    /// </summary>
-    [Fact]
-    public async Task FindByKeyAsyncKeyValueIsNullThrowsInvalidOperationException() {
+    public async Task FindByKeyAsyncNullKeyValueReturnsNull() {
         // Arrange
         var model = new NullKeyModel { Code = null, Name = "NullKey" };
+        var mockService = new Mock<IKintoneModelCrudService>();
 
-        // Act & Assert
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => NullKeyModel.FindByKeyAsync(Mock.Of<IKintoneModelCrudService>(), model));
+        // Act
+        var result = await NullKeyModel.FindByKeyAsync(mockService.Object, model, x => x.Code);
 
-        Assert.Equal("'Code' は更新キーですが、値が未設定です。", ex.Message);
-    }
-
-    /// <summary>
-    /// IsKey 属性が付与されたプロパティの値が空文字列の場合に FindByKeyAsync を呼び出すと、InvalidOperationException がスローされることを検証するテスト。
-    /// </summary>
-    [Fact]
-    public async Task FindByKeyAsyncKeyValueIsEmptyThrowsInvalidOperationException() {
-        // Arrange
-        var model = new EmptyKeyModel { Code = "", Name = "EmptyKey" };
-
-        // Act & Assert
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => EmptyKeyModel.FindByKeyAsync(Mock.Of<IKintoneModelCrudService>(), model));
-
-        Assert.Equal("'Code' は更新キーですが、値が未設定です。", ex.Message);
-    }
-
-    /// <summary>
-    /// 複数のプロパティに IsKey 属性が付与されたモデルで FindByKeyAsync を呼び出すと、InvalidOperationException がスローされることを検証するテスト。
-    /// </summary>
-    [Fact]
-    public async Task FindByKeyAsyncMultipleKeyAttributesThrowsInvalidOperationException() {
-        // Arrange
-        var model = new MultipleKeyModel {
-            Code = "A001",
-            SubCode = "B001",
-            Name = "MultiKey"
-        };
-
-        // Act & Assert
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => MultipleKeyModel.FindByKeyAsync(Mock.Of<IKintoneModelCrudService>(), model));
-
-        Assert.Equal("モデル 'MultipleKeyModel' には IsKey が複数あります（Code, SubCode）", ex.Message);
+        // Assert
+        Assert.Null(result);
+        mockService.Verify(s => s.FindAsync<NullKeyModel>(It.IsAny<IList<string>?>(), It.IsAny<string?>(), It.IsAny<IList<string>?>()), Times.Never);
     }
 
     /// <summary>
@@ -312,12 +232,14 @@ public class KintoneModelBaseFindTests {
             .ReturnsAsync([]);
 
         // Act
-        var result = await KeyedModel.FindByKeyAsync(mockService.Object, input);
+        var result = await KeyedModel.FindByKeyAsync(mockService.Object, input, x => x.Code);
 
         // Assert
         Assert.Null(result);
         mockService.Verify(s => s.FindAsync<KeyedModel>(null, It.IsAny<string>(), null), Times.Once);
     }
+
+    // ---- FindByKeysAsync ----
 
     /// <summary>
     /// 複数の有効なキーを指定して FindByKeysAsync を呼び出すと、対応するモデルのリストが返されることを検証するテスト。
@@ -341,7 +263,7 @@ public class KintoneModelBaseFindTests {
             .ReturnsAsync(expected);
 
         // Act
-        var result = await KeyedModel.FindByKeysAsync(mockService.Object, inputModels);
+        var result = await KeyedModel.FindByKeysAsync(mockService.Object, inputModels, x => x.Code);
 
         // Assert
         Assert.Equal(2, result.Count);
@@ -350,7 +272,7 @@ public class KintoneModelBaseFindTests {
     }
 
     /// <summary>
-    /// 有効なキーを指定して FindByKeysAsync を呼び出すと、対応するモデルが返されることを検証するテスト。
+    /// 有効なキーを指定して FindByKeysAsync を呼び出すと、対応するモデルが存在しない場合に空のリストが返されることを検証するテスト。
     /// </summary>
     [Fact]
     public async Task FindByKeysAsyncValidKeysButNoMatchesReturnsEmptyList() {
@@ -366,7 +288,7 @@ public class KintoneModelBaseFindTests {
             .ReturnsAsync([]);
 
         // Act
-        var result = await KeyedModel.FindByKeysAsync(mockService.Object, inputModels);
+        var result = await KeyedModel.FindByKeysAsync(mockService.Object, inputModels, x => x.Code);
 
         // Assert
         Assert.NotNull(result);
@@ -374,7 +296,7 @@ public class KintoneModelBaseFindTests {
     }
 
     /// <summary>
-    /// 複数のレコードIDを指定して FindByIDsAsync を呼び出すと、一部のIDに対応するモデルが存在しない場合でも、存在するモデルのみが返されることを検証するテスト。
+    /// 一部のキーに一致するレコードのみが返されることを検証するテスト。
     /// </summary>
     [Fact]
     public async Task FindByKeysAsyncSomeKeysMatchReturnsOnlyMatchingRecords() {
@@ -396,7 +318,7 @@ public class KintoneModelBaseFindTests {
             .ReturnsAsync(expected);
 
         // Act
-        var result = await KeyedModel.FindByKeysAsync(mockService.Object, inputModels);
+        var result = await KeyedModel.FindByKeysAsync(mockService.Object, inputModels, x => x.Code);
 
         // Assert
         Assert.Equal(2, result.Count);
@@ -406,48 +328,10 @@ public class KintoneModelBaseFindTests {
     }
 
     /// <summary>
-    /// IsKey 属性が付与されたプロパティが存在しないモデルで FindByKeysAsync を呼び出すと、InvalidOperationException がスローされることを検証するテスト。
+    /// null キー値を含むモデルリストで FindByKeysAsync を呼び出すと、null 値がスキップされてクエリが実行されることを検証するテスト。
     /// </summary>
     [Fact]
-    public async Task FindByKeysAsyncModelWithoutKeyAttributeThrowsInvalidOperationException() {
-        // Arrange
-        var inputModels = new[] {
-            new NoKeyModel { Code = "X001" },
-            new NoKeyModel { Code = "Y002" }
-        };
-
-        var mockService = new Mock<IKintoneModelCrudService>();
-
-        // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await NoKeyModel.FindByKeysAsync(mockService.Object, inputModels)
-        );
-    }
-
-    /// <summary>
-    /// 複数のプロパティに IsKey 属性が付与されたモデルで FindByKeysAsync を呼び出すと、InvalidOperationException がスローされることを検証するテスト。
-    /// </summary>
-    [Fact]
-    public async Task FindByKeysAsyncModelWithDuplicateKeyAttributesThrowsInvalidOperationException() {
-        // Arrange
-        var inputModels = new[] {
-            new MultipleKeyModel { Code = "D001", SubCode = "X001" },
-            new MultipleKeyModel { Code = "D002", SubCode = "X002" }
-        };
-
-        var mockService = new Mock<IKintoneModelCrudService>();
-
-        // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await MultipleKeyModel.FindByKeysAsync(mockService.Object, inputModels)
-        );
-    }
-
-    /// <summary>
-    /// IsKey 属性が付与されたプロパティの値が null または空文字列の場合に FindByKeysAsync を呼び出すと、InvalidOperationException がスローされることを検証するテスト。
-    /// </summary>
-    [Fact]
-    public async Task FindByKeysAsyncModelWithNullKeyValueThrowsInvalidOperationException() {
+    public async Task FindByKeysAsyncNullKeyValuesAreFiltered() {
         // Arrange
         var inputModels = new[] {
             new NullKeyModel { Code = "A001" },
@@ -455,13 +339,51 @@ public class KintoneModelBaseFindTests {
             new NullKeyModel { Code = "B002" }
         };
 
+        var expected = new[] {
+            new NullKeyModel { Code = "A001", Name = "Alpha" },
+            new NullKeyModel { Code = "B002", Name = "Beta" }
+        };
+
+        var mockService = new Mock<IKintoneModelCrudService>();
+        mockService
+            .Setup(s => s.FindAsync<NullKeyModel>(
+                null,
+                It.Is<string>(q => q.Contains("Code") && q.Contains("A001") && q.Contains("B002")),
+                null))
+            .ReturnsAsync(expected);
+
+        // Act
+        var result = await NullKeyModel.FindByKeysAsync(mockService.Object, inputModels, x => x.Code);
+
+        // Assert
+        Assert.Equal(2, result.Count);
+        Assert.Contains(result, r => r.Code == "A001");
+        Assert.Contains(result, r => r.Code == "B002");
+        mockService.Verify(s => s.FindAsync<NullKeyModel>(null, It.IsAny<string>(), null), Times.Once);
+    }
+
+    /// <summary>
+    /// すべてのキー値が null の場合 FindByKeysAsync は空リストを返し、サービスを呼び出さないことを検証するテスト。
+    /// </summary>
+    [Fact]
+    public async Task FindByKeysAsyncAllNullKeyValuesReturnsEmptyWithoutServiceCall() {
+        // Arrange
+        var inputModels = new[] {
+            new NullKeyModel { Code = null },
+            new NullKeyModel { Code = null }
+        };
+
         var mockService = new Mock<IKintoneModelCrudService>();
 
-        // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await NullKeyModel.FindByKeysAsync(mockService.Object, inputModels)
-        );
+        // Act
+        var result = await NullKeyModel.FindByKeysAsync(mockService.Object, inputModels, x => x.Code);
+
+        // Assert
+        Assert.Empty(result);
+        mockService.Verify(s => s.FindAsync<NullKeyModel>(It.IsAny<IList<string>?>(), It.IsAny<string?>(), It.IsAny<IList<string>?>()), Times.Never);
     }
+
+    // ---- FindByQueryAsync ----
 
     /// <summary>
     /// 有効なクエリを指定して FindByQueryAsync を呼び出すと、対応するモデルのリストが返されることを検証するテスト。
@@ -507,6 +429,8 @@ public class KintoneModelBaseFindTests {
         // Assert
         Assert.Empty(result);
     }
+
+    // ---- FindAllAsync ----
 
     /// <summary>
     /// FindAllAsync を呼び出すと、すべてのレコードが返されることを検証するテスト。

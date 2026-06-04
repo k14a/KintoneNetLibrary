@@ -129,11 +129,11 @@ SRP の段階的分離として適切であり、これ以上の責任分離は�
 ## 5. その他
 
 ### 5-1. `FindByKeyAsync` / `FindByKeysAsync` でリフレクションを多用している
-- [ ] **対象ファイル**: [`src/KintoneNetLibrary/Domain/Entities/KintoneModelBase.Crud.cs:333-418`](src/KintoneNetLibrary/Domain/Entities/KintoneModelBase.Crud.cs#L333)
+- [x] **対象ファイル**: [`src/KintoneNetLibrary/Domain/Entities/KintoneModelBase.Crud.cs`](src/KintoneNetLibrary/Domain/Entities/KintoneModelBase.Crud.cs)
 - **問題**: キーフィールドへのアクセスにリフレクションを多用しており、型安全性が低く、パフォーマンス・可読性に懸念がある。
-- **対応方針**: ジェネリクスと抽象メソッド（例: `abstract KintoneQuery<TSelf> BuildKeyQuery()` を継承クラスで実装）に置き換えることを検討する。
+- **対応方針**: `abstract BuildKeyQuery()` の代わりに、呼び出し側が明示的にキーセレクターを渡す型安全な形式（`Expression<Func<TSelf, TKey>> keySelector`）に変更した。`CreateFieldSelector`・`ConvertExpression` ヘルパーおよび `using System.Reflection;` を削除。テストも更新し、`IsKey` 属性バリデーション系のテストを削除した。
 
 ### 5-2. `IKintoneRepository` の戻り値が `string` で型安全でない
-- [ ] **対象ファイル**: [`src/KintoneNetLibrary/Domain/Interfaces/IKintoneRepository.cs`](src/KintoneNetLibrary/Domain/Interfaces/IKintoneRepository.cs)
+- [x] **対象ファイル**: [`src/KintoneNetLibrary/Domain/Interfaces/IKintoneRepository.cs`](src/KintoneNetLibrary/Domain/Interfaces/IKintoneRepository.cs)
 - **問題**: CRUD・Find 系メソッドがすべて `Task<string>` / `Task<string?>` を返しており、JSON 文字列をそのまま戻り値としている。型安全性がなく、呼び出し側でのデシリアライズが必要になる。
-- **対応方針**: 必要に応じて適切な型（`Task<KintoneWriteResult<T>>`、`Task<IEnumerable<T>>` 等）を返すよう変更する。
+- **対応方針**: 設計上の意図的仕様のため**コード変更なし**。`IKintoneRepository` はローレベルAPIとして生JSONを返し、独自JSONパーサーを使いたい利用者向けに提供する。型付き結果が必要な場合は `KintoneTypedCrudService` 等のハイレベルAPIを使用する。
