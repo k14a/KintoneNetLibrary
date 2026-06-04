@@ -340,8 +340,8 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
         var keyValue = keyProp.GetValue(model);
         if (keyValue == null) { return null; }
 
-        var keyTYpe = keyProp.PropertyType;
-        var underlyingType = Nullable.GetUnderlyingType(keyTYpe) ?? keyTYpe;
+        var keyType = keyProp.PropertyType;
+        var underlyingType = Nullable.GetUnderlyingType(keyType) ?? keyType;
 
         var method = typeof(KintoneModelBase<TSelf>)
             .GetMethod("CreateFieldSelector", BindingFlags.NonPublic | BindingFlags.Static)!
@@ -384,8 +384,8 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
             .Distinct()
             .ToList();
 
-        var keyTYpe = keyProp.PropertyType;
-        var underlyingType = Nullable.GetUnderlyingType(keyTYpe) ?? keyTYpe;
+        var keyType = keyProp.PropertyType;
+        var underlyingType = Nullable.GetUnderlyingType(keyType) ?? keyType;
 
         var method = typeof(KintoneModelBase<TSelf>)
             .GetMethod("CreateFieldSelector", BindingFlags.NonPublic | BindingFlags.Static)!

@@ -38,13 +38,13 @@
 ## 2. 命名規則の問題
 
 ### 2-1. `NameConvertor` のスペルミス
-- [ ] **対象ファイル**: [`src/KintoneNetLibrary/Infrastructure/Converters/NameConvertor.cs:7`](src/KintoneNetLibrary/Infrastructure/Converters/NameConvertor.cs#L7)
+- [x] **対象ファイル**: [`src/KintoneNetLibrary/Domain/Entities/NameConverter.cs`](src/KintoneNetLibrary/Domain/Entities/NameConverter.cs)
 - **問題**: クラス名が `NameConvertor`（誤り）。他の Converter クラスはすべて `Converter`（正しいスペル）を使用している。
   - 正しい例: `KintoneRecordConverter`, `KintoneValueConverter`, `KintoneContentConverter`, `KintoneErrorConverter`, `TimeOnlyJsonConverter`
 - **対応方針**: `NameConvertor` → `NameConverter` にリネームし、ファイル名も合わせて変更する。
 
 ### 2-2. `KintoneModelBase.Crud.cs` の変数名スペルミス
-- [ ] **対象ファイル**: [`src/KintoneNetLibrary/Domain/Entities/KintoneModelBase.Crud.cs:343`](src/KintoneNetLibrary/Domain/Entities/KintoneModelBase.Crud.cs#L343), [`src/KintoneNetLibrary/Domain/Entities/KintoneModelBase.Crud.cs:387`](src/KintoneNetLibrary/Domain/Entities/KintoneModelBase.Crud.cs#L387)
+- [x] **対象ファイル**: [`src/KintoneNetLibrary/Domain/Entities/KintoneModelBase.Crud.cs:343`](src/KintoneNetLibrary/Domain/Entities/KintoneModelBase.Crud.cs#L343), [`src/KintoneNetLibrary/Domain/Entities/KintoneModelBase.Crud.cs:387`](src/KintoneNetLibrary/Domain/Entities/KintoneModelBase.Crud.cs#L387)
 - **問題**: ローカル変数名が `keyTYpe`（大文字 Y は誤り）。
 - **対応方針**: `keyTYpe` → `keyType` に修正する。
 

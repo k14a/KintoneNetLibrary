@@ -107,14 +107,14 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// <remarks>プロパティ名とアイテム名の変換は、Kintoneのフィールドコードと一致させるために使用されます。</remarks>
     /// </summary>
     /// <returns>変換情報のリスト</returns>
-    public IDictionary<string, string> GetToPropertyDic() => this.GetNameConvertDic(NameConvertor.Direction.Read);
+    public IDictionary<string, string> GetToPropertyDic() => this.GetNameConvertDic(NameConverter.Direction.Read);
 
     /// <summary>
     /// Kintoneモデルのアイテム名とプロパティ名の変換情報
     /// <remarks>アイテム名とプロパティ名の変換は、Kintoneのフィールドコードと一致させるために使用されます。</remarks>
     /// </summary>
     /// <returns>変換情報のリスト</returns>
-    public IDictionary<string, string> GetToItemNameDic() => this.GetNameConvertDic(NameConvertor.Direction.Send);
+    public IDictionary<string, string> GetToItemNameDic() => this.GetNameConvertDic(NameConverter.Direction.Send);
 
     /// <summary>
     /// Kintoneモデルのプロパティ名とアイテム名の変換情報を取得します。
@@ -122,12 +122,12 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// </summary>
     /// <param name="direction">変換の方向（読み取りまたは送信）</param>
     /// <returns>変換情報の辞書</returns>
-    private Dictionary<string, string> GetNameConvertDic(NameConvertor.Direction direction) {
+    private Dictionary<string, string> GetNameConvertDic(NameConverter.Direction direction) {
         return this.ConvertDictionary
-            .Where(c => c.ConvertDirection == direction || c.ConvertDirection == NameConvertor.Direction.Both)
+            .Where(c => c.ConvertDirection == direction || c.ConvertDirection == NameConverter.Direction.Both)
             .ToDictionary(
-                c => direction == NameConvertor.Direction.Read ? c.ItemName : c.PropertyName,
-                c => direction == NameConvertor.Direction.Read ? c.PropertyName : c.ItemName
+                c => direction == NameConverter.Direction.Read ? c.ItemName : c.PropertyName,
+                c => direction == NameConverter.Direction.Read ? c.PropertyName : c.ItemName
             );
     }
 }
