@@ -14,6 +14,7 @@ namespace KintoneNetLibrary.Infrastructure.Api;
 /// レコード取得（Raw）
 /// </summary>
 public partial class KintoneApi : IKintoneApi {
+
     /// <summary>
     /// IDで単一レコードを取得（Raw）
     /// </summary>
@@ -31,7 +32,9 @@ public partial class KintoneApi : IKintoneApi {
 
         using var response = await this._httpClient.SendAsync(request);
         var json = await response.Content.ReadAsStringAsync();
-        this._logger?.LogTrace(json);
+        if (this._logger != null) {
+            _logTraceException(this._logger, json, null);
+        }
 
         if (!response.IsSuccessStatusCode) {
             throw new KintoneException(KintoneErrorConverter.Parse(json));
@@ -62,7 +65,9 @@ public partial class KintoneApi : IKintoneApi {
 
         using var response = await this._httpClient.SendAsync(request);
         var json = await response.Content.ReadAsStringAsync();
-        this._logger?.LogTrace(json);
+        if (this._logger != null) {
+            _logTraceException(this._logger, json, null);
+        }
 
         if (!response.IsSuccessStatusCode) {
             throw new KintoneException(KintoneErrorConverter.Parse(json));
@@ -465,7 +470,9 @@ public partial class KintoneApi : IKintoneApi {
 
             return hasNext;
         } catch (Exception ex) {
-            this._logger?.LogError(ex, "Error while reading records from cursor stream.");
+            if(this._logger != null) {
+                _logErrorException(this._logger, "Error while reading records from cursor stream.", ex);
+            }
             throw;
         }
     }
@@ -632,7 +639,9 @@ public partial class KintoneApi : IKintoneApi {
                 await this.DeleteCursorAsync(cursorId);
             } catch (KintoneException ex) when (ex.Detail.Contains("GAIA_CN01")) {
                 // すでに削除済みなど
-                this._logger?.LogWarning(ex.ToString());
+                if(this._logger != null) {
+                    _logWarningException(this._logger, ex.Message,ex);
+                }
             }
         }
     }

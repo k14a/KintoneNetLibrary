@@ -12,17 +12,19 @@ namespace KintoneNetLibrary.Infrastructure.Api;
 /// <summary>
 /// Kintone API 基底クラス
 /// </summary>
+#pragma warning disable CA1001 // 破棄可能なフィールドを所有する型は、破棄可能でなければなりません
 public partial class KintoneApi : IKintoneApi {
+#pragma warning restore CA1001 // 破棄可能なフィールドを所有する型は、破棄可能でなければなりません
     #region <<Private values>>
     private readonly KintoneAccessBase _access;
     private readonly int _appID;
     private HttpClient _httpClient;
     private readonly JsonSerializerOptions _jsonOptions;
-    private readonly ILogger<KintoneApi>? _logger;
+    private readonly ILogger? _logger;
     private int _cursorPageSize = KintoneConstants.CursorFetchLimit;
     private long _maxUploadFileSize = KintoneConstants.MaxUploadFileSize;
     private int _maxUploadFileCount = KintoneConstants.MaxUploadFileCount;
-    #endregion
+    #endregion // <<Private values>>
 
     #region <<Properties>>
     /// <summary>
@@ -62,7 +64,7 @@ public partial class KintoneApi : IKintoneApi {
             this._maxUploadFileCount = value;
         }
     }
-    #endregion
+    #endregion // <<Properties>>
 
     #region <<Constructor(s)>>
     /// <summary>
@@ -78,7 +80,7 @@ public partial class KintoneApi : IKintoneApi {
         KintoneAccessBase access,
         int appID,
         IHttpClientFactory httpClientFactory,
-        ILogger<KintoneApi>? logger = null,
+        ILogger? logger = null,
         JsonSerializerOptions? jsonOptions = null) {
 
         ArgumentNullException.ThrowIfNull(access);
@@ -91,7 +93,7 @@ public partial class KintoneApi : IKintoneApi {
 
         this.EnsureDefaultHeaders();
     }
-    #endregion
+    #endregion // <<Constructor(s)>>
 
     /// <summary>
     /// HTTPクライアントのデフォルトヘッダを設定します
@@ -146,11 +148,10 @@ public partial class KintoneApi : IKintoneApi {
         using var response = await this._httpClient.SendAsync(request);
         var json = await response.Content.ReadAsStringAsync();
 
-        this._logger?.LogTrace(json);
-
         if (!response.IsSuccessStatusCode) {
-            var message = $"APIリクエストに失敗しました。StatusCode: {response.StatusCode}, Response: {json}";
-            this._logger?.LogError(message);
+            if(this._logger != null) {
+                _logErrorException(this._logger, $"API request failed. StatusCode: {response.StatusCode}, Response: {json}", null);
+            }
             throw new KintoneException(KintoneErrorConverter.Parse(json));
         }
 
@@ -195,5 +196,18 @@ public partial class KintoneApi : IKintoneApi {
     protected void SetHeaders(HttpRequestMessage request) {
         this._access.ApplyAuthentication(request);
     }
-    #endregion
+    #endregion // <<Protected methods>>
+    
+    #region <<Logging>>
+    private static readonly Action<ILogger, string, Exception?> _logWarningException =
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(1001), "{Message}");
+    private static readonly Action<ILogger, string, Exception?> _logErrorException =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(1002), "{Message}");
+    private static readonly Action<ILogger, string, Exception?> _logTraceException =
+        LoggerMessage.Define<string>(LogLevel.Trace, new EventId(1003), "{Message}");
+    private static readonly Action<ILogger, string, Exception?> _logDebugException =
+        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(1004), "{Message}");
+    private static readonly Action<ILogger, string, Exception?> _logInformationException =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(1005), "{Message}");
+    #endregion // <<Logging>>
 }

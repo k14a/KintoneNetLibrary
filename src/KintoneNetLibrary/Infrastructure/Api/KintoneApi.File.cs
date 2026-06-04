@@ -5,7 +5,6 @@ using KintoneNetLibrary.Application.Interfaces;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Infrastructure.Converters;
 using KintoneNetLibrary.Infrastructure.Helpers;
-using Microsoft.Extensions.Logging;
 
 namespace KintoneNetLibrary.Infrastructure.Api;
 
@@ -61,7 +60,9 @@ public partial class KintoneApi : IKintoneApi {
         fileName ??= "";
 
         if (fileName.Any(char.IsControl)) {
-            this._logger?.LogWarning("ファイル名に制御文字が含まれていたため、除去されました: {Original}", fileName);
+            if(this._logger != null) {
+                _logWarningException(this._logger, $"ファイル名に制御文字が含まれていたため、除去されました: {fileName}", null);
+            }
             fileName = string.Concat(fileName.Where(c => !char.IsControl(c)));
         }
 
@@ -75,7 +76,9 @@ public partial class KintoneApi : IKintoneApi {
 
         if (stream.Length > this.MaxUploadFileSize) {
             var message = $"ファイルサイズが制限（{this.MaxUploadFileSize / 1024 / 1024}MB）を超えています。: {stream.Length} bytes";
-            this._logger?.LogError(message);
+            if(this._logger != null) {
+                _logWarningException(this._logger, message, null);
+            }
             throw new KintoneException(new KintoneError {
                 Code = "LOCAL_FILE_TOO_LARGE",
                 Message = message,
@@ -104,7 +107,9 @@ public partial class KintoneApi : IKintoneApi {
 
         if (!resp.IsSuccessStatusCode) {
             var error = KintoneErrorConverter.Parse(json);
-            this._logger?.LogError("Kintoneファイルアップロード失敗: {Error}", error);
+            if(this._logger != null) {
+                _logErrorException(this._logger, $"Kintoneファイルアップロード失敗: {error}, Response: {json}", null);
+            }
             throw new KintoneException(error);
         }
 
@@ -112,7 +117,9 @@ public partial class KintoneApi : IKintoneApi {
         if (!resp.Content.Headers.ContentType?.MediaType?.Equals("application/json", StringComparison.OrdinalIgnoreCase) ?? true) {
             var mediaType = resp.Content.Headers.ContentType?.MediaType ?? "null";
             var errorMessage = $"想定外の Content-Type: {mediaType}";
-            this._logger?.LogError(errorMessage);
+            if(this._logger != null) {
+                _logErrorException(this._logger, $"Kintoneファイルアップロード失敗: {errorMessage}, Response: {json}", null);
+            }
             throw new KintoneException(new KintoneError {
                 Code = "INVALID_CONTENT_TYPE",
                 Message = errorMessage,
@@ -215,12 +222,16 @@ public partial class KintoneApi : IKintoneApi {
             try {
                 error = KintoneErrorConverter.Parse(json);
             } catch (Exception ex) {
-                this._logger?.LogError(ex, "Kintoneエラー解析失敗: fileKey={FileKey}, body={Json}", fileKey, json);
+                if(this._logger != null) {
+                    _logErrorException(this._logger, $"Kintoneエラー解析失敗: fileKey={fileKey}, body={json}", ex);
+                }
                 throw new KintoneException($"予期しないContent-Type: {contentType}, body={json}");
             }
 
             if (error != null) {
-                this._logger?.LogError("Kintoneファイルダウンロード失敗（ストリーム）: fileKey={FileKey}, Error={Error}", fileKey, error);
+                if(this._logger != null) {
+                    _logErrorException(this._logger, $"Kintoneファイルダウンロード失敗: fileKey={fileKey}, Error={error}", null);
+                }
                 throw new KintoneException(error);
             }
 
