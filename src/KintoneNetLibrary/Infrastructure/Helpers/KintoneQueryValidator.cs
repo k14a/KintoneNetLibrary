@@ -104,7 +104,7 @@ public static partial class KintoneQueryValidator {
     /// <returns>リテラル値である場合はtrue、それ以外はfalse</returns>
     private static bool IsLiteralValue(string word) {
         // 数字リテラル・クォート済み文字列はここでは単純に除外（実装は要改善可能）
-        return int.TryParse(word, out _) || double.TryParse(word, out _) || word.StartsWith("\"") || word.EndsWith("\"");
+        return int.TryParse(word, out _) || double.TryParse(word, out _) || word.StartsWith('"') || word.EndsWith('"');
     }
 
 }

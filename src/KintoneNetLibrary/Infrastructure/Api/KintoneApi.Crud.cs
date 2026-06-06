@@ -10,6 +10,7 @@ namespace KintoneNetLibrary.Infrastructure.Api;
 /// <summary>
 /// Kintone API の CRUD 操作を提供する部分クラス
 /// </summary>
+#pragma warning disable CA1001
 public partial class KintoneApi : IKintoneApi {
     /// <summary>
     /// 複数レコードを一括登録します

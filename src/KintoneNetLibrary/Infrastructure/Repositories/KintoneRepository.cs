@@ -117,11 +117,13 @@ public class KintoneRepository(IKintoneApiFactory factory) : IKintoneRepository 
     /// <param name="models">保存対象のモデルリスト</param>
     /// <returns>保存結果のインデックス情報</returns>
     /// <exception cref="NotImplementedException">このメソッドは未実装です。KintoneModelCrudService.SaveAsync() を使用してください。</exception>
+#pragma warning disable CA1822
     public async Task<KintoneIndexes> SaveAsync<T>(IEnumerable<T> models) where T : KintoneModelBase<T>, new() {
         await Task.CompletedTask.ConfigureAwait(false);
         // 必要であれば保存実装を委譲、それ以外は NotImplemented に
         throw new NotImplementedException("Use KintoneModelCrudService.SaveAsync() instead.");
     }
+#pragma warning restore CA1822
 
     /// <summary>
     /// ファイルのアップロード

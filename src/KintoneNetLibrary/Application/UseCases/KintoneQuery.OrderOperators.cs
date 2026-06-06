@@ -16,7 +16,7 @@ public partial class KintoneQuery<T> where T : KintoneModelBase<T>, new() {
     /// </remarks>
     /// <exception cref="ArgumentNullException">keySelector が null の場合にスローされます。</exception>
     /// <exception cref="ArgumentException">keySelector が有効なフィールドを指定していない場合にスローされます。</exception>
-    public KintoneQuery<T> OrderBy(Expression<Func<T, object>> keySelector) {
+    public KintoneQuery<T> OrderBy(Expression<Func<T, object?>> keySelector) {
         this._orderBys.Clear();
         this._orderBys.Add($"{GetFieldName(keySelector)} asc");
         return this;
@@ -33,7 +33,7 @@ public partial class KintoneQuery<T> where T : KintoneModelBase<T>, new() {
     /// <returns>KintoneQuery インスタンス</returns>
     /// <exception cref="ArgumentNullException">keySelector が null の場合にスローされます。</exception>
     /// <exception cref="ArgumentException">keySelector が有効なフィールドを指定していない場合にスローされます。</exception>
-    public KintoneQuery<T> OrderByDescending(Expression<Func<T, object>> keySelector) {
+    public KintoneQuery<T> OrderByDescending(Expression<Func<T, object?>> keySelector) {
         this._orderBys.Clear();
         this._orderBys.Add($"{GetFieldName(keySelector)} desc");
         return this;
@@ -50,7 +50,7 @@ public partial class KintoneQuery<T> where T : KintoneModelBase<T>, new() {
     /// <returns>KintoneQuery インスタンス</returns>
     /// <exception cref="ArgumentNullException">keySelector が null の場合にスローされます。</exception>
     /// <exception cref="ArgumentException">keySelector が有効なフィールドを指定していない場合にスローされます。</exception>
-    public KintoneQuery<T> ThenBy(Expression<Func<T, object>> keySelector) {
+    public KintoneQuery<T> ThenBy(Expression<Func<T, object?>> keySelector) {
         this._orderBys.Add($"{GetFieldName(keySelector)} asc");
         return this;
     }
@@ -66,7 +66,7 @@ public partial class KintoneQuery<T> where T : KintoneModelBase<T>, new() {
     /// <returns>KintoneQuery インスタンス</returns>
     /// <exception cref="ArgumentNullException">keySelector が null の場合にスローされます。</exception>
     /// <exception cref="ArgumentException">keySelector が有効なフィールドを指定していない場合にスローされます。</exception>
-    public KintoneQuery<T> ThenByDescending(Expression<Func<T, object>> keySelector) {
+    public KintoneQuery<T> ThenByDescending(Expression<Func<T, object?>> keySelector) {
         this._orderBys.Add($"{GetFieldName(keySelector)} desc");
         return this;
     }

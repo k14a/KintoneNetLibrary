@@ -150,7 +150,7 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
         } else if (node.Value is TimeOnly t) {
             this._queryBuilder.Append($"\"{t:HH:mm}\"");
         } else if (node.Value is bool b) {
-            this._queryBuilder.Append(b.ToString().ToLower());
+            this._queryBuilder.Append(b.ToString().ToLowerInvariant());
         } else {
             // 数値などはそのまま出力
             this._queryBuilder.Append(Convert.ToString(node.Value, System.Globalization.CultureInfo.InvariantCulture));
@@ -238,7 +238,7 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
                     if (evaluated is IEnumerable<object> values) {
                         this._queryBuilder.Append($"{fieldName} in (");
                         this._queryBuilder.Append(string.Join(", ", values.Select(v => this.FormatValue(v))));
-                        this._queryBuilder.Append(")");
+                        this._queryBuilder.Append(')');
                         return node;
                     }
 
@@ -246,7 +246,7 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
                         var formatted = rawEnumerable.Cast<object>().Select(this.FormatValue);
                         this._queryBuilder.Append($"{fieldName} in (");
                         this._queryBuilder.Append(string.Join(", ", formatted));
-                        this._queryBuilder.Append(")");
+                        this._queryBuilder.Append(')');
                         return node;
                     }
                 } catch (NotSupportedException) {
@@ -278,7 +278,7 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
 
                             this._queryBuilder.Append($"{fieldName} in (");
                             this._queryBuilder.Append(string.Join(", ", values.Select(v => this.FormatValue(v))));
-                            this._queryBuilder.Append(")");
+                            this._queryBuilder.Append(')');
 
                             return node;
                         }
@@ -312,7 +312,7 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
             null => "null",
             TimeOnly t => $"\"{t:HH:mm}\"", // ← 追加
             string s => $"\"{s}\"",
-            bool b => b.ToString().ToLower(),
+            bool b => b.ToString().ToLowerInvariant(),
             DateTime dt => $"\"{dt.ToUniversalTime():yyyy-MM-ddTHH:mm:ssZ}\"",
             KintoneDateTime kdt => $"\"{kdt.Value.ToUniversalTime():yyyy-MM-ddTHH:mm:ssZ}\"",
             KintoneTimeOnly kto => $"\"{kto.Value}\"",

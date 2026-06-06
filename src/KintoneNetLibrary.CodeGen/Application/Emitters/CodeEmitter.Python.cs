@@ -27,7 +27,7 @@ public class PythonCodeEmitter(
     ILogger<PythonCodeEmitter>? logger = null) : ICodeEmitter {
 
     // private readonly INameConverter _converter = converterFactory.Create(GenerateLanguages.Python);
-    private INameConverter _converter;
+    private INameConverter _converter = null!;
     private readonly ITypeMapper _mapper = mapperFactory.Create(GenerateLanguages.Python);
     private readonly IDateTimeProvider _clock = clock ?? new SystemDateTimeProvider();
     private readonly ILogger<PythonCodeEmitter>? _logger = logger;
