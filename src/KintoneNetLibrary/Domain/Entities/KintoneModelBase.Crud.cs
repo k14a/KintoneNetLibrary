@@ -75,6 +75,7 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
         return await service.SaveWithRetryAsync([(TSelf)this], enableSingleRetryOnError, enableCreateToUpdateRetry);
     }
 
+#pragma warning disable CA1000
     /// <summary>
     /// レコードを一括作成します。
     /// </summary>
@@ -326,6 +327,7 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
         return [.. await service.FindAsync<TSelf>()];
     }
 
+#pragma warning restore CA1000
     /// <summary>
     /// 複数モデルを1件ずつ書き込み操作し、結果をマージして返すヘルパーメソッド
     /// </summary>
