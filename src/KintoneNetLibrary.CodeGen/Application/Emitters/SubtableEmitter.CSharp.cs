@@ -45,10 +45,7 @@ public class CSharpSubTableEmitter(ITypeMapperFactory mapperFactory, IXmlComment
         sb.AppendLine();
 
         // class name
-        var rawName = this._converter!.ToClassName(name, string.Empty, true);
-        if (rawName == "_") {
-            rawName = $"SubTable{rawName}";
-        }
+        var rawName = $"SubTable{this._converter!.ToClassName(name, string.Empty, tableTemplate: false)}";
         rawName = this.MakeUniqueClassName(rawName);
         var className = rawName;
 

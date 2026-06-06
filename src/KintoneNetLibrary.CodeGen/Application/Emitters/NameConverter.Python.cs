@@ -86,11 +86,11 @@ public class PythonNameConverter : INameConverter, INameTableApplicable {
         }
 
         var baseName = SelectBaseName(label, code);
+        if (string.IsNullOrWhiteSpace(baseName)) { return "INVALID_FIELD_NAME"; }
+
         if (baseName.IsAscii()) { return baseName.ToSnakeCase(); }
 
         if (tableTemplate) { return string.Empty; }
-
-        if (string.IsNullOrWhiteSpace(baseName)) { return tableTemplate ? string.Empty : "INVALID_FIELD_NAME"; }
 
         // システムフィールドは固定名
         if (SystemFieldCodes.Contains(code)) { return code.ToSnakeCase(); }

@@ -1,0 +1,14 @@
+﻿using System;
+
+namespace KintoneNetLibrary.Generated;
+
+/// <summary>明細</summary>
+public partial class SubTableOrderItems
+{
+    /// <summary>商品名</summary>
+    public string ItemName { get; set; } = string.Empty;
+
+    /// <summary>数量</summary>
+    public int? Qty { get; set; }
+
+}

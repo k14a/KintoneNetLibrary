@@ -90,7 +90,7 @@ public class CSharpTypeMapperTests {
     [InlineData(KintoneFieldType.LinkTelephone, "string")]
     [InlineData(KintoneFieldType.LinkEmail, "string")]
     public void MapType_LibraryMode_ReturnsExpected(KintoneFieldType type, string expected) {
-        var field = new KintoneFieldSchema { FieldType = type };
+        var field = new KintoneFieldSchema { FieldType = type, Required = true };
         var result = _mapper.MapType(field, useKintoneNetLibrary: true);
         Assert.Equal(expected, result);
     }
@@ -121,8 +121,8 @@ public class CSharpTypeMapperTests {
     [InlineData(KintoneFieldType.Time, "TimeOnly?")]
     [InlineData(KintoneFieldType.File, "List<string>")]
     [InlineData(KintoneFieldType.UserSelect, "List<UserInfo>")]
-    [InlineData(KintoneFieldType.GroupSelect, "List<OrganizationInfo>")]
-    [InlineData(KintoneFieldType.OrganizationSelect, "List<GroupInfo>")]
+    [InlineData(KintoneFieldType.GroupSelect, "List<GroupInfo>")]
+    [InlineData(KintoneFieldType.OrganizationSelect, "List<OrganizationInfo>")]
     public void MapType_PureMode_ReturnsExpected(KintoneFieldType type, string expected) {
         var field = new KintoneFieldSchema { FieldType = type };
         var result = _mapper.MapType(field, useKintoneNetLibrary: false);

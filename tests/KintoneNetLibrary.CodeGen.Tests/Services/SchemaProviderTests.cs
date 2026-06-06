@@ -48,6 +48,22 @@ public class SchemaProviderTests {
                     }
                 ]
             });
+
+        // Convert は取得したメタデータをそのままスキーマに変換する
+        this._mockConverter
+            .Setup(x => x.Convert(It.IsAny<KintoneAppMetadata>()))
+            .Returns<KintoneAppMetadata>(meta => new KintoneNetLibrary.CodeGen.Domain.Schemas.KintoneAppSchema {
+                AppId = meta.AppId,
+                Revision = meta.Revision,
+                Fields = meta.Fields.Select(f => new KintoneNetLibrary.CodeGen.Domain.Schemas.KintoneFieldSchema {
+                    FieldCode = f.FieldCode,
+                    Label = f.FieldLabel,
+                    FieldType = f.FieldType,
+                    Required = f.Required,
+                    Options = f.Options?.ToList() ?? []
+                }).ToList(),
+                SubTables = []
+            });
     }
 
 
