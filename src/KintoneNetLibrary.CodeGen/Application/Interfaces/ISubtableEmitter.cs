@@ -15,6 +15,5 @@ public interface ISubTableEmitter {
     /// <param name="subTable">サブテーブルのスキーマ情報</param>
     /// <param name="options">コード生成オプション</param>
     /// <returns>生成されたサブテーブルモデル</returns>
-    GeneratedSubTableModel EmitSubTable(string name, KintoneSubTableSchema subTable, CSharpEmitterOptions options);
-    void SetNameConverter(INameConverter converter);
+    GeneratedSubTableModel EmitSubTable(string name, KintoneSubTableSchema subTable, CSharpEmitterOptions options, INameConverter nameConverter);
 }

@@ -65,12 +65,12 @@ public class MetadataConverter : IMetadataConverter {
                     Fields = []
                 };
 
+                var subFieldDict = subMeta.SubFields!.ToDictionary(sf => sf.FieldCode);
                 foreach (var f in sub.Fields) {
                     if (string.IsNullOrEmpty(f.Code)) { continue; }
 
-                    if (!subMeta.SubFields!.Any(sf => sf.FieldCode == f.Code)) { continue; }
+                    if (!subFieldDict.TryGetValue(f.Code, out var sfMeta)) { continue; }
 
-                    var sfMeta = subMeta.SubFields!.First(sf => sf.FieldCode == f.Code);
                     subTable.Fields.Add(this.ConvertField(sfMeta));
                 }
 

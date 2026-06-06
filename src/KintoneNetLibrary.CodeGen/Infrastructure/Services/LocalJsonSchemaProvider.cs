@@ -68,14 +68,6 @@ public class LocalJsonSchemaProvider(string jsonPath, IKintoneFieldParser fieldP
     }
 
     /// <summary>
-    /// このプロバイダーはローカルの JSON ファイルからスキーマを提供するため、SetDomain はサポートしていません。
-    /// </summary>
-    /// <param name="subDomain">未使用</param>
-    /// <exception cref="NotSupportedException">このメソッドはサポートされていません。</exception>
-    public void SetDomain(string subDomain)
-        => throw new NotSupportedException("LocalJsonSchemaProvider does not support SetDomain because it does not connect to Kintone API.");
-
-    /// <summary>
     /// このプロバイダーはローカルの JSON ファイルからスキーマを提供するため、CompareAsync はサポートしていません。
     /// </summary>
     /// <param name="backupSchema">未使用</param>

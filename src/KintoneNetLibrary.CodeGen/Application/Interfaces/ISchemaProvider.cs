@@ -17,12 +17,6 @@ public interface ISchemaProvider {
     Task<KintoneAppSchema> GetSchemaAsync(string domain, string apiToken, int appId);
 
     /// <summary>
-    /// Kintoneのサブドメインを設定します。
-    /// </summary>
-    /// <param name="subDomain">Kintoneのサブドメイン</param>
-    void SetDomain(string subDomain);
-
-    /// <summary>
     /// 指定されたアプリIDとAPIトークンに基づいてKintoneアプリのメタデータを取得します。
     /// </summary>
     /// <param name="domain">Kintoneのサブドメイン</param>

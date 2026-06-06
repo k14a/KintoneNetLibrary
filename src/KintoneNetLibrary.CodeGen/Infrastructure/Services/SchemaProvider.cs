@@ -16,7 +16,6 @@ public class SchemaProvider(IKintoneAppMetadataApi metadataApi, IMetadataConvert
     private readonly IKintoneAppMetadataApi _metadataApi = metadataApi;
     private readonly IMetadataConverter _converter = converter;
     private readonly ILogger<SchemaProvider> _logger = logger;
-    private string? _domain;
 
     /// <summary>
     /// Kintoneアプリのスキーマ情報を取得します。
@@ -44,21 +43,9 @@ public class SchemaProvider(IKintoneAppMetadataApi metadataApi, IMetadataConvert
     /// <param name="apiToken">APIトークン</param>
     /// <param name="appId">アプリケーションのID</param>
     /// <returns>取得したメタデータ情報</returns>
-    /// <exception cref="ArgumentNullException">domainが設定されていない場合にスローされます</exception>
     public async Task<KintoneAppMetadata> GetMetadataAsync(string domain, string apiToken, int appId) {
-        if (this._domain is null) {
-            var message = "domainが設定されていません。";
-            throw new ArgumentNullException(message);
-        }
-
         return await this._metadataApi.GetAppMetadataAsync(domain, apiToken, appId);
     }
-
-    /// <summary>
-    /// Kintoneのサブドメインを設定します。
-    /// </summary>
-    /// <param name="subDomain">Kintoneのサブドメイン</param>
-    public void SetDomain(string subDomain) => this._domain = $"{subDomain}.cybozu.com";
 
     /// <summary>
     /// 指定されたバックアップスキーマと現在のスキーマを比較し、差分を取得します。

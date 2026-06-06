@@ -14,13 +14,12 @@ public interface ICodeEmitter {
     /// </summary>
     GenerateLanguages Language { get; }
 
-    void SetNameConverter(INameConverter converter);
-
     /// <summary>
     /// コード生成を実行します
     /// </summary>
     /// <param name="schema">Kintone アプリスキーマ</param>
     /// <param name="options">コード生成オプション</param>
+    /// <param name="nameConverter">名前変換</param>
     /// <returns>生成されたモデル結果</returns>
-    GeneratedModelResult Emit(KintoneAppSchema schema, CodeEmitterOptions options);
+    GeneratedModelResult Emit(KintoneAppSchema schema, CodeEmitterOptions options, INameConverter nameConverter);
 }

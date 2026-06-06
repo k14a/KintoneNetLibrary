@@ -137,7 +137,7 @@ public class CSharpSubTableEmitterTests {
         };
 
         // Act
-        var result = emitter.EmitSubTable("order_items", subTable, options);
+        var result = emitter.EmitSubTable("order_items", subTable, options, new CSharpNameConverter());
 
         // Assert: クラス名が正しい
         Assert.Equal("SubTableOrderItems", result.ClassName);
@@ -169,8 +169,9 @@ public class CSharpSubTableEmitterTests {
         };
 
         // Act
-        var first = emitter.EmitSubTable("details", subTable, options);
-        var second = emitter.EmitSubTable("details", subTable, options);
+        var converter = new CSharpNameConverter();
+        var first = emitter.EmitSubTable("details", subTable, options, converter);
+        var second = emitter.EmitSubTable("details", subTable, options, converter);
 
         // Assert
         Assert.Equal("SubTableDetails", first.ClassName);

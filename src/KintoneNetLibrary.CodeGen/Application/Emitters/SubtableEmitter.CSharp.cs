@@ -26,18 +26,16 @@ public class CSharpSubTableEmitter(ITypeMapperFactory mapperFactory, IXmlComment
     /// 名前変換ファクトリを設定する
     /// </summary>
     /// <param name="converter">名前変換ファクトリ</param>
-    public void SetNameConverter(INameConverter converter) {
-        this._converter ??= converter;
-    }
-
     /// <summary>
     /// サブテーブルモデルを生成する
     /// </summary>
     /// <param name="name">サブテーブル名</param>
     /// <param name="subTable">サブテーブルスキーマ</param>
     /// <param name="options">エミッターオプション</param>
+    /// <param name="nameConverter">名前変換</param>
     /// <returns>生成されたサブテーブルモデル</returns>
-    public GeneratedSubTableModel EmitSubTable(string name, KintoneSubTableSchema subTable, CSharpEmitterOptions options) {
+    public GeneratedSubTableModel EmitSubTable(string name, KintoneSubTableSchema subTable, CSharpEmitterOptions options, INameConverter nameConverter) {
+        this._converter = nameConverter;
         var sb = new StringBuilder();
 
         this.EmitUsingSection(sb, options);

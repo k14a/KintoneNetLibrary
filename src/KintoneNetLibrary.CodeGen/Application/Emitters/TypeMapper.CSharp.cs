@@ -138,8 +138,8 @@ public class CSharpTypeMapper : ITypeMapper {
             KintoneFieldType.DropDown => "string",
 
             KintoneFieldType.UserSelect => "List<UserInfo>",
-            KintoneFieldType.OrganizationSelect => "List<GroupInfo>",
-            KintoneFieldType.GroupSelect => "List<OrganizationInfo>",
+            KintoneFieldType.OrganizationSelect => "List<OrganizationInfo>",
+            KintoneFieldType.GroupSelect => "List<GroupInfo>",
 
             KintoneFieldType.File => "List<string>",
 

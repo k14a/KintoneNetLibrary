@@ -17,12 +17,9 @@ public class CodeEmitterFactory(IEnumerable<ICodeEmitter> emitters) : ICodeEmitt
     /// コードエミッターの作成
     /// </summary>
     /// <param name="lang">生成する言語</param>
-    /// <param name="nameConverter">使用する名前変換</param>
     /// <returns>指定された言語のコードエミッター</returns>
-    public ICodeEmitter Create(GenerateLanguages lang, INameConverter nameConverter) {
+    public ICodeEmitter Create(GenerateLanguages lang) {
         if (this._emitters.TryGetValue(lang, out var emitter)) {
-            // 生成されたコードエミッターに名前変換を設定する
-            emitter.SetNameConverter(nameConverter);
             return emitter;
         }
 

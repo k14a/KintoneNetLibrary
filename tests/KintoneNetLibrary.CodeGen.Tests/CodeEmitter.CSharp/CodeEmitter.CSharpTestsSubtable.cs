@@ -71,18 +71,15 @@ public class CSharpCodeEmitterSubTableTests {
         /// <returns>生成されたサブテーブルのコード文字列</returns>
         public string EmitSubTable(string fieldCode, KintoneSubTableSchema schema, CSharpEmitterOptions options) => string.Empty;
 
-        public void SetNameConverter(INameConverter converter) {
-            throw new NotImplementedException();
-        }
-
         /// <summary>
         /// サブテーブルのコード生成に必要な情報を含むモデルを生成するためのメソッド。ここでは空のモデルを返すフェイク実装となっている。
         /// </summary>
         /// <param name="name">生成するモデルの名前</param>
         /// <param name="subTable">サブテーブルのスキーマ情報</param>
         /// <param name="options">C# エミッタのオプション</param>
+        /// <param name="nameConverter">名前変換</param>
         /// <returns>生成されたサブテーブルモデル</returns>
-        GeneratedSubTableModel ISubTableEmitter.EmitSubTable(string name, KintoneSubTableSchema subTable, CSharpEmitterOptions options) => new();
+        GeneratedSubTableModel ISubTableEmitter.EmitSubTable(string name, KintoneSubTableSchema subTable, CSharpEmitterOptions options, INameConverter nameConverter) => new();
     }
 
     /// <summary>
@@ -175,7 +172,7 @@ public class CSharpCodeEmitterSubTableTests {
             UseKintoneNetLibrary = false
         };
 
-        var result = emitter.Emit(schema, options);
+        var result = emitter.Emit(schema, options, new CSharpNameConverter());
 
         Snapshot.Match(result.MainModelCode);
     }

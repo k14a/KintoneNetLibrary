@@ -148,7 +148,7 @@ public class PythonCodeEmitterTests {
         };
 
         // Act
-        var result = emitter.Emit(schema, options);
+        var result = emitter.Emit(schema, options, new PythonNameConverter());
 
         // Assert
         Snapshot.Match(result.MainModelCode);

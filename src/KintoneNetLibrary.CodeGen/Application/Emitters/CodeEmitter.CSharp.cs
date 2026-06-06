@@ -7,7 +7,7 @@ using KintoneNetLibrary.CodeGen.Domain.Options;
 using KintoneNetLibrary.CodeGen.Domain.Schemas;
 using KintoneNetLibrary.CodeGen.Infrastructure.Services;
 using KintoneNetLibrary.Domain.Interfaces;
-using KintoneNetLibrary.Infrastructure.Helpers;
+using KintoneNetLibrary.CodeGen.Infrastructure.Helpers;
 using Microsoft.Extensions.Logging;
 
 namespace KintoneNetLibrary.CodeGen.Application.Emitters;
@@ -30,6 +30,7 @@ public class CSharpCodeEmitter(
 
     private INameConverter? _converter;
     private readonly ITypeMapper _mapper = mapperFactory.Create(GenerateLanguages.CSharp);
+
     private readonly IXmlCommentBuilder _xml = xml;
     private readonly ISubTableEmitter _subTableEmitter = subTableEmitter;
     private readonly IHelperClassEmitter _helperEmitter = helperEmitter;
@@ -41,17 +42,15 @@ public class CSharpCodeEmitter(
     /// </summary>
     public GenerateLanguages Language => GenerateLanguages.CSharp;
 
-    public void SetNameConverter(INameConverter converter) {
-        this._converter ??= converter;
-    }
-
     /// <summary>
     /// Kintone アプリスキーマから C# コードを生成する
     /// </summary>
     /// <param name="schema">Kintone アプリスキーマ</param>
     /// <param name="options">コードエミッターオプション</param>
+    /// <param name="nameConverter">名前変換</param>
     /// <returns>生成されたモデル結果</returns>
-    public GeneratedModelResult Emit(KintoneAppSchema schema, CodeEmitterOptions options) {
+    public GeneratedModelResult Emit(KintoneAppSchema schema, CodeEmitterOptions options, INameConverter nameConverter) {
+        this._converter = nameConverter;
         this._logger?.LogInformation("Starting C# code emission for App ID: {AppId}", schema.AppId);
 
         try {
@@ -63,10 +62,9 @@ public class CSharpCodeEmitter(
             };
 
             // 2. サブテーブル生成
-            this._subTableEmitter.SetNameConverter(this._converter!);
             foreach (var sub in schema.SubTables) {
                 result.SubTableModels.Add(
-                    this._subTableEmitter.EmitSubTable(sub.FieldCode, sub, csOptions)
+                    this._subTableEmitter.EmitSubTable(sub.FieldCode, sub, csOptions, nameConverter)
                 );
             }
 

@@ -255,3 +255,58 @@ SRP の段階的分離として適切であり、これ以上の責任分離は�
 - [x] **対象ファイル**: [`src/KintoneNetLibrary.Backup/Infrastructure/Services/RestoreService.cs:462`](src/KintoneNetLibrary.Backup/Infrastructure/Services/RestoreService.cs#L462)
 - **問題**: `else` ブランチで SUBTABLE 以外の `JsonObject` フィールドにも再帰的に `RemoveRecordIdFields` を呼び出しているが、通常の Kintone フィールド（`{"type": "...", "value": "..."}` 構造）は `$id` を持たないため無駄な再帰が発生している。
 - **対応方針**: 再帰は SUBTABLE のみに限定する（`else` ブランチを削除）。
+
+---
+
+## 7. KintoneNetLibrary.CodeGen プロジェクトのレビュー（2026-06-06）
+
+### 7-A. Clean Architecture 依存方向違反
+
+#### 7-A-1. `CSharpCodeEmitter` / `PythonCodeEmitter` が `SystemDateTimeProvider`（Infrastructure）を直接 `new` している
+- [x] **対象ファイル**: [`src/KintoneNetLibrary.CodeGen/Application/Emitters/CodeEmitter.CSharp.cs:36`](src/KintoneNetLibrary.CodeGen/Application/Emitters/CodeEmitter.CSharp.cs#L36), [`src/KintoneNetLibrary.CodeGen/Application/Emitters/CodeEmitter.Python.cs:32`](src/KintoneNetLibrary.CodeGen/Application/Emitters/CodeEmitter.Python.cs#L32)
+- **問題**: `clock ?? new SystemDateTimeProvider()` と、Application 層のエミッターが `KintoneNetLibrary.Infrastructure.Helpers`（Infrastructure 層）に直接依存している。
+- **対応方針**: DI 側で `IDateTimeProvider` のデフォルト実装を登録するか、CodeGen プロジェクト内に実装を移動する。
+
+### 7-B. 設計上の問題
+
+#### 7-B-1. `ISchemaProvider.SetDomain` がインターフェースをステートフルにしており、実装と矛盾している
+- [x] **対象ファイル**: [`src/KintoneNetLibrary.CodeGen/Application/Interfaces/ISchemaProvider.cs:23`](src/KintoneNetLibrary.CodeGen/Application/Interfaces/ISchemaProvider.cs#L23), [`src/KintoneNetLibrary.CodeGen/Infrastructure/Services/SchemaProvider.cs:48-55`](src/KintoneNetLibrary.CodeGen/Infrastructure/Services/SchemaProvider.cs#L48)
+- **問題**: `GetMetadataAsync(domain, ...)` は引数 `domain` を受け取るのに `this._domain is null` をチェックして例外を投げる。`this._domain` は実際には使っておらず、`SetDomain` を呼ばないと引数 `domain` があっても常に例外になる。
+- **対応方針**: `SetDomain` を廃止し、引数 `domain` をそのまま利用する形に統一する。`ISchemaProvider` からも `SetDomain` を除去する。
+
+#### 7-B-2. `ICodeEmitter.SetNameConverter` の設計により、異なる `nameConverter` での再利用が無視される
+- [x] **対象ファイル**: [`src/KintoneNetLibrary.CodeGen/Infrastructure/Factories/CodeEmitterFactory.cs:22`](src/KintoneNetLibrary.CodeGen/Infrastructure/Factories/CodeEmitterFactory.cs#L22), [`src/KintoneNetLibrary.CodeGen/Application/Emitters/CodeEmitter.CSharp.cs:44`](src/KintoneNetLibrary.CodeGen/Application/Emitters/CodeEmitter.CSharp.cs#L44)
+- **問題**: `SetNameConverter` 内で `this._converter ??= converter` のため、2回目以降の `Create(lang, nameConverter)` 呼び出しで `nameConverter` が無視される。Factory が同一インスタンスを辞書で保持し使い回しているため。
+- **対応方針**: Factory の `Create` でエミッターを都度生成するか、コンストラクタで `INameConverter` を受け取る設計に変更する。
+
+### 7-C. バグ・論理エラー
+
+#### 7-C-1. `CSharpNameConverter.Dictionary`（日本語→英語変換辞書）がデッドコード
+- [x] **対象ファイル**: [`src/KintoneNetLibrary.CodeGen/Application/Emitters/NameConverter.CSharp.cs:16`](src/KintoneNetLibrary.CodeGen/Application/Emitters/NameConverter.CSharp.cs#L16), [`src/KintoneNetLibrary.CodeGen/Application/Emitters/NameConverter.CSharp.cs:103`](src/KintoneNetLibrary.CodeGen/Application/Emitters/NameConverter.CSharp.cs#L103)
+- **問題**: `Convert` 内で `SanitizeFieldCode` により日本語が `_` に置換された後の `codeName`（PascalCase 済み）で辞書を引いているため、日本語キー（"顧客"、"担当者" 等）とマッチする機会がなく、辞書が事実上機能していない。
+- **対応方針**: 辞書の参照を `SanitizeFieldCode` 前の元の `label` に対して行うよう修正する。
+
+#### 7-C-2. `CSharpTypeMapper.MapPure` で `OrganizationSelect` と `GroupSelect` の型マッピングが逆
+- [x] **対象ファイル**: [`src/KintoneNetLibrary.CodeGen/Application/Emitters/TypeMapper.CSharp.cs:141`](src/KintoneNetLibrary.CodeGen/Application/Emitters/TypeMapper.CSharp.cs#L141)
+- **問題**: `OrganizationSelect → List<GroupInfo>` / `GroupSelect → List<OrganizationInfo>` となっており逆（`OrganizationSelect` は組織選択なので `OrganizationInfo`、`GroupSelect` はグループ選択なので `GroupInfo` が正しい）。
+- **対応方針**: 型マッピングを正しい順序に修正する。
+
+### 7-D. コード品質・その他
+
+#### 7-D-1. `MetadataConverter` のサブフィールド検索が O(n²)
+- [x] **対象ファイル**: [`src/KintoneNetLibrary.CodeGen/Infrastructure/Services/MetadataConverter.cs:71`](src/KintoneNetLibrary.CodeGen/Infrastructure/Services/MetadataConverter.cs#L71)
+- **問題**: `subMeta.SubFields!.Any(sf => sf.FieldCode == f.Code)` と `subMeta.SubFields!.First(sf => sf.FieldCode == f.Code)` を各サブフィールドで繰り返し呼び出しており O(n²) の処理になっている。
+- **対応方針**: `subMeta.SubFields.ToDictionary(sf => sf.FieldCode)` で事前に辞書化し O(n) に改善する。
+
+#### 7-D-2. `CSharpNameConverter.IsCSharpKeyword` で毎回配列を生成している
+- [x] **対象ファイル**: [`src/KintoneNetLibrary.CodeGen/Application/Emitters/NameConverter.CSharp.cs:154`](src/KintoneNetLibrary.CodeGen/Application/Emitters/NameConverter.CSharp.cs#L154)
+- **問題**: `new[] { ... }.Contains(name)` で毎回配列を生成している。
+- **対応方針**: `private static readonly HashSet<string>` のフィールドに変更する。
+
+#### 7-D-3. `PythonCodeEmitter` のコメントアウトコード残存・命名規則違反・未使用変数
+- [x] **対象ファイル**: [`src/KintoneNetLibrary.CodeGen/Application/Emitters/CodeEmitter.Python.cs:23`](src/KintoneNetLibrary.CodeGen/Application/Emitters/CodeEmitter.Python.cs#L23)
+- **問題**:
+  - コンストラクタ引数のコメントアウトが残存している（`// INameConverterFactory converterFactory,` 等）
+  - フィールド `_invalid_field_name` がスネークケースで C# 命名規則に違反（`_invalidFieldName` が正しい）
+  - `GenerateHeader` で `appName` を計算しているが実際には使っておらず、旧コードがコメントアウトのまま残存している
+- **対応方針**: 未使用コードの削除、命名規則の統一、未使用変数の除去。

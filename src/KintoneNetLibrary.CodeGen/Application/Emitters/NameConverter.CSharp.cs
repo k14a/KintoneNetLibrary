@@ -98,10 +98,10 @@ public class CSharpNameConverter : INameConverter, INameTableApplicable {
         if (baseName.IsAscii()) { return baseName.ToPascalCase(); }
         if (tableTemplate) { return string.Empty; }
 
+        if (Dictionary.TryGetValue(baseName, out var mapped)) { return mapped; }
+
         var safeCode = SanitizeFieldCode(baseName);
         var codeName = safeCode.ToPascalCase();
-
-        if (Dictionary.TryGetValue(codeName, out var mapped)) { return mapped; }
 
         var roman = codeName.ToRoman();
         if (!string.IsNullOrWhiteSpace(roman)) { return roman.ToPascalCase(); }
@@ -146,24 +146,26 @@ public class CSharpNameConverter : INameConverter, INameTableApplicable {
         return name;
     }
 
+    private static readonly HashSet<string> CSharpKeywords = [
+        "class",
+        "namespace",
+        "public",
+        "private",
+        "protected",
+        "internal",
+        "string",
+        "int",
+        "decimal",
+        "var"
+    ];
+
     /// <summary>
     /// C# キーワードかどうか
     /// </summary>
     /// <param name="name">識別子名</param>
     /// <returns>キーワードの場合は true、それ以外は false</returns>
     private static bool IsCSharpKeyword(string name) {
-        return new[] {
-            "class",
-            "namespace",
-            "public",
-            "private",
-            "protected",
-            "internal",
-            "string",
-            "int",
-            "decimal",
-            "var"
-        }.Contains(name);
+        return CSharpKeywords.Contains(name);
     }
 
 }

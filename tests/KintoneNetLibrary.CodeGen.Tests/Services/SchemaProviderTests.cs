@@ -33,8 +33,6 @@ public class SchemaProviderTests {
             converter: this._mockConverter.Object
         );
 
-        this._provider.SetDomain("example");
-
         // デフォルトの最新メタデータ（GetSchemaAsync / CompareAsync 共通）
         this._mockApi.Setup(x => x.GetAppMetadataAsync("example.cybozu.com", "dummy", 1))
             .ReturnsAsync(new KintoneAppMetadata {
@@ -127,25 +125,6 @@ public class SchemaProviderTests {
     }
 
     // -----------------------------
-    // SetDomain 未設定時の例外
-    // -----------------------------
-    /// <summary>
-    /// SchemaProviderTests クラスの GetMetadataAsync_Throws_WhenDomainNotSet テストメソッド。GetMetadataAsync メソッドが、ドメインが設定されていない場合に ArgumentNullException をスローすることを確認するためのテスト。このテストでは、ドメインを設定せずに GetMetadataAsync メソッドを呼び出し、ArgumentNullException がスローされることをアサートする。これにより、GetMetadataAsync メソッドがドメイン情報を必要とすることを正しく検証していることが確認できる。
-    /// </summary>
-    [Fact]
-    public async Task GetMetadataAsync_Throws_WhenDomainNotSet() {
-        var logger = Mock.Of<ILogger<SchemaProvider>>();
-        var provider = new SchemaProvider(
-            this._mockApi.Object,
-            this._mockConverter.Object,
-            logger
-        );
-
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            provider.GetMetadataAsync("example.cybozu.com", "dummy", 1));
-    }
-
-    // -----------------------------
     // CompareAsync のテスト（追加）
     // -----------------------------
     /// <summary>
@@ -211,8 +190,6 @@ public class SchemaProviderTests {
             metadataApi: fakeApi,
             converter: this._mockConverter.Object
         );
-
-        provider.SetDomain("example");
 
         var schema = await provider.GetSchemaAsync("example.cybozu.com", "dummy", 1);
 

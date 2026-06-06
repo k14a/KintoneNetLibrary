@@ -119,7 +119,6 @@ public sealed class BackupService(
             this._api.CursorPageSize = size; // KintoneApi 側でバリデーション
         }
 
-        this._schemaProvider.SetDomain(this.Options.SubDomain);
     }
 
     /// <summary>
