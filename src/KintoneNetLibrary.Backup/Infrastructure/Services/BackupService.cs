@@ -1,4 +1,3 @@
-using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using KintoneNetLibrary.Application.Interfaces;
@@ -9,7 +8,6 @@ using KintoneNetLibrary.Domain.Access;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Domain.Enums;
 using KintoneNetLibrary.Domain.Interfaces;
-using KintoneNetLibrary.Infrastructure.Api;
 using Microsoft.Extensions.Logging;
 
 namespace KintoneNetLibrary.Backup.Infrastructure.Services;
@@ -18,41 +16,50 @@ namespace KintoneNetLibrary.Backup.Infrastructure.Services;
 /// バックアップサービスの実装
 /// </summary>
 /// <param name="schemaProvider">スキーマプロバイダー</param>
-/// <param name="_accessFactory">Kintoneアクセスファクトリー</param>
-/// <param name="httpClientFactory">HTTPクライアントファクトリー</param>
+/// <param name="accessFactory">Kintoneアクセスファクトリー</param>
+/// <param name="metadataApi">アプリメタデータ API</param>
+/// <param name="apiFactory">Kintone API ファクトリー</param>
 /// <param name="logger">ロガー</param>
 public sealed class BackupService(
     ISchemaProvider schemaProvider,
-    IKintoneAccessFactory _accessFactory,
-    IHttpClientFactory httpClientFactory,
-    IKintoneFieldParser fieldParser,
+    IKintoneAccessFactory accessFactory,
+    IKintoneAppMetadataApi metadataApi,
+    IKintoneApiFactory apiFactory,
     ILogger<BackupService>? logger = null) : IBackupService {
 
     private IKintoneApi? _api;
     private readonly ISchemaProvider _schemaProvider = schemaProvider;
-    private readonly IKintoneAccessFactory _accessFactory = _accessFactory;
-    private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
-    private readonly IKintoneFieldParser _fieldParser = fieldParser;
+    private readonly IKintoneAccessFactory _accessFactory = accessFactory;
+    private readonly IKintoneAppMetadataApi _metadataApi = metadataApi;
+    private readonly IKintoneApiFactory _apiFactory = apiFactory;
     private JsonSerializerOptions? _jsonOptions;
     private readonly ILogger<BackupService>? _logger = logger;
+    private BackupOptions? _options;
     private int _partIndex = 0;
     /// <summary>
     /// part_xxxxx.json の xxxxx 部の桁数
     /// </summary>
     private const int PartDigits = 5;
-    public BackupOptions Options { get; set; } = default!;
-    public string BackupRoot { get; set; } = string.Empty;
+    private string _backupRoot = string.Empty;
+    private BackupOptions Options => this._options
+        ?? throw new InvalidOperationException($"{nameof(RunBackupAsync)} を先に呼び出してください。");
 
     /// <summary>
     /// バックアップを実行します
     /// </summary>
-    public async Task<BackupResult> RunBackupAsync() {
+    /// <param name="options">バックアップオプション</param>
+    public async Task<BackupResult> RunBackupAsync(BackupOptions options) {
+        this._options = options;
+        this._api = null;
+        this._jsonOptions = null;
+        this._partIndex = 0;
+        this._backupRoot = string.Empty;
         this.EnsureApiInitialized();
         var result = new BackupResult();
 
         try {
             // 0) ディレクトリ作成
-            this.BackupRoot = this.PrepareBackupDirectories();
+            this._backupRoot = this.PrepareBackupDirectories();
 
             // 1) ページ単位で part_xxxxx.json を作成
             await foreach (var pageStream in this._api!.StreamCursorPagesAsync(this.Options.Query ?? "", this.Options.FieldCodes, this.Options.SplitSize)) {
@@ -73,17 +80,18 @@ public sealed class BackupService(
             // 3) 添付ファイルダウンロード（Stream）
             if (this.Options.DownloadFiles) {
                 await foreach (var record in this._api!.StreamRecordsAsync(this.Options.Query ?? "", this.Options.FieldCodes, this.Options.SplitSize)) {
-                    await this.DownloadFilesAsync(record);
+                    await this.DownloadFilesAsync(record, result);
                 }
             }
 
             // 4) manifest.json 保存
             await this.SaveManifestAsync(metadata, result);
 
-            result.BackedUpDirectory = new DirectoryInfo(this.BackupRoot);
+            result.BackedUpDirectory = new DirectoryInfo(this._backupRoot);
             result.Success = true;
 
         } catch (Exception ex) {
+            this._logger?.LogError(ex, "バックアップ中にエラーが発生しました");
             result.Success = false;
             result.Errors.Add(ex.Message);
         }
@@ -96,14 +104,7 @@ public sealed class BackupService(
     /// </summary>
     private void EnsureApiInitialized() {
         if (this._api != null) { return; }
-        ArgumentNullException.ThrowIfNull(this.Options);
-
         var access = new ApiTokenAccess(this.Options.SubDomain, this.Options.ApiToken);
-
-        // this._httpClient ??= new HttpClient {
-        //     BaseAddress = new Uri($"https://{access.Domain}/k/v1/")
-        // };
-        var httpClient = this._httpClientFactory.CreateClient("Kintone");
 
         this._jsonOptions ??= new JsonSerializerOptions() {
             WriteIndented = this.Options.Pretty,
@@ -111,7 +112,7 @@ public sealed class BackupService(
                 ? null
                 : JavaScriptEncoder.UnsafeRelaxedJsonEscaping
         };
-        this._api = new KintoneApi(access: access, appID: this.Options.AppID, httpClientFactory: this._httpClientFactory, jsonOptions: this._jsonOptions);
+        this._api = this._apiFactory.Create(access, this.Options.AppID, this._jsonOptions);
 
         // BatchSize が指定されていれば KintoneApi に反映
         if (this.Options.BatchSize is int size) {
@@ -136,7 +137,7 @@ public sealed class BackupService(
         var fileName = $"part_{this._partIndex.ToString().PadLeft(PartDigits, '0')}.json";
 
         var path = Path.Combine(
-            this.Options.OutputPath.FullName,   // 例: /backup/20250130_120000/
+            this._backupRoot,
             "data",
             fileName
         );
@@ -194,183 +195,18 @@ public sealed class BackupService(
         Directory.CreateDirectory(Path.Combine(backupRoot, "data"));
         Directory.CreateDirectory(Path.Combine(backupRoot, "files"));
 
-        // BackupService 内で OutputPath を書き換え
-        this.Options.OutputPath = new DirectoryInfo(backupRoot);
-
         this._logger?.LogInformation("バックアップ先ディレクトリを作成しました: {Path}", backupRoot);
 
         return backupRoot;
     }
 
     /// <summary>
-    /// レコードをストリームで取得します
-    /// </summary>
-    /// <param name="output">出力先のストリーム</param>
-    /// <returns>非同期操作のタスク</returns>
-    private async Task FetchRecordsAsStreamAsync(Stream output) {
-        if (!string.IsNullOrWhiteSpace(this.Options.Query)) {
-            await this._api!.RawFindByQueryAsStreamAsync(
-                output,
-                this.Options.Query!,
-                fieldCodes: this.Options.FieldCodes
-            );
-            return;
-        }
-
-        await this._api!.RawFindAllAsStreamAsync(output, fieldCodes: this.Options.FieldCodes);
-    }
-
-    /// <summary>
-    /// ストリーム内のレコード数をカウントします
-    /// </summary>
-    /// <param name="input">レコードが含まれるストリーム</param>
-    /// <returns>レコード数</returns>
-    private async Task<int> CountRecordsInStreamAsync(Stream input) {
-        // Utf8JsonReader は同期 API なので、Stream を一括読み込みする必要がある
-        // ただし byte[] は UTF-8 のままなので string よりはるかに軽い
-        using var ms = new MemoryStream();
-        await input.CopyToAsync(ms);
-        var span = new ReadOnlySpan<byte>(ms.GetBuffer(), 0, (int)ms.Length);
-
-        var reader = new Utf8JsonReader(span, new JsonReaderOptions {
-            CommentHandling = JsonCommentHandling.Skip,
-            AllowTrailingCommas = true
-        });
-
-        int count = 0;
-        bool insideRecordsArray = false;
-
-        while (reader.Read()) {
-            // "records": [ ... ] の開始を検出
-            if (reader.TokenType == JsonTokenType.PropertyName &&
-                reader.ValueTextEquals("records")) {
-                // 次のトークンが StartArray のはず
-                reader.Read();
-                if (reader.TokenType == JsonTokenType.StartArray) {
-                    insideRecordsArray = true;
-                }
-                continue;
-            }
-
-            // records 配列の中にいる間だけカウント
-            if (insideRecordsArray) {
-                if (reader.TokenType == JsonTokenType.StartObject) {
-                    count++;
-                } else if (reader.TokenType == JsonTokenType.EndArray) {
-                    // 配列の終わり
-                    break;
-                }
-            }
-        }
-
-        return count;
-    }
-
-    /// <summary>
-    /// ストリームから分割された JSON ファイルを保存します
-    /// </summary>
-    /// <param name="input">レコードが含まれるストリーム</param>
-    /// <returns>作成された分割ファイルのパスのリスト</returns>
-    private async Task<List<string>> SaveSplitJsonFilesFromStreamAsync(Stream input) {
-        var result = new List<string>();
-        var buffer = new byte[8192];
-
-        // Utf8JsonReader は同期 API のため、MemoryStream に読み込む
-        using var ms = new MemoryStream();
-        await input.CopyToAsync(ms);
-        var span = new ReadOnlySpan<byte>(ms.GetBuffer(), 0, (int)ms.Length);
-
-        var reader = new Utf8JsonReader(span, new JsonReaderOptions {
-            CommentHandling = JsonCommentHandling.Skip,
-            AllowTrailingCommas = true
-        });
-
-        // 出力ファイル管理
-        int partIndex = 1;
-        int currentSize = 0;
-        FileStream? currentFile = null;
-        Utf8JsonWriter? writer = null;
-
-        void OpenNewFile() {
-            currentFile?.Dispose();
-            writer?.Dispose();
-
-            var fileName = $"part_{partIndex:D5}.json";
-            var filePath = Path.Combine(this.Options.OutputPath.FullName, "data", fileName);
-
-            currentFile = File.Create(filePath);
-            writer = new Utf8JsonWriter(currentFile, new JsonWriterOptions {
-                Indented = this.Options.Pretty,
-                SkipValidation = false
-            });
-
-            writer.WriteStartObject();
-            writer.WritePropertyName("records");
-            writer.WriteStartArray();
-
-            result.Add(fileName);
-            currentSize = 0;
-            partIndex++;
-        }
-
-        void CloseCurrentFile() {
-            if (writer != null) {
-                writer.WriteEndArray();
-                writer.WriteEndObject();
-                writer.Flush();
-            }
-
-            writer?.Dispose();
-            currentFile?.Dispose();
-        }
-
-        bool insideRecordsArray = false;
-
-        while (reader.Read()) {
-            // "records": [ の開始を検出
-            if (reader.TokenType == JsonTokenType.PropertyName &&
-                reader.ValueTextEquals("records")) {
-                reader.Read(); // StartArray
-                insideRecordsArray = true;
-                continue;
-            }
-
-            if (!insideRecordsArray) {
-                continue;
-            }
-
-            // records 配列の終わり
-            if (reader.TokenType == JsonTokenType.EndArray) {
-                break;
-            }
-
-            // レコードオブジェクトの開始
-            if (reader.TokenType == JsonTokenType.StartObject) {
-                // レコード全体を抽出する
-                var recordJson = ExtractJsonObject(ref reader, span);
-
-                // 新しいファイルが必要か？
-                if (writer == null || currentSize + recordJson.Length > this.Options.SplitSize) {
-                    CloseCurrentFile();
-                    OpenNewFile();
-                }
-
-                // 書き込み
-                writer!.WriteRawValue(recordJson);
-                currentSize += recordJson.Length;
-            }
-        }
-
-        CloseCurrentFile();
-        return result;
-    }
-
-    /// <summary>
     /// レコード内の添付ファイルをダウンロードします
     /// </summary>
     /// <param name="record">添付ファイルを含むレコードの JSON 要素</param>
+    /// <param name="result">ダウンロード結果を集計するバックアップ結果</param>
     /// <returns>非同期操作のタスク</returns>
-    private async Task DownloadFilesAsync(JsonElement record) {
+    private async Task DownloadFilesAsync(JsonElement record, BackupResult result) {
         // レコード番号を取得
         if (!record.TryGetProperty("$id", out var idProp) || !idProp.TryGetProperty("value", out var idValueProp)) {
             this._logger?.LogWarning("レコード番号が見つかりません。添付ファイルのダウンロードをスキップします。");
@@ -394,7 +230,7 @@ public sealed class BackupService(
             if (valueProp.ValueKind != JsonValueKind.Array) { continue; }
 
             // 保存先ディレクトリ
-            var fieldDir = Path.Combine(this.BackupRoot, "files", recordId, fieldCode);
+            var fieldDir = Path.Combine(this._backupRoot, "files", recordId, fieldCode);
             Directory.CreateDirectory(fieldDir);
 
             // 添付ファイルを列挙
@@ -417,157 +253,14 @@ public sealed class BackupService(
                     await File.WriteAllBytesAsync(savePath, bytes);
 
                     this._logger?.LogInformation("Downloaded file: {FileName}", fileName);
+                    result.FileDownloadedCount++;
 
                 } catch (Exception ex) {
                     this._logger?.LogError(ex, "Failed to download file: {FileKey}", fileKey);
+                    result.FileFailedCount++;
                 }
             }
         }
-    }
-
-    /// <summary>
-    /// ストリームから添付ファイルをダウンロードします
-    /// </summary>
-    /// <param name="input">レコードが含まれるストリーム</param>
-    /// <returns>非同期操作のタスク</returns>
-    private async Task<(int success, int fail)> DownloadFilesWithResultFromStreamAsync(Stream input) {
-        // Stream → MemoryStream（UTF-8 のままなので軽量）
-        using var ms = new MemoryStream();
-        await input.CopyToAsync(ms);
-        var span = new ReadOnlySpan<byte>(ms.GetBuffer(), 0, (int)ms.Length);
-
-        var files = this.ExtractFileInfos(span);
-
-        int success = 0;
-        int fail = 0;
-
-        foreach (var (fileKey, fileName) in files) {
-            try {
-                await this.DownloadSingleFileAsync(fileKey, fileName);
-                success++;
-            } catch {
-                fail++;
-            }
-        }
-
-        return (success, fail);
-    }
-
-    /// <summary>
-    /// ストリームから添付ファイルの情報を抽出します
-    /// </summary>
-    /// <param name="span">JSON データを含むバイト配列のスパン</param>
-    /// <returns>抽出されたファイル情報のリスト</returns>
-    private List<(string fileKey, string fileName)> ExtractFileInfos(ReadOnlySpan<byte> span) {
-        var list = new List<(string fileKey, string fileName)>();
-
-        var reader = new Utf8JsonReader(span, new JsonReaderOptions {
-            CommentHandling = JsonCommentHandling.Skip,
-            AllowTrailingCommas = true
-        });
-
-        bool insideRecordsArray = false;
-
-        while (reader.Read()) {
-            // "records": [
-            if (reader.TokenType == JsonTokenType.PropertyName &&
-                reader.ValueTextEquals("records")) {
-                reader.Read(); // StartArray
-                insideRecordsArray = true;
-                continue;
-            }
-
-            if (!insideRecordsArray) { continue; }
-
-            // records 配列の終わり
-            if (reader.TokenType == JsonTokenType.EndArray) { break; }
-
-            // レコードオブジェクトの開始
-            if (reader.TokenType == JsonTokenType.StartObject) {
-                var recordJson = ExtractJsonObject(ref reader, span);
-
-                using var doc = JsonDocument.Parse(recordJson);
-                var root = doc.RootElement;
-
-                foreach (var prop in root.EnumerateObject()) {
-                    if (prop.Value.ValueKind != JsonValueKind.Array) { continue; }
-                    if (!IsFileField(prop.Value)) { continue; }
-
-                    foreach (var fileInfo in prop.Value.EnumerateArray()) {
-                        var fileKey = fileInfo.GetProperty("fileKey").GetString();
-                        var fileName = fileInfo.GetProperty("name").GetString();
-
-                        if (fileKey != null && fileName != null) {
-                            list.Add((fileKey, fileName));
-                        }
-                    }
-                }
-            }
-        }
-
-        return list;
-    }
-
-    /// <summary>
-    /// 単一ファイルをダウンロードします
-    /// </summary>
-    /// <param name="fileKey">ダウンロードするファイルのキー</param>
-    /// <param name="fileName">ダウンロードするファイルの名前</param>
-    /// <returns>非同期操作のタスク</returns>
-    private async Task DownloadSingleFileAsync(string fileKey, string fileName) {
-        // 保存先パス: {OutputPath}/files/{fileName}
-        var destPath = Path.Combine(this.Options.OutputPath.FullName, "files", fileName);
-        var destFile = new FileInfo(destPath);
-
-        // KintoneApi.File.DownloadFileAsync を呼ぶだけ
-        await this._api!.DownloadFileAsync(fileKey, destFile);
-    }
-
-    /// <summary>
-    /// JSON オブジェクトを抽出します
-    /// </summary>
-    /// <param name="reader">JSON リーダー</param>
-    /// <param name="source">JSON データを含むバイト配列のスパン</param>
-    /// <returns></returns>
-    private static string ExtractJsonObject(ref Utf8JsonReader reader, ReadOnlySpan<byte> source) {
-        var start = reader.TokenStartIndex;
-        int depth = 0;
-
-        do {
-            if (reader.TokenType == JsonTokenType.StartObject) {
-                depth++;
-            } else if (reader.TokenType == JsonTokenType.EndObject) {
-                depth--;
-            }
-
-            reader.Read();
-        }
-        while (depth > 0);
-
-        var end = reader.TokenStartIndex;
-        var length = (int)(end - start);
-
-        return Encoding.UTF8.GetString(source.Slice((int)start, length));
-    }
-
-    /// <summary>
-    /// ファイルフィールドかどうかを判定します
-    /// </summary>
-    /// <param name="element">判定する JSON 要素</param>
-    /// <returns>ファイルフィールドであれば true、それ以外は false</returns>
-    private static bool IsFileField(JsonElement element) {
-        if (element.ValueKind != JsonValueKind.Array) {
-            return false;
-        }
-
-        if (!element.EnumerateArray().Any()) {
-            return false;
-        }
-
-        var first = element.EnumerateArray().First();
-
-        return first.TryGetProperty("fileKey", out _)
-            && first.TryGetProperty("name", out _);
     }
 
     /// <summary>
@@ -579,12 +272,8 @@ public sealed class BackupService(
     /// <returns>非同期操作のタスク</returns>
     /// <exception cref="IOException">ファイルの保存に失敗した場合にスローされます</exception>
     private async Task<bool> SaveJsonAsync(string json, string fileName, string? directory = null) {
-        if (!this.Options.OutputPath.Exists) {
-            this.Options.OutputPath.Create();
-        }
-
         // data ディレクトリを作成
-        var dataDir = Path.Combine(this.Options.OutputPath.FullName, directory ?? "");
+        var dataDir = Path.Combine(this._backupRoot, directory ?? "");
         Directory.CreateDirectory(dataDir);
 
         // 保存先パス
@@ -616,15 +305,15 @@ public sealed class BackupService(
             FileCount = result.FileDownloadedCount,
             PartFiles = result.PartFiles,
             SplitSize = this.Options.SplitSize,
-            Options = new {
+            Options = JsonSerializer.SerializeToElement(new {
                 this.Options.IncludeFieldSchema,
                 this.Options.DownloadFiles,
                 this.Options.Overwrite,
                 this.Options.Query,
                 this.Options.FieldCodes,
-            },
+            }),
         };
-        var path = Path.Combine(this.Options.OutputPath.FullName, "manifest.json");
+        var path = Path.Combine(this._backupRoot, "manifest.json");
         if (File.Exists(path) && !this.Options.Overwrite) {
             this._logger?.LogWarning("マニフェストの保存がスキップされました: {Path}", path);
             return;
@@ -648,11 +337,9 @@ public sealed class BackupService(
         this._logger?.LogInformation("フィールドスキーマを保存しています…");
 
         var access = this._accessFactory.CreateApiTokenAccess(this.Options.SubDomain, this.Options.ApiToken);
-        var metadataApi = new KintoneAppMetadataApi(this._httpClientFactory, this._fieldParser, this._logger as ILogger<KintoneAppMetadataApi>);
-        var json = await metadataApi.GetFieldsJsonAsync(access.Domain, this.Options.ApiToken, metadata.AppId);
+        var json = await this._metadataApi.GetFieldsJsonAsync(access.Domain, this.Options.ApiToken, metadata.AppId);
 
-        var dir = this.Options.OutputPath.FullName;
-        Directory.CreateDirectory(dir);
+        var dir = this._backupRoot;
 
         var filePath = Path.Combine(dir, this.Options.FieldSchemaFileName);
 
@@ -696,11 +383,9 @@ public sealed class BackupService(
         this._logger?.LogInformation("レイアウトスキーマを保存しています…");
 
         var access = this._accessFactory.CreateApiTokenAccess(this.Options.SubDomain, this.Options.ApiToken);
-        var metadataApi = new KintoneAppMetadataApi(this._httpClientFactory, this._fieldParser, this._logger as ILogger<KintoneAppMetadataApi>);
-        var json = await metadataApi.GetLayoutJsonAsync(access.Domain, this.Options.ApiToken, metadata.AppId);
+        var json = await this._metadataApi.GetLayoutJsonAsync(access.Domain, this.Options.ApiToken, metadata.AppId);
 
-        var dir = this.Options.OutputPath.FullName;
-        Directory.CreateDirectory(dir);
+        var dir = this._backupRoot;
 
         var filePath = Path.Combine(dir, "layout.json");
 

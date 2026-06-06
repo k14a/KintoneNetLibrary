@@ -1,5 +1,4 @@
 using KintoneNetLibrary.Backup.Domain.Enums;
-using KintoneNetLibrary.Domain.Common;
 
 namespace KintoneNetLibrary.Backup.Application.DTOs;
 
@@ -54,7 +53,7 @@ public sealed class RestoreOptions {
     public bool ValidateOnly { get; init; } = false;
 
     /// <summary>
-    /// バッチサイズ
+    /// バッチサイズ（デフォルトは Kintone 一括登録上限の 100 件）
     /// </summary>
-    public int BatchSize { get; init; } = KintoneConstants.KintoneLimit;
+    public int BatchSize { get; init; } = 100;
 }

@@ -9,10 +9,6 @@ public interface IRestoreService {
     /// <summary>
     /// リストアを実行します
     /// </summary>
-    Task<RestoreResult> RunRestoreAsync();
-
-    /// <summary>
-    /// リストアのオプションを取得します
-    /// </summary>
-    RestoreOptions Options { get; set; }
+    /// <param name="options">リストアオプション</param>
+    Task<RestoreResult> RunRestoreAsync(RestoreOptions options);
 }

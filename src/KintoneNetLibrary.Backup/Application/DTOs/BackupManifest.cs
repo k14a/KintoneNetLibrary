@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace KintoneNetLibrary.Backup.Application.DTOs;
 
 /// <summary>
@@ -58,7 +60,7 @@ public class BackupManifest {
     public int SplitSize { get; set; }
 
     /// <summary>
-    /// バックアップオプションの詳細（JSONシリアライズされた文字列）
+    /// バックアップオプションの詳細
     /// </summary>
-    public object Options { get; set; } = default!;
+    public JsonElement Options { get; set; }
 }

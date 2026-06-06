@@ -137,3 +137,121 @@ SRP の段階的分離として適切であり、これ以上の責任分離は�
 - [x] **対象ファイル**: [`src/KintoneNetLibrary/Domain/Interfaces/IKintoneRepository.cs`](src/KintoneNetLibrary/Domain/Interfaces/IKintoneRepository.cs)
 - **問題**: CRUD・Find 系メソッドがすべて `Task<string>` / `Task<string?>` を返しており、JSON 文字列をそのまま戻り値としている。型安全性がなく、呼び出し側でのデシリアライズが必要になる。
 - **対応方針**: 設計上の意図的仕様のため**コード変更なし**。`IKintoneRepository` はローレベルAPIとして生JSONを返し、独自JSONパーサーを使いたい利用者向けに提供する。型付き結果が必要な場合は `KintoneTypedCrudService` 等のハイレベルAPIを使用する。
+
+---
+
+## 6. KintoneNetLibrary.Backup プロジェクトのレビュー（2026-06-06）
+
+### 6-A. Clean Architecture 依存方向違反
+
+#### 6-A-1. `BackupService` / `RestoreService` が `KintoneApi`（具象クラス）を直接 `new` している
+- [x] **対象ファイル**: [`src/KintoneNetLibrary.Backup/Infrastructure/Services/BackupService.cs:114`](src/KintoneNetLibrary.Backup/Infrastructure/Services/BackupService.cs#L114), [`src/KintoneNetLibrary.Backup/Infrastructure/Services/RestoreService.cs:126`](src/KintoneNetLibrary.Backup/Infrastructure/Services/RestoreService.cs#L126)
+- **問題**: `EnsureApiInitialized()` 内で `new KintoneApi(...)` を直接呼び出している。Infrastructure 実装への具体的な依存が生じており、テストが困難。
+- **対応方針**: `IKintoneApiFactory` 等のインターフェースを通じてAPIインスタンスを取得するか、コンストラクタで `IKintoneApi` を受け取るよう変更する。
+
+#### 6-A-2. `BackupService` / `RestoreService` が `KintoneAppMetadataApi`（具象クラス）を直接 `new` している
+- [x] **対象ファイル**: [`src/KintoneNetLibrary.Backup/Infrastructure/Services/BackupService.cs:651`](src/KintoneNetLibrary.Backup/Infrastructure/Services/BackupService.cs#L651), [`src/KintoneNetLibrary.Backup/Infrastructure/Services/BackupService.cs:699`](src/KintoneNetLibrary.Backup/Infrastructure/Services/BackupService.cs#L699), [`src/KintoneNetLibrary.Backup/Infrastructure/Services/RestoreService.cs:602`](src/KintoneNetLibrary.Backup/Infrastructure/Services/RestoreService.cs#L602)
+- **問題**: メソッド内で `new KintoneAppMetadataApi(...)` を直接生成している。`SaveFieldSchemaAsync` / `SaveLayoutSchemaAsync` / `ValidateSchemaAsync` それぞれで重複生成しており、テスト・差し替えが困難。
+- **対応方針**: `ISchemaProvider` を拡張するか、`KintoneAppMetadataApi` 用のインターフェースをコンストラクタ注入に変更する。
+
+#### 6-A-3. `RestoreOptions` が `KintoneNetLibrary.Domain.Common.KintoneConstants` を直接参照している
+- [x] **対象ファイル**: [`src/KintoneNetLibrary.Backup/Application/DTOs/RestoreOptions.cs:3`](src/KintoneNetLibrary.Backup/Application/DTOs/RestoreOptions.cs#L3)
+- **問題**: Backup プロジェクトの Application 層 DTO がメインプロジェクトの Domain 層に依存しており、`KintoneConstants.KintoneLimit` を `BatchSize` のデフォルト値として使用している。
+- **対応方針**: Backup プロジェクト内に定数を定義するか、デフォルト値をリテラルで記述する（`= 100` 等）。
+
+### 6-B. 設計上の問題
+
+#### 6-B-1. `IBackupService.Options` / `IRestoreService.Options` がインターフェースで `{ get; set; }` として公開されている
+- [x] **対象ファイル**: [`src/KintoneNetLibrary.Backup/Application/Interfaces/IBackupService.cs:17`](src/KintoneNetLibrary.Backup/Application/Interfaces/IBackupService.cs#L17), [`src/KintoneNetLibrary.Backup/Application/Interfaces/IRestoreService.cs:17`](src/KintoneNetLibrary.Backup/Application/Interfaces/IRestoreService.cs#L17)
+- **問題**: オプションが実行後も外部から変更可能で、サービスの状態管理が呼び出し側に依存してしまう。
+- **対応方針**: `RunBackupAsync(BackupOptions options)` のようにメソッド引数として渡すか、コンストラクタで受け取る形にする。
+
+#### 6-B-2. `BackupService.BackupRoot` が `public` になっている
+- [x] **対象ファイル**: [`src/KintoneNetLibrary.Backup/Infrastructure/Services/BackupService.cs:44`](src/KintoneNetLibrary.Backup/Infrastructure/Services/BackupService.cs#L44)
+- **問題**: `BackupRoot` は `IBackupService` に含まれない内部実装の詳細であるにもかかわらず `public` で公開されている。
+- **対応方針**: `private` に変更する。
+
+#### 6-B-3. `BackupService` のインスタンス状態が `RunBackupAsync()` 複数回呼び出しでリセットされない
+- [x] **対象ファイル**: [`src/KintoneNetLibrary.Backup/Infrastructure/Services/BackupService.cs`](src/KintoneNetLibrary.Backup/Infrastructure/Services/BackupService.cs)
+- **問題**: `_partIndex`・`_api`・`BackupRoot` 等がインスタンス状態として保持されており、2回目の `RunBackupAsync()` 呼び出し時に `_partIndex` がリセットされず重複ファイル名が生成される可能性がある。
+- **対応方針**: `RunBackupAsync()` 冒頭でインスタンス状態を初期化する、またはサービスを都度 new するよう DI を構成する。
+
+#### 6-B-4. `RestoreService._result` がインスタンス変数で複数回呼び出し時に累積する
+- [x] **対象ファイル**: [`src/KintoneNetLibrary.Backup/Infrastructure/Services/RestoreService.cs:37`](src/KintoneNetLibrary.Backup/Infrastructure/Services/RestoreService.cs#L37)
+- **問題**: `private readonly RestoreResult _result = new();` がインスタンスフィールドのため、`RunRestoreAsync()` を2回呼ぶと `AddedRecords` 等が前回結果に加算される。
+- **対応方針**: `_result` を `RunRestoreAsync()` のメソッドローカル変数にする。
+
+#### 6-B-5. `Options = default!` による null 安全性の偽装
+- [x] **対象ファイル**: [`src/KintoneNetLibrary.Backup/Infrastructure/Services/BackupService.cs:43`](src/KintoneNetLibrary.Backup/Infrastructure/Services/BackupService.cs#L43), [`src/KintoneNetLibrary.Backup/Infrastructure/Services/RestoreService.cs:51`](src/KintoneNetLibrary.Backup/Infrastructure/Services/RestoreService.cs#L51)
+- **問題**: `Options` が実質 `null` の状態で `EnsureApiInitialized()` 以外の箇所からアクセスされると `NullReferenceException` が発生する。
+- **対応方針**: 6-B-1 の対応（コンストラクタ注入 or メソッド引数化）で根本解消する。
+
+#### 6-B-6. `PrepareBackupDirectories()` が `this.Options.OutputPath` を副作用で書き換えている
+- [x] **対象ファイル**: [`src/KintoneNetLibrary.Backup/Infrastructure/Services/BackupService.cs:198`](src/KintoneNetLibrary.Backup/Infrastructure/Services/BackupService.cs#L198)
+- **問題**: `this.Options.OutputPath = new DirectoryInfo(backupRoot);` により、呼び出し元が渡した設定オブジェクトを実行中に上書きしている。`BackupOptions.OutputPath` は `{ get; set; }` のため可能だが、外部から見えない副作用になっており予期しにくい。
+- **対応方針**: バックアップ先の実際のパスは戻り値として返し、`Options.OutputPath` は書き換えない。
+
+### 6-C. デッドコード（未使用メソッド）
+
+#### 6-C-1. `BackupService` に未使用メソッドが複数存在する
+- [x] **対象ファイル**: [`src/KintoneNetLibrary.Backup/Infrastructure/Services/BackupService.cs`](src/KintoneNetLibrary.Backup/Infrastructure/Services/BackupService.cs)
+- **問題**: 以下のメソッドは `RunBackupAsync()` から呼び出されておらず、デッドコードになっている。
+  - `FetchRecordsAsStreamAsync`（line 210）
+  - `CountRecordsInStreamAsync`（line 228）
+  - `SaveSplitJsonFilesFromStreamAsync`（line 274）
+  - `DownloadFilesWithResultFromStreamAsync`（line 433）
+  - `ExtractFileInfos`（line 461）
+  - `DownloadSingleFileAsync`（line 517）
+  - `ExtractJsonObject`（line 532）
+- **対応方針**: 不要なメソッドを削除する。将来的に必要な場合はその時点で実装する。
+
+### 6-D. バグ・エラーハンドリング
+
+#### 6-D-1. `DownloadFilesAsync` が失敗時に `FileFailedCount` をインクリメントしていない
+- [x] **対象ファイル**: [`src/KintoneNetLibrary.Backup/Infrastructure/Services/BackupService.cs:421`](src/KintoneNetLibrary.Backup/Infrastructure/Services/BackupService.cs#L421)
+- **問題**: ダウンロード失敗時にログのみで `result.FileFailedCount++` をしていないため、`BackupResult.FileFailedCount` が常に 0 のまま返される。
+- **対応方針**: `catch` ブロック内で `result.FileFailedCount++` を追加する。ただし `result` への参照を `DownloadFilesAsync` に渡す必要がある。
+
+#### 6-D-2. `RunBackupAsync` の `catch` でスタックトレースが記録されていない
+- [x] **対象ファイル**: [`src/KintoneNetLibrary.Backup/Infrastructure/Services/BackupService.cs:88`](src/KintoneNetLibrary.Backup/Infrastructure/Services/BackupService.cs#L88)
+- **問題**: `result.Errors.Add(ex.Message)` のみで、スタックトレースがログにも結果にも残らない。障害調査が困難になる。
+- **対応方針**: `this._logger?.LogError(ex, "バックアップ中にエラーが発生しました")` を追加する。
+
+#### 6-D-3. `DeleteAllRecordsAsync` が `RawFindAllAsync` で全件一括取得している
+- [x] **対象ファイル**: [`src/KintoneNetLibrary.Backup/Infrastructure/Services/RestoreService.cs:657`](src/KintoneNetLibrary.Backup/Infrastructure/Services/RestoreService.cs#L657)
+- **問題**: `RawFindAllAsync(fieldCodes: ["$id"])` で全レコードの ID を一度にメモリに展開している。レコード数が多い場合にメモリを大量消費する。
+- **対応方針**: カーソル API（`StreamRecordsAsync` 等）を使ってページ単位で取得・削除する。
+
+### 6-E. コメント・命名の問題
+
+#### 6-E-1. `ValidateSchemaAsync` のコメントに誤字がある
+- [x] **対象ファイル**: [`src/KintoneNetLibrary.Backup/Infrastructure/Services/RestoreService.cs:621`](src/KintoneNetLibrary.Backup/Infrastructure/Services/RestoreService.cs#L621)
+- **問題**: `// リストアリストアで扱わなすすｓすｋすスキップ` という誤字・文字化けのようなコメントが残っている。
+- **対応方針**: 正しいコメント（例: `// Backup プロジェクトで扱わないフィールドタイプはスキップ`）に修正する。
+
+#### 6-E-2. `GetPartFiles` の `<param>` コメントが引数名と不一致
+- [x] **対象ファイル**: [`src/KintoneNetLibrary.Backup/Infrastructure/Services/RestoreService.cs:181`](src/KintoneNetLibrary.Backup/Infrastructure/Services/RestoreService.cs#L181)
+- **問題**: `<param name="parts">` と記述されているが、実際の引数名は `partFiles`。
+- **対応方針**: `<param name="partFiles">` に修正する。
+
+#### 6-E-3. `BackupService` コンストラクタ引数の命名が不一致
+- [x] **対象ファイル**: [`src/KintoneNetLibrary.Backup/Infrastructure/Services/BackupService.cs:26`](src/KintoneNetLibrary.Backup/Infrastructure/Services/BackupService.cs#L26)
+- **問題**: プライマリコンストラクタの引数 `_accessFactory` だけ `_` プレフィックスが付いており、他の引数（`schemaProvider`、`httpClientFactory` 等）と命名規則が異なる。
+- **対応方針**: `accessFactory` に統一する。
+
+### 6-F. その他
+
+#### 6-F-1. `BackupManifest.Options` の型が `object`
+- [x] **対象ファイル**: [`src/KintoneNetLibrary.Backup/Application/DTOs/BackupManifest.cs:63`](src/KintoneNetLibrary.Backup/Application/DTOs/BackupManifest.cs#L63)
+- **問題**: `public object Options { get; set; } = default!;` のため、JSON デシリアライズ時に型情報が失われ `JsonElement` になる。再利用時にキャストが必要になる。
+- **対応方針**: 専用の `BackupOptionsSnapshot` DTO 等を定義するか、`JsonElement` 型にする。
+
+#### 6-F-2. `BackupOptions` のプロパティ mutability が不一致
+- [x] **対象ファイル**: [`src/KintoneNetLibrary.Backup/Application/DTOs/BackupOptions.cs`](src/KintoneNetLibrary.Backup/Application/DTOs/BackupOptions.cs)
+- **問題**: 大半のプロパティは `{ get; init; }` だが、`Pretty`・`EscapeUnicode`・`SplitSize`・`OutputPath` だけが `{ get; set; }` になっており、一貫性がない。
+- **対応方針**: `OutputPath` は 6-B-6 の対応で書き換え不要にし、`Pretty`・`EscapeUnicode`・`SplitSize` も `init;` に統一する。
+
+#### 6-F-3. `RemoveRecordIdFields` の再帰が SUBTABLE 以外にも適用されている
+- [x] **対象ファイル**: [`src/KintoneNetLibrary.Backup/Infrastructure/Services/RestoreService.cs:462`](src/KintoneNetLibrary.Backup/Infrastructure/Services/RestoreService.cs#L462)
+- **問題**: `else` ブランチで SUBTABLE 以外の `JsonObject` フィールドにも再帰的に `RemoveRecordIdFields` を呼び出しているが、通常の Kintone フィールド（`{"type": "...", "value": "..."}` 構造）は `$id` を持たないため無駄な再帰が発生している。
+- **対応方針**: 再帰は SUBTABLE のみに限定する（`else` ブランチを削除）。

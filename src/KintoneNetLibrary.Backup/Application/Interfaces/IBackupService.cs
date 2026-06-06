@@ -9,10 +9,6 @@ public interface IBackupService {
     /// <summary>
     /// バックアップを実行します
     /// </summary>
-    Task<BackupResult> RunBackupAsync();
-
-    /// <summary>
-    /// バックアップのオプションを取得します
-    /// </summary>
-    BackupOptions Options { get; set; }
+    /// <param name="options">バックアップオプション</param>
+    Task<BackupResult> RunBackupAsync(BackupOptions options);
 }

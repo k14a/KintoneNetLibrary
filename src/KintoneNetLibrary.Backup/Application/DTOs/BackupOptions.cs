@@ -22,7 +22,7 @@ public sealed class BackupOptions {
     /// <summary>
     /// 出力先パス(必須)
     /// </summary>
-    public required DirectoryInfo OutputPath { get; set; }
+    public required DirectoryInfo OutputPath { get; init; }
 
     /// <summary>
     /// クエリ文字列
@@ -66,15 +66,15 @@ public sealed class BackupOptions {
     /// <summary>
     /// JSONファイルの整形出力を行うかどうか
     /// </summary>
-    public bool Pretty { get; set; } = false;
+    public bool Pretty { get; init; } = false;
 
     /// <summary>
     /// JSONファイルのUnicodeエスケープを行うかどうか
     /// </summary>
-    public bool EscapeUnicode { get; set; } = true;
+    public bool EscapeUnicode { get; init; } = true;
 
     /// <summary>
     /// データファイルを分割するレコード数
     /// </summary>
-    public int SplitSize { get; set; } = 1000;
+    public int SplitSize { get; init; } = 1000;
 }

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using KintoneNetLibrary.Application.Interfaces;
 using KintoneNetLibrary.Domain.Entities;
 using KintoneNetLibrary.Domain.Interfaces;
@@ -22,7 +23,17 @@ public class KintoneApiFactory(IHttpClientFactory httpClientFactory, ILogger<Kin
     /// <param name="model">モデルのインスタンス</param>
     /// <returns>生成されたKintoneApiのインスタンス</returns>
     public IKintoneApi Create<T>(T model) where T : KintoneModelBase<T>, new() {
-        // var client = this._httpClientFactory.CreateClient("Kintone");
         return new KintoneApi(model.Access, model.AppID, this._httpClientFactory, this._logger);
+    }
+
+    /// <summary>
+    /// アクセス情報とアプリ ID から KintoneApi のインスタンスを生成する
+    /// </summary>
+    /// <param name="access">Kintone アクセス情報</param>
+    /// <param name="appID">アプリ ID</param>
+    /// <param name="jsonOptions">JSON シリアライズオプション（省略時はデフォルト）</param>
+    /// <returns>生成されたKintoneApiのインスタンス</returns>
+    public IKintoneApi Create(KintoneAccessBase access, int appID, JsonSerializerOptions? jsonOptions = null) {
+        return new KintoneApi(access, appID, this._httpClientFactory, this._logger, jsonOptions);
     }
 }

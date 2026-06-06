@@ -8,7 +8,6 @@ using KintoneNetLibrary.CodeGen.Application.Interfaces;
 using KintoneNetLibrary.Domain.Access;
 using KintoneNetLibrary.Domain.Converters;
 using KintoneNetLibrary.Domain.Interfaces;
-using KintoneNetLibrary.Infrastructure.Api;
 using Microsoft.Extensions.Logging;
 using static KintoneNetLibrary.Domain.Common.KintoneConstants;
 
@@ -19,22 +18,22 @@ namespace KintoneNetLibrary.Backup.Infrastructure.Services;
 /// </summary>
 /// <param name="schemaProvider">スキーマプロバイダー</param>
 /// <param name="accessFactory">Kintoneアクセスファクトリー</param>
-/// <param name="httpClientFactory">HTTPクライアントファクトリー</param>
+/// <param name="metadataApi">アプリメタデータ API</param>
+/// <param name="apiFactory">Kintone API ファクトリー</param>
 /// <param name="logger">ロガー</param>
 public sealed class RestoreService(
     ISchemaProvider schemaProvider,
     IKintoneAccessFactory accessFactory,
-    IHttpClientFactory httpClientFactory,
-    IKintoneFieldParser fieldParser,
+    IKintoneAppMetadataApi metadataApi,
+    IKintoneApiFactory apiFactory,
     ILogger<RestoreService>? logger = null) : IRestoreService {
 
     private IKintoneApi? _api;
     private readonly IKintoneAccessFactory _accessFactory = accessFactory;
     private readonly ISchemaProvider _schemaProvider = schemaProvider;
-    private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
-    private readonly IKintoneFieldParser _fieldParser = fieldParser;
+    private readonly IKintoneAppMetadataApi _metadataApi = metadataApi;
+    private readonly IKintoneApiFactory _apiFactory = apiFactory;
     private readonly ILogger? _logger = logger;
-    private readonly RestoreResult _result = new();
     private static readonly HashSet<string> _readonlyFieldTypes = [
         "CREATOR",
         "MODIFIER",
@@ -45,20 +44,22 @@ public sealed class RestoreService(
         "LOOKUP",
     ];
 
-    /// <summary>
-    /// リストアオプション
-    /// </summary>
-    public RestoreOptions Options { get; set; } = default!;
+    private RestoreOptions? _options;
+    private RestoreOptions Options => this._options
+        ?? throw new InvalidOperationException($"{nameof(RunRestoreAsync)} を先に呼び出してください。");
 
     /// <summary>
     /// リストアを実行します
     /// </summary>
+    /// <param name="options">リストアオプション</param>
     /// <returns>リストア結果</returns>
     /// <exception cref="NotSupportedException">サポートされていない操作が指定された場合にスローされます。</exception>
-    public async Task<RestoreResult> RunRestoreAsync() {
+    public async Task<RestoreResult> RunRestoreAsync(RestoreOptions options) {
+        this._options = options;
         this._logger?.LogInformation("リストア 開始: App={App}", this.Options.AppID);
         this.EnsureApiInitialized();
 
+        var result = new RestoreResult();
         try {
             // 0) DryRun モード確認
             if (this.Options.DryRun) {
@@ -77,7 +78,7 @@ public sealed class RestoreService(
 
             // 3) RestoreMode に応じた前処理
             if (this.Options.Mode == RestoreMode.FullReplace) {
-                await this.DeleteAllRecordsAsync();
+                await this.DeleteAllRecordsAsync(result);
             }
 
             // 4) data/part-xxxx.json を順次読み込み、レコード復元
@@ -93,20 +94,20 @@ public sealed class RestoreService(
                 // 添付ファイルの処理
                 records = await this.ReplaceFileKeysAsync(records);
 
-                await this.RestoreRecordsAsync(records);
+                await this.RestoreRecordsAsync(records, result);
 
                 partIndex++;
             }
 
             // 5) 結果を返す
-            this._result.Success = true;
-            return this._result;
+            result.Success = true;
+            return result;
 
         } catch (Exception ex) {
             this._logger?.LogError(ex, "リストア中にエラーが発生しました");
-            this._result.Success = false;
-            this._result.Errors.Add(ex.Message);
-            return this._result;
+            result.Success = false;
+            result.Errors.Add(ex.Message);
+            return result;
 
         } finally {
             this._logger?.LogInformation("リストア 完了");
@@ -118,12 +119,9 @@ public sealed class RestoreService(
     /// </summary>
     private void EnsureApiInitialized() {
         if (this._api != null) { return; }
-        ArgumentNullException.ThrowIfNull(this.Options);
         var access = new ApiTokenAccess(this.Options.SubDomain, this.Options.ApiToken);
 
-        var httpClient = this._httpClientFactory.CreateClient();
-
-        this._api = new KintoneApi(access: access, appID: this.Options.AppID, httpClientFactory: this._httpClientFactory);
+        this._api = this._apiFactory.Create(access, this.Options.AppID);
     }
 
     /// <summary>
@@ -175,7 +173,7 @@ public sealed class RestoreService(
     /// <summary>
     /// バックアップデータを読み込みます
     /// </summary>
-    /// <param name="parts">分割ファイルのリスト</param>
+    /// <param name="partFiles">分割ファイルのリスト</param>
     /// <returns>分割ファイルのパスの列挙</returns>
     /// <exception cref="FileNotFoundException">バックアップデータファイルが見つからない場合にスローされます</exception>
     private IEnumerable<string> GetPartFiles(IList<string> partFiles) {
@@ -290,16 +288,17 @@ public sealed class RestoreService(
     /// レコード復元を実行します
     /// </summary>
     /// <param name="records">レコードデータのリスト</param>
-    private async Task RestoreRecordsAsync(List<JsonNode> records) {
+    /// <param name="result">リストア結果</param>
+    private async Task RestoreRecordsAsync(List<JsonNode> records, RestoreResult result) {
         switch (this.Options.Mode) {
             case RestoreMode.FullReplace:
-                await this.RestoreRecordsCreateOnlyAsync(records);
+                await this.RestoreRecordsCreateOnlyAsync(records, result);
                 break;
             case RestoreMode.Merge:
-                await this.RestoreRecordsCreateOnlyAsync(records, true);
+                await this.RestoreRecordsCreateOnlyAsync(records, result, true);
                 break;
             case RestoreMode.Upsert:
-                await this.RestoreRecordsUpsertAsync(records);
+                await this.RestoreRecordsUpsertAsync(records, result);
                 break;
             default:
                 throw new NotSupportedException($"Unsupported RestoreMode: {this.Options.Mode}");
@@ -310,8 +309,9 @@ public sealed class RestoreService(
     /// レコードを一括インサートします
     /// </summary>
     /// <param name="records">レコードデータのリスト</param>
+    /// <param name="result">リストア結果</param>
     /// <param name="skipExisting">既存レコードをスキップするかどうか</param>
-    private async Task RestoreRecordsCreateOnlyAsync(List<JsonNode> records, bool skipExisting = false) {
+    private async Task RestoreRecordsCreateOnlyAsync(List<JsonNode> records, RestoreResult result, bool skipExisting = false) {
         if (this.Options.DryRun) {
             int count = 0;
 
@@ -328,7 +328,7 @@ public sealed class RestoreService(
             }
 
             this._logger?.LogInformation("DryRun: 新規作成予定件数 = {Count}", count);
-            this._result.AddedRecords += count;
+            result.AddedRecords += count;
             return;
         }
 
@@ -353,12 +353,12 @@ public sealed class RestoreService(
 
             // バッチサイズに達したら一括登録
             if (batch.Count >= this.Options.BatchSize) {
-                await this.InsertBatchAsync(batch);
+                await this.InsertBatchAsync(batch, result);
                 batch.Clear();
             }
         }
         if (batch.Count > 0) {
-            await this.InsertBatchAsync(batch);
+            await this.InsertBatchAsync(batch, result);
         }
     }
 
@@ -366,7 +366,8 @@ public sealed class RestoreService(
     /// レコードを一括アップサートします
     /// </summary>
     /// <param name="records">レコードデータのリスト</param>
-    private async Task RestoreRecordsUpsertAsync(List<JsonNode> records) {
+    /// <param name="result">リストア結果</param>
+    private async Task RestoreRecordsUpsertAsync(List<JsonNode> records, RestoreResult result) {
         if (this.Options.DryRun) {
             int postCount = 0;
             int putCount = 0;
@@ -385,8 +386,8 @@ public sealed class RestoreService(
 
             this._logger?.LogInformation("DryRun: POST（新規）予定 = {Post}, PUT（更新）予定 = {Put}", postCount, putCount);
 
-            this._result.AddedRecords += postCount;
-            this._result.UpdatedRecords += putCount;
+            result.AddedRecords += postCount;
+            result.UpdatedRecords += putCount;
             return;
         }
 
@@ -406,7 +407,7 @@ public sealed class RestoreService(
 
                 postBatch.Add(newRecord);
                 if (postBatch.Count >= this.Options.BatchSize) {
-                    await this.InsertBatchAsync(postBatch);
+                    await this.InsertBatchAsync(postBatch, result);
                     postBatch.Clear();
                 }
             } else {
@@ -425,7 +426,7 @@ public sealed class RestoreService(
                 putBatch.Add(wrapper);
 
                 if (putBatch.Count >= this.Options.BatchSize) {
-                    await this.UpdateBatchAsync(putBatch);
+                    await this.UpdateBatchAsync(putBatch, result);
                     putBatch.Clear();
                 }
             }
@@ -433,10 +434,10 @@ public sealed class RestoreService(
 
         // 端数処理
         if (postBatch.Count > 0) {
-            await this.InsertBatchAsync(postBatch);
+            await this.InsertBatchAsync(postBatch, result);
         }
         if (putBatch.Count > 0) {
-            await this.UpdateBatchAsync(putBatch);
+            await this.UpdateBatchAsync(putBatch, result);
         }
     }
 
@@ -461,8 +462,6 @@ public sealed class RestoreService(
                             this.RemoveRecordIdFields(rowObj["value"]!.AsObject());
                         }
                     }
-                } else {
-                    this.RemoveRecordIdFields(childObj);
                 }
             }
         }
@@ -493,7 +492,8 @@ public sealed class RestoreService(
     /// レコードを一括登録します
     /// </summary>
     /// <param name="batch">レコードデータのリスト</param>
-    private async Task InsertBatchAsync(List<JsonNode> batch) {
+    /// <param name="result">リストア結果</param>
+    private async Task InsertBatchAsync(List<JsonNode> batch, RestoreResult result) {
         if (batch.Count == 0) { return; }
 
         var root = new JsonObject {
@@ -503,14 +503,15 @@ public sealed class RestoreService(
 
         var json = root.ToJsonString();
         await this._api!.RawCreateAsync(json);
-        this._result.AddedRecords += batch.Count;
+        result.AddedRecords += batch.Count;
     }
 
     /// <summary>
     /// レコードを一括更新します
     /// </summary>
     /// <param name="batch">レコードデータのリスト</param>
-    private async Task UpdateBatchAsync(List<JsonNode> batch) {
+    /// <param name="result">リストア結果</param>
+    private async Task UpdateBatchAsync(List<JsonNode> batch, RestoreResult result) {
         if (batch.Count == 0) { return; }
 
         var root = new JsonObject {
@@ -520,7 +521,7 @@ public sealed class RestoreService(
 
         await this._api!.RawUpdateAsync(root.ToJsonString());
 
-        this._result.UpdatedRecords += batch.Count;
+        result.UpdatedRecords += batch.Count;
     }
 
     /// <summary>
@@ -599,8 +600,7 @@ public sealed class RestoreService(
 
         // リストア先アプリのスキーマを取得
         var access = this._accessFactory.CreateApiTokenAccess(this.Options.SubDomain, this.Options.ApiToken);
-        var metadataApi = new KintoneAppMetadataApi(this._httpClientFactory, this._fieldParser, this._logger as ILogger<KintoneAppMetadataApi>);
-        var currentSchema = await metadataApi.GetAppMetadataAsync(
+        var currentSchema = await this._metadataApi.GetAppMetadataAsync(
             access.Domain,
             this.Options.ApiToken,
             this.Options.AppID
@@ -618,7 +618,7 @@ public sealed class RestoreService(
             var backupType = backupFieldObj["type"]?.ToString()
                 ?? throw new InvalidOperationException($"fields.json の '{fieldCode}' に type がありません。");
 
-            // リストアリストアで扱わなすすｓすｋすスキップ
+            // Backup プロジェクトで扱わないフィールドタイプはスキップ
             if (!KintoneFieldTypeMapper.TryConvert(backupType, out _)) { continue; }
 
             // リストア先にフィールドが存在するか
@@ -645,7 +645,8 @@ public sealed class RestoreService(
     /// <summary>
     /// 既存レコードを全削除します
     /// </summary>
-    private async Task DeleteAllRecordsAsync() {
+    /// <param name="result">リストア結果</param>
+    private async Task DeleteAllRecordsAsync(RestoreResult result) {
         if (this.Options.DryRun) {
             this._logger?.LogWarning("DryRun: 全レコード削除が実行される予定です（実際には削除されません）");
             return;
@@ -653,55 +654,52 @@ public sealed class RestoreService(
 
         this._logger?.LogInformation("既存レコードの削除を開始します…");
 
-        // 1) $id のみを取得
-        var json = await this._api!.RawFindAllAsync(fieldCodes: ["$id"]);
+        var batch = new List<int>(KintoneDeleteLimit);
 
-        if (json is null) {
-            this._logger?.LogWarning("レコードが取得できませんでした。削除をスキップします。");
-            return;
-        }
+        await foreach (var record in this._api!.StreamRecordsAsync("", fields: ["$id"])) {
+            if (!record.TryGetProperty("$id", out var idProp)
+                || !idProp.TryGetProperty("value", out var valueProp)) { continue; }
 
-        var root = JsonNode.Parse(json)!;
-        var records = root["records"]!.AsArray();
+            var id = valueProp.GetString();
+            if (id is null) { continue; }
 
-        var idList = new List<string>(records.Count);
+            batch.Add(int.Parse(id));
 
-        foreach (var record in records) {
-            var id = record?["$id"]?["value"]?.ToString();
-            if (id is not null) { idList.Add(id); }
-        }
-
-        if (idList.Count == 0) {
-            this._logger?.LogInformation("削除対象のレコードはありませんでした。");
-            return;
-        }
-
-        this._logger?.LogInformation("削除対象レコード数: {Count}", idList.Count);
-
-        // 2) 100件ずつ削除
-        for (int i = 0; i < idList.Count; i += KintoneDeleteLimit) {
-            var batch = idList
-                .Skip(i)
-                .Take(KintoneDeleteLimit)
-                .Select(int.Parse)
-                .ToArray();
-
-            var deleteJson = new JsonObject {
-                ["app"] = this.Options.AppID,
-                ["ids"] = new JsonArray(batch.Select(id => JsonValue.Create(id)).ToArray())
-            };
-
-            try {
-                await this._api!.RawDeleteAsync(deleteJson.ToJsonString());
-                this._logger?.LogInformation("{Count} 件のレコードを削除しました", batch.Length);
-                this._result.DeletedRecords += batch.Length;
-
-            } catch (Exception ex) {
-                this._logger?.LogError(ex, "レコード削除中にエラーが発生しました（ID: {Ids}）", string.Join(",", batch));
-                throw;
+            if (batch.Count >= KintoneDeleteLimit) {
+                await this.FlushDeleteBatchAsync(batch, result);
+                batch.Clear();
             }
         }
 
-        this._logger?.LogInformation("既存レコードの削除が完了しました({Count}件)", this._result.DeletedRecords);
+        if (batch.Count > 0) {
+            await this.FlushDeleteBatchAsync(batch, result);
+        }
+
+        if (result.DeletedRecords == 0) {
+            this._logger?.LogInformation("削除対象のレコードはありませんでした。");
+        } else {
+            this._logger?.LogInformation("既存レコードの削除が完了しました({Count}件)", result.DeletedRecords);
+        }
+    }
+
+    /// <summary>
+    /// レコード削除バッチを実行します
+    /// </summary>
+    /// <param name="batch">削除するレコード ID のリスト</param>
+    /// <param name="result">リストア結果</param>
+    private async Task FlushDeleteBatchAsync(List<int> batch, RestoreResult result) {
+        var deleteJson = new JsonObject {
+            ["app"] = this.Options.AppID,
+            ["ids"] = new JsonArray(batch.Select(id => JsonValue.Create(id)).ToArray())
+        };
+
+        try {
+            await this._api!.RawDeleteAsync(deleteJson.ToJsonString());
+            this._logger?.LogInformation("{Count} 件のレコードを削除しました", batch.Count);
+            result.DeletedRecords += batch.Count;
+        } catch (Exception ex) {
+            this._logger?.LogError(ex, "レコード削除中にエラーが発生しました（ID: {Ids}）", string.Join(",", batch));
+            throw;
+        }
     }
 }
