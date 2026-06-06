@@ -16,7 +16,7 @@ public class KintoneQueryValidatorTests {
     /// ValidateLikeClauseメソッドが英数字のみの文字列に対して警告を出すことをテストします。
     /// </summary>
     private class SampleModel : KintoneModelBase<SampleModel> {
-        public override int AppID { get; init; } = TestEnv.Settings.AppID;
+        public override int AppID { get; init; } = 0;
         public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("dummyDomain", "dummyApiToken");
 
         [KintoneItem(fieldCode: "UUID")]
