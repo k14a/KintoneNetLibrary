@@ -20,9 +20,9 @@ public class KintoneModelFileServiceExtensionsTests {
         public override int AppID { get; init; } = 11111;
 
         [KintoneItem(fieldType: KintoneFieldType.File)]
-        public List<KintoneFile> Attachments { get; set; }
+        public List<KintoneFile> Attachments { get; set; } = null!;
         [KintoneItem(fieldType: KintoneFieldType.File)]
-        public List<KintoneFile> Images { get; set; }
+        public List<KintoneFile> Images { get; set; } = null!;
     }
 
     /// <summary>
@@ -72,7 +72,7 @@ public class KintoneModelFileServiceExtensionsTests {
         var model = new SampleModel {
             Attachments = [
                 new() { FileKey = "key1", Name = "doc1.pdf" },
-                new() { FileKey = null, Name = "doc2.pdf" }, // 無効
+                new() { FileKey = null!, Name = "doc2.pdf" }, // 無効
                 new() { FileKey = "", Name = "doc3.pdf" }    // 無効
             ],
             Images = [

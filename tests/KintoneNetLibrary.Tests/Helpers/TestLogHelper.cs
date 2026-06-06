@@ -24,9 +24,9 @@ public static class TestLogHelper {
         logger.Verify(l => l.Log(
             level,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, _) => v.ToString().Contains(expectedMessage)),
-            It.IsAny<Exception>(),
-            (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
+            It.Is<It.IsAnyType>((v, _) => v.ToString()!.Contains(expectedMessage)),
+            It.IsAny<Exception?>(),
+            (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()),
             times);
     }
 }

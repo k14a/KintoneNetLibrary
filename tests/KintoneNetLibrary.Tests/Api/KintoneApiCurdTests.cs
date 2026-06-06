@@ -71,7 +71,7 @@ public class KintoneApiCrudTests {
         Assert.Equal(3, createdBooks.Count);
 
         // Read（ID指定）
-        var idList = createdBooks.Select(b => b.ID).ToList();
+        var idList = createdBooks.Select(b => b.ID!).ToList();
         var foundJson = await api.FindByIDsAsync<BookModel>(idList);
         var foundRecords = KintoneResponseParser.ParseRecords<BookModel>(foundJson);
 
@@ -103,7 +103,7 @@ public class KintoneApiCrudTests {
         var createJson = KintoneRequestBuilder.BuildCreateJson(books);
         var createResult = await api.CreateAsync(createJson);
         var createdBooks = KintoneResponseParser.ParseCreatedRecords(books, createResult);
-        var idList = createdBooks.Select(b => b.ID).ToList();
+        var idList = createdBooks.Select(b => b.ID!).ToList();
 
         // fieldCodes を使って特定のフィールドのみ取得
         var fieldCodes = new[] { "Title" };
@@ -627,6 +627,7 @@ public class KintoneApiCrudTests {
         }
     }
 
+#pragma warning disable xUnit1026
     /// <summary>
     /// FindByQueryAsync で in 条件を指定して複数ページにわたるレコードを取得する際に、カーソルAPIが正しく使用されていることを確認するテスト。
     /// </summary>
@@ -827,12 +828,14 @@ public class KintoneApiCrudTests {
             Assert.NotNull(deleteResult);
         }
     }
+#pragma warning restore xUnit1026
 
     /// <summary>
     /// FindByQueryAsync で Price >= 0 の条件を指定して複数ページにわたるレコードを取得する際に、Price が null のレコードがヒットしないことを確認するテスト。
     /// </summary>
     /// <param name="cursorPageSize">カーソルのページサイズ</param>
     /// <param name="dummyPageSize">ダミーのページサイズ（使用されない）</param>
+#pragma warning disable xUnit1026
     [Theory]
     [InlineData(5, 2)]  // カーソル使用（pageSize < recordCount）
     [InlineData(5, 10)] // カーソル不使用（pageSize >= recordCount）
@@ -883,12 +886,14 @@ public class KintoneApiCrudTests {
             Assert.NotNull(deleteResult);
         }
     }
+#pragma warning restore xUnit1026
 
     /// <summary>
     /// FindByQueryAsync で ReleaseDate > "2024-01-01T00:00:00Z" の条件を指定して複数ページにわたるレコードを取得する際に、カーソルAPIが正しく使用されていることを確認するテスト。
     /// </summary>
     /// <param name="pageSize">カーソルのページサイズ</param>
     /// <param name="recordCount">レコードの総数</param>
+#pragma warning disable xUnit1026
     [Theory]
     [InlineData(5, 2)]  // カーソル使用（pageSize < recordCount）
     [InlineData(5, 10)] // カーソル不使用（pageSize >= recordCount）
@@ -962,6 +967,7 @@ public class KintoneApiCrudTests {
             Assert.NotNull(deleteResult);
         }
     }
+#pragma warning restore xUnit1026
 
     /// <summary>
     /// FindByQueryAsync でラジオボタンフィールドの値を条件に指定して複数ページにわたるレコードを取得する際に、カーソルAPIが正しく使用されていることを確認するテスト。

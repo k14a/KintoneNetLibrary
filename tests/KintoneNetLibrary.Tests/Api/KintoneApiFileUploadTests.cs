@@ -103,7 +103,7 @@ public partial class KintoneApiFileUploadTests {
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes("これは12バイト"));
 
         var ex = await Assert.ThrowsAsync<KintoneException>(() => api.UploadFileAsync(stream, "dummy.txt"));
-        Assert.Equal("LOCAL_FILE_TOO_LARGE", ex.Error.Code);
+        Assert.Equal("LOCAL_FILE_TOO_LARGE", ex.Error!.Code);
     }
 
     /// <summary>
@@ -129,8 +129,8 @@ public partial class KintoneApiFileUploadTests {
         // Act & Assert
         var ex = await Assert.ThrowsAsync<KintoneException>(() => api.UploadFileAsync(stream, "test.txt"));
 
-        Assert.Equal("LOCAL_FILE_TOO_LARGE", ex.Error.Code);
-        Assert.Contains("ファイルサイズが制限", ex.Error.Message);
+        Assert.Equal("LOCAL_FILE_TOO_LARGE", ex.Error!.Code);
+        Assert.Contains("ファイルサイズが制限", ex.Error!.Message);
     }
 
     /// <summary>
@@ -229,11 +229,10 @@ public partial class KintoneApiFileUploadTests {
     /// UploadFileAsync メソッドが HTTP レスポンスでエラーコードが返された場合に、KintoneException をスローし、そのエラーコードとメッセージが正しく設定されていることを検証するテスト。
     /// </summary>
     /// <param name="statusCode">HTTP レスポンスのステータスコード</param>
-    /// <param name="expectedCode">期待されるエラーコード</param>
     [Theory]
-    [InlineData(HttpStatusCode.BadRequest, "400")]
-    [InlineData(HttpStatusCode.InternalServerError, "500")]
-    public async Task UploadFileAsyncWhenHttpResponseIsErrorThrowsKintoneException(HttpStatusCode statusCode, string expectedCode) {
+    [InlineData(HttpStatusCode.BadRequest)]
+    [InlineData(HttpStatusCode.InternalServerError)]
+    public async Task UploadFileAsyncWhenHttpResponseIsErrorThrowsKintoneException(HttpStatusCode statusCode) {
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes("dummy content"));
 
         var errorJson = """
@@ -255,8 +254,8 @@ public partial class KintoneApiFileUploadTests {
 
         var ex = await Assert.ThrowsAsync<KintoneException>(() => api.UploadFileAsync(stream, "error.txt"));
 
-        Assert.Equal("SAMPLE_ERROR_CODE", ex.Error.Code);
-        Assert.Equal("アップロード失敗", ex.Error.Message);
+        Assert.Equal("SAMPLE_ERROR_CODE", ex.Error!.Code);
+        Assert.Equal("アップロード失敗", ex.Error!.Message);
     }
 
     /// <summary>
@@ -361,8 +360,8 @@ public partial class KintoneApiFileUploadTests {
         var ex = await Assert.ThrowsAsync<KintoneException>(() =>
             api.UploadFileAsync(stream, fileName));
 
-        Assert.Equal("FILEKEY_MISSING", ex.Error.Code);
-        Assert.Contains("fileKey", ex.Error.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("FILEKEY_MISSING", ex.Error!.Code);
+        Assert.Contains("fileKey", ex.Error!.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>
@@ -379,7 +378,7 @@ public partial class KintoneApiFileUploadTests {
         var dummyFileKey = "dummy_file_key";
 
         var httpClient = KintoneHttpTestHelper.CreateMockHttpClient(request => {
-            var body = request.Content.ReadAsStringAsync().Result;
+            var body = request.Content!.ReadAsStringAsync().Result;
 
             // ファイル名（通常とエンコードされた形式）を検出
             var plainFileName = Path.GetFileName(longFileName);
@@ -423,7 +422,7 @@ public partial class KintoneApiFileUploadTests {
         stream.Position = 3;
 
         var httpClient = KintoneHttpTestHelper.CreateMockHttpClient(request => {
-            var body = request.Content.ReadAsStringAsync().Result;
+            var body = request.Content!.ReadAsStringAsync().Result;
 
             // 中身がストリーム全体（0123456789）であることを確認
             Assert.Contains(expectedUploadContent, body);
@@ -459,7 +458,7 @@ public partial class KintoneApiFileUploadTests {
         var stream = new MemoryStream(Encoding.UTF8.GetBytes(dummyContent));
 
         var httpClient = KintoneHttpTestHelper.CreateMockHttpClient(request => {
-            var body = request.Content.ReadAsStringAsync().Result;
+            var body = request.Content!.ReadAsStringAsync().Result;
 
             // Content-Disposition ヘッダーに filename が含まれていること
             Assert.Contains("Content-Disposition", body);

@@ -42,6 +42,7 @@ public class KintoneRequestBuilderTests {
     /// </summary>
     /// <param name="input"></param>
     /// <param name="expected"></param>
+#pragma warning disable xUnit1012, xUnit1026
     [Theory]
     [InlineData(null, null)]
     [InlineData(new string[] { }, null)]
@@ -49,6 +50,7 @@ public class KintoneRequestBuilderTests {
         var result = InvokeEnsureMinimumFields(input);
         Assert.Null(result);
     }
+#pragma warning restore xUnit1012, xUnit1026
 
     /// <summary>
     /// EnsureMinimumFields メソッドが、必須フィールドが存在しない場合にそれらを追加することを確認するテスト。
@@ -58,7 +60,7 @@ public class KintoneRequestBuilderTests {
         var input = new List<string> { "name", "email" };
         var result = InvokeEnsureMinimumFields(input);
         var expected = new List<string> { "$id", "$revision", "name", "email" };
-        Assert.Equal(expected.OrderBy(x => x), result.OrderBy(x => x));
+        Assert.Equal(expected.OrderBy(x => x), result!.OrderBy(x => x));
     }
 
     /// <summary>
@@ -69,7 +71,7 @@ public class KintoneRequestBuilderTests {
         var input = new List<string> { "$revision", "created_time" };
         var result = InvokeEnsureMinimumFields(input);
         var expected = new List<string> { "$id", "$revision", "created_time" };
-        Assert.Equal(expected.OrderBy(x => x), result.OrderBy(x => x));
+        Assert.Equal(expected.OrderBy(x => x), result!.OrderBy(x => x));
     }
     #endregion
 
@@ -79,8 +81,8 @@ public class KintoneRequestBuilderTests {
     /// </summary>
     /// <param name="input"></param>
     /// <returns></returns>
-    private static IList<string> InvokeEnsureMinimumFields(IList<string> input) =>
+    private static IList<string>? InvokeEnsureMinimumFields(IList<string> input) =>
         typeof(KintoneRequestBuilder)
-            .GetMethod("EnsureMinimumFields", BindingFlags.NonPublic | BindingFlags.Static)
+            .GetMethod("EnsureMinimumFields", BindingFlags.NonPublic | BindingFlags.Static)!
             .Invoke(null, new object[] { input }) as IList<string>;
 }

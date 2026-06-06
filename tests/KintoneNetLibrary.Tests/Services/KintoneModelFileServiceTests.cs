@@ -234,7 +234,7 @@ public class KintoneModelFileServiceTests {
         var service = new KintoneModelFileService<TestModel>(Mock.Of<IKintoneRepository>(), this._logger2);
         var file = new FileInfo("match.txt");
         var model = new TestModel {
-            SingleFile = new KintoneFile { Name = "match.txt", FileKey = null }
+            SingleFile = new KintoneFile { Name = "match.txt", FileKey = null! }
         };
 
         await service.MapUploadedFilesToModelAsync(model, new[] { file });
@@ -255,8 +255,8 @@ public class KintoneModelFileServiceTests {
 
         var model = new TestModel {
             FileList = [
-                new KintoneFile { Name = "a.txt", FileKey = null },
-                new KintoneFile { Name = "b.txt", FileKey = null },
+                new KintoneFile { Name = "a.txt", FileKey = null! },
+                new KintoneFile { Name = "b.txt", FileKey = null! },
                 new KintoneFile { Name = "c.txt", FileKey = "already-set" }
             ]
         };
@@ -276,9 +276,9 @@ public class KintoneModelFileServiceTests {
         var service = new KintoneModelFileService<TestModel>(Mock.Of<IKintoneRepository>(), this._logger2);
         var files = new[] { new FileInfo("x.txt") };
         var model = new TestModel {
-            SingleFile = new KintoneFile { Name = "notfound.txt", FileKey = null },
+            SingleFile = new KintoneFile { Name = "notfound.txt", FileKey = null! },
             FileList = [
-                new KintoneFile { Name = "notfound1.txt", FileKey = null }
+                new KintoneFile { Name = "notfound1.txt", FileKey = null! }
             ]
         };
 
@@ -352,7 +352,7 @@ public class KintoneModelFileServiceTests {
     public async Task DownloadFilesAsyncSkipsFilesWithEmptyFileKey() {
         var model = new ValidFileModel();
         var files = new[] {
-            new KintoneFile { FileKey = null, Name = "skip1.txt" },
+            new KintoneFile { FileKey = null!, Name = "skip1.txt" },
             new KintoneFile { FileKey = "", Name = "skip2.txt" }
         };
 
@@ -364,7 +364,7 @@ public class KintoneModelFileServiceTests {
             x => x.Log(
                 LogLevel.Warning,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("skip1.txt")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("skip1.txt")),
                 null,
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()
             ),
@@ -373,7 +373,7 @@ public class KintoneModelFileServiceTests {
             x => x.Log(
                 LogLevel.Warning,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("skip2.txt")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("skip2.txt")),
                 null,
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()
             ),
@@ -431,7 +431,7 @@ public class KintoneModelFileServiceTests {
             x => x.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains(file2.Name)),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains(file2.Name)),
                 It.IsAny<IOException>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()
             ),
@@ -447,7 +447,7 @@ public class KintoneModelFileServiceTests {
     [InlineData("")]
     public async Task DownloadFileAsyncThrowsArgumentExceptionWhenFileKeyIsInvalid(string? fileKey) {
         var model = new ValidFileModel();
-        var file = new KintoneFile { FileKey = fileKey, Name = "invalid.txt" };
+        var file = new KintoneFile { FileKey = fileKey!, Name = "invalid.txt" };
 
         var service = this.CreateService();
         var ex = await Assert.ThrowsAsync<ArgumentException>(() => service.DownloadFileAsync(model, file));
@@ -489,7 +489,7 @@ public class KintoneModelFileServiceTests {
     [InlineData("")]
     public async Task DownloadFileToPathAsyncThrowsArgumentExceptionWhenFileKeyIsInvalid(string? fileKey) {
         var model = new ValidFileModel();
-        var file = new KintoneFile { FileKey = fileKey, Name = "invalid.txt" };
+        var file = new KintoneFile { FileKey = fileKey!, Name = "invalid.txt" };
         var savePath = Path.Combine(Path.GetTempPath(), "dummy.txt");
 
         var service = this.CreateService();

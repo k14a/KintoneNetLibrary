@@ -181,7 +181,7 @@ public class KintoneApiDownloadFileTests {
 
         var api = new KintoneApi(CreateMockAccess(), 1, factoryMock.Object);
 
-        var ex = await Assert.ThrowsAsync<ArgumentNullException>(() => api.DownloadFileAsync(null));
+        var ex = await Assert.ThrowsAsync<ArgumentNullException>(() => api.DownloadFileAsync(null!));
         Assert.Contains("fileKey", ex.Message);
     }
 

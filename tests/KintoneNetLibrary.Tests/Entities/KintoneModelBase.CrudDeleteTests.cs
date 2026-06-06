@@ -118,7 +118,7 @@ public class KintoneModelBaseDeleteAsyncTests {
         };
 
         var expectedResult = new KintoneDeleteResult {
-            Succeeded = models.Select(m => m.RecordID).ToList()
+            Succeeded = models.Select(m => m.RecordID!).ToList()
         };
 
         var mockService = new Mock<IKintoneModelCrudService>();

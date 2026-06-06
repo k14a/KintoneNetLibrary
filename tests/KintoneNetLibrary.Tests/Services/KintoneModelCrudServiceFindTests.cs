@@ -297,10 +297,10 @@ public class KintoneModelCrudServiceFindTests {
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, _) =>
                     v != null &&
-                    v.ToString().Contains("JSON deserialization failed") &&
-                    v.ToString().Contains(nameof(SampleModel))),
-                It.IsAny<Exception>(),
-                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
+                    v.ToString()!.Contains("JSON deserialization failed") &&
+                    v.ToString()!.Contains(nameof(SampleModel))),
+                It.IsAny<Exception?>(),
+                (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()),
             Times.Once);
 
         // loggerMock.Verify(l => l.LogInformation("FindAsync() - Start"), Times.Once);

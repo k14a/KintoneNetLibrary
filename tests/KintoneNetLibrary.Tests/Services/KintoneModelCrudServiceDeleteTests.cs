@@ -48,15 +48,15 @@ public class KintoneModelCrudServiceDeleteTests {
         loggerMock.Verify(x => x.Log(
             LogLevel.Information,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((o, t) => o != null && o.ToString().Contains("Start")),
-            null,
-            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+            It.Is<It.IsAnyType>((o, t) => o != null && o.ToString()!.Contains("Start")),
+            It.IsAny<Exception?>(),
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
         loggerMock.Verify(x => x.Log(
             LogLevel.Information,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((o, t) => o != null && o.ToString().Contains("Finish")),
-            null,
-            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+            It.Is<It.IsAnyType>((o, t) => o != null && o.ToString()!.Contains("Finish")),
+            It.IsAny<Exception?>(),
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
         TestLogHelper.VerifyLog(loggerMock, LogLevel.Information, "DeleteAsync() - Start", Times.Once());
         TestLogHelper.VerifyLog(loggerMock, LogLevel.Information, "DeleteAsync() - Finish", Times.Once());
     }
