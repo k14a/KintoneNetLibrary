@@ -29,7 +29,7 @@ public static class KintoneResponseParser {
     /// <returns>ID と Revision がセットされたレコードリスト</returns>
     /// <exception cref="KintoneException">レスポンスのレコード数が一致しない場合にスローされます</exception>
     public static IList<T> ParseCreatedRecords<T>(IList<T> originalRecords, string responseJson) where T : KintoneModelBase<T>, new() {
-        var indexes = KintoneRecordIndexesResponse.Parse(responseJson).ToIndexes();
+        var indexes = KintoneIndexes.Parse(responseJson);
 
         // var originals = originalRecords.ToList();
         if (indexes.IDs.Count != originalRecords.Count) {
@@ -62,8 +62,13 @@ public static class KintoneResponseParser {
             throw new InvalidOperationException("Missing 'record' property in JSON.");
         }
 
-        var modelJson = recordElement.GetRawText();
-        return JsonSerializer.Deserialize<T>(modelJson, KintoneJsonOptions.Default)!;
+        var dict = new Dictionary<string, JsonElement>();
+        foreach (var prop in recordElement.EnumerateObject()) {
+            dict[prop.Name] = prop.Value;
+        }
+        var model = new T();
+        model.LoadFromJsonDictionary(dict);
+        return model;
 
     }
 

@@ -550,6 +550,7 @@ public partial class KintoneApiFileUploadTests {
         using var cts = new CancellationTokenSource();
         var handler = new CancelledHandler(); // 先ほど定義したキャンセル対応のモック
         var httpClient = new HttpClient(handler);
+        httpClient.BaseAddress = new Uri("https://dummyAppId/k/v1/");
 
         var factory = new Mock<IHttpClientFactory>();
         factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
@@ -591,6 +592,7 @@ public partial class KintoneApiFileUploadTests {
         var httpClient = new HttpClient(handlerMock.Object) {
             Timeout = TimeSpan.FromMilliseconds(100) // タイムアウトを極端に短く
         };
+        httpClient.BaseAddress = new Uri("https://dummyAppId/k/v1/");
 
         var factory = new Mock<IHttpClientFactory>();
         factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
@@ -628,6 +630,7 @@ public partial class KintoneApiFileUploadTests {
             });
 
         var httpClient = new HttpClient(handlerMock.Object);
+        httpClient.BaseAddress = new Uri("https://dummyAppId/k/v1/");
         var factory = new Mock<IHttpClientFactory>();
         factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
 
@@ -667,6 +670,7 @@ public partial class KintoneApiFileUploadTests {
             });
 
         var httpClient = new HttpClient(handlerMock.Object);
+        httpClient.BaseAddress = new Uri("https://dummyAppId/k/v1/");
         var factory = new Mock<IHttpClientFactory>();
         factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
 

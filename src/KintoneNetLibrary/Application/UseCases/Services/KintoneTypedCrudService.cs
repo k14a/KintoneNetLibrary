@@ -529,7 +529,11 @@ public class KintoneTypedCrudService<T>(
         var keyed = records.Where(r => r.HasUpdateKey()).ToList();
 
         if (keyed.Count == 0) {
-            return (records.ToList(), new List<T>());
+            // 更新キーを持つレコードがない場合は RecordID の有無で create/update を分割する
+            return (
+                records.Where(r => !r.HasUpdateKeyOrID()).ToList(),
+                records.Where(r => r.HasUpdateKeyOrID()).ToList()
+            );
         }
 
         var keyValues = keyed

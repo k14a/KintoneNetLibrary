@@ -402,6 +402,8 @@ public class KintoneModelCrudServiceCreateTests {
             mockLogger.Object
         );
 
+        mockLogger.Setup(l => l.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
+
         var result = await service.CreateAsync(testRecords);
 
         mockLogger.Verify(

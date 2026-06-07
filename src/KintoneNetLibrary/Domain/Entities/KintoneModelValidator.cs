@@ -264,8 +264,10 @@ public static class KintoneModelValidator {
         var props = rowType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
         foreach (var prop in props) {
-            var attr = prop.GetCustomAttribute<KintoneItemAttribute>() ?? throw new InvalidOperationException(
-                $"サブテーブル行 '{rowType.Name}' のプロパティ '{prop.Name}' に KintoneItemAttribute がありません。");
+            var attr = prop.GetCustomAttribute<KintoneItemAttribute>();
+            if (attr == null) {
+                continue;
+            }
 
             // SubTable 内の構造化フィールドも再帰的にチェック
             switch (attr.FieldType) {

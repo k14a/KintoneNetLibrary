@@ -97,7 +97,7 @@ public class KintoneApiDownloadFileTests {
             });
 
         var httpClient = mockHttp.ToHttpClient();
-        httpClient.BaseAddress = new Uri("https://dummy.domain/k/v1/");
+        httpClient.BaseAddress = new Uri($"https://{DummyDomain}/k/v1/");
 
         var factoryMock = new Mock<IHttpClientFactory>();
         factoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
@@ -131,6 +131,7 @@ public class KintoneApiDownloadFileTests {
             });
 
         var httpClient = mockHttp.ToHttpClient();
+        httpClient.BaseAddress = new Uri($"https://{DummyDomain}/k/v1/");
 
         var factoryMock = new Mock<IHttpClientFactory>();
         factoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
@@ -160,6 +161,7 @@ public class KintoneApiDownloadFileTests {
             .Respond(HttpStatusCode.BadRequest, "application/json", errorJson);
 
         var httpClient = mockHttp.ToHttpClient();
+        httpClient.BaseAddress = new Uri($"https://{DummyDomain}/k/v1/");
         var factoryMock = new Mock<IHttpClientFactory>();
         factoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
 
@@ -214,6 +216,7 @@ public class KintoneApiDownloadFileTests {
             .Respond(HttpStatusCode.BadRequest, "application/json", errorJson);
 
         var httpClient = mockHttp.ToHttpClient();
+        httpClient.BaseAddress = new Uri($"https://{DummyDomain}/k/v1/");
         var factoryMock = new Mock<IHttpClientFactory>();
         factoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
 
@@ -237,6 +240,7 @@ public class KintoneApiDownloadFileTests {
             .Respond("application/json", errorJson); // ← ステータスコード200だがJSON
 
         var httpClient = mockHttp.ToHttpClient();
+        httpClient.BaseAddress = new Uri($"https://{DummyDomain}/k/v1/");
         var factoryMock = new Mock<IHttpClientFactory>();
         factoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
 
@@ -259,6 +263,7 @@ public class KintoneApiDownloadFileTests {
             .Respond("application/json", invalidJson);
 
         var httpClient = mockHttp.ToHttpClient();
+        httpClient.BaseAddress = new Uri($"https://{DummyDomain}/k/v1/");
         var factoryMock = new Mock<IHttpClientFactory>();
         factoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
 
@@ -281,6 +286,7 @@ public class KintoneApiDownloadFileTests {
             .Respond("text/html", errorJson); // Content-Typeが想定外
 
         var httpClient = mockHttp.ToHttpClient();
+        httpClient.BaseAddress = new Uri($"https://{DummyDomain}/k/v1/");
         var factoryMock = new Mock<IHttpClientFactory>();
         factoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
         var api = new KintoneApi(CreateMockAccess(), 1, factoryMock.Object);
@@ -302,6 +308,7 @@ public class KintoneApiDownloadFileTests {
         });
 
         var httpClient = new HttpClient(handler);
+        httpClient.BaseAddress = new Uri($"https://{DummyDomain}/k/v1/");
         var factoryMock = new Mock<IHttpClientFactory>();
         factoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
         var api = new KintoneApi(CreateMockAccess(), 1, factoryMock.Object);
@@ -330,6 +337,7 @@ public class KintoneApiDownloadFileTests {
             .Respond(_ => response);
 
         var httpClient = mockHttp.ToHttpClient();
+        httpClient.BaseAddress = new Uri($"https://{DummyDomain}/k/v1/");
         var factoryMock = new Mock<IHttpClientFactory>();
         factoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
         var api = new KintoneApi(CreateMockAccess(), 1, factoryMock.Object);
@@ -358,6 +366,7 @@ public class KintoneApiDownloadFileTests {
             .Respond(HttpStatusCode.BadRequest, "application/json", errorJson);
 
         var httpClient = mockHttp.ToHttpClient();
+        httpClient.BaseAddress = new Uri($"https://{DummyDomain}/k/v1/");
         var factoryMock = new Mock<IHttpClientFactory>();
         factoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
         var api = new KintoneApi(CreateMockAccess(), 1, factoryMock.Object);
@@ -408,6 +417,7 @@ public class KintoneApiDownloadFileTests {
             .Respond("text/html", errorHtml);
 
         var httpClient = mockHttp.ToHttpClient();
+        httpClient.BaseAddress = new Uri($"https://{DummyDomain}/k/v1/");
         var factoryMock = new Mock<IHttpClientFactory>();
         factoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
         var api = new KintoneApi(CreateMockAccess(), 1, factoryMock.Object);
@@ -432,8 +442,10 @@ public class KintoneApiDownloadFileTests {
                     }
                 });
 
+        var httpClient = mockHttp.ToHttpClient();
+        httpClient.BaseAddress = new Uri($"https://{DummyDomain}/k/v1/");
         var factoryMock = new Mock<IHttpClientFactory>();
-        factoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(mockHttp.ToHttpClient());
+        factoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
         var api = new KintoneApi(CreateMockAccess(), 1, factoryMock.Object);
         var stream = await api.DownloadFileStreamAsync("valid_file_key");
 
@@ -454,8 +466,10 @@ public class KintoneApiDownloadFileTests {
             .When(HttpMethod.Get, $"https://{DummyDomain}/k/v1/file.json*")
             .Respond("text/html", htmlBody);
 
+        var httpClient = mockHttp.ToHttpClient();
+        httpClient.BaseAddress = new Uri($"https://{DummyDomain}/k/v1/");
         var factoryMock = new Mock<IHttpClientFactory>();
-        factoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(mockHttp.ToHttpClient());
+        factoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
         var api = new KintoneApi(CreateMockAccess(), 1, factoryMock.Object);
 
         // Act & Assert
@@ -476,8 +490,10 @@ public class KintoneApiDownloadFileTests {
             .When(HttpMethod.Get, $"https://{DummyDomain}/k/v1/file.json*")
             .Respond("application/json", jsonError);
 
+        var httpClient = mockHttp.ToHttpClient();
+        httpClient.BaseAddress = new Uri($"https://{DummyDomain}/k/v1/");
         var factoryMock = new Mock<IHttpClientFactory>();
-        factoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(mockHttp.ToHttpClient());
+        factoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
         var api = new KintoneApi(CreateMockAccess(), 1, factoryMock.Object);
 
         // Act & Assert
@@ -495,8 +511,10 @@ public class KintoneApiDownloadFileTests {
         mockHttp.When(HttpMethod.Get, $"https://{DummyDomain}/k/v1/file.json*")
                 .Respond(HttpStatusCode.BadRequest, "application/json", jsonError);
 
+        var httpClient = mockHttp.ToHttpClient();
+        httpClient.BaseAddress = new Uri($"https://{DummyDomain}/k/v1/");
         var factoryMock = new Mock<IHttpClientFactory>();
-        factoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(mockHttp.ToHttpClient());
+        factoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
         var api = new KintoneApi(CreateMockAccess(), 1, factoryMock.Object);
 
         var ex = await Assert.ThrowsAsync<KintoneException>(() => api.DownloadFileStreamAsync("invalid_key"));
@@ -514,8 +532,10 @@ public class KintoneApiDownloadFileTests {
         mockHttp.When(HttpMethod.Get, $"https://{DummyDomain}/k/v1/file.json*")
                 .Respond(HttpStatusCode.InternalServerError, "text/html", badBody);
 
+        var httpClient = mockHttp.ToHttpClient();
+        httpClient.BaseAddress = new Uri($"https://{DummyDomain}/k/v1/");
         var factoryMock = new Mock<IHttpClientFactory>();
-        factoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(mockHttp.ToHttpClient());
+        factoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
         var api = new KintoneApi(CreateMockAccess(), 1, factoryMock.Object);
 
         var ex = await Assert.ThrowsAsync<KintoneException>(() => api.DownloadFileStreamAsync("filekey"));
@@ -542,8 +562,10 @@ public class KintoneApiDownloadFileTests {
                     };
                 });
 
+        var httpClient = mockHttp.ToHttpClient();
+        httpClient.BaseAddress = new Uri($"https://{DummyDomain}/k/v1/");
         var factoryMock = new Mock<IHttpClientFactory>();
-        factoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(mockHttp.ToHttpClient());
+        factoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
         var api = new KintoneApi(CreateMockAccess(), 1, factoryMock.Object);
         var ex = await Assert.ThrowsAsync<ArgumentException>(() => api.DownloadFileStreamAsync(""));
         Assert.Contains("fileKey must not be empty.", ex.Message);
@@ -570,8 +592,10 @@ public class KintoneApiDownloadFileTests {
                     };
                 });
 
+        var httpClient = mockHttp.ToHttpClient();
+        httpClient.BaseAddress = new Uri($"https://{DummyDomain}/k/v1/");
         var factoryMock = new Mock<IHttpClientFactory>();
-        factoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(mockHttp.ToHttpClient());
+        factoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
         var api = new KintoneApi(CreateMockAccess(), 1, factoryMock.Object);
         await api.DownloadFileStreamAsync(fileKey);
 

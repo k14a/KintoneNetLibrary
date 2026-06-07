@@ -40,6 +40,8 @@ public class KintoneModelCrudServiceSaveTests {
         mockRepo.Setup(r => r.CreateRecordsAsync(It.IsAny<IList<SampleModel>>()))
             .ReturnsAsync("{\"ids\": [\"C1001\"], \"revisions\": [\"1\"]}");
 
+        mockLogger.Setup(l => l.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
+
         var result = await service.SaveAsync(records);
 
         Assert.Single(result.Succeeded);
@@ -85,7 +87,9 @@ public class KintoneModelCrudServiceSaveTests {
 
         // UpdateAsync を構成する AddUpdateRecordsAsync のレスポンスモック
         mockRepo.Setup(r => r.UpdateRecordsAsync(It.IsAny<IList<SampleModel>>()))
-            .ReturnsAsync("{\"ids\": [\"1001\"], \"revisions\": [\"6\"]}");
+            .ReturnsAsync("{\"records\": [{\"id\": \"1001\", \"revision\": \"6\"}]}");
+
+        mockLogger.Setup(l => l.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
 
         // Revision更新確認を可能にするよう ParseUpdatedRecords() の呼び出し動作を前提に結果確認
         var result = await service.SaveAsync(new List<SampleModel> { updateRecord });
@@ -135,7 +139,9 @@ public class KintoneModelCrudServiceSaveTests {
             .ReturnsAsync("{\"ids\": [\"R2001\"], \"revisions\": [\"1\"]}");
 
         mockRepo.Setup(r => r.UpdateRecordsAsync(It.IsAny<IList<SampleModel>>()))
-            .ReturnsAsync("{\"ids\": [\"R1002\"], \"revisions\": [\"3\"]}");
+            .ReturnsAsync("{\"records\": [{\"id\": \"R1002\", \"revision\": \"3\"}]}");
+
+        mockLogger.Setup(l => l.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
 
         var result = await service.SaveAsync(records);
 
@@ -197,7 +203,7 @@ public class KintoneModelCrudServiceSaveTests {
             .ThrowsAsync(new Exception("Create failed"));
 
         mockRepo.Setup(r => r.UpdateRecordsAsync(It.IsAny<IList<SampleModel2>>()))
-            .ReturnsAsync("{\"ids\": [\"U123\"], \"revisions\": [\"2\"]}");
+            .ReturnsAsync("{\"records\": [{\"id\": \"U123\", \"revision\": \"2\"}]}");
 
         var result = await service.SaveWithRetryAsync(new List<SampleModel2> { model }, enableSingleRetryOnError: false, enableCreateToUpdateRetry: true);
 
@@ -217,7 +223,7 @@ public class KintoneModelCrudServiceSaveTests {
         var mockRepo = new Mock<IKintoneRepository>();
 
         mockRepo.Setup(r => r.UpdateRecordsAsync(It.IsAny<IList<SampleModel>>()))
-            .ReturnsAsync("{\"ids\": [\"U999\"], \"revisions\": [\"8\"]}");
+            .ReturnsAsync("{\"records\": [{\"id\": \"U999\", \"revision\": \"8\"}]}");
 
         var service = new KintoneTypedCrudService<SampleModel>(
             mockRepo.Object,

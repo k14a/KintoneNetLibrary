@@ -35,6 +35,8 @@ public class KintoneModelCrudServiceDeleteTests {
             loggerMock.Object
         );
 
+        loggerMock.Setup(l => l.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
+
         var model = new SampleModel { RecordID = "123" };
         // Act
         var result = await service.DeleteAsync(models: []);
@@ -83,6 +85,8 @@ public class KintoneModelCrudServiceDeleteTests {
             KintoneJsonOptions.Default,
             loggerMock.Object
         );
+
+        loggerMock.Setup(l => l.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
 
         // Act
         var result = await service.DeleteAsync(models, false);

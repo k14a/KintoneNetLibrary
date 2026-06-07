@@ -26,8 +26,7 @@ public class KintoneModelCrudServiceUpdateTests {
         var mockRepo = new Mock<IKintoneRepository>();
         mockRepo.Setup(r => r.UpdateRecordsAsync<SampleModel>(It.IsAny<IList<SampleModel>>()))
             .ReturnsAsync(JsonSerializer.Serialize(new {
-                ids = new[] { "R9999" },
-                revisions = new[] { "2" }
+                records = new[] { new { id = "R9999", revision = "2" } }
             }));
 
         var service = new KintoneTypedCrudService<SampleModel>(
@@ -59,8 +58,10 @@ public class KintoneModelCrudServiceUpdateTests {
         var mockRepo = new Mock<IKintoneRepository>();
         mockRepo.Setup(r => r.UpdateRecordsAsync<SampleModel>(It.IsAny<IList<SampleModel>>()))
             .ReturnsAsync(JsonSerializer.Serialize(new {
-                ids = new[] { "R1001", "R1002" },
-                revisions = new[] { "2", "3" }
+                records = new[] {
+                    new { id = "R1001", revision = "2" },
+                    new { id = "R1002", revision = "3" }
+                }
             }));
 
         var service = new KintoneTypedCrudService<SampleModel>(
@@ -103,8 +104,7 @@ public class KintoneModelCrudServiceUpdateTests {
 
                 callLog.Add($"single:{input[0].RecordID}");
                 var json = JsonSerializer.Serialize(new {
-                    ids = new[] { input[0].RecordID },
-                    revisions = new[] { "2" }
+                    records = new[] { new { id = input[0].RecordID, revision = "2" } }
                 });
                 return json;
             });
@@ -286,6 +286,8 @@ public class KintoneModelCrudServiceUpdateTests {
             mockLogger.Object
         );
 
+        mockLogger.Setup(l => l.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
+
         var result = await service.UpdateAsync(testRecords, enableSingleRetryOnError: false);
 
         mockLogger.Verify(
@@ -322,6 +324,8 @@ public class KintoneModelCrudServiceUpdateTests {
             null,
             mockLogger.Object
         );
+
+        mockLogger.Setup(l => l.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
 
         var result = await service.UpdateAsync(testRecords, enableSingleRetryOnError: true);
 

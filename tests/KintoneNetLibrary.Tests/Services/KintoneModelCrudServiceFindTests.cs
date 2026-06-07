@@ -283,6 +283,8 @@ public class KintoneModelCrudServiceFindTests {
             loggerMock.Object
         );
 
+        loggerMock.Setup(l => l.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
+
         // Act & Assert
         var ex = await Assert.ThrowsAsync<KintoneException>(async () =>
             await service.FindAsync(query: "Title = \"Invalid\"")
@@ -332,6 +334,8 @@ public class KintoneModelCrudServiceFindTests {
             KintoneJsonOptions.Default,
             loggerMock.Object
         );
+
+        loggerMock.Setup(l => l.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
 
         // Act & Assert
         var ex = await Assert.ThrowsAsync<KintoneException>(() =>

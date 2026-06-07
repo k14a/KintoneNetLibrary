@@ -350,6 +350,8 @@ public class KintoneModelFileServiceTests {
     /// </summary>
     [Fact]
     public async Task DownloadFilesAsyncSkipsFilesWithEmptyFileKey() {
+        this._mockLogger.Setup(l => l.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
+
         var model = new ValidFileModel();
         var files = new[] {
             new KintoneFile { FileKey = null!, Name = "skip1.txt" },
@@ -410,6 +412,8 @@ public class KintoneModelFileServiceTests {
     /// </summary>
     [Fact]
     public async Task DownloadFilesAsyncContinuesOnDownloadError() {
+        this._mockLogger.Setup(l => l.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
+
         var model = new ValidFileModel();
         var file1 = new KintoneFile { FileKey = "key1", Name = $"ok_{Guid.NewGuid()}.txt" };
         var file2 = new KintoneFile { FileKey = "key2", Name = $"fail_{Guid.NewGuid()}.txt" };

@@ -263,23 +263,39 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
             // node.Arguments[1]: ラムダ式 (s => list.Contains(s))
 
             var collectionExpr = node.Arguments[0];
-            var predicate = node.Arguments[1] as LambdaExpression;
+            var rawPredicate = node.Arguments[1];
+            var predicate = (rawPredicate is UnaryExpression unary && unary.NodeType == ExpressionType.Quote
+                ? unary.Operand
+                : rawPredicate) as LambdaExpression;
 
             if (predicate != null && predicate.Body is MethodCallExpression predicateMethodCall) {
                 // predicate の中身が list.Contains(s) か確認
                 if (predicateMethodCall.Method.Name == "Contains") {
-                    // list.Contains(s) の list 部分を評価して値を取得
-                    var values = EvaluateExpression(predicateMethodCall.Object ?? predicateMethodCall.Arguments[0]) as IEnumerable<object>;
+                    // コレクション式を取り出す
+                    // .NET 10 では MemoryExtensions.Contains(arr.AsSpan(), s) に最適化される場合があるため、
+                    // AsSpan() の引数（元の配列）を取り出す
+                    Expression? collectionSource = predicateMethodCall.Object;
+                    if (collectionSource == null && predicateMethodCall.Arguments.Count >= 1) {
+                        var firstArg = predicateMethodCall.Arguments[0];
+                        // .NET 10 では MemoryExtensions.Contains(ReadOnlySpan<T>.op_Implicit(arr), s) に最適化される場合があるため、
+                        // AsSpan / op_Implicit などのスパン変換を展開して元の配列を取り出す
+                        if (firstArg is MethodCallExpression conversionCall &&
+                            (conversionCall.Method.Name == "AsSpan" ||
+                             conversionCall.Method.Name == "AsReadOnlySpan" ||
+                             conversionCall.Method.Name == "op_Implicit")) {
+                            collectionSource = conversionCall.Object ?? (conversionCall.Arguments.Count > 0 ? conversionCall.Arguments[0] : null);
+                        } else {
+                            collectionSource = firstArg;
+                        }
+                    }
 
-                    if (values != null) {
-                        // collectionExpr はフィールドアクセスと想定
-                        if (collectionExpr is MemberExpression memberExpr) {
+                    if (collectionSource != null) {
+                        var evaluated = EvaluateExpression(collectionSource);
+                        if (evaluated is System.Collections.IEnumerable rawValues && collectionExpr is MemberExpression memberExpr) {
                             var fieldName = GetFieldNameFromMemberExpression(memberExpr);
-
                             this._queryBuilder.Append($"{fieldName} in (");
-                            this._queryBuilder.Append(string.Join(", ", values.Select(v => this.FormatValue(v))));
+                            this._queryBuilder.Append(string.Join(", ", rawValues.Cast<object>().Select(v => this.FormatValue(v))));
                             this._queryBuilder.Append(')');
-
                             return node;
                         }
                     }

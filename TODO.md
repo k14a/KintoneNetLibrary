@@ -310,3 +310,79 @@ SRP の段階的分離として適切であり、これ以上の責任分離は�
   - フィールド `_invalid_field_name` がスネークケースで C# 命名規則に違反（`_invalidFieldName` が正しい）
   - `GenerateHeader` で `appName` を計算しているが実際には使っておらず、旧コードがコメントアウトのまま残存している
 - **対応方針**: 未使用コードの削除、命名規則の統一、未使用変数の除去。
+
+---
+
+## 8. KintoneNetLibrary.Tests ユニットテスト修正（2026-06-06）
+
+統合テスト分離作業（`KintoneNetLibrary.IntegrationTests` プロジェクト新設）により、以前は TestConfig.json 不在でアセンブリがクラッシュして隠れていた既存の失敗 52 件が表面化した。以下はその分類と対応方針。
+
+### 8-A. Castle.DynamicProxy: `internal SampleModel` と `Mock<ILogger>` の非互換
+
+- [x] **対象ファイル**:
+  - [`tests/KintoneNetLibrary.Tests/Services/KintoneModelCrudServiceDeleteTests.cs`](tests/KintoneNetLibrary.Tests/Services/KintoneModelCrudServiceDeleteTests.cs)（全件）
+  - [`tests/KintoneNetLibrary.Tests/Services/KintoneModelCrudServiceCreateTests.cs`](tests/KintoneNetLibrary.Tests/Services/KintoneModelCrudServiceCreateTests.cs)（`CreateAsyncWhenBulkFailsLogsWarningMessage`）
+  - [`tests/KintoneNetLibrary.Tests/Services/KintoneModelCrudServiceUpdateTests.cs`](tests/KintoneNetLibrary.Tests/Services/KintoneModelCrudServiceUpdateTests.cs)（ログ検証 2 件）
+  - [`tests/KintoneNetLibrary.Tests/Services/KintoneModelCrudServiceFindTests.cs`](tests/KintoneNetLibrary.Tests/Services/KintoneModelCrudServiceFindTests.cs)（エラー系 2 件）
+  - [`tests/KintoneNetLibrary.Tests/Services/KintoneModelCrudServiceSaveTests.cs`](tests/KintoneNetLibrary.Tests/Services/KintoneModelCrudServiceSaveTests.cs)（ログ検証系）
+- **問題**: 各テストファイル内の `SampleModel` / `SampleModel2` が `internal class` であるため、Moq（Castle.DynamicProxy）が `ILogger<KintoneTypedCrudService<SampleModel>>` のプロキシを生成できない。`Microsoft.Extensions.Logging.Abstractions` が strong-named アセンブリなため `InternalsVisibleTo` 宣言が必要。
+  ```
+  Can not create proxy for type ILogger`1[...SampleModel...] because type SampleModel
+  is not accessible. Make it public, or internal and mark your assembly with
+  [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2, PublicKey=...")]
+  ```
+- **対応方針**: テストプロジェクトに `AssemblyInfo.cs` を追加し、以下を宣言する。
+  ```csharp
+  [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2, PublicKey=0024000004800000940000000602000000240000525341310004000001000100c547cac37abd99c8db225ef2f6c8a3602f3b3606cc9891605d02baa56104f4cfc0734aa39b93bf7852f7d9266654753cc297e7d2edfe0bac1cdcf9f717241550e0a7b191195b7667bb4f64bcb8e2121380fd1d9d46ad2d92d2d15605093924cceaf74c4861eff62abf69b9291ed0a340e113be11e6a7d3113e92484cf7045cc7")]
+  ```
+
+### 8-B-1. `ParseCreatedRecords` の JSON 形式不一致（実装バグ）
+
+- [x] **対象ファイル**: [`src/KintoneNetLibrary/Infrastructure/Helpers/KintoneResponseParser.cs:31`](src/KintoneNetLibrary/Infrastructure/Helpers/KintoneResponseParser.cs#L31), [`src/KintoneNetLibrary/Domain/Entities/KintoneRecordIndexesResponse.cs`](src/KintoneNetLibrary/Domain/Entities/KintoneRecordIndexesResponse.cs)
+- **問題**: `ParseCreatedRecords` が `KintoneRecordIndexesResponse`（`{"records":[{"id":"...","revision":"..."},...]}`）でパースしているが、Kintone Create API（`POST /k/v1/records.json`）の実際のレスポンスは `{"ids":[...],"revisions":[...]}` 形式。テストモックは正しい形式を返しているが実装が対応できていない。
+  - 影響テスト: `CreateAsyncWithValidRecordsReturnsSucceededResult`（期待 10 件 → 実際 0 件）、`CreateAsyncWhenKintoneExceptionOccursAndRetrySucceedsAddsToSucceeded`、`CreateAsyncWhenBulkFailsAndSingleRetrySucceedsAllRecordsAddedToSucceeded`、`CreateAsyncWhenRevisionIsInvalidSetsDefaultRevision`、`CreateAsyncWhenResponseHasNullOrEmptyIdsSetsEmptyStringToId` 等
+- **対応方針**: `ParseCreatedRecords` を `{"ids":[...],"revisions":[...]}` 形式に対応するよう修正する（`KintoneRecordIndexesResponse` ではなく専用パーサーを使う）。
+
+### 8-B-2. UpdateAsync テストのモック JSON 形式不一致（テストバグ）
+
+- [x] **対象ファイル**: [`tests/KintoneNetLibrary.Tests/Services/KintoneModelCrudServiceUpdateTests.cs`](tests/KintoneNetLibrary.Tests/Services/KintoneModelCrudServiceUpdateTests.cs), [`tests/KintoneNetLibrary.Tests/Services/KintoneModelCrudServiceSaveTests.cs`](tests/KintoneNetLibrary.Tests/Services/KintoneModelCrudServiceSaveTests.cs)
+- **問題**: テストのモックが `{"ids":[...],"revisions":[...]}` を返しているが、`ParseUpdatedRecords` は Kintone Update API の実際のレスポンス形式である `{"records":[{"id":"...","revision":"..."},...]}`（`KintoneRecordIndexesResponse`）を期待している。
+  - 影響テスト: `UpdateAsyncWithSingleRecordReturnsSucceededResult`、`UpdateAsyncWithMultipleRecordsReturnsAllSucceeded`、`UpdateAsyncWhenBulkFailsAndSingleRetrySucceedsRecordsAddedToSucceeded` 等
+- **対応方針**: UpdateAsync・SaveAsync 系テストのモック返却 JSON を `{"records":[{"id":"...","revision":"..."},...]}` 形式に修正する。
+
+### 8-C. DownloadFile / UploadFile: 相対 URL と `BaseAddress` 不整合
+
+- [x] **対象ファイル**: [`src/KintoneNetLibrary/Infrastructure/Api/KintoneApi.File.cs:158`](src/KintoneNetLibrary/Infrastructure/Api/KintoneApi.File.cs#L158), [`src/KintoneNetLibrary/Infrastructure/Api/KintoneApi.File.cs:209`](src/KintoneNetLibrary/Infrastructure/Api/KintoneApi.File.cs#L209)
+- **問題**: `DownloadFileAsync` / `DownloadFileStreamAsync` / `UploadFileInternalAsync` が相対 URL（`"file.json?fileKey=..."` 等）で `HttpRequestMessage` を構築するため `HttpClient.BaseAddress` が必須。テストで `MockHttpMessageHandler.ToHttpClient()` を使う際に `BaseAddress` が未設定のため `InvalidOperationException` が発生。
+  - 影響テスト: `KintoneApiDownloadFileTests` の大半（15 件）、`KintoneApiFileUploadTests` の一部（4 件）
+- **対応方針**: `BuildRequestUri`（絶対 URL）を使うよう実装を修正するか、失敗テストすべてに `httpClient.BaseAddress = new Uri($"https://{DummyDomain}/k/v1/")` を追加する。
+
+### 8-D. `KintoneModelFileService` ロガー呼び出しの検証失敗
+
+- [x] **対象ファイル**: [`tests/KintoneNetLibrary.Tests/Services/KintoneModelFileServiceTests.cs`](tests/KintoneNetLibrary.Tests/Services/KintoneModelFileServiceTests.cs)（`DownloadFilesAsyncContinuesOnDownloadError`、`DownloadFilesAsyncSkipsFilesWithEmptyFileKey`）
+- **問題**: `LoggerMessage.Define` によるログ呼び出しは `ILogger.IsEnabled()` を先行チェックし、`false` が返ると `Log()` を呼ばない。Moq の `Mock<ILogger>` はデフォルトで `IsEnabled` が `false` を返すため、Moq.Verify で `0 times` になる。
+- **対応方針**: テストで `mock.Setup(x => x.IsEnabled(LogLevel.Warning)).Returns(true)` 等を追加し、ログが実際に呼ばれるよう設定する。
+
+### 8-E-1. `ValidateSubTablePropertiesWhenTypeIsValidListDoesNotThrow` — バリデーター強化との不一致
+
+- [x] **対象ファイル**: [`tests/KintoneNetLibrary.Tests/Helpers/KintoneModelValidatorTests.cs`](tests/KintoneNetLibrary.Tests/Helpers/KintoneModelValidatorTests.cs)
+- **問題**: テスト内のサブテーブル行モデル `FakeSubRow` の `ID` プロパティに `[KintoneItem]` が付与されていないため、バリデーターの強化（サブテーブル行の全プロパティに `KintoneItemAttribute` を要求）により例外が発生。
+  ```
+  System.InvalidOperationException : サブテーブル行 'FakeSubRow' のプロパティ 'ID' に KintoneItemAttribute がありません。
+  ```
+- **対応方針**: `FakeSubRow.ID` に `[KintoneItem(...)]` を追加するか、バリデーターの対象プロパティ条件を見直す。
+
+### 8-E-2. `FindAsyncWithSingleIDReturnsSingleRecord` — `$id` の JSON パース失敗
+
+- [x] **対象ファイル**: [`tests/KintoneNetLibrary.Tests/Services/KintoneModelCrudServiceFindTests.cs`](tests/KintoneNetLibrary.Tests/Services/KintoneModelCrudServiceFindTests.cs)
+- **問題**: テストが `JsonSerializerOptions` に `ReferenceHandler.Preserve` を設定しているため、シリアライズした JSON に `$id` メタデータが埋め込まれる。`KintoneResponseParser.ParseRecord<T>` はこれを文字列として読もうとし `JsonException` が発生。
+  ```
+  The JSON value could not be converted to System.String. Path: $.$id
+  ```
+- **対応方針**: テストの `JsonSerializerOptions` から `ReferenceHandler.Preserve` を除去する（または `ParseRecord` を参照保持 JSON に対応させる）。
+
+### 8-E-3. `QueryMultiSelectorAny` — クエリビルダーの `in (...)` 生成バグ
+
+- [x] **対象ファイル**: [`tests/KintoneNetLibrary.Tests/Helpers/Queries/KintoneQueryExpressionsTests.cs:225`](tests/KintoneNetLibrary.Tests/Helpers/Queries/KintoneQueryExpressionsTests.cs#L225)（テスト側）および クエリビルダー実装
+- **問題**: `MultiSelector in ("選択肢1", "選択肢2")` が生成されるべきところ、`"MultiSelector"選択肢1""選択肢2""` という不正な文字列が生成される。`in` キーワードと括弧が欠落している。
+- **対応方針**: クエリビルダーの `in` 演算子（`MultiSelect` 向け）の実装を修正し、`フィールドコード in ("値1", "値2")` の形式で生成されるようにする。
