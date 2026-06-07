@@ -206,7 +206,7 @@ public class KintoneQueryExpressionsTests {
     public void QueryReleaseDateBefore20250101LocalTime() {
         var localDateTime = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
         var query = new KintoneQuery<BookModel> {
-            TimeZone = TimeZoneInfo.FindSystemTimeZoneById("Tokyo Standard Time")
+            TimeZone = TimeZoneInfo.CreateCustomTimeZone("JST", TimeSpan.FromHours(9), "JST", "JST")
         }
         .Where(x => x.ReleaseDate < localDateTime)
         .Build();
