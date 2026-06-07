@@ -329,6 +329,8 @@ public class KintoneExpressionVisitor : ExpressionVisitor {
             TimeOnly t => $"\"{t:HH:mm}\"", // ← 追加
             string s => $"\"{s}\"",
             bool b => b.ToString().ToLowerInvariant(),
+            DateTime dt when dt.Kind == DateTimeKind.Unspecified
+                => $"\"{TimeZoneInfo.ConvertTimeToUtc(dt, this.TimeZone):yyyy-MM-ddTHH:mm:ssZ}\"",
             DateTime dt => $"\"{dt.ToUniversalTime():yyyy-MM-ddTHH:mm:ssZ}\"",
             KintoneDateTime kdt => $"\"{kdt.Value.ToUniversalTime():yyyy-MM-ddTHH:mm:ssZ}\"",
             KintoneTimeOnly kto => $"\"{kto.Value}\"",
