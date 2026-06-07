@@ -227,7 +227,16 @@ var record = await CustomerModel.FindByIdAsync(crud, "123");
 
 ## 7. サンプルプロジェクト（Sample Project）
 
-リポジトリには `samples/` を用意しており、コンソールサンプルや ASP.NET Core 統合例を参照できる（設定ファイル・DI 構成例を含む）。
+リポジトリの `samples/ConsoleSample/` にコンソールアプリのサンプルを用意している。
+主要な操作（レコードの登録・取得・更新・削除）と DI 構成例を確認できる。
+
+| ファイル | 内容 |
+|---------|------|
+| [Models/TaskModel.cs](samples/ConsoleSample/Models/TaskModel.cs) | `KintoneModelBase<T>` の実装例（フィールド定義・アクセス設定） |
+| [Program.cs](samples/ConsoleSample/Program.cs) | DI 構成・CRUD 操作・型安全なクエリのサンプル |
+| [appsettings.json](samples/ConsoleSample/appsettings.json) | 接続設定の記述例 |
+
+実行前に `appsettings.json` と `Models/TaskModel.cs` のドメイン・ApiToken・AppId を実環境の値に書き換えること。
 
 ---
 

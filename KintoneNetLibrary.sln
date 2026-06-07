@@ -21,6 +21,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KintoneNetLibrary.Backup.Te
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KintoneNetLibrary.IntegrationTests", "tests\KintoneNetLibrary.IntegrationTests\KintoneNetLibrary.IntegrationTests.csproj", "{45F68244-A5A1-4443-9C4E-CC8A7B1AD0E4}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{5D20AA90-6969-D8BD-9DCD-8634F4692FDA}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ConsoleSample", "ConsoleSample", "{AFE7E362-7E14-44FB-558B-61E5661095D9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KintoneNetLibrary.ConsoleSample", "samples\ConsoleSample\KintoneNetLibrary.ConsoleSample.csproj", "{2CD15051-2871-4DD1-AC67-A5EB80104A39}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -115,6 +121,18 @@ Global
 		{45F68244-A5A1-4443-9C4E-CC8A7B1AD0E4}.Release|x64.Build.0 = Release|Any CPU
 		{45F68244-A5A1-4443-9C4E-CC8A7B1AD0E4}.Release|x86.ActiveCfg = Release|Any CPU
 		{45F68244-A5A1-4443-9C4E-CC8A7B1AD0E4}.Release|x86.Build.0 = Release|Any CPU
+		{2CD15051-2871-4DD1-AC67-A5EB80104A39}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2CD15051-2871-4DD1-AC67-A5EB80104A39}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2CD15051-2871-4DD1-AC67-A5EB80104A39}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{2CD15051-2871-4DD1-AC67-A5EB80104A39}.Debug|x64.Build.0 = Debug|Any CPU
+		{2CD15051-2871-4DD1-AC67-A5EB80104A39}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{2CD15051-2871-4DD1-AC67-A5EB80104A39}.Debug|x86.Build.0 = Debug|Any CPU
+		{2CD15051-2871-4DD1-AC67-A5EB80104A39}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2CD15051-2871-4DD1-AC67-A5EB80104A39}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2CD15051-2871-4DD1-AC67-A5EB80104A39}.Release|x64.ActiveCfg = Release|Any CPU
+		{2CD15051-2871-4DD1-AC67-A5EB80104A39}.Release|x64.Build.0 = Release|Any CPU
+		{2CD15051-2871-4DD1-AC67-A5EB80104A39}.Release|x86.ActiveCfg = Release|Any CPU
+		{2CD15051-2871-4DD1-AC67-A5EB80104A39}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -126,6 +144,8 @@ Global
 		{99331BDC-9D38-4198-A9CB-C966512D339B} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{C3B687D7-55B3-4C6B-A9A2-C5FABAA770D2} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{45F68244-A5A1-4443-9C4E-CC8A7B1AD0E4} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{AFE7E362-7E14-44FB-558B-61E5661095D9} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{2CD15051-2871-4DD1-AC67-A5EB80104A39} = {AFE7E362-7E14-44FB-558B-61E5661095D9}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8E7E9FC6-BE31-49E7-8CE3-501CD916CA33}
