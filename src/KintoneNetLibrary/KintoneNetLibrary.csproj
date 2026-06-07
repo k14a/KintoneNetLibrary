@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>KintoneNetLibrary</AssemblyName>
+    <Version>0.9.1</Version>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
@@ -22,10 +23,5 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="xunit" Version="2.9.2" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Remove="tests\**\*.cs" />
   </ItemGroup>
 </Project>

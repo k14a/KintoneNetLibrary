@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [ "develop", "main" ]
+  pull_request:
+    branches: [ "develop", "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore KintoneNetLibrary.sln
+
+      - name: Build
+        run: dotnet build KintoneNetLibrary.sln --no-restore --configuration Release
+
+      # IntegrationTests は実環境への接続が必要なため除外する
+      - name: Test
+        run: >
+          dotnet test KintoneNetLibrary.sln
+          --no-build
+          --configuration Release
+          --filter "FullyQualifiedName!~IntegrationTests"
+          --verbosity normal
