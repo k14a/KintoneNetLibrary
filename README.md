@@ -17,40 +17,46 @@
 
 - **cursor を自動運用する Find 実装**
   - Kintone が推奨する cursor を内部で自動的に運用する。開発者は cursor の存在を意識せずに大量データ取得が可能である。
-  - 低レベル API（`KintoneApi`）経由の呼び出しでも自動 cursor 利用に対応している。
+  - 低レベル API（`IKintoneApi`）経由の呼び出しでも自動 cursor 利用に対応している。
   - ※注意: cursor を細かく制御したいユースケース（特殊なページングや長期保持など）には適さない場合がある。
 
 - **選べる API スタイル（利用者レベルに応じた 3 段階）**
-  - 初心者向け：モデル継承（`KintoneModelBase`）
-  - 中級者向け：`KintoneTypedCrudService<T>` を使用するサービス層
-  - 上級者向け：低レベル API（`KintoneApi`）を直接利用
+  - 初心者向け：モデル継承（`KintoneModelBase<TSelf>`）
+  - 中級者向け：`IKintoneTypedCrudService<T>` を使用するサービス層
+  - 上級者向け：低レベル API（`IKintoneApi`）を直接利用
 
 ### 利用スタイルのサンプル
 
 - 初心者向け：モデル継承 (KintoneModelBase)
 
 ```csharp
-public class CustomerModel : KintoneModelBase
+public class CustomerModel : KintoneModelBase<CustomerModel>
 {
-    // フィールド定義…
+    public override int AppId { get; init; } = 100;
+    public override KintoneAccessBase Access { get; init; }
+        = new ApiTokenAccess("your-domain.cybozu.com", "YOUR_API_TOKEN");
+
+    [KintoneItem("CustomerName", KintoneFieldType.SingleLineText)]
+    public string Name { get; set; } = string.Empty;
 }
 
-var model = new CustomerModel();
-var record = await model.FindByIDAsync(100);
+// service は IKintoneModelCrudService を DI で取得
+var record = await CustomerModel.FindByIdAsync(service, "123");
 ```
 
-- 中級者向け：KintoneModelCrudService
+- 中級者向け：IKintoneTypedCrudService
 
 ```csharp
-var service = provider.GetRequiredService<KintoneTypedCrudService<CustomerModel>>();
+var service = provider.GetRequiredService<IKintoneTypedCrudService<CustomerModel>>();
 var list = await service.FindAsync(x => x.Status == "Active");
 ```
 
-- 上級者向け：KintoneApi を直接利用
+- 上級者向け：IKintoneApi を直接利用
 
 ```csharp
-var api = provider.GetRequiredService<KintoneApi>();
-var result = await api.Record.FindAsync(appId, query);
+var api = provider.GetRequiredService<IKintoneApiFactory>()
+                  .Create(access, appId);
+var result = await api.FindByQueryAsync<CustomerModel>("Status = \"Active\"");
 ```
 
 ---
@@ -84,38 +90,37 @@ dotnet add package KintoneNetLibrary
 ### 最小限のレコード取得（`KintoneModelBase` を利用）
 
 ```csharp
-public class CustomerModel : KintoneModelBase
+public class CustomerModel : KintoneModelBase<CustomerModel>
 {
-    [KintoneField("CustomerName")]
-    public string Name { get; set; }
+    public override int AppId { get; init; } = 100;
+    public override KintoneAccessBase Access { get; init; }
+        = new ApiTokenAccess("your-domain.cybozu.com", "YOUR_API_TOKEN");
+
+    [KintoneItem("CustomerName", KintoneFieldType.SingleLineText)]
+    public string Name { get; set; } = string.Empty;
 }
 
-var model = new CustomerModel();
-var record = await model.FindByIDAsync(100);
+// service は IKintoneModelCrudService を DI で取得
+var record = await CustomerModel.FindByIdAsync(service, "123");
 ```
 
 ### DI コンテナの登録例
 
 ```csharp
-services.AddKintone(options =>
-{
-    options.BaseUrl = configuration["Kintone:BaseUrl"];
-    options.ApiToken = configuration["Kintone:ApiToken"];
-});
-
-services.AddScoped<KintoneTypedCrudService<CustomerModel>>();
+services.AddHttpClient();
+services.AddScoped<IKintoneApiFactory, KintoneApiFactory>();
+services.AddScoped<IKintoneRepository, KintoneRepository>();
+services.AddScoped<IKintoneModelCrudService, KintoneModelCrudService>();
+services.AddScoped(typeof(IKintoneTypedCrudService<>), typeof(KintoneTypedCrudService<>));
 ```
 
-### DIを使用しない最小例
+### 低レベル API の最小例
 
 ```csharp
-var api = new KintoneApi(new KintoneOptions
-{
-    BaseUrl = "...",
-    ApiToken = "..."
-});
+var factory = provider.GetRequiredService<IKintoneApiFactory>();
+var api = factory.Create(new ApiTokenAccess("your-domain.cybozu.com", "YOUR_API_TOKEN"), appId);
 
-var result = await api.Record.FindAsync(appId, "order by $id asc");
+var result = await api.FindByQueryAsync<CustomerModel>("order by $id asc");
 ```
 
 ---
@@ -125,99 +130,97 @@ var result = await api.Record.FindAsync(appId, "order by $id asc");
 ### 5.1 レコード取得（モデル継承）
 
 ```csharp
-public class CustomerModel : KintoneModelBase
+public class CustomerModel : KintoneModelBase<CustomerModel>
 {
-    [KintoneField("$id")]
-    public long Id { get; set; }
-    [KintoneField("CustomerName")]
-    public string Name { get; set; }
+    public override int AppId { get; init; } = 100;
+    public override KintoneAccessBase Access { get; init; }
+        = new ApiTokenAccess("your-domain.cybozu.com", "YOUR_API_TOKEN");
+
+    [KintoneItem("CustomerName", KintoneFieldType.SingleLineText)]
+    public string Name { get; set; } = string.Empty;
 }
 
-var item = await new CustomerModel().FindByIDAsync(123);
-var list = await new CustomerModel().FindAsync("Status = \"Active\"");
+// Id 指定で単一レコードを取得
+var item = await CustomerModel.FindByIdAsync(service, "123");
+
+// クエリで複数レコードを取得
+var list = await CustomerModel.FindByQueryAsync(service, "Status = \"Active\"");
 ```
 
 ### 5.2 レコード登録
 
 ```csharp
 var model = new CustomerModel { Name = "Acme" };
-var id = await model.CreateAsync(appId);
+var result = await model.CreateAsync(service);
 ```
 
 ### 5.3 クエリ検索
 
 ```csharp
-var result = await new CustomerModel().FindAsync("Status = \"Active\" order by $id asc");
-foreach (var r in result) Console.WriteLine(r.Id + ": " + r.Name);
+var result = await CustomerModel.FindByQueryAsync(service, "Status = \"Active\" order by $id asc");
+foreach (var r in result) Console.WriteLine(r.RecordId + ": " + r.Name);
 ```
 
-> 注：`FindAsync` は内部で cursor を自動運用するため、大量データも透過的に取得できる。細かい cursor 制御が必要な場合は `KintoneApi` の直接利用を検討すること。
+> 注：`FindByQueryAsync` は内部で cursor を自動運用するため、大量データも透過的に取得できる。細かい cursor 制御が必要な場合は `IKintoneApi` の直接利用を検討すること。
 
 ### 5.4 添付ファイル操作
 
 ```csharp
+var api = factory.Create(access, appId);
+
 // ファイルアップロード
-var fileKey = await api.File.UploadAsync(appId, "document.pdf", fileStream);
+var fileKey = await api.UploadAsync("document.pdf", fileStream);
 
 // レコードに紐づけて登録
 var rec = new CustomerModel { Name = "WithFile" };
 rec.AddAttachment("fileField", fileKey);
-await rec.CreateAsync(appId);
+await rec.CreateAsync(service);
 ```
 
-### 5.5 バルク API
+### 5.5 バルク操作
 
 ```csharp
-var bulkRequests = items.Select(i => i.ToRecordRequest()).ToList();
-var bulkResult = await api.Record.BulkAsync(appId, bulkRequests);
+var result = await CustomerModel.CreateBulkAsync(service, items);
 ```
 
 ### 5.6 DI 登録例
 
 ```csharp
 public static IServiceCollection AddKintoneConfig(this IServiceCollection services) {
-    // 設定の初期化(Domain Model の static プロパティに設定をセットする)
-    services.AddSingleton<FileCheckRecipeConfigInitializer>();
-    // ApiFactoryの登録
+    // HttpClient の登録
+    services.AddHttpClient();
+    // ApiFactory の登録
     services.AddScoped<IKintoneApiFactory, KintoneApiFactory>();
-    // Repositoryの登録
+    // Repository の登録
     services.AddScoped<IKintoneRepository, KintoneRepository>();
-    // CRUD Serviceの登録(非ジェネリック版 → static api用)
+    // CRUD Service の登録（非ジェネリック版 → static API 用）
     services.AddScoped<IKintoneModelCrudService, KintoneModelCrudService>();
-    // CRUD Serviceの登録(ジェネリック版 → 型付き CRUD)
+    // CRUD Service の登録（ジェネリック版 → 型付き CRUD）
     services.AddScoped(typeof(IKintoneTypedCrudService<>), typeof(KintoneTypedCrudService<>));
     return services;
 }
 ```
-### 5.7 Staticメソッドで使用するプロパティの設定方法
+
+### 5.7 DI を使った利用例
 
 ```csharp
-public static IHost InitializeKintoneConfig(this IHost host) {
-    // Initializerのコンストラクタを実行し、
-    // Domainモデルのstaticプロパティに設定を注入する
-    host.Services.GetRequiredService<Initializer>();
-    return host;
-}
-```
+// 型付き CRUD サービスを使う場合
+var typed = serviceProvider.GetRequiredService<IKintoneTypedCrudService<CustomerModel>>();
+var active = await typed.FindAsync(x => x.Status == "Active");
 
-#### 補足
-Find系メソッド（FindByQueryAsyncなど）は static メソッドのため、DI から設定を受け取れません。
-そのため、アプリ起動時に Domain Model の static プロパティへ設定を注入する初期化処理が必要です。
-
-### 5.8 DI を使った利用例
-
-```csharp
-var crud = serviceProvider.GetRequiredService<KintoneTypedCrudService<CustomerModel>>();
-var active = await crud.FindAsync(x => x.Status == "Active");
+// モデルの static メソッドを使う場合
+var crud = serviceProvider.GetRequiredService<IKintoneModelCrudService>();
+var record = await CustomerModel.FindByIdAsync(crud, "123");
 ```
 
 ---
 
 ## 6. 設計思想（Design Philosophy） 💡
 
-- **拡張性を重視**：レイヤード / クリーンアーキテクチャ的な分離を採用しており、Domain / Application / Infrastructure を明確に分離している。
+- **拡張性を重視**：Clean Architecture に基づき、Domain / Application / Infrastructure を明確に分離している。
 - **疎結合**：インターフェースを多用し、DI による差し替えが容易で単体テストが行いやすい。
-- **モデル駆動**：`KintoneModelBase` を中心とした利用スタイルを想定し、保守性と読みやすさを重視した設計である。
+- **明示的な依存**：Service Locator パターンを廃止し、CRUD メソッドは `IKintoneModelCrudService` を明示的に受け取る設計としている。
+- **インターフェース分離**：`IKintoneApi` は `IKintoneRecordReadApi` / `IKintoneRecordWriteApi` / `IKintoneFileApi` / `IKintoneCursorApi` に分割され、必要な機能のみに依存できる。
 - **カーソルの隠蔽**：大量データ取得における cursor の煩雑さを隠蔽し、利用者がビジネスロジックに集中できるように設計している。
 
 ---
