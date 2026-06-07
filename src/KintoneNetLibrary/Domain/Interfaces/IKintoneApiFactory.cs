@@ -17,11 +17,11 @@ public interface IKintoneApiFactory {
     IKintoneApi Create<T>(T model) where T : KintoneModelBase<T>, new();
 
     /// <summary>
-    /// アクセス情報と アプリ ID から Kintone API インスタンスを作成します。
+    /// アクセス情報と アプリ Id から Kintone API インスタンスを作成します。
     /// </summary>
     /// <param name="access">Kintone アクセス情報</param>
-    /// <param name="appID">アプリ ID</param>
+    /// <param name="appId">アプリ Id</param>
     /// <param name="jsonOptions">JSON シリアライズオプション（省略時はデフォルト）</param>
     /// <returns>Kintone API インスタンス</returns>
-    IKintoneApi Create(KintoneAccessBase access, int appID, JsonSerializerOptions? jsonOptions = null);
+    IKintoneApi Create(KintoneAccessBase access, int appId, JsonSerializerOptions? jsonOptions = null);
 }

@@ -8,9 +8,9 @@ namespace KintoneNetLibrary.Domain.Entities;
 /// </summary>
 public abstract class KintoneSubTableBase {
     /// <summary>
-    /// サブテーブル行のID
+    /// サブテーブル行のId
     /// </summary>
-    public string ID { get; set; } = string.Empty;
+    public string Id { get; set; } = string.Empty;
 
     /// <summary>
     /// サブテーブル行のJSON辞書をプロパティに読み込む

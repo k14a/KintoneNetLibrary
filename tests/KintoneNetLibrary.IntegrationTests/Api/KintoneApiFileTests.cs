@@ -41,7 +41,7 @@ public class KintoneApiFileTests {
                 var query = $"UUID = \"{uuid}\"";
                 var found = await api.FindByQueryAsync<BookModel>(query);
                 var results = KintoneResponseParser.ParseRecords<BookModel>(found);
-                var match = results.FirstOrDefault(b => b.ID == createdRecord.ID);
+                var match = results.FirstOrDefault(b => b.Id == createdRecord.Id);
 
                 Assert.NotNull(match);
                 Assert.Single(match!.Files);
@@ -90,7 +90,7 @@ public class KintoneApiFileTests {
             var query = $"UUID = \"{uuid}\"";
             var found = await api.FindByQueryAsync<BookModel>(query);
             var results = KintoneResponseParser.ParseRecords<BookModel>(found);
-            var match = results.FirstOrDefault(b => b.ID == createdRecord.ID);
+            var match = results.FirstOrDefault(b => b.Id == createdRecord.Id);
 
             // Assert
             Assert.NotNull(match);
@@ -139,7 +139,7 @@ public class KintoneApiFileTests {
             var query = $"UUID = \"{uuid}\"";
             var found = await api.FindByQueryAsync<BookModel>(query);
             var results = KintoneResponseParser.ParseRecords<BookModel>(found);
-            var match = results.FirstOrDefault(b => b.ID == createdRecord.ID);
+            var match = results.FirstOrDefault(b => b.Id == createdRecord.Id);
 
             // Assert
             Assert.NotNull(match);
@@ -186,7 +186,7 @@ public class KintoneApiFileTests {
             var query = $"UUID = \"{uuid}\"";
             var found = await api.FindByQueryAsync<BookModel>(query);
             var results = KintoneResponseParser.ParseRecords<BookModel>(found);
-            var match = results.FirstOrDefault(b => b.ID == createdRecord.ID);
+            var match = results.FirstOrDefault(b => b.Id == createdRecord.Id);
 
             Assert.NotNull(match);
             Assert.NotNull(match!.Files);
@@ -241,7 +241,7 @@ public class KintoneApiFileTests {
             var query = $"UUID = \"{uuid}\"";
             var found = await api.FindByQueryAsync<BookModel>(query);
             var results = KintoneResponseParser.ParseRecords<BookModel>(found);
-            var match = results.FirstOrDefault(b => b.ID == createdRecord.ID);
+            var match = results.FirstOrDefault(b => b.Id == createdRecord.Id);
 
             // Assert
             Assert.NotNull(match);
@@ -290,7 +290,7 @@ public class KintoneApiFileTests {
             var query = $"UUID = \"{uuid}\"";
             var found = await api.FindByQueryAsync<BookModel>(query);
             var results = KintoneResponseParser.ParseRecords<BookModel>(found);
-            var match = results.FirstOrDefault(b => b.ID == createdRecord.ID);
+            var match = results.FirstOrDefault(b => b.Id == createdRecord.Id);
 
             Assert.NotNull(match);
             Assert.NotNull(match!.Files);
@@ -354,7 +354,7 @@ public class KintoneApiFileTests {
             var query = $"UUID = \"{uuid}\"";
             var found = await api.FindByQueryAsync<BookModel>(query);
             var results = KintoneResponseParser.ParseRecords<BookModel>(found);
-            var match = results.FirstOrDefault(b => b.ID == createdRecord.ID);
+            var match = results.FirstOrDefault(b => b.Id == createdRecord.Id);
 
             Assert.NotNull(match);
             Assert.NotNull(match!.Files);

@@ -49,7 +49,7 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
                         }
 
                         return new {
-                            id = item.ID ?? "",  // IDがnullなら空文字列
+                            id = item.Id ?? "",  // Idがnullなら空文字列
                             value = valueDict
                         };
                     }).ToList();
@@ -84,8 +84,8 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     public virtual IDictionary<string, object> ToKintoneUpdateRecord() {
         var record = this.ToKintoneRecord();
 
-        if (!string.IsNullOrEmpty(this.ID)) {
-            record["id"] = this.ID;
+        if (!string.IsNullOrEmpty(this.Id)) {
+            record["id"] = this.Id;
         } else {
             var (fieldCode, keyValue) = this.GetUpdateKeyField(out var value);
             if (!string.IsNullOrEmpty(fieldCode) && value is not null) {

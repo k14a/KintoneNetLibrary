@@ -13,16 +13,16 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// JSONからフィールドマップを読み込み、モデルのプロパティに値をセットします。
     /// このメソッドは、Kintone APIから取得したJSONレスポンスをモデルに変換するために使用されます。
     /// フィールドマップは、フィールドコードをキー、JsonElementを値とする辞書形式で提供されます。
-    /// 特殊フィールド '$id' はRecordIDプロパティにマッピングされます。
+    /// 特殊フィールド '$id' はRecordIdプロパティにマッピングされます。
     /// サブテーブルフィールドは、サブテーブルアイテムのリストとして処理されます。
     /// その他のフィールドは、KintoneValueConverterを使用して適切なC#型に変換されます。
     /// </summary>
     /// <param name="fieldMap"></param>
     public void LoadFromJsonDictionary(Dictionary<string, JsonElement> fieldMap) {
-        // 特殊フィールド '$id' → RecordID にセット
+        // 特殊フィールド '$id' → RecordId にセット
         if (fieldMap.TryGetValue("$id", out var idElement)) {
             if (idElement.TryGetProperty("value", out var idValue)) {
-                this.RecordID = idValue.GetString();
+                this.RecordId = idValue.GetString();
             }
         }
 

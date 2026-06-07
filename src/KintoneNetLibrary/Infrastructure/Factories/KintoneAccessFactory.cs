@@ -17,7 +17,7 @@ public class KintoneAccessFactory : IKintoneAccessFactory {
     /// <param name="apiToken">APIトークン</param>
     /// <param name="basicAuthUser">ベーシック認証のユーザー名（省略可能）</param>
     /// <param name="basicAuthPassword">ベーシック認証のパスワード（省略可能）</param>
-    /// <param name="guestSpaceId">ゲストスペースID（省略可能）</param>
+    /// <param name="guestSpaceId">ゲストスペースId（省略可能）</param>
     /// <returns>作成されたApiTokenAccessインスタンス</returns>
     public ApiTokenAccess CreateApiTokenAccess(string domain, string apiToken, string basicAuthUser = "", string basicAuthPassword = "", int guestSpaceId = 0) {
         return new ApiTokenAccess(domain, apiToken, basicAuthUser, basicAuthPassword, guestSpaceId);
@@ -31,7 +31,7 @@ public class KintoneAccessFactory : IKintoneAccessFactory {
     /// <param name="password">パスワード</param>
     /// <param name="basicAuthUser">ベーシック認証のユーザー名（省略可能）</param>
     /// <param name="basicAuthPassword">ベーシック認証のパスワード（省略可能）</param>
-    /// <param name="guestSpaceId">ゲストスペースID（省略可能）</param>
+    /// <param name="guestSpaceId">ゲストスペースId（省略可能）</param>
     /// <returns>作成されたUserPasswordAccessインスタンス</returns>
     /// <exception cref="NotImplementedException">このメソッドはまだ実装されていません。</exception>
     public UserPasswordAccess CreateBasicAuthAccess(string domain, string loginName, string password, string basicAuthUser = "", string basicAuthPassword = "", int guestSpaceId = 0) {

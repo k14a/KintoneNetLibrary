@@ -36,9 +36,9 @@ public class KintoneApiCrudTests {
         var createParsed = KintoneResponseParser.ParseCreatedRecords([book], createResult);
         Assert.Single(createParsed);
 
-        // Read（検索条件は ID）
-        var recordId = createParsed.First().ID!;
-        var found = await api.FindByIDAsync<BookModel>(recordId);
+        // Read（検索条件は Id）
+        var recordId = createParsed.First().Id!;
+        var found = await api.FindByIdAsync<BookModel>(recordId);
         var record = KintoneResponseParser.ParseRecord<BookModel>(found);
         Assert.NotNull(record);
         Assert.Equal("Test Book", record!.Title);
@@ -70,9 +70,9 @@ public class KintoneApiCrudTests {
         var createdBooks = KintoneResponseParser.ParseCreatedRecords(books, createResult);
         Assert.Equal(3, createdBooks.Count);
 
-        // Read（ID指定）
-        var idList = createdBooks.Select(b => b.ID!).ToList();
-        var foundJson = await api.FindByIDsAsync<BookModel>(idList);
+        // Read（Id指定）
+        var idList = createdBooks.Select(b => b.Id!).ToList();
+        var foundJson = await api.FindByIdsAsync<BookModel>(idList);
         var foundRecords = KintoneResponseParser.ParseRecords<BookModel>(foundJson);
 
         Assert.Equal(3, foundRecords.Count);
@@ -93,7 +93,7 @@ public class KintoneApiCrudTests {
     public async Task CanReadWithFieldCodes() {
         var api = KintoneTestHelper.CreateApi();
 
-        // 準備：BookModel の3件（ID確保のため）
+        // 準備：BookModel の3件（Id確保のため）
         var books = new List<BookModel> {
                 new() { Title = "Book D", Price = 400, Uuid = Guid.NewGuid().ToString() },
                 new() { Title = "Book E", Price = 500, Uuid = Guid.NewGuid().ToString() },
@@ -103,11 +103,11 @@ public class KintoneApiCrudTests {
         var createJson = KintoneRequestBuilder.BuildCreateJson(books);
         var createResult = await api.CreateAsync(createJson);
         var createdBooks = KintoneResponseParser.ParseCreatedRecords(books, createResult);
-        var idList = createdBooks.Select(b => b.ID!).ToList();
+        var idList = createdBooks.Select(b => b.Id!).ToList();
 
         // fieldCodes を使って特定のフィールドのみ取得
         var fieldCodes = new[] { "Title" };
-        var foundJson = await api.FindByIDsAsync<BookModel>(idList, fieldCodes);
+        var foundJson = await api.FindByIdsAsync<BookModel>(idList, fieldCodes);
         var foundRecords = KintoneResponseParser.ParseRecords<BookModel>(foundJson);
 
         Assert.Equal(3, foundRecords.Count);
@@ -133,7 +133,7 @@ public class KintoneApiCrudTests {
         var createResult = await api.CreateAsync(createJson);
         var createdRecords = KintoneResponseParser.ParseCreatedRecords([book], createResult);
         var created = createdRecords.First();
-        Assert.NotNull(created.ID);
+        Assert.NotNull(created.Id);
 
         // Step 2: Update
         created.Title = "Updated Title";
@@ -144,7 +144,7 @@ public class KintoneApiCrudTests {
         Assert.False(string.IsNullOrWhiteSpace(updateResult));
 
         // Step 3: Find
-        var findJson = await api.FindByIDAsync<BookModel>(created.ID);
+        var findJson = await api.FindByIdAsync<BookModel>(created.Id);
         var foundRecord = KintoneResponseParser.ParseRecord<BookModel>(findJson);
         Assert.NotNull(foundRecord);
         Assert.Equal("Updated Title", foundRecord!.Title);
@@ -177,7 +177,7 @@ public class KintoneApiCrudTests {
         var createResult = await api.CreateAsync(createJson);
         var createdRecords = KintoneResponseParser.ParseCreatedRecords([book], createResult);
         var created = createdRecords.First();
-        Assert.False(string.IsNullOrWhiteSpace(created.ID), "Record ID is null or empty after creation.");
+        Assert.False(string.IsNullOrWhiteSpace(created.Id), "Record Id is null or empty after creation.");
 
         // ② updateKey（UUID）で更新
         created.Title = "Updated Title by UUID";
@@ -196,7 +196,7 @@ public class KintoneApiCrudTests {
         Assert.Equal("Updated Title by UUID", fetched.Title);
         Assert.Equal(2000, fetched.Price);
 
-        // ④ 削除（IDを使う必要があるので fetched を使う）
+        // ④ 削除（Idを使う必要があるので fetched を使う）
         var deleteJson = KintoneRequestBuilder.BuildDeleteJson([fetched]);
         var deleteResult = await api.DeleteAsync(deleteJson);
         Assert.NotNull(deleteResult);
@@ -219,7 +219,7 @@ public class KintoneApiCrudTests {
         var createJson = KintoneRequestBuilder.BuildCreateJson(books);
         var createResult = await api.CreateAsync(createJson);
         var createdRecords = KintoneResponseParser.ParseCreatedRecords(books, createResult);
-        Assert.All(createdRecords, r => Assert.NotNull(r.ID));
+        Assert.All(createdRecords, r => Assert.NotNull(r.Id));
 
         // 2. クエリで検索（Price >= 1500）
         string query = "Price >= 1500 order by Price asc";
@@ -263,7 +263,7 @@ public class KintoneApiCrudTests {
 
         // Assert - 登録確認
         Assert.Equal(5, createdRecords.Count);
-        Assert.All(createdRecords, item => Assert.NotNull(item.ID));
+        Assert.All(createdRecords, item => Assert.NotNull(item.Id));
 
         // Act - 全件取得（カーソルAPIが使用されることを期待）
         var found = await api.FindAllAsync<BookModel>();
@@ -1170,7 +1170,7 @@ public class KintoneApiCrudTests {
             var query = $"DateField = \"{today:yyyy-MM-dd}\" and TimeField = \"{time:HH\\:mm}\"";
             var found = await api.FindByQueryAsync<BookModel>(query);
             var results = KintoneResponseParser.ParseRecords<BookModel>(found);
-            var match = results.FirstOrDefault(b => b.ID == created.First().ID);
+            var match = results.FirstOrDefault(b => b.Id == created.First().Id);
 
             // Assert
             Assert.NotNull(match);
@@ -1191,7 +1191,7 @@ public class KintoneApiCrudTests {
             var queryAfterUpdate = $"DateField = \"{updatedDate:yyyy-MM-dd}\" and TimeField = \"{updatedTime:HH\\:mm}\"";
             var foundAfterUpdate = await api.FindByQueryAsync<BookModel>(queryAfterUpdate);
             var updatedResults = KintoneResponseParser.ParseRecords<BookModel>(foundAfterUpdate);
-            var updatedMatch = updatedResults.FirstOrDefault(b => b.ID == match.ID);
+            var updatedMatch = updatedResults.FirstOrDefault(b => b.Id == match.Id);
 
             Assert.NotNull(updatedMatch);
             Assert.Equal(updatedDate, updatedMatch!.DateField.DateOnly);
@@ -1442,7 +1442,7 @@ public class KintoneApiCrudTests {
             var query = $"UUID = \"{uuid}\"";
             var foundJson = await api.FindByQueryAsync<BookModel>(query);
             var found = KintoneResponseParser.ParseRecords<BookModel>(foundJson);
-            var match = found.FirstOrDefault(b => b.ID == created.First().ID);
+            var match = found.FirstOrDefault(b => b.Id == created.First().Id);
 
             Assert.NotNull(match);
             var actual = WebUtility.HtmlDecode(match!.RichText);
@@ -1457,7 +1457,7 @@ public class KintoneApiCrudTests {
             // Step 3: 更新結果の再取得（R after U）
             var afterUpdateJson = await api.FindByQueryAsync<BookModel>(query);
             var updatedRecords = KintoneResponseParser.ParseRecords<BookModel>(afterUpdateJson);
-            var updatedMatch = updatedRecords.FirstOrDefault(b => b.ID == match.ID);
+            var updatedMatch = updatedRecords.FirstOrDefault(b => b.Id == match.Id);
 
             Assert.NotNull(updatedMatch);
             var updatedActual = WebUtility.HtmlDecode(updatedMatch!.RichText);

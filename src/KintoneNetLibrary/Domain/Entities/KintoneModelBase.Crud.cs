@@ -134,10 +134,10 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// レコードを一括削除します。
     /// </summary>
     /// <remarks>
-    /// このメソッドは、複数のレコードIDを指定してKintoneから一括で削除します。
+    /// このメソッドは、複数のレコードIdを指定してKintoneから一括で削除します。
     /// </remarks>
     /// <param name="service">CRUDサービスのインスタンス</param>
-    /// <param name="ids">削除するレコードのIDリスト</param>
+    /// <param name="ids">削除するレコードのIdリスト</param>
     /// <param name="validateExistence">削除前にレコードの存在を検証するかどうか</param>
     /// <returns>削除結果</returns>
     public static async Task<KintoneDeleteResult> DeleteBulkAsync(IKintoneModelCrudService service, IList<string> ids, bool validateExistence = true) {
@@ -162,10 +162,10 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// レコードを単一削除します。
     /// </summary>
     /// <remarks>
-    /// このメソッドは、複数のレコードIDを指定してKintoneから単一で削除します。
+    /// このメソッドは、複数のレコードIdを指定してKintoneから単一で削除します。
     /// </remarks>
     /// <param name="service">CRUDサービスのインスタンス</param>
-    /// <param name="ids">削除するレコードのIDリスト</param>
+    /// <param name="ids">削除するレコードのIdリスト</param>
     /// <param name="validateExistence">削除前にレコードの存在を検証するかどうか</param>
     /// <returns>削除結果</returns>
     public static Task<KintoneDeleteResult> DeleteSingleAsync(IKintoneModelCrudService service, IList<string> ids, bool validateExistence = true)
@@ -241,29 +241,29 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
         => RunSingleWriteAsync(models, model => service.SaveWithRetryAsync([model], enableSingleRetryOnError, enableCreateToUpdateRetry));
 
     /// <summary>
-    /// レコードをIDで検索します。
+    /// レコードをIdで検索します。
     /// </summary>
     /// <remarks>
-    /// このメソッドは、指定されたIDを持つレコードをKintoneから検索します。
+    /// このメソッドは、指定されたIdを持つレコードをKintoneから検索します。
     /// </remarks>
     /// <param name="service">CRUDサービスのインスタンス</param>
-    /// <param name="id">検索するレコードのID</param>
+    /// <param name="id">検索するレコードのId</param>
     /// <returns>検索結果のレコード</returns>
-    public static async Task<TSelf?> FindByIDAsync(IKintoneModelCrudService service, string id) {
+    public static async Task<TSelf?> FindByIdAsync(IKintoneModelCrudService service, string id) {
         var result = await service.FindAsync<TSelf>([id], fieldCodes: null);
         return result.FirstOrDefault();
     }
 
     /// <summary>
-    /// レコードをIDのリストで検索します。
+    /// レコードをIdのリストで検索します。
     /// </summary>
     /// <remarks>
-    /// このメソッドは、指定されたIDのリストを持つレコードをKintoneから検索します。
+    /// このメソッドは、指定されたIdのリストを持つレコードをKintoneから検索します。
     /// </remarks>
     /// <param name="service">CRUDサービスのインスタンス</param>
-    /// <param name="ids">検索するレコードのIDのリスト</param>
+    /// <param name="ids">検索するレコードのIdのリスト</param>
     /// <returns>検索結果のレコードのリスト</returns>
-    public static async Task<List<TSelf>> FindByIDsAsync(IKintoneModelCrudService service, IList<string> ids) {
+    public static async Task<List<TSelf>> FindByIdsAsync(IKintoneModelCrudService service, IList<string> ids) {
         return [.. await service.FindAsync<TSelf>([.. ids], fieldCodes: null)];
     }
 

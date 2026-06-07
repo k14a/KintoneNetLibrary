@@ -16,7 +16,7 @@ public class ApiTokenAccess : KintoneAccessBase {
     /// <param name="apiToken">APIトークン。</param>
     /// /// <param name="basicAuthUser">基本認証のユーザー名（オプション）。</param>
     /// <param name="basicAuthPassword">基本認証のパスワード（オプション）。</param>
-    /// <param name="guestSpaceId">ゲストスペースID（オプション）。</param>
+    /// <param name="guestSpaceId">ゲストスペースId（オプション）。</param>
     public ApiTokenAccess(string domain, string apiToken, string basicAuthUser = "", string basicAuthPassword = "", int guestSpaceId = 0) {
         this.Domain = domain;
         this.ApiToken = apiToken;

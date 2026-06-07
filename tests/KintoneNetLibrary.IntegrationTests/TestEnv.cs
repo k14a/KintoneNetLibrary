@@ -3,7 +3,7 @@ using System.Text.Json;
 namespace KintoneNetLibrary.IntegrationTests;
 
 /// <summary>
-/// テスト環境の設定を管理するクラス。テストで使用するKintoneのドメイン、APIトークン、アプリIDなどの設定をTestConfig.jsonから読み込みます。
+/// テスト環境の設定を管理するクラス。テストで使用するKintoneのドメイン、APIトークン、アプリIdなどの設定をTestConfig.jsonから読み込みます。
 /// </summary>
 internal static class TestEnv {
     internal static readonly Config Settings = Load();
@@ -11,7 +11,7 @@ internal static class TestEnv {
     internal sealed class Config {
         public required string Domain { get; init; }
         public required string ApiToken { get; init; }
-        public required int AppID { get; init; }
+        public required int AppId { get; init; }
     }
 
     /// <summary>

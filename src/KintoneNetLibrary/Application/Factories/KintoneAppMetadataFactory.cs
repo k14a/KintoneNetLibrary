@@ -13,7 +13,7 @@ public static class KintoneAppMetadataFactory {
     /// </summary>
     /// <param name="fieldsJson">フィールド情報のJSON文字列</param>
     /// <param name="layoutJson">レイアウト情報のJSON文字列</param>
-    /// <param name="appId">アプリID</param>
+    /// <param name="appId">アプリId</param>
     /// <returns>生成されたKintoneアプリのメタデータ</returns>
     public static KintoneAppMetadata Create(string fieldsJson, string layoutJson, int appId) {
         var fields = ParseFields(fieldsJson);

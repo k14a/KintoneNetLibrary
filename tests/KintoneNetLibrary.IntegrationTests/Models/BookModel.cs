@@ -5,7 +5,7 @@ using KintoneNetLibrary.Domain.Enums;
 namespace KintoneNetLibrary.IntegrationTests.Models;
 
 public class BookModel : KintoneModelBase<BookModel> {
-    public override int AppID { get; init; } = TestEnv.Settings.AppID;
+    public override int AppId { get; init; } = TestEnv.Settings.AppId;
     [KintoneItem(isUpload: false)]
     public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess(TestEnv.Settings.Domain, TestEnv.Settings.ApiToken);
     /// <summary>

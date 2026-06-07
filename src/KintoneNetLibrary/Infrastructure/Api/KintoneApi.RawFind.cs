@@ -16,16 +16,16 @@ namespace KintoneNetLibrary.Infrastructure.Api;
 public partial class KintoneApi : IKintoneApi {
 
     /// <summary>
-    /// IDで単一レコードを取得（Raw）
+    /// Idで単一レコードを取得（Raw）
     /// </summary>
-    /// <param name="id">取得するレコードのID</param>
+    /// <param name="id">取得するレコードのId</param>
     /// <returns>取得したレコードのJSON文字列</returns>
     /// <exception cref="ArgumentNullException">id が null または空白の場合にスローされます</exception>
     /// <exception cref="KintoneException">Kintone API からのエラーが発生した場合にスローされます</exception>
-    public async Task<string?> RawFindByIDAsync(string id) {
+    public async Task<string?> RawFindByIdAsync(string id) {
         if (string.IsNullOrWhiteSpace(id)) { throw new ArgumentNullException(nameof(id)); }
 
-        var requestUri = this.BuildRequestUri(KintoneApiEndpoints.GetSingleRecord, $"app={this._appID}&id={id}");
+        var requestUri = this.BuildRequestUri(KintoneApiEndpoints.GetSingleRecord, $"app={this._appId}&id={id}");
 
         using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
         this.SetHeaders(request);
@@ -44,21 +44,21 @@ public partial class KintoneApi : IKintoneApi {
     }
 
     /// <summary>
-    /// IDで単一レコードを取得（Raw）
+    /// Idで単一レコードを取得（Raw）
     /// </summary>
     /// <param name="output">取得したレコードのJSON文字列を書き込むストリーム</param>
-    /// <param name="id">取得するレコードのID</param>
+    /// <param name="id">取得するレコードのId</param>
     /// <returns></returns>
     /// <exception cref="ArgumentNullException">id が null または空白の場合にスローされます</exception>
     /// <exception cref="KintoneException">Kintone API からのエラーが発生した場合にスローされます</exception>
-    public async Task RawFindByIDAsStreamAsync(
+    public async Task RawFindByIdAsStreamAsync(
         Stream output,
         string id) {
         if (string.IsNullOrWhiteSpace(id)) {
             throw new ArgumentNullException(nameof(id));
         }
 
-        var requestUri = this.BuildRequestUri(KintoneApiEndpoints.GetSingleRecord, $"app={this._appID}&id={id}");
+        var requestUri = this.BuildRequestUri(KintoneApiEndpoints.GetSingleRecord, $"app={this._appId}&id={id}");
 
         using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
         this.SetHeaders(request);
@@ -78,14 +78,14 @@ public partial class KintoneApi : IKintoneApi {
     }
 
     /// <summary>
-    /// IDリストで複数レコードを取得（Raw）
+    /// Idリストで複数レコードを取得（Raw）
     /// </summary>
-    /// <param name="ids">取得するレコードのIDリスト</param>
+    /// <param name="ids">取得するレコードのIdリスト</param>
     /// <param name="fieldCodes">取得するフィールドコードのリスト</param>
     /// <returns>取得したレコードのJSON文字列</returns>
     /// <exception cref="ArgumentNullException">ids が null または空の場合にスローされます</exception>
     /// <exception cref="KintoneException">Kintone API からのエラーが発生した場合にスローされます</exception>
-    public async Task<string?> RawFindByIDsAsync(IList<string> ids, IList<string>? fieldCodes = null) {
+    public async Task<string?> RawFindByIdsAsync(IList<string> ids, IList<string>? fieldCodes = null) {
         if (ids == null || ids.Count == 0) { throw new ArgumentNullException(nameof(ids)); }
 
         var idList = string.Join(",", ids.Select(id => $"\"{id}\""));
@@ -94,7 +94,7 @@ public partial class KintoneApi : IKintoneApi {
             var requestUri = KintoneRequestBuilder.BuildFindRequestUri(
                 this.GetBaseUri(),
                 KintoneApiEndpoints.GetRecords,
-                this._appID,
+                this._appId,
                 query,
                 fieldCodes
             );
@@ -117,15 +117,15 @@ public partial class KintoneApi : IKintoneApi {
     }
 
     /// <summary>
-    /// IDリストで複数レコードを取得（Raw）
+    /// Idリストで複数レコードを取得（Raw）
     /// </summary>
     /// <param name="output">取得したレコードのJSON文字列を書き込むストリーム</param>
-    /// <param name="ids">取得するレコードのIDリスト</param>
+    /// <param name="ids">取得するレコードのIdリスト</param>
     /// <param name="fieldCodes">取得するフィールドコードのリスト</param>
     /// <returns></returns>
     /// <exception cref="ArgumentNullException">ids が null または空の場合にスローされます</exception>
     /// <exception cref="KintoneException">Kintone API からのエラーが発生した場合にスローされます</exception>
-    public async Task RawFindByIDsAsStreamAsync(
+    public async Task RawFindByIdsAsStreamAsync(
         Stream output,
         IList<string> ids,
         IList<string>? fieldCodes = null) {
@@ -141,7 +141,7 @@ public partial class KintoneApi : IKintoneApi {
             var requestUri = KintoneRequestBuilder.BuildFindRequestUri(
                 this.GetBaseUri(),
                 KintoneApiEndpoints.GetRecords,
-                this._appID,
+                this._appId,
                 query,
                 fieldCodes
             );
@@ -261,7 +261,7 @@ public partial class KintoneApi : IKintoneApi {
             var countUri = KintoneRequestBuilder.BuildRequestUri(
                 this.GetBaseUri(),
                 KintoneApiEndpoints.GetRecords,
-                this._appID,
+                this._appId,
                 query,
                 fieldCodes,
                 new Dictionary<string, string> {
@@ -293,7 +293,7 @@ public partial class KintoneApi : IKintoneApi {
         var requestUri = KintoneRequestBuilder.BuildRequestUri(
             this.GetBaseUri(),
             KintoneApiEndpoints.GetRecords,
-            this._appID,
+            this._appId,
             query,
             fieldCodes);
 
@@ -324,7 +324,7 @@ public partial class KintoneApi : IKintoneApi {
             var countUri = KintoneRequestBuilder.BuildRequestUri(
                 this.GetBaseUri(),
                 KintoneApiEndpoints.GetRecords,
-                this._appID,
+                this._appId,
                 query,
                 fieldCodes,
                 new Dictionary<string, string> {
@@ -354,7 +354,7 @@ public partial class KintoneApi : IKintoneApi {
         }
 
         // 小規模データ → 通常 API の JSON をそのまま書き込む
-        var requestUri = KintoneRequestBuilder.BuildRequestUri(this.GetBaseUri(), KintoneApiEndpoints.GetRecords, this._appID, query, fieldCodes);
+        var requestUri = KintoneRequestBuilder.BuildRequestUri(this.GetBaseUri(), KintoneApiEndpoints.GetRecords, this._appId, query, fieldCodes);
 
         using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
         this.SetHeaders(request);
@@ -380,7 +380,7 @@ public partial class KintoneApi : IKintoneApi {
     /// <returns>取得したレコードのJSON文字列を書き込むストリーム</returns>
     private async Task RawCursorFetchAllJsonAsStreamAsync(Stream output, string query, IList<string>? fieldCodes = null) {
         var cursorRequest = new Dictionary<string, object> {
-            ["app"] = this._appID,
+            ["app"] = this._appId,
             ["size"] = this.CursorPageSize,
         };
 
@@ -577,7 +577,7 @@ public partial class KintoneApi : IKintoneApi {
     /// <summary>
     /// カーソルをストリームで取得します
     /// </summary>
-    /// <param name="cursorId">カーソルID</param>
+    /// <param name="cursorId">カーソルId</param>
     /// <returns>取得したレコードのJSON文字列を書き込むストリーム</returns>
     public async IAsyncEnumerable<Stream> StreamCursorStreamAsync(string cursorId) {
         try {

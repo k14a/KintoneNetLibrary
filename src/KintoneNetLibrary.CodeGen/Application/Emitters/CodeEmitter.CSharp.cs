@@ -51,7 +51,7 @@ public class CSharpCodeEmitter(
     /// <returns>生成されたモデル結果</returns>
     public GeneratedModelResult Emit(KintoneAppSchema schema, CodeEmitterOptions options, INameConverter nameConverter) {
         this._converter = nameConverter;
-        this._logger?.LogInformation("Starting C# code emission for App ID: {AppId}", schema.AppId);
+        this._logger?.LogInformation("Starting C# code emission for App Id: {AppId}", schema.AppId);
 
         try {
             var csOptions = (CSharpEmitterOptions)options;
@@ -78,7 +78,7 @@ public class CSharpCodeEmitter(
             return result;
 
         } finally {
-            this._logger?.LogInformation("Completed C# code emission for App ID: {AppId}", schema.AppId);
+            this._logger?.LogInformation("Completed C# code emission for App Id: {AppId}", schema.AppId);
         }
     }
 
@@ -133,7 +133,7 @@ public class CSharpCodeEmitter(
         sb.AppendLine("//");
         var appName = this._converter!.ToClassName(schema.AppName, schema.AppId.ToString());
         sb.AppendLine($"// App Name : {appName}");
-        sb.AppendLine($"// App ID : {schema.AppId}");
+        sb.AppendLine($"// App Id : {schema.AppId}");
         sb.AppendLine($"// Revision : {schema.Revision}");
         sb.AppendLine($"// Namespace: {options.Namespace}");
         sb.AppendLine($"// Generated: {this._clock.UtcNow:s} (UTC)");

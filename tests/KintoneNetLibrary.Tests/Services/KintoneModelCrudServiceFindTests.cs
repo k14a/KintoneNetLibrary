@@ -22,16 +22,16 @@ namespace KintoneNetLibrary.Tests.Services;
 public class KintoneModelCrudServiceFindTests {
     #region <<Test methods>>
     /// <summary>
-    /// FindAsync メソッドに単一のレコードIDを渡した場合、そのIDに対応するレコードが正しく返されることをテストします。
+    /// FindAsync メソッドに単一のレコードIdを渡した場合、そのIdに対応するレコードが正しく返されることをテストします。
     /// </summary>
     [Fact]
     public async Task FindAsyncWithSingleIDReturnsSingleRecord() {
         // Arrange
         var testId = "123";
-        var testModel = new SampleModel { RecordID = testId, FieldA = "TestValue", FieldB = 456 };
+        var testModel = new SampleModel { RecordId = testId, FieldA = "TestValue", FieldB = 456 };
         var wrappedJson = JsonSerializer.Serialize(new {
             record = new Dictionary<string, object> {
-                ["$id"] = new { type = "__ID__", value = testModel.RecordID },
+                ["$id"] = new { type = "__ID__", value = testModel.RecordId },
                 ["FieldA"] = new { type = "SINGLE_LINE_TEXT", value = testModel.FieldA },
                 ["FieldB"] = new { type = "NUMBER", value = testModel.FieldB.ToString() },
             }
@@ -39,7 +39,7 @@ public class KintoneModelCrudServiceFindTests {
 
         var mockRepo = new Mock<IKintoneRepository>();
         mockRepo
-            .Setup(r => r.FindByIDAsync<SampleModel>(It.IsAny<SampleModel>(), testId))
+            .Setup(r => r.FindByIdAsync<SampleModel>(It.IsAny<SampleModel>(), testId))
             .ReturnsAsync(wrappedJson);
 
         var service = new KintoneTypedCrudService<SampleModel>(
@@ -54,25 +54,25 @@ public class KintoneModelCrudServiceFindTests {
 
         // Assert
         var single = Assert.Single(result);
-        Assert.Equal(testId, single.RecordID);
+        Assert.Equal(testId, single.RecordId);
         Assert.Equal("TestValue", single.FieldA);
         Assert.Equal(456, single.FieldB);
     }
 
     /// <summary>
-    /// FindAsync メソッドに複数のレコードIDを渡した場合、それらのIDに対応するレコードが正しく返されることをテストします。
+    /// FindAsync メソッドに複数のレコードIdを渡した場合、それらのIdに対応するレコードが正しく返されることをテストします。
     /// </summary>
     [Fact]
-    public async Task FindAsyncWithMultipleIDsReturnsMultipleRecords() {
+    public async Task FindAsyncWithMultipleIdsReturnsMultipleRecords() {
         // Arrange
         var testIds = new[] { "123", "456" };
         var expectedModels = new List<SampleModel> {
-            new() { RecordID = "123", FieldA = "ValueA1", FieldB = 100 },
-            new() { RecordID = "456", FieldA = "ValueA2", FieldB = 200 } };
+            new() { RecordId = "123", FieldA = "ValueA1", FieldB = 100 },
+            new() { RecordId = "456", FieldA = "ValueA2", FieldB = 200 } };
 
         var wrappedJson = JsonSerializer.Serialize(new {
             records = expectedModels.Select(m => new Dictionary<string, object> {
-                ["$id"] = new { type = "__ID__", value = m.RecordID },
+                ["$id"] = new { type = "__ID__", value = m.RecordId },
                 ["FieldA"] = new { type = "SINGLE_LINE_TEXT", value = m.FieldA },
                 ["FieldB"] = new { type = "NUMBER", value = m.FieldB.ToString() },
             }).ToList()
@@ -80,7 +80,7 @@ public class KintoneModelCrudServiceFindTests {
 
         var mockRepo = new Mock<IKintoneRepository>();
         mockRepo
-            .Setup(r => r.FindByIDsAsync<SampleModel>(It.IsAny<SampleModel>(), testIds, null))
+            .Setup(r => r.FindByIdsAsync<SampleModel>(It.IsAny<SampleModel>(), testIds, null))
             .ReturnsAsync(wrappedJson);
 
         var service = new KintoneTypedCrudService<SampleModel>(
@@ -97,7 +97,7 @@ public class KintoneModelCrudServiceFindTests {
         Assert.Equal(2, result.Count());
 
         foreach (var expected in expectedModels) {
-            var actual = result.Single(r => r.RecordID == expected.RecordID);
+            var actual = result.Single(r => r.RecordId == expected.RecordId);
             Assert.Equal(expected.FieldA, actual.FieldA);
             Assert.Equal(expected.FieldB, actual.FieldB);
         }
@@ -111,7 +111,7 @@ public class KintoneModelCrudServiceFindTests {
         // Arrange
         var query = "Title = \"Test Book\"";
         var expectedRecord = new SampleModel {
-            RecordID = "12407",
+            RecordId = "12407",
             FieldA = "Test Book",
             FieldB = 1000
         };
@@ -119,7 +119,7 @@ public class KintoneModelCrudServiceFindTests {
         var wrappedJson = JsonSerializer.Serialize(new {
             records = new[] {
             new Dictionary<string, object> {
-                ["$id"] = new { type = "__ID__", value = expectedRecord.RecordID },
+                ["$id"] = new { type = "__ID__", value = expectedRecord.RecordId },
                 ["FieldA"] = new { type = "SINGLE_LINE_TEXT", value = expectedRecord.FieldA },
                 ["FieldB"] = new { type = "NUMBER", value = expectedRecord.FieldB }
             }
@@ -143,7 +143,7 @@ public class KintoneModelCrudServiceFindTests {
 
         // Assert
         var single = Assert.Single(result);
-        Assert.Equal("12407", single.RecordID);
+        Assert.Equal("12407", single.RecordId);
         Assert.Equal("Test Book", single.FieldA);
         Assert.Equal(1000, single.FieldB);
     }
@@ -223,7 +223,7 @@ public class KintoneModelCrudServiceFindTests {
     }
 
     /// <summary>
-    /// FindAsync メソッドにレコードIDもクエリも渡さなかった場合、すべてのレコードが正しく返されることをテストします。
+    /// FindAsync メソッドにレコードIdもクエリも渡さなかった場合、すべてのレコードが正しく返されることをテストします。
     /// </summary>
     [Fact]
     public async Task FindAsyncWithoutIdsOrQueryReturnsAllRecords() {
@@ -324,7 +324,7 @@ public class KintoneModelCrudServiceFindTests {
 
         var mockRepo = new Mock<IKintoneRepository>();
         mockRepo
-            .Setup(r => r.FindByIDsAsync<SampleModel>(It.IsAny<SampleModel>(), ids, null))
+            .Setup(r => r.FindByIdsAsync<SampleModel>(It.IsAny<SampleModel>(), ids, null))
             .Throws(new InvalidOperationException("Simulated unexpected failure"));
 
         // service にモック注入
@@ -352,10 +352,10 @@ public class KintoneModelCrudServiceFindTests {
 }
 
 /// <summary>
-/// テスト用のサンプルモデルクラスです。AppID と Access はダミー値を設定しています。
+/// テスト用のサンプルモデルクラスです。AppId と Access はダミー値を設定しています。
 /// </summary>
 internal class SampleModel3 : KintoneModelBase<SampleModel3> {
-    public override int AppID { get; init; } = 7778;
+    public override int AppId { get; init; } = 7778;
     public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("dummyDomain", "dummyApiToken");
 
     [KintoneItem(fieldCode: "Title", fieldType: KintoneFieldType.SingleLineText)]

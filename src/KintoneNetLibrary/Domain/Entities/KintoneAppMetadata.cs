@@ -5,7 +5,7 @@ namespace KintoneNetLibrary.Domain.Entities;
 /// </summary>
 public class KintoneAppMetadata {
     /// <summary>
-    /// アプリIDを取得または設定します。
+    /// アプリIdを取得または設定します。
     /// </summary>
     public int AppId { get; set; }
 

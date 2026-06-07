@@ -15,7 +15,7 @@ public class KintoneModelBaseUpdateTests {
     /// テスト用のダミーモデルクラス。KintoneModelBaseを継承し、必要なプロパティとフィールドを定義しています。
     /// </summary>
     public class DummyModel : KintoneModelBase<DummyModel> {
-        public override int AppID { get; init; }
+        public override int AppId { get; init; }
         public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
 
         [KintoneItem(fieldCode: "FieldA", fieldType: KintoneFieldType.SingleLineText)]

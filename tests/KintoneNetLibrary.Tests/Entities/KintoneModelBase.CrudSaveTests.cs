@@ -12,10 +12,10 @@ namespace KintoneNetLibrary.Tests.Entities;
 /// </summary>
 public class KintoneModelBaseSaveTests {
     /// <summary>
-    /// テスト用のダミーモデルクラス。実際のアプリIDやアクセス情報はテスト内でモックされるため、適当な値を設定している。
+    /// テスト用のダミーモデルクラス。実際のアプリIdやアクセス情報はテスト内でモックされるため、適当な値を設定している。
     /// </summary>
     public class DummyModel : KintoneModelBase<DummyModel> {
-        public override int AppID { get; init; }
+        public override int AppId { get; init; }
         public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
 
         [KintoneItem(fieldCode: "FieldA", fieldType: KintoneFieldType.SingleLineText)]
@@ -31,7 +31,7 @@ public class KintoneModelBaseSaveTests {
     [Fact]
     public async Task SaveAsyncSuccessReturnsExpectedResult() {
         // Arrange
-        var model = new DummyModel { RecordID = "1111", FieldA = "ToDelete", FieldB = 999 };
+        var model = new DummyModel { RecordId = "1111", FieldA = "ToDelete", FieldB = 999 };
 
         var expectedResult = new KintoneWriteResult<DummyModel> {
             Succeeded = [model]
@@ -57,7 +57,7 @@ public class KintoneModelBaseSaveTests {
     [Fact]
     public async Task SaveAsyncFailureReturnsExpectedFailureResult() {
         // Arrange
-        var model = new DummyModel { RecordID = "1111", FieldA = "Invalid", FieldB = -1 };
+        var model = new DummyModel { RecordId = "1111", FieldA = "Invalid", FieldB = -1 };
 
         var expectedResult = new KintoneWriteResult<DummyModel> {
             Failed = [
@@ -91,7 +91,7 @@ public class KintoneModelBaseSaveTests {
     [Fact]
     public async Task SaveAsyncWithRetryFlagTruePassesFlagToService() {
         // Arrange
-        var model = new DummyModel { RecordID = "1111", FieldA = "Retry", FieldB = 123 };
+        var model = new DummyModel { RecordId = "1111", FieldA = "Retry", FieldB = 123 };
 
         var mockService = new Mock<IKintoneModelCrudService>();
         mockService
@@ -113,7 +113,7 @@ public class KintoneModelBaseSaveTests {
     [Fact]
     public async Task SaveWithRetryAsyncSuccessWithoutRetryReturnsExpectedResult() {
         // Arrange
-        var model = new DummyModel { RecordID = "2222", FieldA = "Initial", FieldB = 123 };
+        var model = new DummyModel { RecordId = "2222", FieldA = "Initial", FieldB = 123 };
 
         var expectedResult = new KintoneWriteResult<DummyModel> {
             Succeeded = [model]
@@ -139,7 +139,7 @@ public class KintoneModelBaseSaveTests {
     [Fact]
     public async Task SaveWithRetryAsyncFirstAttemptFailsRetrySucceeds() {
         // Arrange
-        var model = new DummyModel { RecordID = "3333", FieldA = "RetryMe", FieldB = 456 };
+        var model = new DummyModel { RecordId = "3333", FieldA = "RetryMe", FieldB = 456 };
 
         var successResult = new KintoneWriteResult<DummyModel> {
             Succeeded = [model]
@@ -165,7 +165,7 @@ public class KintoneModelBaseSaveTests {
     [Fact]
     public async Task SaveWithRetryAsyncAllAttemptsFailReturnsFailure() {
         // Arrange
-        var model = new DummyModel { RecordID = "3333", FieldA = "RetryMe", FieldB = 456 };
+        var model = new DummyModel { RecordId = "3333", FieldA = "RetryMe", FieldB = 456 };
 
         var failureResult = new KintoneWriteResult<DummyModel> {
             Failed = [
@@ -198,7 +198,7 @@ public class KintoneModelBaseSaveTests {
     [Fact]
     public async Task SaveWithRetryAsyncCreateFailsUpdateRetrySucceedsWhenEnabled() {
         // Arrange
-        var model = new DummyModel { RecordID = "9999", FieldA = "FallbackToUpdate", FieldB = 789 };
+        var model = new DummyModel { RecordId = "9999", FieldA = "FallbackToUpdate", FieldB = 789 };
 
         var updateSuccess = new KintoneWriteResult<DummyModel> {
             Succeeded = [model]
@@ -224,7 +224,7 @@ public class KintoneModelBaseSaveTests {
     [Fact]
     public async Task SaveWithRetryAsyncCreateFailsNoUpdateRetryWhenDisabled() {
         // Arrange
-        var model = new DummyModel { RecordID = "9999", FieldA = "NoFallback", FieldB = 321 };
+        var model = new DummyModel { RecordId = "9999", FieldA = "NoFallback", FieldB = 321 };
 
         var createFailure = new KintoneWriteResult<DummyModel> {
             Failed = [
@@ -258,8 +258,8 @@ public class KintoneModelBaseSaveTests {
     public async Task SaveBulkAsyncAllModelsSucceedReturnsSuccessResult() {
         // Arrange
         var models = new List<DummyModel> {
-            new() { RecordID = "1001", FieldA = "A", FieldB = 1 },
-            new() { RecordID = "1002", FieldA = "B", FieldB = 2 }
+            new() { RecordId = "1001", FieldA = "A", FieldB = 1 },
+            new() { RecordId = "1002", FieldA = "B", FieldB = 2 }
         };
 
         var successResult = new KintoneWriteResult<DummyModel> {
@@ -286,8 +286,8 @@ public class KintoneModelBaseSaveTests {
     [Fact]
     public async Task SaveBulkAsyncSomeModelsFailReturnsPartialResult() {
         // Arrange
-        var model1 = new DummyModel { RecordID = "2001", FieldA = "OK", FieldB = 10 };
-        var model2 = new DummyModel { RecordID = "2002", FieldA = "Fail", FieldB = 20 };
+        var model1 = new DummyModel { RecordId = "2001", FieldA = "OK", FieldB = 10 };
+        var model2 = new DummyModel { RecordId = "2002", FieldA = "Fail", FieldB = 20 };
 
         var partialResult = new KintoneWriteResult<DummyModel> {
             Succeeded = [model1],
@@ -321,8 +321,8 @@ public class KintoneModelBaseSaveTests {
     [Fact]
     public async Task SaveBulkAsyncAllModelsFailReturnsAllFailures() {
         // Arrange
-        var model1 = new DummyModel { RecordID = "3001", FieldA = "BadA", FieldB = -1 };
-        var model2 = new DummyModel { RecordID = "3002", FieldA = "BadB", FieldB = -2 };
+        var model1 = new DummyModel { RecordId = "3001", FieldA = "BadA", FieldB = -1 };
+        var model2 = new DummyModel { RecordId = "3002", FieldA = "BadB", FieldB = -2 };
 
         var failureResult = new KintoneWriteResult<DummyModel> {
             Failed = [
@@ -361,8 +361,8 @@ public class KintoneModelBaseSaveTests {
     [Fact]
     public async Task SaveSingleAsyncAllModelsSucceedReturnsAllSuccesses() {
         // Arrange
-        var model1 = new DummyModel { RecordID = "4001", FieldA = "A1", FieldB = 1 };
-        var model2 = new DummyModel { RecordID = "4002", FieldA = "A2", FieldB = 2 };
+        var model1 = new DummyModel { RecordId = "4001", FieldA = "A1", FieldB = 1 };
+        var model2 = new DummyModel { RecordId = "4002", FieldA = "A2", FieldB = 2 };
 
         var success1 = new KintoneWriteResult<DummyModel> {
             Succeeded = [model1]
@@ -399,8 +399,8 @@ public class KintoneModelBaseSaveTests {
     [Fact]
     public async Task SaveSingleAsyncPartialSuccessReturnsMixedResult() {
         // Arrange
-        var model1 = new DummyModel { RecordID = "5001", FieldA = "Good", FieldB = 10 };
-        var model2 = new DummyModel { RecordID = "5002", FieldA = "Bad", FieldB = -5 };
+        var model1 = new DummyModel { RecordId = "5001", FieldA = "Good", FieldB = 10 };
+        var model2 = new DummyModel { RecordId = "5002", FieldA = "Bad", FieldB = -5 };
 
         var successResult = new KintoneWriteResult<DummyModel> {
             Succeeded = [model1]
@@ -443,8 +443,8 @@ public class KintoneModelBaseSaveTests {
     [Fact]
     public async Task SaveSingleAsyncAllModelsFailReturnsAllFailures() {
         // Arrange
-        var model1 = new DummyModel { RecordID = "6001", FieldA = "BadA", FieldB = -10 };
-        var model2 = new DummyModel { RecordID = "6002", FieldA = "BadB", FieldB = -20 };
+        var model1 = new DummyModel { RecordId = "6001", FieldA = "BadA", FieldB = -10 };
+        var model2 = new DummyModel { RecordId = "6002", FieldA = "BadB", FieldB = -20 };
 
         var failure1 = new KintoneWriteResult<DummyModel> {
             Failed = [
@@ -492,8 +492,8 @@ public class KintoneModelBaseSaveTests {
     [Fact]
     public async Task SaveWithRetryBulkAsyncAllModelsSucceedReturnsSuccessResult() {
         // Arrange
-        var model1 = new DummyModel { RecordID = "7001", FieldA = "A1", FieldB = 1 };
-        var model2 = new DummyModel { RecordID = "7002", FieldA = "A2", FieldB = 2 };
+        var model1 = new DummyModel { RecordId = "7001", FieldA = "A1", FieldB = 1 };
+        var model2 = new DummyModel { RecordId = "7002", FieldA = "A2", FieldB = 2 };
 
         var models = new List<DummyModel> { model1, model2 };
 
@@ -522,8 +522,8 @@ public class KintoneModelBaseSaveTests {
     [Fact]
     public async Task SaveWithRetryBulkAsyncPartialSuccessReturnsMixedResult() {
         // Arrange
-        var model1 = new DummyModel { RecordID = "8001", FieldA = "Good", FieldB = 10 };
-        var model2 = new DummyModel { RecordID = "8002", FieldA = "Bad", FieldB = -10 };
+        var model1 = new DummyModel { RecordId = "8001", FieldA = "Good", FieldB = 10 };
+        var model2 = new DummyModel { RecordId = "8002", FieldA = "Bad", FieldB = -10 };
 
         var models = new List<DummyModel> { model1, model2 };
 
@@ -561,8 +561,8 @@ public class KintoneModelBaseSaveTests {
     [Fact]
     public async Task SaveWithRetryBulkAsyncAllModelsFailReturnsAllFailures() {
         // Arrange
-        var model1 = new DummyModel { RecordID = "9001", FieldA = "BadA", FieldB = -1 };
-        var model2 = new DummyModel { RecordID = "9002", FieldA = "BadB", FieldB = -2 };
+        var model1 = new DummyModel { RecordId = "9001", FieldA = "BadA", FieldB = -1 };
+        var model2 = new DummyModel { RecordId = "9002", FieldA = "BadB", FieldB = -2 };
 
         var models = new List<DummyModel> { model1, model2 };
 
@@ -603,7 +603,7 @@ public class KintoneModelBaseSaveTests {
     [Fact]
     public async Task SaveWithRetryBulkAsyncRetryTurnsFailureIntoSuccess() {
         // Arrange
-        var model = new DummyModel { RecordID = "10001", FieldA = "Retryable", FieldB = 5 };
+        var model = new DummyModel { RecordId = "10001", FieldA = "Retryable", FieldB = 5 };
         var models = new List<DummyModel> { model };
 
         var retrySuccess = new KintoneWriteResult<DummyModel> {
@@ -632,7 +632,7 @@ public class KintoneModelBaseSaveTests {
     [Fact]
     public async Task SaveWithRetryBulkAsyncAllAttemptsFailReturnsFinalFailures() {
         // Arrange
-        var model = new DummyModel { RecordID = "11001", FieldA = "StillBad", FieldB = -99 };
+        var model = new DummyModel { RecordId = "11001", FieldA = "StillBad", FieldB = -99 };
         var models = new List<DummyModel> { model };
 
         var failureResult = new KintoneWriteResult<DummyModel> {
@@ -667,8 +667,8 @@ public class KintoneModelBaseSaveTests {
     [Fact]
     public async Task SaveWithRetrySingleAsyncAllModelsSucceedReturnsAllSuccesses() {
         // Arrange
-        var model1 = new DummyModel { RecordID = "12001", FieldA = "A1", FieldB = 1 };
-        var model2 = new DummyModel { RecordID = "12002", FieldA = "A2", FieldB = 2 };
+        var model1 = new DummyModel { RecordId = "12001", FieldA = "A1", FieldB = 1 };
+        var model2 = new DummyModel { RecordId = "12002", FieldA = "A2", FieldB = 2 };
         var models = new List<DummyModel> { model1, model2 };
 
         var success1 = new KintoneWriteResult<DummyModel> {
@@ -704,8 +704,8 @@ public class KintoneModelBaseSaveTests {
     [Fact]
     public async Task SaveWithRetrySingleAsyncPartialSuccessReturnsMixedResult() {
         // Arrange
-        var model1 = new DummyModel { RecordID = "12001", FieldA = "A1", FieldB = 1 };
-        var model2 = new DummyModel { RecordID = "12002", FieldA = "A2", FieldB = 2 };
+        var model1 = new DummyModel { RecordId = "12001", FieldA = "A1", FieldB = 1 };
+        var model2 = new DummyModel { RecordId = "12002", FieldA = "A2", FieldB = 2 };
         var models = new List<DummyModel> { model1, model2 };
 
         var successResult = new KintoneWriteResult<DummyModel> {
@@ -747,8 +747,8 @@ public class KintoneModelBaseSaveTests {
     [Fact]
     public async Task SaveWithRetrySingleAsyncAllModelsFailReturnsAllFailures() {
         // Arrange
-        var model1 = new DummyModel { RecordID = "12001", FieldA = "A1", FieldB = 1 };
-        var model2 = new DummyModel { RecordID = "12002", FieldA = "A2", FieldB = 2 };
+        var model1 = new DummyModel { RecordId = "12001", FieldA = "A1", FieldB = 1 };
+        var model2 = new DummyModel { RecordId = "12002", FieldA = "A2", FieldB = 2 };
         var models = new List<DummyModel> { model1, model2 };
 
         var failureResult1 = new KintoneWriteResult<DummyModel> {
@@ -786,7 +786,7 @@ public class KintoneModelBaseSaveTests {
     [Fact]
     public async Task SaveWithRetrySingleAsyncRetrySucceedsReturnsSuccessAfterInitialFailure() {
         // Arrange
-        var model = new DummyModel { RecordID = "12001", FieldA = "A1", FieldB = 1 };
+        var model = new DummyModel { RecordId = "12001", FieldA = "A1", FieldB = 1 };
         var models = new List<DummyModel> { model };
 
         var successResult = new KintoneWriteResult<DummyModel> {
@@ -815,7 +815,7 @@ public class KintoneModelBaseSaveTests {
     [Fact]
     public async Task SaveWithRetrySingleAsyncRetryFailsReturnsFailure() {
         // Arrange
-        var model = new DummyModel { RecordID = "12001", FieldA = "A1", FieldB = 1 };
+        var model = new DummyModel { RecordId = "12001", FieldA = "A1", FieldB = 1 };
         var models = new List<DummyModel> { model };
 
         var failureResult2 = new KintoneWriteResult<DummyModel> {

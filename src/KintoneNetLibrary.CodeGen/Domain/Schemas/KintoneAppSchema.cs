@@ -5,7 +5,7 @@ namespace KintoneNetLibrary.CodeGen.Domain.Schemas;
 /// </summary>
 public class KintoneAppSchema {
     /// <summary>
-    /// アプリID
+    /// アプリId
     /// </summary>
     public int AppId { get; set; }
 

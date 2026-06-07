@@ -31,7 +31,7 @@ public static class KintoneTestHelper {
         var factory = new Mock<IHttpClientFactory>();
         factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(cli);
         var access = new ApiTokenAccess(cfg.Domain, cfg.ApiToken);
-        return new KintoneApi(access, cfg.AppID, factory.Object);
+        return new KintoneApi(access, cfg.AppId, factory.Object);
     }
 
     /// <summary>

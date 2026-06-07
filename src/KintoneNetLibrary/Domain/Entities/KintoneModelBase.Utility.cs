@@ -8,11 +8,11 @@ namespace KintoneNetLibrary.Domain.Entities;
 public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase where TSelf : KintoneModelBase<TSelf>, new() {
     // ----- 判定・ユーティリティ -----
     /// <summary>
-    /// 更新キーまたはIDが設定されているかどうかを判定します。
+    /// 更新キーまたはIdが設定されているかどうかを判定します。
     /// </summary>
     /// <returns></returns>
-    public virtual bool HasUpdateKeyOrID() {
-        if (!string.IsNullOrEmpty(this.ID)) {
+    public virtual bool HasUpdateKeyOrId() {
+        if (!string.IsNullOrEmpty(this.Id)) {
             return true;
         }
 
@@ -45,7 +45,7 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     }
 
     /// <summary>
-    /// 更新キーまたはIDからIDを再取得します。
+    /// 更新キーまたはIdからIdを再取得します。
     /// </summary>
     /// <returns></returns>
     protected virtual Task RefreshIdFromKeyAsync() => Task.CompletedTask;
@@ -57,12 +57,12 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// <param name="index">適用するインデックスの位置</param>
     /// <returns>適用後のKintoneIndex</returns>
     private KintoneIndex ApplyIndex(KintoneIndexes indexes, int index = 0) {
-        if (indexes.IDs.Count > index && indexes.Revisions.Count > index) {
-            this.RecordID = indexes.IDs[index];
+        if (indexes.Ids.Count > index && indexes.Revisions.Count > index) {
+            this.RecordId = indexes.Ids[index];
             this.Revision = Convert.ToInt32(indexes.Revisions[index]);
 
             return new KintoneIndex {
-                ID = this.RecordID!,
+                Id = this.RecordId!,
                 Revision = this.Revision
             };
         }

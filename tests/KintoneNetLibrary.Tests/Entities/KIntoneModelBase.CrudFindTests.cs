@@ -8,14 +8,14 @@ using Xunit;
 namespace KintoneNetLibrary.Tests.Entities;
 
 /// <summary>
-/// KintoneModelBase クラスの Find メソッドに関するテストクラス。FindByIDAsync、FindByIDsAsync、FindByKeyAsync、FindByKeysAsync、FindByQueryAsync、FindAllAsync メソッドの正常系と異常系の動作を検証する。
+/// KintoneModelBase クラスの Find メソッドに関するテストクラス。FindByIdAsync、FindByIdsAsync、FindByKeyAsync、FindByKeysAsync、FindByQueryAsync、FindAllAsync メソッドの正常系と異常系の動作を検証する。
 /// </summary>
 public class KintoneModelBaseFindTests {
     /// <summary>
     /// テスト用のダミーモデルクラス。FieldA と FieldB というフィールドを持ち、FindByID メソッドのテストに使用される。
     /// </summary>
     public class DummyModel : KintoneModelBase<DummyModel> {
-        public override int AppID { get; init; }
+        public override int AppId { get; init; }
         public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
 
         [KintoneItem(fieldCode: "FieldA", fieldType: KintoneFieldType.SingleLineText)]
@@ -28,7 +28,7 @@ public class KintoneModelBaseFindTests {
     /// テスト用のモデルクラス。Code プロパティをキーとして FindByKeyAsync メソッドのテストに使用される。
     /// </summary>
     public class KeyedModel : KintoneModelBase<KeyedModel> {
-        public override int AppID { get; init; }
+        public override int AppId { get; init; }
         public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
 
         [KintoneItem(IsKey = true)]
@@ -40,7 +40,7 @@ public class KintoneModelBaseFindTests {
     /// テスト用のモデルクラス。Code プロパティが null 許容であり、FindByKeyAsync の null キー値動作テストに使用される。
     /// </summary>
     public class NullKeyModel : KintoneModelBase<NullKeyModel> {
-        public override int AppID { get; init; }
+        public override int AppId { get; init; }
         public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
 
         public string? Code { get; set; }
@@ -49,16 +49,16 @@ public class KintoneModelBaseFindTests {
 
     #region <<Test methods>>
 
-    // ---- FindByIDAsync ----
+    // ---- FindByIdAsync ----
 
     /// <summary>
-    /// 有効なレコードIDを指定して FindByIDAsync を呼び出すと、対応するモデルが返されることを検証するテスト。
+    /// 有効なレコードIdを指定して FindByIdAsync を呼び出すと、対応するモデルが返されることを検証するテスト。
     /// </summary>
     [Fact]
-    public async Task FindByIDAsyncValidIDReturnsModel() {
+    public async Task FindByIdAsyncValidIDReturnsModel() {
         // Arrange
         var id = "2222";
-        var expectedModel = new DummyModel { RecordID = id, FieldA = "Found", FieldB = 42 };
+        var expectedModel = new DummyModel { RecordId = id, FieldA = "Found", FieldB = 42 };
 
         var mockService = new Mock<IKintoneModelCrudService>();
         mockService
@@ -66,21 +66,21 @@ public class KintoneModelBaseFindTests {
             .ReturnsAsync([expectedModel]);
 
         // Act
-        var result = await DummyModel.FindByIDAsync(mockService.Object, id);
+        var result = await DummyModel.FindByIdAsync(mockService.Object, id);
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(expectedModel.RecordID, result!.RecordID);
+        Assert.Equal(expectedModel.RecordId, result!.RecordId);
         Assert.Equal("Found", result.FieldA);
         Assert.Equal(42, result.FieldB);
         mockService.Verify(s => s.FindAsync<DummyModel>(It.IsAny<IList<string>>(), null, null), Times.Once);
     }
 
     /// <summary>
-    /// 存在しないレコードIDを指定して FindByIDAsync を呼び出すと、null が返されることを検証するテスト。
+    /// 存在しないレコードIdを指定して FindByIdAsync を呼び出すと、null が返されることを検証するテスト。
     /// </summary>
     [Fact]
-    public async Task FindByIDAsyncIDNotFoundReturnsNull() {
+    public async Task FindByIdAsyncIDNotFoundReturnsNull() {
         // Arrange
         var id = "not-found-id";
 
@@ -90,7 +90,7 @@ public class KintoneModelBaseFindTests {
             .ReturnsAsync([]);
 
         // Act
-        var result = await DummyModel.FindByIDAsync(mockService.Object, id);
+        var result = await DummyModel.FindByIdAsync(mockService.Object, id);
 
         // Assert
         Assert.Null(result);
@@ -98,15 +98,15 @@ public class KintoneModelBaseFindTests {
     }
 
     /// <summary>
-    /// 複数の有効なレコードIDを指定して FindByIDsAsync を呼び出すと、対応するモデルのリストが返されることを検証するテスト。
+    /// 複数の有効なレコードIdを指定して FindByIdsAsync を呼び出すと、対応するモデルのリストが返されることを検証するテスト。
     /// </summary>
     [Fact]
-    public async Task FindByIDsAsyncValidIDsReturnsMatchingModels() {
+    public async Task FindByIdsAsyncValidIdsReturnsMatchingModels() {
         // Arrange
         var ids = new List<string> { "id1", "id2" };
         var expectedModels = new List<DummyModel> {
-            new() { RecordID = "id1", FieldA = "A1", FieldB = 1 },
-            new() { RecordID = "id2", FieldA = "A2", FieldB = 2 }
+            new() { RecordId = "id1", FieldA = "A1", FieldB = 1 },
+            new() { RecordId = "id2", FieldA = "A2", FieldB = 2 }
         };
 
         var mockService = new Mock<IKintoneModelCrudService>();
@@ -115,20 +115,20 @@ public class KintoneModelBaseFindTests {
             .ReturnsAsync(expectedModels);
 
         // Act
-        var result = await DummyModel.FindByIDsAsync(mockService.Object, ids);
+        var result = await DummyModel.FindByIdsAsync(mockService.Object, ids);
 
         // Assert
         Assert.Equal(2, result.Count);
-        Assert.Contains(result, r => r.RecordID == "id1");
-        Assert.Contains(result, r => r.RecordID == "id2");
+        Assert.Contains(result, r => r.RecordId == "id1");
+        Assert.Contains(result, r => r.RecordId == "id2");
         mockService.Verify(s => s.FindAsync<DummyModel>(It.IsAny<IList<string>>(), null, null), Times.Once);
     }
 
     /// <summary>
-    /// 空のレコードIDリストを指定して FindByIDsAsync を呼び出すと、空のリストが返されることを検証するテスト。
+    /// 空のレコードIdリストを指定して FindByIdsAsync を呼び出すと、空のリストが返されることを検証するテスト。
     /// </summary>
     [Fact]
-    public async Task FindByIDsAsyncEmptyIDListReturnsEmptyResult() {
+    public async Task FindByIdsAsyncEmptyIDListReturnsEmptyResult() {
         // Arrange
         var ids = new List<string>();
 
@@ -138,7 +138,7 @@ public class KintoneModelBaseFindTests {
             .ReturnsAsync([]);
 
         // Act
-        var result = await DummyModel.FindByIDsAsync(mockService.Object, ids);
+        var result = await DummyModel.FindByIdsAsync(mockService.Object, ids);
 
         // Assert
         Assert.Empty(result);
@@ -146,15 +146,15 @@ public class KintoneModelBaseFindTests {
     }
 
     /// <summary>
-    /// 複数のレコードIDを指定して FindByIDsAsync を呼び出すと、一部のIDに対応するモデルが存在しない場合でも、存在するモデルのみが返されることを検証するテスト。
+    /// 複数のレコードIdを指定して FindByIdsAsync を呼び出すと、一部のIdに対応するモデルが存在しない場合でも、存在するモデルのみが返されることを検証するテスト。
     /// </summary>
     [Fact]
-    public async Task FindByIDsAsyncPartialHitReturnsOnlyMatchingRecords() {
+    public async Task FindByIdsAsyncPartialHitReturnsOnlyMatchingRecords() {
         // Arrange
         var requestedIds = new List<string> { "id1", "id2", "id3" };
         var existingRecords = new List<DummyModel> {
-            new() { ID = "id1", FieldA = "Record 1" },
-            new() { ID = "id3", FieldA = "Record 3" }
+            new() { Id = "id1", FieldA = "Record 1" },
+            new() { Id = "id3", FieldA = "Record 3" }
         };
 
         var mockService = new Mock<IKintoneModelCrudService>();
@@ -163,13 +163,13 @@ public class KintoneModelBaseFindTests {
             .ReturnsAsync(existingRecords);
 
         // Act
-        var result = await DummyModel.FindByIDsAsync(mockService.Object, requestedIds);
+        var result = await DummyModel.FindByIdsAsync(mockService.Object, requestedIds);
 
         // Assert
         Assert.Equal(2, result.Count);
-        Assert.Contains(result, r => r.ID == "id1");
-        Assert.Contains(result, r => r.ID == "id3");
-        Assert.DoesNotContain(result, r => r.ID == "id2");
+        Assert.Contains(result, r => r.Id == "id1");
+        Assert.Contains(result, r => r.Id == "id3");
+        Assert.DoesNotContain(result, r => r.Id == "id2");
 
         mockService.Verify(s => s.FindAsync<DummyModel>(requestedIds, null, null), Times.Once);
     }

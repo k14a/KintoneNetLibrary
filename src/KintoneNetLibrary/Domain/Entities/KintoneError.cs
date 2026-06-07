@@ -6,7 +6,7 @@ namespace KintoneNetLibrary.Domain.Entities;
 
 /// <summary>
 /// Kintone APIのエラー情報を表すクラス
-/// Kintoneからのエラーメッセージ、コード、ID、詳細情報を保持する
+/// Kintoneからのエラーメッセージ、コード、Id、詳細情報を保持する
 /// </summary>
 public class KintoneError {
     /// <summary>
@@ -24,11 +24,11 @@ public class KintoneError {
     public string Code { get; set; } = string.Empty;
 
     /// <summary>
-    /// レコードID
-    /// Kintoneからのレスポンスに含まれるレコードID
+    /// レコードId
+    /// Kintoneからのレスポンスに含まれるレコードId
     /// </summary>
     [JsonPropertyName("id")]
-    public string ID { get; set; } = string.Empty;
+    public string Id { get; set; } = string.Empty;
 
     /// <summary>
     /// エラーの詳細情報
@@ -79,7 +79,7 @@ public class KintoneError {
         var builder = new System.Text.StringBuilder();
         builder.AppendLine($"[KintoneError] Code: {this.Code}, Message: {this.Message}");
         if (!string.IsNullOrEmpty(this.Summary)) { builder.AppendLine($"Summary: {this.Summary}"); }
-        if (!string.IsNullOrEmpty(this.ID)) { builder.AppendLine($"ID: {this.ID}"); }
+        if (!string.IsNullOrEmpty(this.Id)) { builder.AppendLine($"Id: {this.Id}"); }
         if (this.HasDetails) {
             builder.AppendLine("Details:");
             foreach (var detail in this.Details) {

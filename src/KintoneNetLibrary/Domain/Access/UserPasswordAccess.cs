@@ -22,10 +22,10 @@ public class UserPasswordAccess : KintoneAccessBase {
     /// <param name="password">Kintoneのパスワード。</param>
     /// <param name="basicAuthUser">基本認証のユーザー名（オプション）。</param>
     /// <param name="basicAuthPassword">基本認証のパスワード（オプション）。</param>
-    /// <param name="guestSpaceId">ゲストスペースID（オプション）。</param>
+    /// <param name="guestSpaceId">ゲストスペースId（オプション）。</param>
     /// <exception cref="ArgumentNullException">ドメイン、ログイン名、またはパスワードがnullの場合にスローされます。</exception>
     /// <exception cref="ArgumentException">ドメイン、ログイン名、またはパスワードが空文字列の場合にスローされます。</exception>
-    /// <exception cref="ArgumentOutOfRangeException">ゲストスペースIDが負の値の場合にスローされます。</exception>
+    /// <exception cref="ArgumentOutOfRangeException">ゲストスペースIdが負の値の場合にスローされます。</exception>
     /// <exception cref="NotImplementedException">ApplyAuthenticationメソッドは未実装です。</exception>
     public UserPasswordAccess(string domain, string loginName, string password, string basicAuthUser = "", string basicAuthPassword = "", int guestSpaceId = 0) {
         this.Domain = domain;
@@ -41,9 +41,9 @@ public class UserPasswordAccess : KintoneAccessBase {
     /// Kintoneのドメイン名を取得または設定します。
     /// /// </summary>
     /// <remarks>
-    /// このメソッドは、Kintoneのドメイン名、ログイン名、パスワード、基本認証情報、およびゲストスペースIDを含むKintoneAccountオブジェクトを返します。
+    /// このメソッドは、Kintoneのドメイン名、ログイン名、パスワード、基本認証情報、およびゲストスペースIdを含むKintoneAccountオブジェクトを返します。
     /// </remarks>
-    /// <returns>KintoneAccountオブジェクトにドメイン、ログイン名、パスワード、基本認証情報、およびゲストスペースIDを設定します。</returns>
+    /// <returns>KintoneAccountオブジェクトにドメイン、ログイン名、パスワード、基本認証情報、およびゲストスペースIdを設定します。</returns>
     public override KintoneAccount ToKintoneAccount() => new() {
         Domain = this.Domain,
         LoginName = this.LoginName,

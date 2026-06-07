@@ -91,7 +91,7 @@ public class KintoneQueryExpressionsTests {
     }
 
     /// <summary>
-    /// IDフィールドに対するin式の式ツリーが正しいクエリ文字列に変換されることをテストします。
+    /// Idフィールドに対するin式の式ツリーが正しいクエリ文字列に変換されることをテストします。
     /// </summary>
     [Fact]
     public void WhereSimpleEqualityConditionReturnsCorrectQuery() {
@@ -123,7 +123,7 @@ public class KintoneQueryExpressionsTests {
     }
 
     /// <summary>
-    /// WhereIdInメソッドを使用してIDフィールドに対するin式の式ツリーが正しいクエリ文字列に変換されることをテストします。
+    /// WhereIdInメソッドを使用してIdフィールドに対するin式の式ツリーが正しいクエリ文字列に変換されることをテストします。
     /// </summary>
     [Fact]
     public void WhereIdInAddsCorrectInClause() {
@@ -305,7 +305,7 @@ public class KintoneQueryExpressionsTests {
     }
 
     /// <summary>
-    /// 式ツリーを使用して、IDフィールドが特定の値に等しい条件を表すクエリが正しく生成されることをテストします。
+    /// 式ツリーを使用して、Idフィールドが特定の値に等しい条件を表すクエリが正しく生成されることをテストします。
     /// </summary>
     [Fact]
     public void QueryWhereIdEqualsGeneratesCorrectQuery() {
@@ -317,7 +317,7 @@ public class KintoneQueryExpressionsTests {
     }
 
     /// <summary>
-    /// 式ツリーを使用して、IDフィールドが複数の値のいずれかに等しい条件を表すクエリが正しく生成されることをテストします。
+    /// 式ツリーを使用して、Idフィールドが複数の値のいずれかに等しい条件を表すクエリが正しく生成されることをテストします。
     /// </summary>
     [Fact]
     public void QueryWhereIdsEqualsMultipleIds() {
@@ -357,7 +357,7 @@ public class KintoneQueryExpressionsTests {
     public void ToStringReturnsSameAsBuild() {
         var query = new KintoneQuery<BookModel>()
             .Where(b => b.Title == "C#入門")
-            .OrderBy(b => b.ID)
+            .OrderBy(b => b.Id)
             .Limit(10);
 
         Assert.Equal(query.Build(), query.ToString());

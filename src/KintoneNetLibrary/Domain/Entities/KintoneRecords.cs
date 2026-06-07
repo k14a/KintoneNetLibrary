@@ -9,15 +9,15 @@ namespace KintoneNetLibrary.Domain.Entities;
 /// <typeparam name="T"></typeparam>
 public class KintoneRecords<T> {
     /// <summary>
-    /// アプリのID
+    /// アプリのId
     /// </summary>
     [JsonPropertyName("app")]
-    public int AppID { get; set; }
+    public int AppId { get; set; }
     /// <summary>
-    /// レコードのID一覧
+    /// レコードのId一覧
     /// </summary>
     [JsonPropertyName("ids")]
-    public List<string>? IDs { get; set; }
+    public List<string>? Ids { get; set; }
 
     /// <summary>
     /// レコードのリビジョン番号一覧

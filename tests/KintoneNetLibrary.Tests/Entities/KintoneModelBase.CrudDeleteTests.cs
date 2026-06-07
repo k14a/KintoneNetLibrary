@@ -15,7 +15,7 @@ public class KintoneModelBaseDeleteAsyncTests {
     /// テスト用のダミーモデルクラス。KintoneModelBase を継承し、必要なプロパティを実装している。
     /// </summary>
     public class DummyModel : KintoneModelBase<DummyModel> {
-        public override int AppID { get; init; }
+        public override int AppId { get; init; }
         public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
 
         [KintoneItem(fieldCode: "FieldA", fieldType: KintoneFieldType.SingleLineText)]
@@ -29,10 +29,10 @@ public class KintoneModelBaseDeleteAsyncTests {
     [Fact]
     public async Task DeleteAsyncValidModelCallsServiceAndReturnsResult() {
         // Arrange
-        var model = new DummyModel { RecordID = "1000", FieldA = "ToDelete" };
+        var model = new DummyModel { RecordId = "1000", FieldA = "ToDelete" };
 
         var expectedResult = new KintoneDeleteResult {
-            Succeeded = [model.RecordID]
+            Succeeded = [model.RecordId]
         };
 
         var mockService = new Mock<IKintoneModelCrudService>();
@@ -55,10 +55,10 @@ public class KintoneModelBaseDeleteAsyncTests {
     [Fact]
     public async Task DeleteAsyncWithValidateExistenceFalseCallsServiceWithFlag() {
         // Arrange
-        var model = new DummyModel { RecordID = "1001", FieldA = "ToDelete" };
+        var model = new DummyModel { RecordId = "1001", FieldA = "ToDelete" };
 
         var expectedResult = new KintoneDeleteResult {
-            Succeeded = [model.RecordID]
+            Succeeded = [model.RecordId]
         };
 
         var mockService = new Mock<IKintoneModelCrudService>();
@@ -80,12 +80,12 @@ public class KintoneModelBaseDeleteAsyncTests {
     [Fact]
     public async Task DeleteAsyncDeleteFailsReturnsFailureResult() {
         // Arrange
-        var model = new DummyModel { RecordID = "1002", FieldA = "NG" };
+        var model = new DummyModel { RecordId = "1002", FieldA = "NG" };
 
         var expectedResult = new KintoneDeleteResult {
             Failed = [
                 new KintoneDeleteFailure {
-                    ID = model.RecordID,
+                    Id = model.RecordId,
                     ErrorMessage = "Record not found"
                 }
             ]
@@ -113,12 +113,12 @@ public class KintoneModelBaseDeleteAsyncTests {
     public async Task DeleteBulkAsyncWithTwoValidModelsReturnsSucceededResult() {
         // Arrange
         var models = new List<DummyModel> {
-            new() { RecordID = "1003", FieldA = "Retry1" },
-            new() { RecordID = "1004", FieldA = "Retry2" }
+            new() { RecordId = "1003", FieldA = "Retry1" },
+            new() { RecordId = "1004", FieldA = "Retry2" }
         };
 
         var expectedResult = new KintoneDeleteResult {
-            Succeeded = models.Select(m => m.RecordID!).ToList()
+            Succeeded = models.Select(m => m.RecordId!).ToList()
         };
 
         var mockService = new Mock<IKintoneModelCrudService>();
@@ -144,14 +144,14 @@ public class KintoneModelBaseDeleteAsyncTests {
     public async Task DeleteBulkAsyncWithThreeModelsTwoSucceededOneFailedReturnsPartialResult() {
         // Arrange
         var models = new List<DummyModel> {
-            new() { RecordID = "1003", FieldA = "Retry1" },
-            new() { RecordID = "1004", FieldA = "Retry2" },
-            new() { RecordID = "9999", FieldA = "NonExistent" }
+            new() { RecordId = "1003", FieldA = "Retry1" },
+            new() { RecordId = "1004", FieldA = "Retry2" },
+            new() { RecordId = "9999", FieldA = "NonExistent" }
         };
 
         var expectedResult = new KintoneDeleteResult {
             Succeeded = ["1003", "1004"],
-            Failed = [new() { ID = "9999", ErrorMessage = "NonExistent", Reason = KintoneDeleteFailureReason.RecordNotFound }]
+            Failed = [new() { Id = "9999", ErrorMessage = "NonExistent", Reason = KintoneDeleteFailureReason.RecordNotFound }]
         };
 
         var mockService = new Mock<IKintoneModelCrudService>();
@@ -172,7 +172,7 @@ public class KintoneModelBaseDeleteAsyncTests {
     }
 
     /// <summary>
-    /// 複数の有効なIDを削除するテスト。DeleteBulkAsync メソッドが IKintoneModelCrudService の DeleteAsync を正しく呼び出し、成功結果を返すことを検証する。
+    /// 複数の有効なIdを削除するテスト。DeleteBulkAsync メソッドが IKintoneModelCrudService の DeleteAsync を正しく呼び出し、成功結果を返すことを検証する。
     /// </summary>
     [Fact]
     public async Task DeleteBulkAsyncWithTwoValidIdsReturnsSucceededResult() {
@@ -200,7 +200,7 @@ public class KintoneModelBaseDeleteAsyncTests {
     }
 
     /// <summary>
-    /// 複数のIDを削除するテスト。DeleteBulkAsync メソッドが IKintoneModelCrudService の DeleteAsync を呼び出し、部分的に成功し部分的に失敗する結果を返すことを検証する。
+    /// 複数のIdを削除するテスト。DeleteBulkAsync メソッドが IKintoneModelCrudService の DeleteAsync を呼び出し、部分的に成功し部分的に失敗する結果を返すことを検証する。
     /// </summary>
     [Fact]
     public async Task DeleteBulkAsyncWithThreeIdsTwoSucceededOneFailedReturnsPartialResult() {
@@ -211,7 +211,7 @@ public class KintoneModelBaseDeleteAsyncTests {
             Succeeded = ["1003", "1004"],
             Failed = [
                 new() {
-                    ID = "9999",
+                    Id = "9999",
                     ErrorMessage = "NonExistent",
                     Reason = KintoneDeleteFailureReason.RecordNotFound
                 }
@@ -236,7 +236,7 @@ public class KintoneModelBaseDeleteAsyncTests {
     }
 
     /// <summary>
-    /// 複数の有効なIDを削除するテスト。DeleteSingleAsync メソッドが IKintoneModelCrudService の DeleteAsync を正しく呼び出し、成功結果を返すことを検証する。
+    /// 複数の有効なIdを削除するテスト。DeleteSingleAsync メソッドが IKintoneModelCrudService の DeleteAsync を正しく呼び出し、成功結果を返すことを検証する。
     /// </summary>
     [Fact]
     public async Task DeleteSingleAsyncWithTwoValidIdsReturnsSucceededResult() {
@@ -264,30 +264,30 @@ public class KintoneModelBaseDeleteAsyncTests {
     }
 
     /// <summary>
-    /// 複数のIDを削除するテスト。DeleteSingleAsync メソッドが IKintoneModelCrudService の DeleteAsync を呼び出し、部分的に成功し部分的に失敗する結果を返すことを検証する。
+    /// 複数のIdを削除するテスト。DeleteSingleAsync メソッドが IKintoneModelCrudService の DeleteAsync を呼び出し、部分的に成功し部分的に失敗する結果を返すことを検証する。
     /// </summary>
     [Fact]
     public async Task DeleteSingleAsyncWithThreeModelsTwoSucceededOneFailedReturnsPartialResult() {
         // Arrange
         var models = new List<DummyModel> {
-            new() { RecordID = "1003", FieldA = "Retry1" },
-            new() { RecordID = "1004", FieldA = "Retry2" },
-            new() { RecordID = "9999", FieldA = "NonExistent" }
+            new() { RecordId = "1003", FieldA = "Retry1" },
+            new() { RecordId = "1004", FieldA = "Retry2" },
+            new() { RecordId = "9999", FieldA = "NonExistent" }
         };
 
         var mockService = new Mock<IKintoneModelCrudService>();
         mockService
-            .Setup(s => s.DeleteAsync<DummyModel>(It.Is<IList<DummyModel>>(x => x.Count == 1 && x[0].RecordID == "1003"), true))
+            .Setup(s => s.DeleteAsync<DummyModel>(It.Is<IList<DummyModel>>(x => x.Count == 1 && x[0].RecordId == "1003"), true))
             .ReturnsAsync(new KintoneDeleteResult { Succeeded = ["1003"] });
         mockService
-            .Setup(s => s.DeleteAsync<DummyModel>(It.Is<IList<DummyModel>>(x => x.Count == 1 && x[0].RecordID == "1004"), true))
+            .Setup(s => s.DeleteAsync<DummyModel>(It.Is<IList<DummyModel>>(x => x.Count == 1 && x[0].RecordId == "1004"), true))
             .ReturnsAsync(new KintoneDeleteResult { Succeeded = ["1004"] });
         mockService
-            .Setup(s => s.DeleteAsync<DummyModel>(It.Is<IList<DummyModel>>(x => x.Count == 1 && x[0].RecordID == "9999"), true))
+            .Setup(s => s.DeleteAsync<DummyModel>(It.Is<IList<DummyModel>>(x => x.Count == 1 && x[0].RecordId == "9999"), true))
             .ReturnsAsync(new KintoneDeleteResult {
                 Failed = [
                     new() {
-                        ID = "9999",
+                        Id = "9999",
                         ErrorMessage = "Record not found",
                         Reason = KintoneDeleteFailureReason.RecordNotFound
                     }
@@ -303,9 +303,9 @@ public class KintoneModelBaseDeleteAsyncTests {
         Assert.Single(result.Failed);
         Assert.True(result.HasFailures);
 
-        mockService.Verify(s => s.DeleteAsync<DummyModel>(It.Is<IList<DummyModel>>(x => x.Count == 1 && x[0].RecordID == "1003"), true), Times.Once);
-        mockService.Verify(s => s.DeleteAsync<DummyModel>(It.Is<IList<DummyModel>>(x => x.Count == 1 && x[0].RecordID == "1004"), true), Times.Once);
-        mockService.Verify(s => s.DeleteAsync<DummyModel>(It.Is<IList<DummyModel>>(x => x.Count == 1 && x[0].RecordID == "9999"), true), Times.Once);
+        mockService.Verify(s => s.DeleteAsync<DummyModel>(It.Is<IList<DummyModel>>(x => x.Count == 1 && x[0].RecordId == "1003"), true), Times.Once);
+        mockService.Verify(s => s.DeleteAsync<DummyModel>(It.Is<IList<DummyModel>>(x => x.Count == 1 && x[0].RecordId == "1004"), true), Times.Once);
+        mockService.Verify(s => s.DeleteAsync<DummyModel>(It.Is<IList<DummyModel>>(x => x.Count == 1 && x[0].RecordId == "9999"), true), Times.Once);
     }
 
     /// <summary>
@@ -315,16 +315,16 @@ public class KintoneModelBaseDeleteAsyncTests {
     public async Task DeleteSingleAsyncWithTwoValidModelsReturnsSucceededResult() {
         // Arrange
         var models = new List<DummyModel> {
-            new() { RecordID = "1003", FieldA = "Retry1" },
-            new() { RecordID = "1004", FieldA = "Retry2" }
+            new() { RecordId = "1003", FieldA = "Retry1" },
+            new() { RecordId = "1004", FieldA = "Retry2" }
         };
 
         var mockService = new Mock<IKintoneModelCrudService>();
         mockService
-            .Setup(s => s.DeleteAsync<DummyModel>(It.Is<IList<DummyModel>>(x => x.Count == 1 && x[0].RecordID == "1003"), true))
+            .Setup(s => s.DeleteAsync<DummyModel>(It.Is<IList<DummyModel>>(x => x.Count == 1 && x[0].RecordId == "1003"), true))
             .ReturnsAsync(new KintoneDeleteResult { Succeeded = ["1003"] });
         mockService
-            .Setup(s => s.DeleteAsync<DummyModel>(It.Is<IList<DummyModel>>(x => x.Count == 1 && x[0].RecordID == "1004"), true))
+            .Setup(s => s.DeleteAsync<DummyModel>(It.Is<IList<DummyModel>>(x => x.Count == 1 && x[0].RecordId == "1004"), true))
             .ReturnsAsync(new KintoneDeleteResult { Succeeded = ["1004"] });
 
         // Act
@@ -335,12 +335,12 @@ public class KintoneModelBaseDeleteAsyncTests {
         Assert.Equal(2, result.Succeeded.Count);
         Assert.False(result.HasFailures);
 
-        mockService.Verify(s => s.DeleteAsync<DummyModel>(It.Is<IList<DummyModel>>(x => x.Count == 1 && x[0].RecordID == "1003"), true), Times.Once);
-        mockService.Verify(s => s.DeleteAsync<DummyModel>(It.Is<IList<DummyModel>>(x => x.Count == 1 && x[0].RecordID == "1004"), true), Times.Once);
+        mockService.Verify(s => s.DeleteAsync<DummyModel>(It.Is<IList<DummyModel>>(x => x.Count == 1 && x[0].RecordId == "1003"), true), Times.Once);
+        mockService.Verify(s => s.DeleteAsync<DummyModel>(It.Is<IList<DummyModel>>(x => x.Count == 1 && x[0].RecordId == "1004"), true), Times.Once);
     }
 
     /// <summary>
-    /// 複数のIDを削除するテスト。DeleteSingleAsync メソッドが IKintoneModelCrudService の DeleteAsync を呼び出し、部分的に成功し部分的に失敗する結果を返すことを検証する。
+    /// 複数のIdを削除するテスト。DeleteSingleAsync メソッドが IKintoneModelCrudService の DeleteAsync を呼び出し、部分的に成功し部分的に失敗する結果を返すことを検証する。
     /// </summary>
     [Fact]
     public async Task DeleteSingleAsyncWithThreeIdsTwoSucceededOneFailedReturnsPartialResult() {
@@ -359,7 +359,7 @@ public class KintoneModelBaseDeleteAsyncTests {
             .ReturnsAsync(new KintoneDeleteResult {
                 Failed = [
                     new() {
-                        ID = "9999",
+                        Id = "9999",
                         ErrorMessage = "Record not found",
                         Reason = KintoneDeleteFailureReason.RecordNotFound
                     }

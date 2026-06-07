@@ -15,7 +15,7 @@ public class KintoneModelValidatorTests {
     /// 複数のプロパティに IsKey=true が設定されたモデル。キーの一意性検証で例外が発生することを確認するためのテストクラス。
     /// </summary>
     public class FakeModelWithMultipleKeys : KintoneModelBase<FakeModelWithMultipleKeys> {
-        public override int AppID { get; init; } = 8888;
+        public override int AppId { get; init; } = 8888;
         public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("dummyDomain", "dummyApiToken");
         [KintoneItem(IsKey = true)]
         public string CodeA { get; set; } = "A001";
@@ -27,7 +27,7 @@ public class KintoneModelValidatorTests {
     /// キー属性があるが値が null のモデル。更新キーの値が未設定の場合に例外が発生することを確認するためのテストクラス。
     /// </summary>
     public class FakeModelWithMissingKey : KintoneModelBase<FakeModelWithMissingKey> {
-        public override int AppID { get; init; } = 7777;
+        public override int AppId { get; init; } = 7777;
         public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("dummyDomain", "dummyApiToken");
         [KintoneItem(IsKey = true)]
         public string? KeyCode { get; set; } = null;
@@ -37,7 +37,7 @@ public class KintoneModelValidatorTests {
     /// キー属性があるモデル。キー値の重複検証で例外が発生することを確認するためのテストクラス。
     /// </summary>
     public class FakeModelWithKey : KintoneModelBase<FakeModelWithKey> {
-        public override int AppID { get; init; } = 6666;
+        public override int AppId { get; init; } = 6666;
         public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("dummyDomain", "dummyApiToken");
         [KintoneItem(IsKey = true)]
         public string? Code { get; set; }
@@ -47,7 +47,7 @@ public class KintoneModelValidatorTests {
     /// URL、電話番号、メールアドレスのリンクフィールドを持つモデル。リンクフィールドの形式検証で例外が発生することを確認するためのテストクラス。
     /// </summary>
     public class FakeModelWithLinks : KintoneModelBase<FakeModelWithLinks> {
-        public override int AppID { get; init; } = 5555;
+        public override int AppId { get; init; } = 5555;
         public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("dummyDomain", "dummyApiToken");
         [KintoneItem(FieldType = KintoneFieldType.LinkUrl)]
         public string? Website { get; set; }
@@ -71,7 +71,7 @@ public class KintoneModelValidatorTests {
     /// サブテーブルフィールドに List<T> 型以外のプロパティが定義されたモデル。サブテーブルの構造検証で例外が発生することを確認するためのテストクラス。
     /// </summary>
     public class FakeModelWithInvalidSubTable : KintoneModelBase<FakeModelWithInvalidSubTable> {
-        public override int AppID { get; init; } = 5555;
+        public override int AppId { get; init; } = 5555;
         public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("dummyDomain", "dummyApiToken");
         [KintoneItem(fieldType: KintoneFieldType.SubTable)]
         public string NotAList { get; set; } = "invalid";
@@ -81,7 +81,7 @@ public class KintoneModelValidatorTests {
     /// サブテーブルフィールドに List<T> 型のプロパティが定義されたモデル。サブテーブルの構造検証で例外が発生しないことを確認するためのテストクラス。
     /// </summary>
     public class FakeModelWithValidSubTable : KintoneModelBase<FakeModelWithValidSubTable> {
-        public override int AppID { get; init; } = 5555;
+        public override int AppId { get; init; } = 5555;
         public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("dummyDomain", "dummyApiToken");
         [KintoneItem(fieldType: KintoneFieldType.SubTable)]
         public List<FakeSubRow> SubRows { get; set; } = [];
@@ -91,7 +91,7 @@ public class KintoneModelValidatorTests {
     /// ファイル、複数選択型（チェックボックス、ドロップダウン、カテゴリ）フィールドを持つモデル。これらの構造化フィールドの検証で例外が発生することを確認するためのテストクラス。
     /// </summary>
     public class FakeModelWithStructuredFields : KintoneModelBase<FakeModelWithStructuredFields> {
-        public override int AppID { get; init; } = 4444;
+        public override int AppId { get; init; } = 4444;
         public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("dummyDomain", "dummyApiToken");
         [KintoneItem(FieldType = KintoneFieldType.File)]
         public object? AttachedFiles { get; set; }
@@ -110,7 +110,7 @@ public class KintoneModelValidatorTests {
     /// 複数の検証ルールを組み合わせたモデル。更新キー、ファイルフィールド、複数選択型フィールドなど、複数の検証ルールが同時に適用されるケースをテストするためのクラス。
     /// </summary>
     public class CompositeTestModel : KintoneModelBase<CompositeTestModel> {
-        public override int AppID { get; init; } = 3333;
+        public override int AppId { get; init; } = 3333;
         public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("dummyDomain", "dummyApiToken");
 
         [KintoneItem(IsKey = true)]

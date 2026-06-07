@@ -8,7 +8,7 @@ namespace KintoneNetLibrary.Tests.Models;
 /// クエリビルダーなどのユニットテスト用モデル。実環境への接続は行わない。
 /// </summary>
 public class BookModel : KintoneModelBase<BookModel> {
-    public override int AppID { get; init; } = 0;
+    public override int AppId { get; init; } = 0;
     public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("dummy", "dummy");
 
     [KintoneItem(fieldCode: "Title", KintoneFieldType.SingleLineText)]

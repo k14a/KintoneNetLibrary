@@ -17,7 +17,7 @@ public interface IKintoneTypedCrudService<T> where T : KintoneModelBase<T>, new(
     /// <summary>
     /// Kintoneモデルのレコードを検索します。
     /// </summary>
-    /// <param name="ids">検索するレコードのIDリスト（オプション）</param>
+    /// <param name="ids">検索するレコードのIdリスト（オプション）</param>
     /// <param name="query">検索クエリ（オプション）</param>
     /// <param name="kintoneQuery">Kintoneクエリオブジェクト（オプション）</param>
     /// <param name="fieldCodes">取得するフィールドコードのリスト（オプション）</param>
@@ -34,7 +34,7 @@ public interface IKintoneTypedCrudService<T> where T : KintoneModelBase<T>, new(
     /// <summary>
     /// Kintoneモデルのレコードを削除します。
     /// </summary>
-    /// <param name="ids">削除するレコードのIDリスト</param>
+    /// <param name="ids">削除するレコードのIdリスト</param>
     /// <param name="validateExistence">存在確認を行うかどうか</param>
     /// <returns>削除結果の情報</returns>
     Task<KintoneDeleteResult> DeleteAsync(IList<string> ids, bool validateExistence = true);

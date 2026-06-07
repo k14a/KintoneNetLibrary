@@ -53,26 +53,26 @@ public class KintoneRepository(IKintoneApiFactory factory) : IKintoneRepository 
     }
 
     /// <summary>
-    /// ID でレコードを検索
+    /// Id でレコードを検索
     /// </summary>
     /// <typeparam name="T">モデルの型</typeparam>
     /// <param name="model">モデルのインスタンス</param>
-    /// <param name="id">検索対象のレコードID</param>
+    /// <param name="id">検索対象のレコードId</param>
     /// <returns>検索結果の JSON 文字列</returns>
-    public async Task<string?> FindByIDAsync<T>(T model, string id) where T : KintoneModelBase<T>, new() {
-        return await this.ExecuteFindAsync(model, api => api.FindByIDAsync<T>(id));
+    public async Task<string?> FindByIdAsync<T>(T model, string id) where T : KintoneModelBase<T>, new() {
+        return await this.ExecuteFindAsync(model, api => api.FindByIdAsync<T>(id));
     }
 
     /// <summary>
-    /// IDs でレコードを検索
+    /// Ids でレコードを検索
     /// </summary>
     /// <typeparam name="T">モデルの型</typeparam>
     /// <param name="model">モデルのインスタンス</param>
-    /// <param name="ids">検索対象のレコードIDリスト</param>
+    /// <param name="ids">検索対象のレコードIdリスト</param>
     /// <param name="fieldCodes">取得対象のフィールドコードリスト</param>
     /// <returns>検索結果の JSON 文字列</returns>
-    public async Task<string?> FindByIDsAsync<T>(T model, IList<string> ids, IList<string>? fieldCodes = null) where T : KintoneModelBase<T>, new() {
-        return await this.ExecuteFindAsync(model, api => api.FindByIDsAsync<T>(ids, fieldCodes));
+    public async Task<string?> FindByIdsAsync<T>(T model, IList<string> ids, IList<string>? fieldCodes = null) where T : KintoneModelBase<T>, new() {
+        return await this.ExecuteFindAsync(model, api => api.FindByIdsAsync<T>(ids, fieldCodes));
     }
 
     /// <summary>

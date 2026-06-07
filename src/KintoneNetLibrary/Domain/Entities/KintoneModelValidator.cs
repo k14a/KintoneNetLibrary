@@ -65,8 +65,8 @@ public static class KintoneModelValidator {
             );
         }
 
-        if (!string.IsNullOrWhiteSpace(model.RecordID)) {
-            // RecordID が指定されている場合は IsKeyは不要
+        if (!string.IsNullOrWhiteSpace(model.RecordId)) {
+            // RecordId が指定されている場合は IsKeyは不要
             return;
         }
 

@@ -47,7 +47,7 @@ public abstract class KintoneAccessBase {
     public virtual string Password { get; set; } = string.Empty;
 
     /// <summary>
-    /// Kintone ゲストスペースID を取得する
+    /// Kintone ゲストスペースId を取得する
     /// </summary>
     public virtual int GuestSpaceId { get; set; }
 
@@ -63,16 +63,16 @@ public abstract class KintoneAccessBase {
     public abstract void ApplyAuthentication(HttpRequestMessage request);
 
     /// <summary>
-    /// Kintone アプリIDを抽出する
+    /// Kintone アプリIdを抽出する
     /// </summary>
-    /// <returns>アプリID</returns>
-    protected virtual int ExtractAppID() => throw new NotImplementedException();
+    /// <returns>アプリId</returns>
+    protected virtual int ExtractAppId() => throw new NotImplementedException();
 
     /// <summary>
-    /// Kintone ゲストアプリIDを抽出する
+    /// Kintone ゲストアプリIdを抽出する
     /// </summary>
-    /// <returns>ゲストアプリID</returns>
-    protected virtual int ExtractGuestAppID() => throw new NotImplementedException();
+    /// <returns>ゲストアプリId</returns>
+    protected virtual int ExtractGuestAppId() => throw new NotImplementedException();
 
     /// <summary>
     /// サブドメインまたはドメインを正規化する

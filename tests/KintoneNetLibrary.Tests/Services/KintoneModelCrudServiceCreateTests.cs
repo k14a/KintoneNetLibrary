@@ -151,7 +151,7 @@ public class KintoneModelCrudServiceCreateTests {
 
         Assert.Single(result.Succeeded);
         Assert.Empty(result.Failed);
-        Assert.Equal("9999", result.Succeeded[0].ID);
+        Assert.Equal("9999", result.Succeeded[0].Id);
     }
 
     /// <summary>
@@ -202,7 +202,7 @@ public class KintoneModelCrudServiceCreateTests {
         // Assert
         Assert.Equal(2, result.Succeeded.Count);
         Assert.Empty(result.Failed);
-        Assert.All(result.Succeeded, r => Assert.StartsWith("999", r.ID));
+        Assert.All(result.Succeeded, r => Assert.StartsWith("999", r.Id));
     }
 
     /// <summary>
@@ -261,12 +261,12 @@ public class KintoneModelCrudServiceCreateTests {
         var result = await service.CreateAsync(testRecords);
 
         Assert.Single(result.Succeeded);
-        Assert.Equal("1234", result.Succeeded[0].ID);
+        Assert.Equal("1234", result.Succeeded[0].Id);
         Assert.Equal(-1, result.Succeeded[0].Revision); // TryParse失敗時のデフォルト
     }
 
     /// <summary>
-    /// レスポンスのIDがnullまたは空文字の場合、レコードのIDに空文字が設定されることを確認するテスト
+    /// レスポンスのIdがnullまたは空文字の場合、レコードのIdに空文字が設定されることを確認するテスト
     /// </summary>
     [Fact]
     public async Task CreateAsyncWhenResponseHasNullOrEmptyIdsSetsEmptyStringToId() {
@@ -297,9 +297,9 @@ public class KintoneModelCrudServiceCreateTests {
         Assert.Equal(3, result.Succeeded.Count);
         Assert.Empty(result.Failed);
 
-        Assert.Equal("123", result.Succeeded[0].ID);
-        Assert.Equal(string.Empty, result.Succeeded[1].ID); // null → empty string
-        Assert.Equal(string.Empty, result.Succeeded[2].ID); // "" → empty string
+        Assert.Equal("123", result.Succeeded[0].Id);
+        Assert.Equal(string.Empty, result.Succeeded[1].Id); // null → empty string
+        Assert.Equal(string.Empty, result.Succeeded[2].Id); // "" → empty string
 
         Assert.All(result.Succeeded, r => Assert.Equal(1, r.Revision));
     }
@@ -425,7 +425,7 @@ public class KintoneModelCrudServiceCreateTests {
 /// テスト用のサンプルモデルクラス
 /// </summary>
 internal class SampleModel : KintoneModelBase<SampleModel> {
-    public override int AppID { get; init; } = 8888;
+    public override int AppId { get; init; } = 8888;
     public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("dummyDomain", "dummyApiToken");
 
     [KintoneItem(fieldCode: "FieldA", fieldType: KintoneFieldType.SingleLineText)]

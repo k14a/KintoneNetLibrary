@@ -10,7 +10,7 @@ namespace KintoneNetLibrary.Tests.Helpers;
 public class KintoneRequestBuilderTests {
     #region <<Test methods>>
     /// <summary>
-    /// クエリやフィールドが指定されない場合、URIにアプリIDのみが含まれることを確認するテスト。
+    /// クエリやフィールドが指定されない場合、URIにアプリIdのみが含まれることを確認するテスト。
     /// </summary>
     [Fact]
     public void BuildFindRequestUriWithoutQueryOrFieldsReturnsAppOnly() {

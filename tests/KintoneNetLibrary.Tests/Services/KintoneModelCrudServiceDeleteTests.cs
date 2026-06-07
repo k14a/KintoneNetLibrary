@@ -37,7 +37,7 @@ public class KintoneModelCrudServiceDeleteTests {
 
         loggerMock.Setup(l => l.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
 
-        var model = new SampleModel { RecordID = "123" };
+        var model = new SampleModel { RecordId = "123" };
         // Act
         var result = await service.DeleteAsync(models: []);
 
@@ -64,7 +64,7 @@ public class KintoneModelCrudServiceDeleteTests {
     }
 
     /// <summary>
-    /// DeleteAsync メソッドに1件のモデルを渡した場合、そのモデルが削除され、成功リストにIDが含まれることをテストします。
+    /// DeleteAsync メソッドに1件のモデルを渡した場合、そのモデルが削除され、成功リストにIdが含まれることをテストします。
     /// </summary>
     [Fact]
     public async Task DeleteAsyncShouldDeleteOneModelWhenOneModelProvided() {
@@ -72,7 +72,7 @@ public class KintoneModelCrudServiceDeleteTests {
         var mockRepo = new Mock<IKintoneRepository>();
         var loggerMock = new Mock<ILogger<KintoneTypedCrudService<SampleModel>>>();
 
-        var model = new SampleModel { RecordID = "123" };
+        var model = new SampleModel { RecordId = "123" };
         var models = new List<SampleModel> { model };
 
         mockRepo
@@ -97,7 +97,7 @@ public class KintoneModelCrudServiceDeleteTests {
         Assert.Empty(result.Failed);
 
         mockRepo.Verify(x => x.DeleteRecordsAsync(
-            It.Is<IList<SampleModel>>(list => list.Count == 1 && list[0].RecordID == "123")
+            It.Is<IList<SampleModel>>(list => list.Count == 1 && list[0].RecordId == "123")
         ), Times.Once);
 
         TestLogHelper.VerifyLog(loggerMock, LogLevel.Information, "DeleteAsync() - Start", Times.Once());
@@ -105,15 +105,15 @@ public class KintoneModelCrudServiceDeleteTests {
     }
 
     /// <summary>
-    /// DeleteAsync メソッドに複数のモデルを渡した場合、それらのモデルが削除され、成功リストにIDが含まれることをテストします。
+    /// DeleteAsync メソッドに複数のモデルを渡した場合、それらのモデルが削除され、成功リストにIdが含まれることをテストします。
     /// </summary>
     [Fact]
     public async Task DeleteAsyncShouldDeleteMultipleModelsWhenMultipleModelsProvided() {
         // Arrange
         var models = new List<SampleModel> {
-            new() { RecordID = "101" },
-            new() { RecordID = "102" },
-            new() { RecordID = "103" }
+            new() { RecordId = "101" },
+            new() { RecordId = "102" },
+            new() { RecordId = "103" }
         };
 
         var mockRepo = new Mock<IKintoneRepository>();
@@ -132,23 +132,23 @@ public class KintoneModelCrudServiceDeleteTests {
         mockRepo.Verify(x => x.DeleteRecordsAsync(
             It.Is<IList<SampleModel>>(list =>
                 list.Count == 3 &&
-                list.Any(m => m.RecordID == "101") &&
-                list.Any(m => m.RecordID == "102") &&
-                list.Any(m => m.RecordID == "103")
+                list.Any(m => m.RecordId == "101") &&
+                list.Any(m => m.RecordId == "102") &&
+                list.Any(m => m.RecordId == "103")
             )
         ), Times.Once);
     }
 
     /// <summary>
-    /// DeleteAsync メソッドに複数のモデルを渡した場合、その中に無効なモデルが含まれていても、有効なモデルだけが削除され、成功リストに有効なモデルのIDが含まれることをテストします。
+    /// DeleteAsync メソッドに複数のモデルを渡した場合、その中に無効なモデルが含まれていても、有効なモデルだけが削除され、成功リストに有効なモデルのIdが含まれることをテストします。
     /// </summary>
     [Fact]
     public async Task DeleteAsyncShouldDeleteOnlyValidModelsWhenSomeModelsAreInvalid() {
         // Arrange
         var models = new List<SampleModel> {
-            new() { RecordID = "201" },
-            new() { RecordID = null },  // 無効モデル
-             new() { RecordID = "202" } };
+            new() { RecordId = "201" },
+            new() { RecordId = null },  // 無効モデル
+             new() { RecordId = "202" } };
 
         var mockRepo = new Mock<IKintoneRepository>();
         var loggerMock = new Mock<ILogger<KintoneTypedCrudService<SampleModel>>>();
@@ -166,21 +166,21 @@ public class KintoneModelCrudServiceDeleteTests {
         mockRepo.Verify(x => x.DeleteRecordsAsync(
             It.Is<IList<SampleModel>>(list =>
                 list.Count == 2 &&
-                list.All(m => m.RecordID != null) &&
-                list.Any(m => m.RecordID == "201") &&
-                list.Any(m => m.RecordID == "202")
+                list.All(m => m.RecordId != null) &&
+                list.Any(m => m.RecordId == "201") &&
+                list.Any(m => m.RecordId == "202")
             )
         ), Times.Once);
     }
 
     /// <summary>
-    /// DeleteAsync メソッドに存在しないレコードIDを持つモデルを渡した場合、NotFound エラーが発生し、失敗リストにエラー情報が含まれることをテストします。
+    /// DeleteAsync メソッドに存在しないレコードIdを持つモデルを渡した場合、NotFound エラーが発生し、失敗リストにエラー情報が含まれることをテストします。
     /// </summary>
     [Fact]
-    public async Task DeleteAsyncShouldHandleNotFoundRecordWhenRecordIDIsInvalid() {
+    public async Task DeleteAsyncShouldHandleNotFoundRecordWhenRecordIdIsInvalid() {
         // Arrange
         var models = new List<SampleModel> {
-            new() { RecordID = "9999" } // ← 存在しないIDと仮定
+            new() { RecordId = "9999" } // ← 存在しないIdと仮定
         };
 
         var mockRepo = new Mock<IKintoneRepository>();
@@ -190,7 +190,7 @@ public class KintoneModelCrudServiceDeleteTests {
             .Setup(x => x.DeleteRecordsAsync<SampleModel>(
                 It.Is<IList<SampleModel>>(list =>
                     list.Count == 1 &&
-                    list[0].RecordID == "9999")
+                    list[0].RecordId == "9999")
             ))
             .ThrowsAsync(new KintoneException("Record not found"));
 
@@ -211,48 +211,48 @@ public class KintoneModelCrudServiceDeleteTests {
     }
 
     /// <summary>
-    /// DeleteAsync メソッドに複数のモデルを渡した場合、その中に存在しないレコードIDを持つモデルが含まれていても、有効なモデルは削除され、成功リストに有効なモデルのIDが含まれ、失敗リストに無効なモデルのエラー情報が含まれることをテストします。
+    /// DeleteAsync メソッドに複数のモデルを渡した場合、その中に存在しないレコードIdを持つモデルが含まれていても、有効なモデルは削除され、成功リストに有効なモデルのIdが含まれ、失敗リストに無効なモデルのエラー情報が含まれることをテストします。
     /// </summary>
     [Fact]
     public async Task DeleteAsyncShouldSeparateDeletedAndFailedRecordsWhenPartiallyFound() {
         // Arrange
         var validId1 = "1001";
         var validId2 = "1002";
-        var invalidId = "9999"; // ← 存在しないIDと仮定
+        var invalidId = "9999"; // ← 存在しないIdと仮定
 
         var models = new List<SampleModel> {
-            new() { RecordID = validId1 },
-            new() { RecordID = validId2 },
-            new() { RecordID = invalidId }
+            new() { RecordId = validId1 },
+            new() { RecordId = validId2 },
+            new() { RecordId = invalidId }
         };
 
         var foundModels = new List<SampleModel> {
-            new() { RecordID = validId1 },
-            new() { RecordID = validId2 }
+            new() { RecordId = validId1 },
+            new() { RecordId = validId2 }
         };
 
         var foundJson = JsonSerializer.Serialize(new {
             records = foundModels.Select(m =>
                 new Dictionary<string, object> {
-                    ["$id"] = new { type = "__ID__", value = m.RecordID },
+                    ["$id"] = new { type = "__ID__", value = m.RecordId },
                 }).ToList()
         });
 
         var mockRepo = new Mock<IKintoneRepository>();
 
         // FindAsync() で存在する2件だけを返すように設定
-        mockRepo.Setup(x => x.FindByIDsAsync<SampleModel>(
+        mockRepo.Setup(x => x.FindByIdsAsync<SampleModel>(
             It.IsAny<SampleModel>(),
             It.Is<IList<string>>(ids => ids.Count == 3),
             It.IsAny<IList<string>>()
         )).ReturnsAsync(foundJson);
 
-        var expectedIds = foundModels.Select(f => f.RecordID).ToHashSet();
+        var expectedIds = foundModels.Select(f => f.RecordId).ToHashSet();
         mockRepo.Setup(x => x.DeleteRecordsAsync<SampleModel>(
             It.Is<IList<SampleModel>>(list =>
-                list.All(m => expectedIds.Contains(m.RecordID))
+                list.All(m => expectedIds.Contains(m.RecordId))
             )
-        )).ReturnsAsync(KintoneRequestBuilder.BuildDeleteJson(new List<SampleModel> { new() { RecordID = invalidId } }));
+        )).ReturnsAsync(KintoneRequestBuilder.BuildDeleteJson(new List<SampleModel> { new() { RecordId = invalidId } }));
 
 
         var loggerMock = new Mock<ILogger<KintoneTypedCrudService<SampleModel>>>();
@@ -272,14 +272,14 @@ public class KintoneModelCrudServiceDeleteTests {
         Assert.Contains(validId2, result.Succeeded);
 
         Assert.Single(result.Failed);
-        Assert.Equal(invalidId, result.Failed[0].ID);
+        Assert.Equal(invalidId, result.Failed[0].Id);
         Assert.Equal("Record is not found.", result.Failed[0].ErrorMessage);
 
         Assert.True(result.HasFailures);
     }
 
     /// <summary>
-    /// DeleteAsync メソッドに複数のレコードIDを渡した場合、それらのモデルが削除されることをテストします。
+    /// DeleteAsync メソッドに複数のレコードIdを渡した場合、それらのモデルが削除されることをテストします。
     /// </summary>
     [Fact]
     public async Task DeleteAsyncShouldDeleteMultipleModelsWhenMultipleIdsProvided() {
@@ -302,9 +302,9 @@ public class KintoneModelCrudServiceDeleteTests {
         mockRepo.Verify(x => x.DeleteRecordsAsync(
             It.Is<IList<SampleModel>>(list =>
                 list.Count == 3 &&
-                list.Any(m => m.RecordID == "101") &&
-                list.Any(m => m.RecordID == "102") &&
-                list.Any(m => m.RecordID == "103")
+                list.Any(m => m.RecordId == "101") &&
+                list.Any(m => m.RecordId == "102") &&
+                list.Any(m => m.RecordId == "103")
             )
         ), Times.Once);
     }

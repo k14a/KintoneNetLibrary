@@ -10,8 +10,8 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     /// 変換辞書
     /// </summary>
     private IList<NameConverter> _convertDictionary = [
-        NameConverter.Create("$id", nameof(RecordID), NameConverter.Direction.Read),
-        NameConverter.Create("レコード番号", nameof(RecordID), NameConverter.Direction.Send),
+        NameConverter.Create("$id", nameof(RecordId), NameConverter.Direction.Read),
+        NameConverter.Create("レコード番号", nameof(RecordId), NameConverter.Direction.Send),
         NameConverter.Create("$revision", nameof(Revision), NameConverter.Direction.Read),
         NameConverter.Create("作成日時", nameof(CreatedTime)),
         NameConverter.Create("更新日時", nameof(UpdatedTime)),

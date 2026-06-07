@@ -16,18 +16,18 @@ namespace KintoneNetLibrary.Infrastructure.Api;
 /// </summary>
 public partial class KintoneApi : IKintoneApi {
     /// <summary>
-    /// IDで単一レコードを取得
+    /// Idで単一レコードを取得
     /// </summary>
     /// <typeparam name="T">取得するレコードの型</typeparam>
-    /// <param name="id">取得するレコードのID</param>
+    /// <param name="id">取得するレコードのId</param>
     /// <returns>取得したレコードのJSON文字列</returns>
     /// <exception cref="ArgumentNullException">id が null または空白の場合にスローされます</exception>
     /// <exception cref="KintoneException">Kintone API からのエラーが発生した場合にスローされます</exception>
-    public async Task<string?> FindByIDAsync<T>(string id) where T : KintoneModelBase<T>, new() {
+    public async Task<string?> FindByIdAsync<T>(string id) where T : KintoneModelBase<T>, new() {
         if (string.IsNullOrWhiteSpace(id)) { throw new ArgumentNullException(nameof(id)); }
 
-        // var appID = new T().AppID;
-        var requestUri = this.BuildRequestUri(KintoneApiEndpoints.GetSingleRecord, $"app={this._appID}&id={id}");
+        // var appId = new T().AppId;
+        var requestUri = this.BuildRequestUri(KintoneApiEndpoints.GetSingleRecord, $"app={this._appId}&id={id}");
 
         using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
         this.SetHeaders(request);
@@ -43,15 +43,15 @@ public partial class KintoneApi : IKintoneApi {
         return json;
     }
     /// <summary>
-    /// IDリストで複数レコードを取得
+    /// Idリストで複数レコードを取得
     /// </summary>
     /// <typeparam name="T">取得するレコードの型</typeparam>
-    /// <param name="ids">取得するレコードのIDリスト</param>
+    /// <param name="ids">取得するレコードのIdリスト</param>
     /// <param name="fieldCodes">取得するフィールドコードのリスト</param>
     /// <returns>取得したレコードのJSON文字列</returns>
     /// <exception cref="ArgumentNullException">ids が null または空の場合にスローされます</exception>
     /// <exception cref="KintoneException">Kintone API からのエラーが発生した場合にスローされます</exception>
-    public async Task<string?> FindByIDsAsync<T>(IList<string> ids, IList<string>? fieldCodes = null) where T : KintoneModelBase<T>, new() {
+    public async Task<string?> FindByIdsAsync<T>(IList<string> ids, IList<string>? fieldCodes = null) where T : KintoneModelBase<T>, new() {
         if (ids == null || ids.Count == 0) {
             throw new ArgumentNullException(nameof(ids));
         }
@@ -61,7 +61,7 @@ public partial class KintoneApi : IKintoneApi {
             var requestUri = KintoneRequestBuilder.BuildFindRequestUri(
                 this.GetBaseUri(),
                 KintoneApiEndpoints.GetRecords,
-                this._appID,
+                this._appId,
                 query.Build(),
                 fieldCodes
             );
@@ -147,7 +147,7 @@ public partial class KintoneApi : IKintoneApi {
             var countUri = KintoneRequestBuilder.BuildRequestUri(
                 this.GetBaseUri(),
                 KintoneApiEndpoints.GetRecords,
-                this._appID,
+                this._appId,
                 queryText,
                 fieldCodes,
                 new Dictionary<string, string> {
@@ -177,7 +177,7 @@ public partial class KintoneApi : IKintoneApi {
         var requestUri = KintoneRequestBuilder.BuildRequestUri(
             this.GetBaseUri(),
             KintoneApiEndpoints.GetRecords,
-            this._appID,
+            this._appId,
             query.Build(),
             fieldCodes);
 
@@ -203,7 +203,7 @@ public partial class KintoneApi : IKintoneApi {
     /// <returns>取得したレコードのJSON文字列</returns>
     private async Task<string> CursorFetchAllJsonAsync<T>(string query, IList<string>? fieldCodes = null) where T : KintoneModelBase<T>, new() {
         var cursorRequest = new Dictionary<string, object> {
-            ["app"] = this._appID,
+            ["app"] = this._appId,
             ["fields"] = fieldCodes ?? typeof(T).GetKintoneFieldCodes(),
             ["size"] = this.CursorPageSize,
         };

@@ -82,7 +82,7 @@ public class CSharpSubTableEmitterTests {
         /// </summary>
         /// <typeparam name="TState">ログの状態の型</typeparam>
         /// <param name="logLevel">ログレベル</param>
-        /// <param name="eventId">イベントID</param>
+        /// <param name="eventId">イベントId</param>
         /// <param name="state">ログの状態</param>
         /// <param name="exception">例外情報</param>
         /// <param name="formatter">ログメッセージのフォーマッタ</param>

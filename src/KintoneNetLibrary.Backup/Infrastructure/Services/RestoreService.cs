@@ -56,7 +56,7 @@ public sealed class RestoreService(
     /// <exception cref="NotSupportedException">サポートされていない操作が指定された場合にスローされます。</exception>
     public async Task<RestoreResult> RunRestoreAsync(RestoreOptions options) {
         this._options = options;
-        this._logger?.LogInformation("リストア 開始: App={App}", this.Options.AppID);
+        this._logger?.LogInformation("リストア 開始: App={App}", this.Options.AppId);
         this.EnsureApiInitialized();
 
         var result = new RestoreResult();
@@ -121,7 +121,7 @@ public sealed class RestoreService(
         if (this._api != null) { return; }
         var access = new ApiTokenAccess(this.Options.SubDomain, this.Options.ApiToken);
 
-        this._api = this._apiFactory.Create(access, this.Options.AppID);
+        this._api = this._apiFactory.Create(access, this.Options.AppId);
     }
 
     /// <summary>
@@ -449,7 +449,7 @@ public sealed class RestoreService(
         // $id を削除
         obj.Remove("$id");
 
-        // サブテーブルの行 ID を削除
+        // サブテーブルの行 Id を削除
         foreach (var kv in obj.ToList()) {
             if (kv.Value is JsonObject childObj) {
                 // SUBTABLE の場合
@@ -458,7 +458,7 @@ public sealed class RestoreService(
                     if (rows != null) {
                         foreach (var row in rows) {
                             var rowObj = row!.AsObject();
-                            rowObj.Remove("id"); // ★ 行 ID 削除
+                            rowObj.Remove("id"); // ★ 行 Id 削除
                             this.RemoveRecordIdFields(rowObj["value"]!.AsObject());
                         }
                     }
@@ -497,7 +497,7 @@ public sealed class RestoreService(
         if (batch.Count == 0) { return; }
 
         var root = new JsonObject {
-            ["app"] = this.Options.AppID,
+            ["app"] = this.Options.AppId,
             ["records"] = new JsonArray(batch.ToArray())
         };
 
@@ -515,7 +515,7 @@ public sealed class RestoreService(
         if (batch.Count == 0) { return; }
 
         var root = new JsonObject {
-            ["app"] = this.Options.AppID,
+            ["app"] = this.Options.AppId,
             ["records"] = new JsonArray(batch.ToArray())
         };
 
@@ -603,7 +603,7 @@ public sealed class RestoreService(
         var currentSchema = await this._metadataApi.GetAppMetadataAsync(
             access.Domain,
             this.Options.ApiToken,
-            this.Options.AppID
+            this.Options.AppId
         );
 
         // バックアップ側のフィールド一覧を取得
@@ -685,11 +685,11 @@ public sealed class RestoreService(
     /// <summary>
     /// レコード削除バッチを実行します
     /// </summary>
-    /// <param name="batch">削除するレコード ID のリスト</param>
+    /// <param name="batch">削除するレコード Id のリスト</param>
     /// <param name="result">リストア結果</param>
     private async Task FlushDeleteBatchAsync(List<int> batch, RestoreResult result) {
         var deleteJson = new JsonObject {
-            ["app"] = this.Options.AppID,
+            ["app"] = this.Options.AppId,
             ["ids"] = new JsonArray(batch.Select(id => JsonValue.Create(id)).ToArray())
         };
 
@@ -698,7 +698,7 @@ public sealed class RestoreService(
             this._logger?.LogInformation("{Count} 件のレコードを削除しました", batch.Count);
             result.DeletedRecords += batch.Count;
         } catch (Exception ex) {
-            this._logger?.LogError(ex, "レコード削除中にエラーが発生しました（ID: {Ids}）", string.Join(",", batch));
+            this._logger?.LogError(ex, "レコード削除中にエラーが発生しました（Id: {Ids}）", string.Join(",", batch));
             throw;
         }
     }

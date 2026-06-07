@@ -20,15 +20,15 @@ internal class KintoneRecordIndexesResponse {
         var revisions = new List<string?>();
 
         foreach (var record in this.Records) {
-            if (!string.IsNullOrEmpty(record.ID)) {
-                ids.Add(record.ID);
+            if (!string.IsNullOrEmpty(record.Id)) {
+                ids.Add(record.Id);
             }
             if (!string.IsNullOrEmpty(record.RevisionString)) {
                 revisions.Add(record.RevisionString);
             }
         }
         return new KintoneIndexes {
-            IDs = ids,
+            Ids = ids,
             Revisions = revisions
         };
     }
@@ -36,7 +36,7 @@ internal class KintoneRecordIndexesResponse {
 
 internal class KintoneRecordIndexItem {
     [JsonPropertyName("id")]
-    public string? ID { get; set; }
+    public string? Id { get; set; }
     [JsonPropertyName("revision")]
     public string? RevisionString { get; set; }
     public int Revision => int.TryParse(this.RevisionString, out var rev) ? rev : -1;

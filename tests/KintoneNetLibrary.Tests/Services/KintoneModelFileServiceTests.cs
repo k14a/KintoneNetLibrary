@@ -608,7 +608,7 @@ public class KintoneModelFileServiceTests {
 /// </summary>
 public class SampleFileModel : KintoneModelBase<SampleFileModel> {
     public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
-    public override int AppID { get; init; } = 6666;
+    public override int AppId { get; init; } = 6666;
 
     public FileInfo? LocalFile { get; set; }
     public KintoneFile? UploadedFile { get; set; }
@@ -619,7 +619,7 @@ public class SampleFileModel : KintoneModelBase<SampleFileModel> {
 /// </summary>
 public class MultiFileModel : KintoneModelBase<MultiFileModel> {
     public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
-    public override int AppID { get; init; } = 6667;
+    public override int AppId { get; init; } = 6667;
 
     public List<FileInfo>? LocalFiles { get; set; }
     public List<KintoneFile>? UploadedFiles { get; set; }
@@ -630,7 +630,7 @@ public class MultiFileModel : KintoneModelBase<MultiFileModel> {
 /// </summary>
 public class ValidFileModel : KintoneModelBase<ValidFileModel> {
     public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
-    public override int AppID { get; init; } = 6668;
+    public override int AppId { get; init; } = 6668;
 
     public FileInfo? LocalFile { get; set; }
     public KintoneFile? UploadedFile { get; set; }
@@ -641,7 +641,7 @@ public class ValidFileModel : KintoneModelBase<ValidFileModel> {
 /// </summary>
 public class InvalidFileModelNoProps : KintoneModelBase<InvalidFileModelNoProps> {
     public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
-    public override int AppID { get; init; } = 6669;
+    public override int AppId { get; init; } = 6669;
 
     public string? Dummy { get; set; }
 }
@@ -651,7 +651,7 @@ public class InvalidFileModelNoProps : KintoneModelBase<InvalidFileModelNoProps>
 /// </summary>
 public class TestModel : KintoneModelBase<TestModel> {
     public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
-    public override int AppID { get; init; } = 6670;
+    public override int AppId { get; init; } = 6670;
 
     public KintoneFile? SingleFile { get; set; }
     public List<KintoneFile>? FileList { get; set; }
@@ -662,7 +662,7 @@ public class TestModel : KintoneModelBase<TestModel> {
 /// </summary>
 public class NoFileModel : KintoneModelBase<NoFileModel> {
     public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
-    public override int AppID { get; init; } = 6671;
+    public override int AppId { get; init; } = 6671;
 
     public string? Dummy { get; set; }
 }

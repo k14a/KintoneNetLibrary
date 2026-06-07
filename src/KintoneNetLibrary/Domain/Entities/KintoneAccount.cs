@@ -35,7 +35,7 @@ public class KintoneAccount {
     public string BasicAuthPassword { get; set; } = string.Empty;
 
     /// <summary>
-    /// Kintone ゲストスペースID
+    /// Kintone ゲストスペースId
     /// </summary>
     public int GuestSpaceId { get; set; }
 

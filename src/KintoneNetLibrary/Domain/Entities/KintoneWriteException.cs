@@ -33,7 +33,7 @@ public class KintoneWriteException<T> : Exception where T : KintoneModelBase<T>,
         var sb = new StringBuilder();
         sb.AppendLine("One or more records failed to be written to Kintone:");
         foreach (var fail in failures) {
-            sb.AppendLine($"- ID: {fail.Record.ID}, Error: {fail.ErrorMessage}");
+            sb.AppendLine($"- Id: {fail.Record.Id}, Error: {fail.ErrorMessage}");
         }
         return sb.ToString();
     }
@@ -47,7 +47,7 @@ public class KintoneWriteException<T> : Exception where T : KintoneModelBase<T>,
         return JsonSerializer.Serialize(new {
             Message = this.Message,
             Failures = this.Failures.Select(f => new {
-                RecordID = f.Record.ID,
+                RecordId = f.Record.Id,
                 ErrorMessage = f.ErrorMessage,
                 Error = f.Error?.ToJson() // KintoneError に ToJson() がある前提
             })

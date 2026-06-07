@@ -35,7 +35,7 @@ public class CSharpXmlCommentBuilderTests {
         /// </summary>
         /// <typeparam name="TState">ログエントリの状態の型</typeparam>
         /// <param name="logLevel">ログレベル</param>
-        /// <param name="eventId">イベント ID</param>
+        /// <param name="eventId">イベント Id</param>
         /// <param name="state">ログエントリの状態</param>
         /// <param name="exception">例外情報</param>
         /// <param name="formatter">ログエントリのフォーマッタ</param>

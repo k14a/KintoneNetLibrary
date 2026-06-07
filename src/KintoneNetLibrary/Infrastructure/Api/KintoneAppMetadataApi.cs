@@ -86,7 +86,7 @@ public class KintoneAppMetadataApi(IHttpClientFactory httpClientFactory, IKinton
     /// </summary>
     /// <param name="domain">kintoneのドメイン</param>
     /// <param name="apiToken">APIトークン</param>
-    /// <param name="appId">アプリID</param>
+    /// <param name="appId">アプリId</param>
     /// <returns>フィールド情報のJSON文字列</returns>
     public async Task<string> GetFieldsJsonAsync(string domain, string apiToken, int appId) {
         var uri = BuildRequestUri(domain, KintoneApiEndpoints.GetAppFields, $"app={appId}");
@@ -98,7 +98,7 @@ public class KintoneAppMetadataApi(IHttpClientFactory httpClientFactory, IKinton
     /// </summary>
     /// <param name="domain">kintoneのドメイン</param>
     /// <param name="apiToken">APIトークン</param>
-    /// <param name="appId">アプリID</param>
+    /// <param name="appId">アプリId</param>
     /// <returns>レイアウト情報のJSON文字列</returns>
     public async Task<string> GetLayoutJsonAsync(string domain, string apiToken, int appId) {
         var uri = BuildRequestUri(domain, KintoneApiEndpoints.GetAppLayout, $"app={appId}");
@@ -110,7 +110,7 @@ public class KintoneAppMetadataApi(IHttpClientFactory httpClientFactory, IKinton
     /// </summary>
     /// <param name="domain">kintoneのドメイン</param>
     /// <param name="apiToken">APIトークン</param>
-    /// <param name="appId">アプリID</param>
+    /// <param name="appId">アプリId</param>
     /// <returns>アプリのメタデータ</returns>
     public async Task<KintoneAppMetadata> GetAppMetadataAsync(string domain, string apiToken, int appId) {
         var json = await this.GetFieldsJsonAsync(domain, apiToken, appId);

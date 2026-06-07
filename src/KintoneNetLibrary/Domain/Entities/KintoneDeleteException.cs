@@ -32,7 +32,7 @@ public class KintoneDeleteException(IList<KintoneDeleteFailure> failures) : Exce
         var sb = new StringBuilder();
         sb.AppendLine("一部のレコードの削除に失敗しました:");
         foreach (var failure in failures) {
-            sb.AppendLine($"- ID: {failure.ID}, Error: {failure.ErrorMessage}");
+            sb.AppendLine($"- Id: {failure.Id}, Error: {failure.ErrorMessage}");
         }
         return sb.ToString();
     }

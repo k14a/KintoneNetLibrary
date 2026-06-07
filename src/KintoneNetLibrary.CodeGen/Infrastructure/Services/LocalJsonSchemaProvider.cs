@@ -26,7 +26,7 @@ public class LocalJsonSchemaProvider(string jsonPath, IKintoneFieldParser fieldP
     /// </summary>
     /// <param name="domain">Kintoneのサブドメイン（未使用）</param>
     /// <param name="apiToken">APIトークン（未使用）</param>
-    /// <param name="appId">アプリID</param>
+    /// <param name="appId">アプリId</param>
     /// <returns>取得したスキーマ情報</returns>
     public async Task<KintoneAppSchema> GetSchemaAsync(string domain, string apiToken, int appId) {
         this._logger.LogInformation("Loading fields.json from {path}", this._jsonPath);
@@ -45,7 +45,7 @@ public class LocalJsonSchemaProvider(string jsonPath, IKintoneFieldParser fieldP
     /// </summary>
     /// <param name="domain">Kintoneのサブドメイン（未使用）</param>
     /// <param name="apiToken">APIトークン（未使用）</param>
-    /// <param name="appId">アプリID</param>
+    /// <param name="appId">アプリId</param>
     /// <returns>取得したメタデータ</returns>
     public async Task<KintoneAppMetadata> GetMetadataAsync(string domain, string apiToken, int appId) {
         var json = await File.ReadAllTextAsync(this._jsonPath);

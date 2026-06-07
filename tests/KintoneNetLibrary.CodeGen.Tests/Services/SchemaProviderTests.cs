@@ -73,8 +73,8 @@ public class SchemaProviderTests {
     /// </summary>
     public class FakeKintoneAppMetadataApi : IKintoneAppMetadataApi {
         /// <summary>
-        /// FakeKintoneAppMetadataApi クラスの GetAppMetadataAsync メソッド。指定されたドメイン、API トークン、およびアプリ ID に基づいて、特定の KintoneAppMetadata オブジェクトを返すように実装されている。このメソッドは、SchemaProvider のテストで使用されることを想定しており、実際の API 呼び出しを行わずに、モックされたメタデータを提供するために使用される。
-        /// 例えば、ドメインが "example.cybozu.com"、API トークンが "dummy"、アプリ ID が 1 の場合に、AppId が 1、Revision が 3、Fields に 1 つのフィールド（FieldCode が "customer"、FieldLabel が "顧客名"、FieldType が SingleLineText、Required が true）を含む KintoneAppMetadata オブジェクトを返すように実装されている。これにより、SchemaProvider の GetSchemaAsync や CompareAsync のテストで、このフェイク API を使用して、特定のメタデータを提供し、SchemaProvider の機能が正しく動作することを確認できるようになる。
+        /// FakeKintoneAppMetadataApi クラスの GetAppMetadataAsync メソッド。指定されたドメイン、API トークン、およびアプリ Id に基づいて、特定の KintoneAppMetadata オブジェクトを返すように実装されている。このメソッドは、SchemaProvider のテストで使用されることを想定しており、実際の API 呼び出しを行わずに、モックされたメタデータを提供するために使用される。
+        /// 例えば、ドメインが "example.cybozu.com"、API トークンが "dummy"、アプリ Id が 1 の場合に、AppId が 1、Revision が 3、Fields に 1 つのフィールド（FieldCode が "customer"、FieldLabel が "顧客名"、FieldType が SingleLineText、Required が true）を含む KintoneAppMetadata オブジェクトを返すように実装されている。これにより、SchemaProvider の GetSchemaAsync や CompareAsync のテストで、このフェイク API を使用して、特定のメタデータを提供し、SchemaProvider の機能が正しく動作することを確認できるようになる。
         /// </summary>
         public KintoneAppMetadata Metadata { get; set; } =
             new KintoneAppMetadata {
@@ -92,29 +92,29 @@ public class SchemaProviderTests {
             };
 
         /// <summary>
-        /// FakeKintoneAppMetadataApi クラスの GetAppMetadataAsync メソッド。指定されたドメイン、API トークン、およびアプリ ID に基づいて、事前に設定された KintoneAppMetadata オブジェクトを返すように実装されている。このメソッドは、SchemaProvider のテストで使用されることを想定しており、実際の API 呼び出しを行わずに、モックされたメタデータを提供するために使用される。これにより、SchemaProvider の GetSchemaAsync や CompareAsync のテストで、このフェイク API を使用して、特定のメタデータを提供し、SchemaProvider の機能が正しく動作することを確認できるようになる。
+        /// FakeKintoneAppMetadataApi クラスの GetAppMetadataAsync メソッド。指定されたドメイン、API トークン、およびアプリ Id に基づいて、事前に設定された KintoneAppMetadata オブジェクトを返すように実装されている。このメソッドは、SchemaProvider のテストで使用されることを想定しており、実際の API 呼び出しを行わずに、モックされたメタデータを提供するために使用される。これにより、SchemaProvider の GetSchemaAsync や CompareAsync のテストで、このフェイク API を使用して、特定のメタデータを提供し、SchemaProvider の機能が正しく動作することを確認できるようになる。
         /// </summary>
         /// <param name="domain">Kintone のドメイン</param>
         /// <param name="apiToken">API トークン</param>
-        /// <param name="appId">アプリ ID</param>
+        /// <param name="appId">アプリ Id</param>
         /// <returns>事前に設定された KintoneAppMetadata オブジェクト</returns>
         public Task<KintoneAppMetadata> GetAppMetadataAsync(string domain, string apiToken, int appId) => Task.FromResult(this.Metadata);
 
         /// <summary>
-        /// FakeKintoneAppMetadataApi クラスの GetFieldsJsonAsync メソッド。指定されたドメイン、API トークン、およびアプリ ID に基づいて、空の JSON オブジェクトを返すように実装されている。このメソッドは、SchemaProvider のテストで使用されることを想定しており、実際の API 呼び出しを行わずに、モックされたデータを提供するために使用される。これにより、SchemaProvider の GetSchemaAsync や CompareAsync のテストで、このフェイク API を使用して、特定のメタデータを提供し、SchemaProvider の機能が正しく動作することを確認できるようになる。
+        /// FakeKintoneAppMetadataApi クラスの GetFieldsJsonAsync メソッド。指定されたドメイン、API トークン、およびアプリ Id に基づいて、空の JSON オブジェクトを返すように実装されている。このメソッドは、SchemaProvider のテストで使用されることを想定しており、実際の API 呼び出しを行わずに、モックされたデータを提供するために使用される。これにより、SchemaProvider の GetSchemaAsync や CompareAsync のテストで、このフェイク API を使用して、特定のメタデータを提供し、SchemaProvider の機能が正しく動作することを確認できるようになる。
         /// </summary>
         /// <param name="domain">Kintone のドメイン</param>
         /// <param name="apiToken">API トークン</param>
-        /// <param name="appId">アプリ ID</param>
+        /// <param name="appId">アプリ Id</param>
         /// <returns>空の JSON オブジェクト</returns>
         public Task<string> GetFieldsJsonAsync(string domain, string apiToken, int appId) => Task.FromResult("{}");
 
         /// <summary>
-        /// FakeKintoneAppMetadataApi クラスの GetLayoutJsonAsync メソッド。指定されたドメイン、API トークン、およびアプリ ID に基づいて、空の JSON オブジェクトを返すように実装されている。このメソッドは、SchemaProvider のテストで使用されることを想定しており、実際の API 呼び出しを行わずに、モックされたデータを提供するために使用される。これにより、SchemaProvider の GetSchemaAsync や CompareAsync のテストで、このフェイク API を使用して、特定のメタデータを提供し、SchemaProvider の機能が正しく動作することを確認できるようになる。
+        /// FakeKintoneAppMetadataApi クラスの GetLayoutJsonAsync メソッド。指定されたドメイン、API トークン、およびアプリ Id に基づいて、空の JSON オブジェクトを返すように実装されている。このメソッドは、SchemaProvider のテストで使用されることを想定しており、実際の API 呼び出しを行わずに、モックされたデータを提供するために使用される。これにより、SchemaProvider の GetSchemaAsync や CompareAsync のテストで、このフェイク API を使用して、特定のメタデータを提供し、SchemaProvider の機能が正しく動作することを確認できるようになる。
         /// </summary>
         /// <param name="domain">Kintone のドメイン</param>
         /// <param name="apiToken">API トークン</param>
-        /// <param name="appId">アプリ ID</param>
+        /// <param name="appId">アプリ Id</param>
         /// <returns>空の JSON オブジェクト</returns>
         public Task<string> GetLayoutJsonAsync(string domain, string apiToken, int appId) => Task.FromResult("{}");
     }

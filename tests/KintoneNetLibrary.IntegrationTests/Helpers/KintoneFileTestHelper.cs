@@ -84,7 +84,7 @@ public static class KintoneFileTestHelper {
 
         var lines = new List<string>
         {
-        "ID,Name,Price",
+        "Id,Name,Price",
         "1,Book A,1200",
         "2,Book B,1500",
         "3,Notebook,800"
@@ -143,7 +143,7 @@ public static class KintoneFileTestHelper {
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("Sheet1");
 
-        worksheet.Cell(1, 1).Value = "ID";
+        worksheet.Cell(1, 1).Value = "Id";
         worksheet.Cell(1, 2).Value = "Name";
         worksheet.Cell(1, 3).Value = "Price";
 

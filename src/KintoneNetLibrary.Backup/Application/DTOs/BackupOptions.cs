@@ -10,9 +10,9 @@ public sealed class BackupOptions {
     public required string SubDomain { get; init; }
 
     /// <summary>
-    /// アプリID(必須)
+    /// アプリId(必須)
     /// </summary>
-    public required int AppID { get; init; }
+    public required int AppId { get; init; }
 
     /// <summary>
     /// APIトークン(必須)

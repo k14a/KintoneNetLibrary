@@ -22,7 +22,7 @@ public class SchemaProvider(IKintoneAppMetadataApi metadataApi, IMetadataConvert
     /// </summary>
     /// <param name="domain">Kintoneのサブドメイン</param>
     /// <param name="apiToken">APIトークン</param>
-    /// <param name="appId">アプリケーションのID</param>
+    /// <param name="appId">アプリケーションのId</param>
     /// <returns>取得したスキーマ情報</returns>
     public async Task<KintoneAppSchema> GetSchemaAsync(string domain, string apiToken, int appId) {
         this._logger.LogInformation("Fetching metadata for AppId: {appId}", appId);
@@ -41,7 +41,7 @@ public class SchemaProvider(IKintoneAppMetadataApi metadataApi, IMetadataConvert
     /// </summary>
     /// <param name="domain">Kintoneのサブドメイン</param>
     /// <param name="apiToken">APIトークン</param>
-    /// <param name="appId">アプリケーションのID</param>
+    /// <param name="appId">アプリケーションのId</param>
     /// <returns>取得したメタデータ情報</returns>
     public async Task<KintoneAppMetadata> GetMetadataAsync(string domain, string apiToken, int appId) {
         return await this._metadataApi.GetAppMetadataAsync(domain, apiToken, appId);
@@ -52,7 +52,7 @@ public class SchemaProvider(IKintoneAppMetadataApi metadataApi, IMetadataConvert
     /// </summary>
     /// <param name="backupSchema">バックアップスキーマ</param>
     /// <param name="domain">Kintoneのサブドメイン</param>
-    /// <param name="appId">アプリケーションのID</param>
+    /// <param name="appId">アプリケーションのId</param>
     /// <param name="apiToken">APIトークン</param>
     /// <returns>差分情報のリスト</returns>
     public async Task<IReadOnlyList<KintoneMetadataDiff>> CompareAsync(KintoneAppMetadata backupSchema, string domain, string apiToken, int appId) {

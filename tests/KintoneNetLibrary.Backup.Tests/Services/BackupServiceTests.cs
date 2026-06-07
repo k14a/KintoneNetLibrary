@@ -76,7 +76,7 @@ public class BackupServiceTests {
     public async Task RunBackupAsync_WhenDirectoryExistsAndOverwriteDisabled_Fails() {
         using var fixture = new BackupFixture();
 
-        // 事前にバックアップ先と同じ AppID/タイムスタンプ構造のディレクトリを作成するため
+        // 事前にバックアップ先と同じ AppId/タイムスタンプ構造のディレクトリを作成するため
         // Overwrite=false で初回実行してディレクトリを作成し、同秒に再実行する
         var options = fixture.CreateOptions(overwrite: false);
         var first = await fixture.CreateService().RunBackupAsync(options);

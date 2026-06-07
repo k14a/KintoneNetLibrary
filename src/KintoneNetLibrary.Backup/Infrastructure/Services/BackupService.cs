@@ -72,7 +72,7 @@ public sealed class BackupService(
 
             // 2) スキーマ取得・保存
             var access = this._accessFactory.CreateApiTokenAccess(this.Options.SubDomain, this.Options.ApiToken);
-            var metadata = await this._schemaProvider.GetMetadataAsync(access.Domain, this.Options.ApiToken, this.Options.AppID);
+            var metadata = await this._schemaProvider.GetMetadataAsync(access.Domain, this.Options.ApiToken, this.Options.AppId);
             await this.SaveFieldSchemaAsync(metadata);
             await this.SaveLayoutSchemaAsync(metadata);
             result.SchemaSaved = true;
@@ -112,7 +112,7 @@ public sealed class BackupService(
                 ? null
                 : JavaScriptEncoder.UnsafeRelaxedJsonEscaping
         };
-        this._api = this._apiFactory.Create(access, this.Options.AppID, this._jsonOptions);
+        this._api = this._apiFactory.Create(access, this.Options.AppId, this._jsonOptions);
 
         // BatchSize が指定されていれば KintoneApi に反映
         if (this.Options.BatchSize is int size) {
@@ -171,10 +171,10 @@ public sealed class BackupService(
     /// <returns>作成されたバックアップ先ディレクトリのパス</returns>
     /// <exception cref="IOException">バックアップ先ディレクトリの作成に失敗した場合</exception>
     private string PrepareBackupDirectories() {
-        this._logger?.LogInformation("バックアップ先ディレクトリを準備します: App={App}", this.Options.AppID);
+        this._logger?.LogInformation("バックアップ先ディレクトリを準備します: App={App}", this.Options.AppId);
 
-        // AppID フォルダ（ゼロパディング）
-        var appIdFolder = $"AppID{this.Options.AppID:D6}";
+        // AppId フォルダ（ゼロパディング）
+        var appIdFolder = $"AppId{this.Options.AppId:D6}";
 
         // タイムスタンプフォルダ（UTC）
         var timestampFolder = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss");
@@ -296,7 +296,7 @@ public sealed class BackupService(
     /// <returns>非同期操作のタスク</returns>
     private async Task SaveManifestAsync(KintoneAppMetadata metadata, BackupResult result) {
         var manifest = new BackupManifest {
-            AppId = this.Options.AppID,
+            AppId = this.Options.AppId,
             AppRevision = metadata.Revision,
             BackupAt = DateTime.UtcNow,
             RecordCount = result.RecordCount,

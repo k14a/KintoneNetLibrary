@@ -8,34 +8,34 @@ namespace KintoneNetLibrary.Application.Interfaces;
 /// </summary>
 public interface IKintoneRecordReadApi {
     /// <summary>
-    /// IDで単一レコードを取得
+    /// Idで単一レコードを取得
     /// </summary>
-    Task<string?> FindByIDAsync<T>(string id) where T : KintoneModelBase<T>, new();
+    Task<string?> FindByIdAsync<T>(string id) where T : KintoneModelBase<T>, new();
 
     /// <summary>
-    /// IDで単一レコードを取得（Raw）
+    /// Idで単一レコードを取得（Raw）
     /// </summary>
-    Task<string?> RawFindByIDAsync(string id);
+    Task<string?> RawFindByIdAsync(string id);
 
     /// <summary>
-    /// IDで単一レコードを取得（Raw・ストリーム）
+    /// Idで単一レコードを取得（Raw・ストリーム）
     /// </summary>
-    Task RawFindByIDAsStreamAsync(Stream output, string id);
+    Task RawFindByIdAsStreamAsync(Stream output, string id);
 
     /// <summary>
-    /// IDリストで複数レコードを取得
+    /// Idリストで複数レコードを取得
     /// </summary>
-    Task<string?> FindByIDsAsync<T>(IList<string> ids, IList<string>? fieldCodes = null) where T : KintoneModelBase<T>, new();
+    Task<string?> FindByIdsAsync<T>(IList<string> ids, IList<string>? fieldCodes = null) where T : KintoneModelBase<T>, new();
 
     /// <summary>
-    /// IDリストで複数レコードを取得（Raw）
+    /// Idリストで複数レコードを取得（Raw）
     /// </summary>
-    Task<string?> RawFindByIDsAsync(IList<string> ids, IList<string>? fieldCodes = null);
+    Task<string?> RawFindByIdsAsync(IList<string> ids, IList<string>? fieldCodes = null);
 
     /// <summary>
-    /// IDリストで複数レコードを取得（Raw・ストリーム）
+    /// Idリストで複数レコードを取得（Raw・ストリーム）
     /// </summary>
-    Task RawFindByIDsAsStreamAsync(Stream output, IList<string> ids, IList<string>? fieldCodes = null);
+    Task RawFindByIdsAsStreamAsync(Stream output, IList<string> ids, IList<string>? fieldCodes = null);
 
     /// <summary>
     /// 全レコード取得（条件なし）

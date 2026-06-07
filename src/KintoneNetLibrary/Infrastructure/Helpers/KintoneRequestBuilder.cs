@@ -24,10 +24,10 @@ public static class KintoneRequestBuilder {
             throw new ArgumentException("レコードが空です", nameof(records));
         }
 
-        var appID = list.First().AppID;
+        var appId = list.First().AppId;
 
         var body = new {
-            app = appID,
+            app = appId,
             records = list.Select(r => r.ToKintoneRecord())
         };
 
@@ -41,7 +41,7 @@ public static class KintoneRequestBuilder {
     /// <param name="models">更新対象のレコードのリスト</param>
     /// <returns>更新用の JSON 文字列</returns>
     /// <exception cref="ArgumentException">レコードが空の場合にスローされます</exception>
-    /// <exception cref="InvalidOperationException">RecordID または IsKey 属性が見つからない場合にスローされます</exception>
+    /// <exception cref="InvalidOperationException">RecordId または IsKey 属性が見つからない場合にスローされます</exception>
     public static string BuildUpdateJson<T>(IList<T> models) where T : KintoneModelBase<T>, new() {
         if (models is null || models.Count == 0) {
             throw new ArgumentException("Models list is null or empty.", nameof(models));
@@ -53,12 +53,12 @@ public static class KintoneRequestBuilder {
             var recordWrapper = new Dictionary<string, object>();
 
             // id または updateKey を指定
-            if (!string.IsNullOrWhiteSpace(model.RecordID)) {
-                recordWrapper["id"] = model.RecordID;
+            if (!string.IsNullOrWhiteSpace(model.RecordId)) {
+                recordWrapper["id"] = model.RecordId;
             } else {
                 var keyProp = model.GetType()
                     .GetProperties()
-                    .FirstOrDefault(p => p.GetCustomAttribute<KintoneItemAttribute>()?.IsKey == true) ?? throw new InvalidOperationException("No RecordID or IsKey attribute found for update.");
+                    .FirstOrDefault(p => p.GetCustomAttribute<KintoneItemAttribute>()?.IsKey == true) ?? throw new InvalidOperationException("No RecordId or IsKey attribute found for update.");
                 var fieldCode = keyProp.GetCustomAttribute<KintoneItemAttribute>()!.FieldCode;
                 var value = keyProp.GetValue(model) ?? throw new InvalidOperationException($"Update key property '{fieldCode}' has null value.");
                 recordWrapper["updateKey"] = new { field = fieldCode, value = value };
@@ -79,7 +79,7 @@ public static class KintoneRequestBuilder {
             records.Add(recordWrapper);
         }
 
-        var appId = models.First().AppID;
+        var appId = models.First().AppId;
 
         var body = new {
             app = appId,
@@ -102,9 +102,9 @@ public static class KintoneRequestBuilder {
             throw new ArgumentException("Model list is empty", nameof(models));
         }
 
-        var appId = modelList.First().AppID;
+        var appId = modelList.First().AppId;
         var idList = modelList
-            .Select(m => m.RecordID)
+            .Select(m => m.RecordId)
             .Where(id => !string.IsNullOrWhiteSpace(id))
             .ToList();
 
@@ -121,7 +121,7 @@ public static class KintoneRequestBuilder {
     /// </summary>
     /// <param name="baseUri">ベースとなる URI</param>
     /// <param name="path">リクエストパス</param>
-    /// <param name="appID">アプリID</param>
+    /// <param name="appId">アプリId</param>
     /// <param name="query">検索クエリ</param>
     /// <param name="fieldCodes">取得するフィールドコードのリスト</param>
     /// <param name="additionalParams">追加のクエリパラメータ</param>
@@ -129,7 +129,7 @@ public static class KintoneRequestBuilder {
     public static Uri BuildRequestUri(
         Uri baseUri,
         string path,
-        int appID,
+        int appId,
         string? query = null,
         IList<string>? fieldCodes = null,
         IDictionary<string, string>? additionalParams = null
@@ -137,7 +137,7 @@ public static class KintoneRequestBuilder {
 
         var builder = new UriBuilder(new Uri(baseUri, path));
         var parameters = new List<string> {
-            $"app={appID}"
+            $"app={appId}"
         };
 
         if (!string.IsNullOrWhiteSpace(query)) {
@@ -165,15 +165,15 @@ public static class KintoneRequestBuilder {
     /// </summary>
     /// <param name="baseUri">ベースとなる URI</param>
     /// <param name="path">リクエストパス</param>
-    /// <param name="appID">アプリID</param>
+    /// <param name="appId">アプリId</param>
     /// <param name="query">検索クエリ</param>
     /// <param name="fieldCodes">取得するフィールドコードのリスト</param>
     /// <returns>構築された URI</returns>
-    public static Uri BuildFindRequestUri(Uri baseUri, string path, int appID, string? query = null, IList<string>? fieldCodes = null) {
+    public static Uri BuildFindRequestUri(Uri baseUri, string path, int appId, string? query = null, IList<string>? fieldCodes = null) {
         var effectiveFields = EnsureMinimumFields(fieldCodes);
 
         var builder = new UriBuilder(new Uri(baseUri, path));
-        var parameters = new List<string> { $"app={appID}" };
+        var parameters = new List<string> { $"app={appId}" };
 
         if (!string.IsNullOrWhiteSpace(query)) {
             parameters.Add($"query={Uri.EscapeDataString(query)}");

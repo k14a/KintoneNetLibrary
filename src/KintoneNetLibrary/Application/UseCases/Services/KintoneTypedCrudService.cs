@@ -135,7 +135,7 @@ public class KintoneTypedCrudService<T>(
     /// <summary>
     /// Kintoneモデルのレコードを検索します。
     /// </summary>
-    /// <param name="ids">検索対象のレコードIDのリスト（オプション）</param>
+    /// <param name="ids">検索対象のレコードIdのリスト（オプション）</param>
     /// <param name="query">検索クエリ文字列（オプション）</param>
     /// <param name="kintoneQuery">型安全なクエリビルダー（オプション）</param>
     /// <param name="fieldCodes">取得するフィールドコードのリスト（オプション）</param>
@@ -148,16 +148,16 @@ public class KintoneTypedCrudService<T>(
             T model = new();
 
             if (ids != null && ids.Any()) {
-                // IDが1件なら単一取得
+                // Idが1件なら単一取得
                 if (ids.Count == 1) {
-                    var json = await this._repository.FindByIDAsync(model, ids[0]);
+                    var json = await this._repository.FindByIdAsync(model, ids[0]);
                     if (string.IsNullOrEmpty(json)) { return []; }
 
                     var record = KintoneResponseParser.ParseRecord<T>(json);
                     return [record];
 
                 } else {
-                    var json = await this._repository.FindByIDsAsync(model, ids, fieldCodes);
+                    var json = await this._repository.FindByIdsAsync(model, ids, fieldCodes);
                     if (string.IsNullOrEmpty(json)) { return []; }
 
                     var records = KintoneResponseParser.ParseRecords<T>(json);
@@ -286,11 +286,11 @@ public class KintoneTypedCrudService<T>(
     /// <summary>
     /// Kintoneモデルのレコードを削除します。
     /// </summary>
-    /// <param name="ids">削除対象のレコードIDのリスト</param>
+    /// <param name="ids">削除対象のレコードIdのリスト</param>
     /// <param name="validateExistence">レコードの存在確認を行うかどうか</param>
     /// <returns>削除結果を含むKintoneDeleteResultオブジェクト</returns>
     public async Task<KintoneDeleteResult> DeleteAsync(IList<string> ids, bool validateExistence = true) {
-        var models = ids.Select(id => new T { RecordID = id }).ToList();
+        var models = ids.Select(id => new T { RecordId = id }).ToList();
         return await this.DeleteAsync(models, validateExistence);
     }
 
@@ -349,21 +349,21 @@ public class KintoneTypedCrudService<T>(
     /// <returns>削除結果を含むKintoneDeleteResultオブジェクト</returns>
     private async Task<KintoneDeleteResult> DeleteChunkAsync(IList<T> chunk) {
         var result = new KintoneDeleteResult();
-        var idList = chunk.Select(m => m.RecordID).Where(id => !string.IsNullOrWhiteSpace(id)).Select(id => id!).ToList();
+        var idList = chunk.Select(m => m.RecordId).Where(id => !string.IsNullOrWhiteSpace(id)).Select(id => id!).ToList();
 
         try {
-            var validModels = chunk.Where(x => !string.IsNullOrWhiteSpace(x.RecordID)).ToList();
+            var validModels = chunk.Where(x => !string.IsNullOrWhiteSpace(x.RecordId)).ToList();
             await this._repository.DeleteRecordsAsync(validModels);
             result.Succeeded.AddRange(idList);
 
-            foreach (var model in chunk.Where(m => idList.Contains(m.RecordID!))) {
+            foreach (var model in chunk.Where(m => idList.Contains(m.RecordId!))) {
                 await model.RunAfterDeleteHookAsync();
             }
 
         } catch (KintoneException ex) {
             foreach (var id in idList) {
                 result.Failed.Add(new KintoneDeleteFailure {
-                    ID = id,
+                    Id = id,
                     ErrorMessage = ex.Message,
                     Reason = KintoneDeleteFailureReason.DeleteError
                 });
@@ -379,8 +379,8 @@ public class KintoneTypedCrudService<T>(
     /// <param name="models">存在確認対象のKintoneモデルのリスト</param>
     /// <returns>存在するKintoneモデルのリスト</returns>
     private async Task<IList<T>> PrepareValidatedTargets(IList<T> models) {
-        var ids = models.Select(x => x.RecordID).OfType<string>().ToList();
-        return (await this.FindAsync(ids, fieldCodes: ["RecordID"])).ToList();
+        var ids = models.Select(x => x.RecordId).OfType<string>().ToList();
+        return (await this.FindAsync(ids, fieldCodes: ["RecordId"])).ToList();
     }
 
     /// <summary>
@@ -390,11 +390,11 @@ public class KintoneTypedCrudService<T>(
     /// <param name="found">存在が確認されたKintoneモデルのリスト</param>
     /// <returns>削除失敗情報のリスト</returns>
     private static List<KintoneDeleteFailure> CollectNotFoundFailures(IList<T> original, IList<T> found) {
-        var foundIds = found.Select(x => x.RecordID).ToHashSet();
+        var foundIds = found.Select(x => x.RecordId).ToHashSet();
         return original
-            .Where(x => !foundIds.Contains(x.RecordID))
+            .Where(x => !foundIds.Contains(x.RecordId))
             .Select(x => new KintoneDeleteFailure {
-                ID = x.RecordID ?? string.Empty,
+                Id = x.RecordId ?? string.Empty,
                 ErrorMessage = "Record is not found.",
                 Reason = KintoneDeleteFailureReason.RecordNotFound
             }).ToList();
@@ -458,7 +458,7 @@ public class KintoneTypedCrudService<T>(
                 // create に失敗したレコードを update として再試行
                 if (enableCreateToUpdateRetry) {
                     var retryCandidates = createResult.Failed
-                        .Where(f => f.Record.HasUpdateKeyOrID()) // update できる条件を満たす
+                        .Where(f => f.Record.HasUpdateKeyOrId()) // update できる条件を満たす
                         .Select(f => f.Record)
                         .ToList();
 
@@ -498,7 +498,7 @@ public class KintoneTypedCrudService<T>(
         foreach (var i in Enumerable.Range(0, Math.Min(records.Count, indexResponse.Records.Count))) {
             var model = records[i];
             var indexItem = indexResponse.Records[i];
-            model.RecordID = indexItem.ID ?? string.Empty;
+            model.RecordId = indexItem.Id ?? string.Empty;
             model.Revision = indexItem.Revision;
             result.Add(model);
         }
@@ -515,7 +515,7 @@ public class KintoneTypedCrudService<T>(
         var updateTargets = new List<T>();
 
         foreach (var record in records) {
-            if (record.HasUpdateKeyOrID()) {
+            if (record.HasUpdateKeyOrId()) {
                 updateTargets.Add(record);
             } else {
                 createTargets.Add(record);
@@ -529,10 +529,10 @@ public class KintoneTypedCrudService<T>(
         var keyed = records.Where(r => r.HasUpdateKey()).ToList();
 
         if (keyed.Count == 0) {
-            // 更新キーを持つレコードがない場合は RecordID の有無で create/update を分割する
+            // 更新キーを持つレコードがない場合は RecordId の有無で create/update を分割する
             return (
-                records.Where(r => !r.HasUpdateKeyOrID()).ToList(),
-                records.Where(r => r.HasUpdateKeyOrID()).ToList()
+                records.Where(r => !r.HasUpdateKeyOrId()).ToList(),
+                records.Where(r => r.HasUpdateKeyOrId()).ToList()
             );
         }
 
@@ -558,7 +558,7 @@ public class KintoneTypedCrudService<T>(
 
         var existingMap = existing.ToDictionary(
             r => r.GetUpdateKeyValue()!,
-            r => (r.RecordID, r.Revision)
+            r => (r.RecordId, r.Revision)
         );
 
         var createTargets = new List<T>();
@@ -570,7 +570,7 @@ public class KintoneTypedCrudService<T>(
             if (record.HasUpdateKey() &&
                 key != null &&
                 existingMap.TryGetValue(key, out var info)) {
-                record.RecordID = info.RecordID;
+                record.RecordId = info.RecordId;
                 record.Revision = info.Revision;
                 updateTargets.Add(record);
             } else {

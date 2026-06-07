@@ -23,27 +23,27 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
     public KintoneAccount Account => this.Access.ToKintoneAccount();
 
     /// <summary>
-    /// KintoneアプリのID
+    /// KintoneアプリのId
     /// <remarks>アプリの一意な識別子として使用されます。</remarks>
     /// </summary>
-    public abstract int AppID { get; init; }
+    public abstract int AppId { get; init; }
 
     /// <summary>
-    /// レコードの一意な識別子(Record ID)
-    /// <remarks>Record IDはKintoneでレコードを一意に識別するためのIDです。</remarks>
+    /// レコードの一意な識別子(Record Id)
+    /// <remarks>Record IdはKintoneでレコードを一意に識別するためのIdです。</remarks>
     /// </summary>
     [JsonPropertyName("$id")]
-    [KintoneItem(fieldCode: "RecordID", isUpload: false)]
-    public virtual string? RecordID { get; set; }
+    [KintoneItem(fieldCode: "RecordId", isUpload: false)]
+    public virtual string? RecordId { get; set; }
 
     /// <summary>
-    /// RecordIDのエイリアスとしてIDプロパティを使用
-    /// <remarks>IDプロパティはRecordIDと同じ値を持ちます。</remarks>
+    /// RecordIdのエイリアスとしてIdプロパティを使用
+    /// <remarks>IdプロパティはRecordIdと同じ値を持ちます。</remarks>
     /// </summary>
     [JsonIgnore]
-    public string? ID {
-        get => this.RecordID;
-        set => this.RecordID = value;
+    public string? Id {
+        get => this.RecordId;
+        set => this.RecordId = value;
     }
 
     /// <summary>
@@ -98,9 +98,9 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
 
     /// <summary>
     /// レコードの表示URLを取得します
-    /// <remarks>レコードのURLは、Kintoneアカウントのドメイン、アプリID、およびレコードIDを組み合わせて構築されます。</remarks>
+    /// <remarks>レコードのURLは、Kintoneアカウントのドメイン、アプリId、およびレコードIdを組み合わせて構築されます。</remarks>
     /// </summary>
-    public string ShowUrl => $"https://{this.Account.Domain}/k/{this.AppID}/show#record={this.RecordID}";
+    public string ShowUrl => $"https://{this.Account.Domain}/k/{this.AppId}/show#record={this.RecordId}";
 
     /// <summary>
     /// Kintoneモデルのプロパティ名とアイテム名の変換情報

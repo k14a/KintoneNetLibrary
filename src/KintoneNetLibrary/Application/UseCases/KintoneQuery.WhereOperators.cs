@@ -46,7 +46,7 @@ public partial class KintoneQuery<T> where T : KintoneModelBase<T>, new() {
     /// このメソッドは、複数の条件を OR で結合します。
     /// 既存の条件は保持され、新しい条件が追加されます。
     /// </remarks>
-    /// <param name="ids"> KintoneレコードID</param>
+    /// <param name="ids"> KintoneレコードId</param>
     /// <returns>KintoneQuery インスタンス</returns>
     /// <exception cref="ArgumentNullException">条件セレクターが null の場合にスローされます。</exception>
     /// <exception cref="ArgumentException">条件セレクターが有効なフィールドを指定していない場合にスローされます。</exception>
@@ -69,13 +69,13 @@ public partial class KintoneQuery<T> where T : KintoneModelBase<T>, new() {
     }
 
     /// <summary>
-    /// KintoneのレコードIDが指定された値と等しいかを確認します。
+    /// KintoneのレコードIdが指定された値と等しいかを確認します。
     /// </summary>
     /// <remarks>
-    /// このメソッドは、KintoneのレコードIDが指定された値と等しいかを確認します。
-    /// KintoneのレコードIDは、"$id" フィールドを使用して参照されます。
+    /// このメソッドは、KintoneのレコードIdが指定された値と等しいかを確認します。
+    /// KintoneのレコードIdは、"$id" フィールドを使用して参照されます。
     /// </remarks>
-    /// <param name="id">KintoneのレコードID</param>
+    /// <param name="id">KintoneのレコードId</param>
     /// <returns>KintoneQuery インスタンス</returns>
     public KintoneQuery<T> WhereIdEquals(string id) {
         this.AddEqualityCondition("$id", id);
@@ -83,13 +83,13 @@ public partial class KintoneQuery<T> where T : KintoneModelBase<T>, new() {
     }
 
     /// <summary>
-    /// KintoneのレコードIDが指定された値のリストに含まれるかを確認します。
+    /// KintoneのレコードIdが指定された値のリストに含まれるかを確認します。
     /// </summary>
     /// <remarks>
-    /// このメソッドは、KintoneのレコードIDが指定された値のリストに含まれるかを確認します。
-    /// KintoneのレコードIDは、"$id" フィールドを使用して参照されます。
+    /// このメソッドは、KintoneのレコードIdが指定された値のリストに含まれるかを確認します。
+    /// KintoneのレコードIdは、"$id" フィールドを使用して参照されます。
     /// </remarks>
-    /// <param name="ids">KintoneのレコードIDのリスト</param>
+    /// <param name="ids">KintoneのレコードIdのリスト</param>
     /// <returns>KintoneQuery インスタンス</returns>
     /// <exception cref="ArgumentNullException">ids が null の場合にスローされます。</exception>
     /// <exception cref="ArgumentException">ids が空の場合にスローされます。</exception>
@@ -99,11 +99,11 @@ public partial class KintoneQuery<T> where T : KintoneModelBase<T>, new() {
     }
 
     /// <summary>
-    /// KintoneのレコードIDが指定された値と等しいかを確認します。
+    /// KintoneのレコードIdが指定された値と等しいかを確認します。
     /// </summary>
     /// <remarks>
-    /// このメソッドは、KintoneのレコードIDが指定された値と等しいかを確認します。
-    /// KintoneのレコードIDは、"$id" フィールドを使用して参照されます。
+    /// このメソッドは、KintoneのレコードIdが指定された値と等しいかを確認します。
+    /// KintoneのレコードIdは、"$id" フィールドを使用して参照されます。
     /// </remarks>
     /// <param name="field">フィールド名</param>
     /// <param name="value">値</param>

@@ -29,22 +29,22 @@ public interface IKintoneRepository {
     Task<string> DeleteRecordsAsync<T>(IList<T> records) where T : KintoneModelBase<T>, new();
 
     /// <summary>
-    /// IDでレコードを検索する非同期メソッド
+    /// Idでレコードを検索する非同期メソッド
     /// </summary>
     /// <typeparam name="T">Kintoneモデルの型</typeparam>
     /// <param name="model">Kintoneモデルのインスタンス</param>
-    /// <param name="id">検索するレコードのID</param>
+    /// <param name="id">検索するレコードのId</param>
     /// <returns>検索結果を示す文字列</returns>
-    Task<string?> FindByIDAsync<T>(T model, string id) where T : KintoneModelBase<T>, new();
+    Task<string?> FindByIdAsync<T>(T model, string id) where T : KintoneModelBase<T>, new();
     /// <summary>
-    /// IDsでレコードを検索する非同期メソッド
+    /// Idsでレコードを検索する非同期メソッド
     /// </summary>
     /// <typeparam name="T">Kintoneモデルの型</typeparam>
     /// <param name="model">Kintoneモデルのインスタンス</param>
-    /// <param name="ids">検索するレコードのIDリスト</param>
+    /// <param name="ids">検索するレコードのIdリスト</param>
     /// <param name="fieldCodes">取得するフィールドコードのリスト</param>
     /// <returns>検索結果を示す文字列</returns>
-    Task<string?> FindByIDsAsync<T>(T model, IList<string> ids, IList<string>? fieldCodes = null) where T : KintoneModelBase<T>, new();
+    Task<string?> FindByIdsAsync<T>(T model, IList<string> ids, IList<string>? fieldCodes = null) where T : KintoneModelBase<T>, new();
     /// <summary>
     /// 全レコードを検索する非同期メソッド
     /// </summary>

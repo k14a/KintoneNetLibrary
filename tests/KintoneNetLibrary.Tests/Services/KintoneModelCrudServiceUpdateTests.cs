@@ -17,11 +17,11 @@ namespace KintoneNetLibrary.Tests.Services;
 public class KintoneModelCrudServiceUpdateTests {
     #region <<Test methods>>
     /// <summary>
-    /// UpdateAsync メソッドに、RecordID と Revision が両方とも有効な値のレコードを1件だけ含むリストを渡した場合、UpdateRecordsAsync メソッドが呼び出され、その結果が正しく返されることをテストします。
+    /// UpdateAsync メソッドに、RecordId と Revision が両方とも有効な値のレコードを1件だけ含むリストを渡した場合、UpdateRecordsAsync メソッドが呼び出され、その結果が正しく返されることをテストします。
     /// </summary>
     [Fact]
     public async Task UpdateAsyncWithSingleRecordReturnsSucceededResult() {
-        var testRecord = new SampleModel { FieldA = "Update1", RecordID = "R9999", Revision = 1 };
+        var testRecord = new SampleModel { FieldA = "Update1", RecordId = "R9999", Revision = 1 };
 
         var mockRepo = new Mock<IKintoneRepository>();
         mockRepo.Setup(r => r.UpdateRecordsAsync<SampleModel>(It.IsAny<IList<SampleModel>>()))
@@ -40,19 +40,19 @@ public class KintoneModelCrudServiceUpdateTests {
 
         Assert.Single(result.Succeeded);
         var updated = result.Succeeded[0];
-        Assert.Equal("R9999", updated.RecordID);
+        Assert.Equal("R9999", updated.RecordId);
         Assert.Equal(2, updated.Revision);
         Assert.Empty(result.Failed);
     }
 
     /// <summary>
-    /// UpdateAsync メソッドに、RecordID と Revision が両方とも有効な値のレコードを複数件含むリストを渡した場合、UpdateRecordsAsync メソッドが呼び出され、その結果が正しく返されることをテストします。
+    /// UpdateAsync メソッドに、RecordId と Revision が両方とも有効な値のレコードを複数件含むリストを渡した場合、UpdateRecordsAsync メソッドが呼び出され、その結果が正しく返されることをテストします。
     /// </summary>
     [Fact]
     public async Task UpdateAsyncWithMultipleRecordsReturnsAllSucceeded() {
         var records = new List<SampleModel> {
-            new() { FieldA = "Update1", RecordID = "R1001", Revision = 1 },
-            new() { FieldA = "Update2", RecordID = "R1002", Revision = 2 }
+            new() { FieldA = "Update1", RecordId = "R1001", Revision = 1 },
+            new() { FieldA = "Update2", RecordId = "R1002", Revision = 2 }
         };
 
         var mockRepo = new Mock<IKintoneRepository>();
@@ -74,20 +74,20 @@ public class KintoneModelCrudServiceUpdateTests {
         var result = await service.UpdateAsync(records);
 
         Assert.Equal(2, result.Succeeded.Count);
-        Assert.Contains(result.Succeeded, r => r.RecordID == "R1001" && r.Revision == 2);
-        Assert.Contains(result.Succeeded, r => r.RecordID == "R1002" && r.Revision == 3);
+        Assert.Contains(result.Succeeded, r => r.RecordId == "R1001" && r.Revision == 2);
+        Assert.Contains(result.Succeeded, r => r.RecordId == "R1002" && r.Revision == 3);
         Assert.Empty(result.Failed);
     }
 
     /// <summary>
-    /// UpdateAsync メソッドに、RecordID と Revision が両方とも有効な値のレコードを複数件含むリストを渡した場合、最初のバルク更新で例外がスローされ、その後の単件リトライで全件が成功することをテストします。
+    /// UpdateAsync メソッドに、RecordId と Revision が両方とも有効な値のレコードを複数件含むリストを渡した場合、最初のバルク更新で例外がスローされ、その後の単件リトライで全件が成功することをテストします。
     /// </summary>
     [Fact]
     public async Task UpdateAsyncWhenBulkFailsAndSingleRetrySucceedsRecordsAddedToSucceeded() {
         // Arrange
         var records = new List<SampleModel> {
-            new() { FieldA = "R1", RecordID = "RID001", Revision = 1 },
-            new() { FieldA = "R2", RecordID = "RID002", Revision = 1 }
+            new() { FieldA = "R1", RecordId = "RID001", Revision = 1 },
+            new() { FieldA = "R2", RecordId = "RID002", Revision = 1 }
         };
 
         var mockRepo = new Mock<IKintoneRepository>();
@@ -102,9 +102,9 @@ public class KintoneModelCrudServiceUpdateTests {
                     };
                 }
 
-                callLog.Add($"single:{input[0].RecordID}");
+                callLog.Add($"single:{input[0].RecordId}");
                 var json = JsonSerializer.Serialize(new {
-                    records = new[] { new { id = input[0].RecordID, revision = "2" } }
+                    records = new[] { new { id = input[0].RecordId, revision = "2" } }
                 });
                 return json;
             });
@@ -123,8 +123,8 @@ public class KintoneModelCrudServiceUpdateTests {
         Assert.Equal(2, result.Succeeded.Count);
         Assert.Empty(result.Failed);
 
-        Assert.Equal("RID001", result.Succeeded[0].RecordID);
-        Assert.Equal("RID002", result.Succeeded[1].RecordID);
+        Assert.Equal("RID001", result.Succeeded[0].RecordId);
+        Assert.Equal("RID002", result.Succeeded[1].RecordId);
         Assert.All(result.Succeeded, r => Assert.Equal(2, r.Revision));
 
         Assert.Equal(3, callLog.Count); // 1回bulk + 2回single
@@ -132,14 +132,14 @@ public class KintoneModelCrudServiceUpdateTests {
     }
 
     /// <summary>
-    /// UpdateAsync メソッドに、RecordID と Revision が両方とも有効な値のレコードを複数件含むリストを渡した場合、最初のバルク更新で例外がスローされ、その後の単件リトライでも全件が失敗することをテストします。失敗したレコードはすべて Failed に追加されることを確認します。
+    /// UpdateAsync メソッドに、RecordId と Revision が両方とも有効な値のレコードを複数件含むリストを渡した場合、最初のバルク更新で例外がスローされ、その後の単件リトライでも全件が失敗することをテストします。失敗したレコードはすべて Failed に追加されることを確認します。
     /// </summary>
     [Fact]
     public async Task UpdateAsyncWhenBulkAndRetryBothFailAddsAllRecordsToFailed() {
         // Arrange
         var records = new List<SampleModel> {
-            new() { FieldA = "R1", RecordID = "RID001", Revision = 1 },
-            new() { FieldA = "R2", RecordID = "RID002", Revision = 1 } };
+            new() { FieldA = "R1", RecordId = "RID001", Revision = 1 },
+            new() { FieldA = "R2", RecordId = "RID002", Revision = 1 } };
 
         var mockRepo = new Mock<IKintoneRepository>();
 
@@ -177,17 +177,17 @@ public class KintoneModelCrudServiceUpdateTests {
     }
 
     /// <summary>
-    /// UpdateAsync メソッドに、RecordID が null で Revision が -1 のレコード（＝Create対象）を含むリストを渡した場合、UpdateRecordsAsync メソッドが呼び出されて例外がスローされ、そのレコードが Failed に追加されることをテストします。
+    /// UpdateAsync メソッドに、RecordId が null で Revision が -1 のレコード（＝Create対象）を含むリストを渡した場合、UpdateRecordsAsync メソッドが呼び出されて例外がスローされ、そのレコードが Failed に追加されることをテストします。
     /// </summary>
     [Fact]
     public async Task UpdateAsyncWhenRecordIdIsNullAddsToFailed() {
         var records = new List<SampleModel> {
-            new() { FieldA = "NullId", RecordID = null, Revision = 1 }
+            new() { FieldA = "NullId", RecordId = null, Revision = 1 }
         };
 
         var mockRepo = new Mock<IKintoneRepository>();
         mockRepo.Setup(r => r.UpdateRecordsAsync<SampleModel>(It.IsAny<IList<SampleModel>>()))
-            .ThrowsAsync(new KintoneException("Missing ID"));
+            .ThrowsAsync(new KintoneException("Missing Id"));
 
         var service = new KintoneTypedCrudService<SampleModel>(
             mockRepo.Object,
@@ -200,17 +200,17 @@ public class KintoneModelCrudServiceUpdateTests {
 
         Assert.Empty(result.Succeeded);
         Assert.Single(result.Failed);
-        Assert.Equal("Missing ID", result.Failed[0].ErrorMessage);
-        Assert.Null(result.Failed[0].Record.RecordID);
+        Assert.Equal("Missing Id", result.Failed[0].ErrorMessage);
+        Assert.Null(result.Failed[0].Record.RecordId);
     }
 
     /// <summary>
-    /// UpdateAsync メソッドに、RecordID と Revision が両方とも有効な値のレコードを含むリストを渡した場合、最初のバルク更新で例外がスローされ、その後の単件リトライで例外がスローされることをテストします。失敗したレコードはすべて Failed に追加されることを確認します。
+    /// UpdateAsync メソッドに、RecordId と Revision が両方とも有効な値のレコードを含むリストを渡した場合、最初のバルク更新で例外がスローされ、その後の単件リトライで例外がスローされることをテストします。失敗したレコードはすべて Failed に追加されることを確認します。
     /// </summary>
     [Fact]
     public async Task UpdateAsyncWhenRevisionIsInvalidAddsToFailed() {
         var records = new List<SampleModel> {
-            new() { FieldA = "BadRev", RecordID = "RID001", Revision = -1 }
+            new() { FieldA = "BadRev", RecordId = "RID001", Revision = -1 }
         };
 
         var mockRepo = new Mock<IKintoneRepository>();
@@ -234,12 +234,12 @@ public class KintoneModelCrudServiceUpdateTests {
     }
 
     /// <summary>
-    /// UpdateAsync メソッドに、RecordID と Revision が両方とも有効な値のレコードを含むリストを渡した場合、UpdateRecordsAsync メソッドが空のレスポンスを返すことがあることをテストします。空のレスポンスはエラーではなく、すべてのレコードが成功とみなされることを確認します。
+    /// UpdateAsync メソッドに、RecordId と Revision が両方とも有効な値のレコードを含むリストを渡した場合、UpdateRecordsAsync メソッドが空のレスポンスを返すことがあることをテストします。空のレスポンスはエラーではなく、すべてのレコードが成功とみなされることを確認します。
     /// </summary>
     [Fact]
     public async Task UpdateAsyncWhenResponseIsEmptyReturnsEmptySucceeded() {
         var records = new List<SampleModel> {
-            new() { FieldA = "NoResponse", RecordID = "RID0001", Revision = 1 }
+            new() { FieldA = "NoResponse", RecordId = "RID0001", Revision = 1 }
         };
 
         var mockRepo = new Mock<IKintoneRepository>();
@@ -264,13 +264,13 @@ public class KintoneModelCrudServiceUpdateTests {
     }
 
     /// <summary>
-    /// UpdateAsync メソッドに、RecordID と Revision が両方とも有効な値のレコードを複数件含むリストを渡した場合、最初のバルク更新で例外がスローされ、その後の単件リトライでも全件が失敗することをテストします。失敗したレコードはすべて Failed に追加されることを確認します。また、バルク更新の失敗と単件リトライの失敗の両方で、適切なログメッセージが記録されることを確認します。
+    /// UpdateAsync メソッドに、RecordId と Revision が両方とも有効な値のレコードを複数件含むリストを渡した場合、最初のバルク更新で例外がスローされ、その後の単件リトライでも全件が失敗することをテストします。失敗したレコードはすべて Failed に追加されることを確認します。また、バルク更新の失敗と単件リトライの失敗の両方で、適切なログメッセージが記録されることを確認します。
     /// </summary>
     [Fact]
     public async Task UpdateAsyncWhenBulkFailsLogsWarningMessage() {
         var testRecords = new List<SampleModel> {
-            new() { FieldA = "BulkFail1", RecordID = "RID001", Revision = 1 },
-            new() { FieldA = "BulkFail2", RecordID = "RID002", Revision = 1 }
+            new() { FieldA = "BulkFail1", RecordId = "RID001", Revision = 1 },
+            new() { FieldA = "BulkFail2", RecordId = "RID002", Revision = 1 }
         };
 
         var mockRepo = new Mock<IKintoneRepository>();
@@ -303,12 +303,12 @@ public class KintoneModelCrudServiceUpdateTests {
     }
 
     /// <summary>
-    /// UpdateAsync メソッドに、RecordID と Revision が両方とも有効な値のレコードを複数件含むリストを渡した場合、最初のバルク更新で例外がスローされ、その後の単件リトライでも全件が失敗することをテストします。失敗したレコードはすべて Failed に追加されることを確認します。また、単件リトライの失敗で、適切なエラーログメッセージが記録されることを確認します。
+    /// UpdateAsync メソッドに、RecordId と Revision が両方とも有効な値のレコードを複数件含むリストを渡した場合、最初のバルク更新で例外がスローされ、その後の単件リトライでも全件が失敗することをテストします。失敗したレコードはすべて Failed に追加されることを確認します。また、単件リトライの失敗で、適切なエラーログメッセージが記録されることを確認します。
     /// </summary>
     [Fact]
     public async Task UpdateAsyncWhenSingleRetryFailsLogsErrorMessage() {
         var testRecords = new List<SampleModel> {
-            new() { FieldA = "RetryFail", RecordID = "RID001", Revision = 1 }
+            new() { FieldA = "RetryFail", RecordId = "RID001", Revision = 1 }
         };
 
         var mockRepo = new Mock<IKintoneRepository>();

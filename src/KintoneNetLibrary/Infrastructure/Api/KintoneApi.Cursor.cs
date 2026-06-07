@@ -19,7 +19,7 @@ public partial class KintoneApi : IKintoneApi
     /// カーソルを作成します。
     /// </summary>
     /// <param name="body">カーソル作成に必要なパラメータを含む辞書</param>
-    /// <returns>作成されたカーソルのID</returns>
+    /// <returns>作成されたカーソルのId</returns>
     /// <exception cref="KintoneException">カーソル作成に失敗した場合にスローされます</exception>
     public async Task<string> CreateCursorAsync(Dictionary<string, object> body)
     {
@@ -36,7 +36,7 @@ public partial class KintoneApi : IKintoneApi
         }
 
         var created = JsonSerializer.Deserialize<CursorCreated>(json, this._jsonOptions);
-        return created?.Id ?? throw new KintoneException("Cursor ID が取得できませんでした。");
+        return created?.Id ?? throw new KintoneException("Cursor Id が取得できませんでした。");
     }
 
     /// <summary>
@@ -45,11 +45,11 @@ public partial class KintoneApi : IKintoneApi
     /// <param name="query">クエリ文字列</param>
     /// <param name="fields">取得するフィールドのリスト</param>
     /// <param name="size">取得する件数</param>
-    /// <returns>作成されたカーソルのID</returns>
+    /// <returns>作成されたカーソルのId</returns>
     public Task<string> CreateCursorAsync(string query, IList<string>? fields = null, int? size = null)
     {
         var body = new Dictionary<string, object> {
-            { "app", this._appID },
+            { "app", this._appId },
             { "query", query }
         };
 
@@ -69,7 +69,7 @@ public partial class KintoneApi : IKintoneApi
     /// <summary>
     /// カーソルを取得します。
     /// </summary>
-    /// <param name="cursorId">取得するカーソルのID</param>
+    /// <param name="cursorId">取得するカーソルのId</param>
     /// <returns>取得したカーソルのJSON文字列</returns>
     /// <exception cref="KintoneException">カーソル取得に失敗した場合にスローされます</exception>
     private async Task<string> FetchCursorAsync(string cursorId)
@@ -98,7 +98,7 @@ public partial class KintoneApi : IKintoneApi
     /// <summary>
     /// カーソルをストリームで取得します。
     /// </summary>
-    /// <param name="cursorId">取得するカーソルのID</param>
+    /// <param name="cursorId">取得するカーソルのId</param>
     /// <returns>取得したカーソルのストリーム</returns>
     public Task<Stream> FetchCursorPageAsStreamAsync(string cursorId)
     {
@@ -108,7 +108,7 @@ public partial class KintoneApi : IKintoneApi
     /// <summary>
     /// カーソルをストリームで取得します。
     /// </summary>
-    /// <param name="cursorId">取得するカーソルのID</param>
+    /// <param name="cursorId">取得するカーソルのId</param>
     /// <returns>取得したカーソルのストリーム</returns>
     /// <exception cref="KintoneException">カーソル取得に失敗した場合にスローされます</exception>
     private async Task<Stream> FetchCursorStreamAsync(string cursorId)
@@ -163,7 +163,7 @@ public partial class KintoneApi : IKintoneApi
     /// <summary>
     /// カーソルを削除します。
     /// </summary>
-    /// <param name="cursorId">削除するカーソルのID</param>
+    /// <param name="cursorId">削除するカーソルのId</param>
     /// <returns>削除されたカーソルのJSON文字列</returns>
     public Task DeleteCursorAsync(string cursorId)
     {
@@ -174,7 +174,7 @@ public partial class KintoneApi : IKintoneApi
     /// <summary>
     /// カーソルをストリームとして取得します。
     /// </summary>
-    /// <param name="cursorId">取得するカーソルのID</param>
+    /// <param name="cursorId">取得するカーソルのId</param>
     /// <returns>取得したカーソルのストリーム</returns>
     public async IAsyncEnumerable<Stream> StreamCursorAsync(string cursorId)
     {
@@ -218,7 +218,7 @@ public partial class KintoneApi : IKintoneApi
     private sealed class CursorCreated
     {
         /// <summary>
-        /// 作成したカーソル ID
+        /// 作成したカーソル Id
         /// </summary>
         [JsonPropertyName("id")]
         public string Id { get; set; } = string.Empty;

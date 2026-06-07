@@ -66,7 +66,7 @@ internal sealed class BackupFixture : IDisposable {
 
     internal BackupOptions CreateOptions(bool downloadFiles = false, bool overwrite = true) => new() {
         SubDomain = "example",
-        AppID = 1,
+        AppId = 1,
         ApiToken = "dummy-token",
         OutputPath = this.OutputDir,
         DownloadFiles = downloadFiles,

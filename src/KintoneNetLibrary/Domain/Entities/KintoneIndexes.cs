@@ -5,15 +5,15 @@ namespace KintoneNetLibrary.Domain.Entities;
 
 /// <summary>
 /// Kintoneのインデックスを表すクラス
-/// このクラスは、KintoneのレコードのIDとリビジョンを保持します。
-/// 単一レコードの ID / Revision を表す DTO.
+/// このクラスは、KintoneのレコードのIdとリビジョンを保持します。
+/// 単一レコードの Id / Revision を表す DTO.
 /// </summary>
 public class KintoneIndexes {
     /// <summary>
-    /// レコード ID リスト
+    /// レコード Id リスト
     /// </summary>
     [JsonPropertyName("ids")]
-    public IList<string?> IDs { get; set; } = [];
+    public IList<string?> Ids { get; set; } = [];
 
     /// <summary>
     /// 各レコードのリビジョン番号リスト
@@ -41,11 +41,11 @@ public class KintoneIndexes {
     public IList<KintoneIndex> ToIndexList() {
         var list = new List<KintoneIndex>();
 
-        for (int i = 0; i < Math.Max(this.IDs.Count, this.Revisions.Count); i++) {
-            var id = i < this.IDs.Count ? this.IDs[i] ?? "" : "";
+        for (int i = 0; i < Math.Max(this.Ids.Count, this.Revisions.Count); i++) {
+            var id = i < this.Ids.Count ? this.Ids[i] ?? "" : "";
             var revision = i < this.Revisions.Count ? this.Revisions[i] ?? "-1" : "-1";
             list.Add(new KintoneIndex {
-                ID = id,
+                Id = id,
                 RevisionString = revision
             });
         }

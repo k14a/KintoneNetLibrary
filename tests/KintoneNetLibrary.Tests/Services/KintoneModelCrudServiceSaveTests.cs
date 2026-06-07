@@ -19,12 +19,12 @@ namespace KintoneNetLibrary.Tests.Services;
 public class KintoneModelCrudServiceSaveTests {
     #region <<Test methods>>
     /// <summary>
-    /// SaveAsync メソッドに、RecordID が null で Revision が -1 のレコード（＝Create対象）だけを含むリストを渡した場合、CreateRecordsAsync メソッドが呼び出され、その結果が正しく返されることをテストします。
+    /// SaveAsync メソッドに、RecordId が null で Revision が -1 のレコード（＝Create対象）だけを含むリストを渡した場合、CreateRecordsAsync メソッドが呼び出され、その結果が正しく返されることをテストします。
     /// </summary>
     [Fact]
     public async Task SaveAsyncWhenOnlyCreateTargetsExistCallsCreateOnly() {
         var records = new List<SampleModel> {
-            new() { FieldA = "Create", RecordID = null, Revision = -1 }
+            new() { FieldA = "Create", RecordId = null, Revision = -1 }
         };
 
         var mockRepo = new Mock<IKintoneRepository>();
@@ -45,7 +45,7 @@ public class KintoneModelCrudServiceSaveTests {
         var result = await service.SaveAsync(records);
 
         Assert.Single(result.Succeeded);
-        Assert.Equal("C1001", result.Succeeded[0].RecordID);
+        Assert.Equal("C1001", result.Succeeded[0].RecordId);
         Assert.Equal(1, result.Succeeded[0].Revision);
         Assert.Empty(result.Failed);
 
@@ -65,13 +65,13 @@ public class KintoneModelCrudServiceSaveTests {
     }
 
     /// <summary>
-    /// SaveAsync メソッドに、RecordID が null で Revision が -1 のレコード（＝Create対象）を含まないリストを渡した場合、UpdateRecordsAsync メソッドが呼び出され、その結果が正しく返されることをテストします。
+    /// SaveAsync メソッドに、RecordId が null で Revision が -1 のレコード（＝Create対象）を含まないリストを渡した場合、UpdateRecordsAsync メソッドが呼び出され、その結果が正しく返されることをテストします。
     /// </summary>
     [Fact]
     public async Task SaveAsyncWhenOnlyUpdateTargetsExistCallsUpdateOnlyAndReturnsResult() {
         var updateRecord = new SampleModel {
             FieldA = "Update",
-            RecordID = "1001", // Update対象
+            RecordId = "1001", // Update対象
             Revision = 5
         };
 
@@ -95,7 +95,7 @@ public class KintoneModelCrudServiceSaveTests {
         var result = await service.SaveAsync(new List<SampleModel> { updateRecord });
 
         Assert.Single(result.Succeeded);
-        Assert.Equal("1001", result.Succeeded[0].RecordID);
+        Assert.Equal("1001", result.Succeeded[0].RecordId);
         Assert.Equal(6, result.Succeeded[0].Revision);
 
         Assert.Empty(result.Failed);
@@ -116,13 +116,13 @@ public class KintoneModelCrudServiceSaveTests {
     }
 
     /// <summary>
-    /// SaveAsync メソッドに、RecordID が null で Revision が -1 のレコード（＝Create対象）と、RecordID と Revision が両方とも有効な値のレコード（＝Update対象）を両方含むリストを渡した場合、CreateRecordsAsync メソッドと UpdateRecordsAsync メソッドの両方が呼び出され、それぞれの結果が正しく組み合わされて返されることをテストします。
+    /// SaveAsync メソッドに、RecordId が null で Revision が -1 のレコード（＝Create対象）と、RecordId と Revision が両方とも有効な値のレコード（＝Update対象）を両方含むリストを渡した場合、CreateRecordsAsync メソッドと UpdateRecordsAsync メソッドの両方が呼び出され、それぞれの結果が正しく組み合わされて返されることをテストします。
     /// </summary>
     [Fact]
     public async Task SaveAsyncWhenCreateAndUpdateTargetsExistCallsBothAndCombinesResults() {
         var records = new List<SampleModel> {
-            new() { FieldA = "CreateA", RecordID = null, Revision = -1 },
-            new() { FieldA = "UpdateB", RecordID = "R1002", Revision = 2 }
+            new() { FieldA = "CreateA", RecordId = null, Revision = -1 },
+            new() { FieldA = "UpdateB", RecordId = "R1002", Revision = 2 }
         };
 
         var mockRepo = new Mock<IKintoneRepository>();
@@ -148,16 +148,16 @@ public class KintoneModelCrudServiceSaveTests {
         Assert.Equal(2, result.Succeeded.Count);
         Assert.Empty(result.Failed);
 
-        Assert.Contains(result.Succeeded, r => r.RecordID == "R2001" && r.Revision == 1);
-        Assert.Contains(result.Succeeded, r => r.RecordID == "R1002" && r.Revision == 3);
+        Assert.Contains(result.Succeeded, r => r.RecordId == "R2001" && r.Revision == 1);
+        Assert.Contains(result.Succeeded, r => r.RecordId == "R1002" && r.Revision == 3);
     }
 
     /// <summary>
-    /// SaveWithRetryAsync メソッドに、RecordID が null で Revision が -1 のレコード（＝Create対象）だけを含むリストを渡した場合、CreateRecordsAsync メソッドが呼び出され、その結果が正しく返されることをテストします。
+    /// SaveWithRetryAsync メソッドに、RecordId が null で Revision が -1 のレコード（＝Create対象）だけを含むリストを渡した場合、CreateRecordsAsync メソッドが呼び出され、その結果が正しく返されることをテストします。
     /// </summary>
     [Fact]
     public async Task SaveWithRetryAsyncWhenOnlyCreateTargetsSucceedsOnCreate() {
-        var createModel = new SampleModel { RecordID = null, Revision = -1 };
+        var createModel = new SampleModel { RecordId = null, Revision = -1 };
 
         var mockRepo = new Mock<IKintoneRepository>();
         var mockLogger = new Mock<ILogger<KintoneTypedCrudService<SampleModel>>>();
@@ -176,17 +176,17 @@ public class KintoneModelCrudServiceSaveTests {
 
         Assert.Single(result.Succeeded);
         Assert.Empty(result.Failed);
-        Assert.Equal("C1001", result.Succeeded[0].RecordID);
+        Assert.Equal("C1001", result.Succeeded[0].RecordId);
         Assert.Equal(1, result.Succeeded[0].Revision);
     }
 
     /// <summary>
-    /// SaveWithRetryAsync メソッドに、RecordID が null で Revision が -1 のレコード（＝Create対象）を含むリストを渡した場合、最初の CreateRecordsAsync メソッドの呼び出しが例外をスローし、その後のリトライで UpdateRecordsAsync メソッドが呼び出されて成功することをテストします。
+    /// SaveWithRetryAsync メソッドに、RecordId が null で Revision が -1 のレコード（＝Create対象）を含むリストを渡した場合、最初の CreateRecordsAsync メソッドの呼び出しが例外をスローし、その後のリトライで UpdateRecordsAsync メソッドが呼び出されて成功することをテストします。
     /// </summary>
     [Fact]
     public async Task SaveWithRetryAsyncWhenCreateFailsUpdatesOnRetry() {
         var model = new SampleModel2 {
-            RecordID = null, Revision = -1, CustomUpdateKey = "U123" // これにより Update可能条件を満たす
+            RecordId = null, Revision = -1, CustomUpdateKey = "U123" // これにより Update可能条件を満たす
         };
 
         var mockRepo = new Mock<IKintoneRepository>();
@@ -209,16 +209,16 @@ public class KintoneModelCrudServiceSaveTests {
 
         Assert.Single(result.Succeeded);
         Assert.Empty(result.Failed);
-        Assert.Equal("U123", result.Succeeded[0].RecordID);
+        Assert.Equal("U123", result.Succeeded[0].RecordId);
         Assert.Equal(2, result.Succeeded[0].Revision);
     }
 
     /// <summary>
-    /// SaveWithRetryAsync メソッドに、RecordID と Revision が両方とも有効な値のレコード（＝Update対象）だけを含むリストを渡した場合、最初の UpdateRecordsAsync メソッドの呼び出しが例外をスローし、その後のリトライで UpdateRecordsAsync メソッドが再度呼び出されて成功することをテストします。
+    /// SaveWithRetryAsync メソッドに、RecordId と Revision が両方とも有効な値のレコード（＝Update対象）だけを含むリストを渡した場合、最初の UpdateRecordsAsync メソッドの呼び出しが例外をスローし、その後のリトライで UpdateRecordsAsync メソッドが再度呼び出されて成功することをテストします。
     /// </summary>
     [Fact]
     public async Task SaveWithRetryAsyncWhenOnlyUpdateTargetsSucceedsOnUpdate() {
-        var model = new SampleModel { RecordID = "U999", Revision = 7 };
+        var model = new SampleModel { RecordId = "U999", Revision = 7 };
 
         var mockRepo = new Mock<IKintoneRepository>();
 
@@ -235,7 +235,7 @@ public class KintoneModelCrudServiceSaveTests {
         var result = await service.SaveWithRetryAsync(new List<SampleModel> { model });
 
         Assert.Single(result.Succeeded);
-        Assert.Equal("U999", result.Succeeded[0].RecordID);
+        Assert.Equal("U999", result.Succeeded[0].RecordId);
         Assert.Equal(8, result.Succeeded[0].Revision);
     }
 
@@ -246,7 +246,7 @@ public class KintoneModelCrudServiceSaveTests {
 /// テスト用のサンプルモデルクラスです。SampleModel と異なり、更新対象を識別するためのキー項目 CustomUpdateKey を持ちます。
 /// </summary>
 internal class SampleModel2 : KintoneModelBase<SampleModel2> {
-    public override int AppID { get; init; } = 9999;
+    public override int AppId { get; init; } = 9999;
     public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("dummyDomain", "dummyApiToken");
 
     [KintoneItem(isKey: true)]

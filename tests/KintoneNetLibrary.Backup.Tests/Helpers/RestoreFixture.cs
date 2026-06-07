@@ -57,7 +57,7 @@ internal sealed class RestoreFixture : IDisposable {
         bool dryRun = false,
         bool force = true) => new() {
         SubDomain = "example",
-        AppID = 1,
+        AppId = 1,
         ApiToken = "dummy-token",
         BackupRootPath = this.BackupDir,
         Mode = mode,

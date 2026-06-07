@@ -80,7 +80,7 @@ public partial class KintoneApiFileUploadTests {
 
         Assert.Equal("アップロードできるファイルサイズを超えました", ex.Message);
         Assert.Equal("GAIA_CO02", ex.Error?.Code);
-        Assert.Equal("error-id-456", ex.Error?.ID);
+        Assert.Equal("error-id-456", ex.Error?.Id);
     }
 
     /// <summary>

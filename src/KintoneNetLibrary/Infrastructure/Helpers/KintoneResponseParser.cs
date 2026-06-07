@@ -14,30 +14,30 @@ public static class KintoneResponseParser {
     /// </summary>
     private sealed class DeleteResponse {
         /// <summary>
-        /// 削除されたレコードの ID のリスト
+        /// 削除されたレコードの Id のリスト
         /// </summary>
         [JsonPropertyName("ids")]
-        public List<string> IDs { get; set; } = [];
+        public List<string> Ids { get; set; } = [];
     }
 
     /// <summary>
-    /// CreateRecordsAsync のレスポンス JSON を解析して、元のレコードリストに ID と Revision をセットするためのメソッド
+    /// CreateRecordsAsync のレスポンス JSON を解析して、元のレコードリストに Id と Revision をセットするためのメソッド
     /// </summary>
     /// <typeparam name="T">解析対象のモデルの型</typeparam>
     /// <param name="originalRecords">元のレコードリスト</param>
     /// <param name="responseJson">レスポンス JSON</param>
-    /// <returns>ID と Revision がセットされたレコードリスト</returns>
+    /// <returns>Id と Revision がセットされたレコードリスト</returns>
     /// <exception cref="KintoneException">レスポンスのレコード数が一致しない場合にスローされます</exception>
     public static IList<T> ParseCreatedRecords<T>(IList<T> originalRecords, string responseJson) where T : KintoneModelBase<T>, new() {
         var indexes = KintoneIndexes.Parse(responseJson);
 
         // var originals = originalRecords.ToList();
-        if (indexes.IDs.Count != originalRecords.Count) {
+        if (indexes.Ids.Count != originalRecords.Count) {
             throw new KintoneException("Mismatch between the number of request and response records.");
         }
 
         for (int i = 0; i < originalRecords.Count; i++) {
-            originalRecords[i].ID = indexes.IDs[i] ?? string.Empty;
+            originalRecords[i].Id = indexes.Ids[i] ?? string.Empty;
             if (int.TryParse(indexes.Revisions[i], out var rev)) {
                 originalRecords[i].Revision = rev;
             }

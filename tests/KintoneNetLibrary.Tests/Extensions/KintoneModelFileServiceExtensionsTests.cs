@@ -13,11 +13,11 @@ namespace KintoneNetLibrary.Tests.Extensions;
 /// </summary>
 public class KintoneModelFileServiceExtensionsTests {
     /// <summary>
-    /// SampleModelは、KintoneModelBaseを継承したサンプルモデルクラスです。AttachmentsとImagesの2つのファイルフィールドを持ち、KintoneItem属性でファイルフィールドであることを指定しています。AccessプロパティとAppIDプロパティも定義しています。
+    /// SampleModelは、KintoneModelBaseを継承したサンプルモデルクラスです。AttachmentsとImagesの2つのファイルフィールドを持ち、KintoneItem属性でファイルフィールドであることを指定しています。AccessプロパティとAppIdプロパティも定義しています。
     /// </summary>
     public class SampleModel : KintoneModelBase<SampleModel> {
         public override KintoneAccessBase Access { get; init; } = new ApiTokenAccess("DummyDomain", "DummyApiToken");
-        public override int AppID { get; init; } = 11111;
+        public override int AppId { get; init; } = 11111;
 
         [KintoneItem(fieldType: KintoneFieldType.File)]
         public List<KintoneFile> Attachments { get; set; } = null!;

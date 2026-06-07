@@ -17,7 +17,7 @@ public partial class KintoneApi : IKintoneApi {
 #pragma warning restore CA1001 // 破棄可能なフィールドを所有する型は、破棄可能でなければなりません
     #region <<Private values>>
     private readonly KintoneAccessBase _access;
-    private readonly int _appID;
+    private readonly int _appId;
     private HttpClient _httpClient;
     private readonly JsonSerializerOptions _jsonOptions;
     private readonly ILogger? _logger;
@@ -71,14 +71,14 @@ public partial class KintoneApi : IKintoneApi {
     /// コンストラクタ
     /// </summary>
     /// <param name="access">Kintoneへのアクセス情報を保持するオブジェクト</param>
-    /// <param name="appID">KintoneアプリケーションID</param>
+    /// <param name="appId">KintoneアプリケーションId</param>
     /// <param name="httpClientFactory">HTTPクライアントファクトリ</param>
     /// <param name="logger">ロガー</param>
     /// <param name="jsonOptions">JSONシリアライズオプション</param>
     /// <exception cref="ArgumentNullException">accessがnullの場合にスローされます</exception>
     public KintoneApi(
         KintoneAccessBase access,
-        int appID,
+        int appId,
         IHttpClientFactory httpClientFactory,
         ILogger? logger = null,
         JsonSerializerOptions? jsonOptions = null) {
@@ -86,7 +86,7 @@ public partial class KintoneApi : IKintoneApi {
         ArgumentNullException.ThrowIfNull(access);
 
         this._access = access;
-        this._appID = appID;
+        this._appId = appId;
         this._logger = logger;
         this._httpClient = httpClientFactory.CreateClient("Kintone");
         this._jsonOptions = jsonOptions ?? DefaultJsonOptions.Default;
@@ -180,14 +180,14 @@ public partial class KintoneApi : IKintoneApi {
         return new Uri($"https://{this._access.Domain.TrimEnd('/')}/k/v1/");
     }
     /// <summary>
-    /// AppIDを取得します
+    /// AppIdを取得します
     /// </summary>
     /// <typeparam name="T">Kintoneのレコードデータの型</typeparam>
-    /// <returns>AppID</returns>
+    /// <returns>AppId</returns>
     /// <exception cref="InvalidOperationException">KintoneItemAttributeが定義されていない場合にスローされます</exception>
-    protected int GetAppID<T>() where T : KintoneModelBase<T>, new() {
+    protected int GetAppId<T>() where T : KintoneModelBase<T>, new() {
         var attr = typeof(T).GetCustomAttribute<KintoneItemAttribute>() ?? throw new InvalidOperationException($"KintoneItemAttribute is not defined on type {typeof(T).FullName}.");
-        return this._appID;
+        return this._appId;
     }
     /// <summary>
     /// リクエストヘッダ作成

@@ -4,16 +4,16 @@ namespace KintoneNetLibrary.Domain.Entities;
 
 /// <summary>
 /// Kintoneのインデックスを表すクラス
-/// このクラスは、KintoneのレコードのIDとリビジョンを保持します。
+/// このクラスは、KintoneのレコードのIdとリビジョンを保持します。
 /// </summary>
 public class KintoneIndex {
     /// <summary>
-    /// レコードID
+    /// レコードId
     /// このプロパティは、Kintoneのレコードの一意の識別子を表します。
     /// レコードを取得または更新する際に使用されます。
     /// </summary>
     [JsonPropertyName("id")]
-    public string ID { get; set; } = string.Empty;
+    public string Id { get; set; } = string.Empty;
 
     /// <summary>
     /// レコードのリビジョン

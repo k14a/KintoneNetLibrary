@@ -42,7 +42,7 @@ public class CSharpEmitterOptions : CodeEmitterOptions {
     /// <summary>
     /// オプションのデフォルト値を設定する
     /// </summary>
-    /// <param name="appId">アプリケーションの ID</param>
+    /// <param name="appId">アプリケーションの Id</param>
     public override void EnsureDefaults(int appId) {
         base.EnsureDefaults(appId);
 

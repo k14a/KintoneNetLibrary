@@ -8,18 +8,18 @@ namespace KintoneNetLibrary.Domain.Entities;
 
 /// <summary>
 /// Kintone削除APIのレスポンス結果を表すクラス
-/// 成功したレコードIDの一覧と、失敗したレコードの詳細を保持する
+/// 成功したレコードIdの一覧と、失敗したレコードの詳細を保持する
 /// </summary>
 public class KintoneDeleteResult {
     /// <summary>
-    /// 成功したレコードIDの一覧
-    /// このIDはKintoneからのレスポンスに含まれるもの
+    /// 成功したレコードIdの一覧
+    /// このIdはKintoneからのレスポンスに含まれるもの
     /// </summary>
     public IList<string> Succeeded { get; init; } = new List<string>();
 
     /// <summary>
     /// 失敗したレコードの詳細情報
-    /// 失敗したIDとエラーメッセージを含む
+    /// 失敗したIdとエラーメッセージを含む
     /// </summary>
     public IList<KintoneDeleteFailure> Failed { get; init; } = [];
 
@@ -51,18 +51,18 @@ public class KintoneDeleteResult {
     /// Kintone削除APIのレスポンスJSONを解析してDeleteResultに変換する
     /// </summary>
     /// <param name="json">Kintone削除APIの生JSONレスポンス</param>
-    /// <param name="requestedIDs">削除リクエストしたレコードID一覧</param>
+    /// <param name="requestedIds">削除リクエストしたレコードId一覧</param>
     /// <returns></returns>
-    public static KintoneDeleteResult Parse(string json, IEnumerable<string?> requestedIDs) {
+    public static KintoneDeleteResult Parse(string json, IEnumerable<string?> requestedIds) {
         var result = new KintoneDeleteResult();
 
         if (string.IsNullOrWhiteSpace(json)) {
             // 空なら全て失敗扱いにするか検討
-            if (requestedIDs != null) {
-                foreach (var id in requestedIDs) {
+            if (requestedIds != null) {
+                foreach (var id in requestedIds) {
                     if (!string.IsNullOrEmpty(id)) {
                         result.Failed.Add(new KintoneDeleteFailure {
-                            ID = id!,
+                            Id = id!,
                             ErrorMessage = "No response from Kintone API"
                         });
                     }
@@ -94,19 +94,19 @@ public class KintoneDeleteResult {
                     }
 
                     result.Failed.Add(new KintoneDeleteFailure {
-                        ID = id,
+                        Id = id,
                         ErrorMessage = message
                     });
                 }
             }
 
-            // 念のため、削除依頼IDのうち結果にも失敗にも含まれないものを失敗に追加（通信エラーなど不明な場合）
-            if (requestedIDs != null) {
-                var knownIDs = new HashSet<string>(result.Succeeded.Concat(result.Failed.Select(f => f.ID)));
-                foreach (var id in requestedIDs) {
-                    if (!string.IsNullOrEmpty(id) && !knownIDs.Contains(id)) {
+            // 念のため、削除依頼Idのうち結果にも失敗にも含まれないものを失敗に追加（通信エラーなど不明な場合）
+            if (requestedIds != null) {
+                var knownIds = new HashSet<string>(result.Succeeded.Concat(result.Failed.Select(f => f.Id)));
+                foreach (var id in requestedIds) {
+                    if (!string.IsNullOrEmpty(id) && !knownIds.Contains(id)) {
                         result.Failed.Add(new KintoneDeleteFailure {
-                            ID = id,
+                            Id = id,
                             ErrorMessage = "No deletion result returned from Kintone API"
                         });
                     }
@@ -114,11 +114,11 @@ public class KintoneDeleteResult {
             }
         } catch (JsonException jex) {
             // JSON解析エラー時は全部失敗扱いに
-            if (requestedIDs != null) {
-                foreach (var id in requestedIDs) {
+            if (requestedIds != null) {
+                foreach (var id in requestedIds) {
                     if (!string.IsNullOrEmpty(id)) {
                         result.Failed.Add(new KintoneDeleteFailure {
-                            ID = id!,
+                            Id = id!,
                             ErrorMessage = $"Invalid JSON response: {jex.Message}"
                         });
                     }
@@ -151,15 +151,15 @@ public enum KintoneDeleteFailureReason {
 
 /// <summary>
 /// Kintone削除APIの失敗情報を表すクラス
-/// このクラスは、削除に失敗したレコードのIDとエラーメッセージを保持します。
+/// このクラスは、削除に失敗したレコードのIdとエラーメッセージを保持します。
 /// また、失敗理由を示す列挙型KintoneDeleteFailureReasonを使用して、失敗の詳細な理由を提供します。
 /// </summary>
 public class KintoneDeleteFailure : IJsonSerializable {
     /// <summary>
-    /// レコードID
-    /// このIDはKintoneからのレスポンスに含まれるもの
+    /// レコードId
+    /// このIdはKintoneからのレスポンスに含まれるもの
     /// </summary>
-    public string ID { get; init; } = string.Empty;
+    public string Id { get; init; } = string.Empty;
 
     /// <summary>
     /// エラーメッセージ
@@ -182,6 +182,6 @@ public class KintoneDeleteFailure : IJsonSerializable {
     /// <returns>JSON形式の文字列</returns>
     public string ToJson(bool indented = false) {
         var options = JsonOptionsUtil.Clone(DefaultJsonOptions.Default, indented);
-        return JsonSerializer.Serialize(new { this.ID, this.ErrorMessage, this.Reason }, options);
+        return JsonSerializer.Serialize(new { this.Id, this.ErrorMessage, this.Reason }, options);
     }
 }
