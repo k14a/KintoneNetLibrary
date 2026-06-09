@@ -386,3 +386,38 @@ SRP の段階的分離として適切であり、これ以上の責任分離は�
 - [x] **対象ファイル**: [`tests/KintoneNetLibrary.Tests/Helpers/Queries/KintoneQueryExpressionsTests.cs:225`](tests/KintoneNetLibrary.Tests/Helpers/Queries/KintoneQueryExpressionsTests.cs#L225)（テスト側）および クエリビルダー実装
 - **問題**: `MultiSelector in ("選択肢1", "選択肢2")` が生成されるべきところ、`"MultiSelector"選択肢1""選択肢2""` という不正な文字列が生成される。`in` キーワードと括弧が欠落している。
 - **対応方針**: クエリビルダーの `in` 演算子（`MultiSelect` 向け）の実装を修正し、`フィールドコード in ("値1", "値2")` の形式で生成されるようにする。
+
+---
+
+## 9. v1.0.0 リリース目標 — NuGet 公開対応
+
+### 9-1. csproj パッケージメタデータの設定
+- [ ] 各ライブラリ（KintoneNetLibrary / Backup / CodeGen）の csproj に以下を追加する
+  - `<PackageId>` / `<Authors>` / `<Copyright>` / `<Description>`
+  - `<PackageTags>` / `<PackageLicenseExpression>`
+  - `<PackageProjectUrl>` / `<RepositoryUrl>` / `<RepositoryType>`
+  - `<PackageReadmeFile>` で README.md を同梱する
+
+### 9-2. ターゲットフレームワークの方針決定
+- [ ] 現在 `net10.0` 専用だが、`net10.0` は非 LTS のためライブラリとして対象が狭い
+  - **選択肢 A**: `net8.0` (LTS) を追加して多ターゲット対応（`net8.0;net10.0`）
+  - **選択肢 B**: `net8.0` 単一ターゲットにして上位互換とする
+  - `LangVersion=preview` や net10.0 固有 API の使用状況を確認してから判断する
+
+### 9-3. public API の整理
+- [ ] パッケージ利用者に公開すべきでないクラス・型を `internal` に絞り込む
+- [ ] テストプロジェクトから `internal` メンバーを参照できるよう `InternalsVisibleTo` を設定する
+
+### 9-4. シンボルパッケージ（snupkg）の設定
+- [ ] 各ライブラリの csproj に以下を追加し、デバッグ体験を向上させる
+  ```xml
+  <IncludeSymbols>true</IncludeSymbols>
+  <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  ```
+
+### 9-5. GitHub Actions — NuGet 公開ワークフローの追加
+- [ ] `v*` タグ push 時に `dotnet pack` → `nuget push` するジョブを `.github/workflows/` に追加する
+- [ ] NuGet API キーを GitHub Secrets に登録する
+
+### 9-6. ライセンスファイルの確認
+- [ ] `LICENSE` ファイルの内容と `<PackageLicenseExpression>` の値が一致していることを確認する
