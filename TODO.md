@@ -389,35 +389,63 @@ SRP の段階的分離として適切であり、これ以上の責任分離は�
 
 ---
 
-## 9. v1.0.0 リリース目標 — NuGet 公開対応
+## 9. v0.9.2 リリース目標 — CodeGen TypeScript 対応
 
-### 9-1. csproj パッケージメタデータの設定
+### 9-1. `TypeScriptTypeMapper` の実装
+- [ ] `TypeMapper.TypeScript.cs` を追加し `ITypeMapper` を実装する
+  - フィールド型 → TypeScript 型のマッピング（日付系は `string | null`、選択肢系は `string[]` など）
+
+### 9-2. `TypeScriptNameConverter` の実装
+- [ ] `NameConverter.TypeScript.cs` を追加し `INameConverter` を実装する
+  - 日本語フィールド名 → camelCase プロパティ名変換
+
+### 9-3. `TypeScriptEmitterOptions` の実装
+- [ ] `CodeEmitterOptions.TypeScript.cs` を追加する
+  - `FileExtension = ".ts"`、`CommentPrefix = "//"` など
+
+### 9-4. `TypeScriptCodeEmitter` の実装
+- [ ] `CodeEmitter.TypeScript.cs` を追加し `ICodeEmitter` を実装する
+  - `interface` 宣言形式でコードを生成する
+  - ビルトイン型（`KintoneFile`、`KintoneUser` など）を同梱する
+  - ヘッダコメントを出力する
+
+### 9-5. `TypeMapperFactory` への登録
+- [ ] [`src/KintoneNetLibrary.CodeGen/Infrastructure/Factories/TypeMapperFactory.cs`](src/KintoneNetLibrary.CodeGen/Infrastructure/Factories/TypeMapperFactory.cs) に `GenerateLanguages.TypeScript => new TypeScriptTypeMapper()` を追加する
+
+### 9-6. テストの追加
+- [ ] `KintoneNetLibrary.CodeGen.Tests` に TypeScript エミッターのスナップショットテストを追加する
+
+---
+
+## 10. v1.0.0 リリース目標 — NuGet 公開対応
+
+### 10-1. csproj パッケージメタデータの設定
 - [ ] 各ライブラリ（KintoneNetLibrary / Backup / CodeGen）の csproj に以下を追加する
   - `<PackageId>` / `<Authors>` / `<Copyright>` / `<Description>`
   - `<PackageTags>` / `<PackageLicenseExpression>`
   - `<PackageProjectUrl>` / `<RepositoryUrl>` / `<RepositoryType>`
   - `<PackageReadmeFile>` で README.md を同梱する
 
-### 9-2. ターゲットフレームワークの方針決定
+### 10-2. ターゲットフレームワークの方針決定
 - [ ] 現在 `net10.0` 専用だが、`net10.0` は非 LTS のためライブラリとして対象が狭い
   - **選択肢 A**: `net8.0` (LTS) を追加して多ターゲット対応（`net8.0;net10.0`）
   - **選択肢 B**: `net8.0` 単一ターゲットにして上位互換とする
   - `LangVersion=preview` や net10.0 固有 API の使用状況を確認してから判断する
 
-### 9-3. public API の整理
+### 10-3. public API の整理
 - [ ] パッケージ利用者に公開すべきでないクラス・型を `internal` に絞り込む
 - [ ] テストプロジェクトから `internal` メンバーを参照できるよう `InternalsVisibleTo` を設定する
 
-### 9-4. シンボルパッケージ（snupkg）の設定
+### 10-4. シンボルパッケージ（snupkg）の設定
 - [ ] 各ライブラリの csproj に以下を追加し、デバッグ体験を向上させる
   ```xml
   <IncludeSymbols>true</IncludeSymbols>
   <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   ```
 
-### 9-5. GitHub Actions — NuGet 公開ワークフローの追加
+### 10-5. GitHub Actions — NuGet 公開ワークフローの追加
 - [ ] `v*` タグ push 時に `dotnet pack` → `nuget push` するジョブを `.github/workflows/` に追加する
 - [ ] NuGet API キーを GitHub Secrets に登録する
 
-### 9-6. ライセンスファイルの確認
+### 10-6. ライセンスファイルの確認
 - [ ] `LICENSE` ファイルの内容と `<PackageLicenseExpression>` の値が一致していることを確認する
