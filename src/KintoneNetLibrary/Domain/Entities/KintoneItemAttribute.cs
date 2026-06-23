@@ -8,6 +8,7 @@ namespace KintoneNetLibrary.Domain.Entities;
 /// <param name="fieldCode"></param>
 /// <param name="initialValue"></param>
 /// <param name="isUpload"></param>
+/// <param name="isDownload"></param>
 /// <param name="isKey"></param>
 /// <param name="fieldType"></param>
 /// <param name="isToJson"></param>
@@ -17,6 +18,7 @@ public class KintoneItemAttribute(
     KintoneFieldType fieldType = KintoneFieldType.Unknown,
     object? initialValue = null,
     bool isUpload = true,
+    bool isDownload = true,
     bool isKey = false,
     bool isToJson = true) : Attribute {
 
@@ -33,6 +35,11 @@ public class KintoneItemAttribute(
     /// </summary>
     /// <value>TRUE:Kintoneへ登録・更新を行う<br/>FALSE:登録・更新を行わない</value>
     public bool IsUpload { get; set; } = isUpload;
+    /// <summary>
+    /// Kintoneからの読み込み有無
+    /// </summary>
+    /// <value>TRUE:Kintoneから読み込みを行う<br/>FALSE:読み込みを行わない</value>
+    public bool IsDownload { get; set; } = isDownload;
     /// <summary>
     /// Kintone更新時のキー
     /// </summary>

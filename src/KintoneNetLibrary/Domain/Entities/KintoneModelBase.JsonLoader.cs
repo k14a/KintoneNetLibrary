@@ -29,6 +29,10 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
         foreach (var prop in this.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)) {
             var attr = prop.GetCustomAttribute<KintoneItemAttribute>();
 
+            if (attr?.IsDownload == false) {
+                continue;
+            }
+
             var fieldCode = attr?.FieldCode ?? prop.Name;
             if (!fieldMap.TryGetValue(fieldCode, out var fieldElement)) {
                 continue;
