@@ -34,7 +34,7 @@ public partial class KintoneApi : IKintoneApi {
 
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        var response = await this._httpClient.PutAsync(KintoneApiEndpoints.UpdateRecords, content);
+        var response = await this._httpClient.PutAsync(this.BuildRequestUri(KintoneApiEndpoints.UpdateRecords), content);
         var responseJson = await response.Content.ReadAsStringAsync();
 
         if (this._logger != null) { _logTraceException(this._logger, $"Received response: {responseJson}", null); }

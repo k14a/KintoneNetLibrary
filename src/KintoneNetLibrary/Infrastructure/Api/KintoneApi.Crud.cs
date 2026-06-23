@@ -26,7 +26,7 @@ public partial class KintoneApi : IKintoneApi {
 
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        var response = await this._httpClient.PostAsync(KintoneApiEndpoints.AddRecords, content);
+        var response = await this._httpClient.PostAsync(this.BuildRequestUri(KintoneApiEndpoints.AddRecords), content);
         var responseJson = await response.Content.ReadAsStringAsync();
 
         if (this._logger != null) { _logDebugException(this._logger, $"Received response from Kintone: {responseJson}", null); }
@@ -53,7 +53,7 @@ public partial class KintoneApi : IKintoneApi {
 
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        var response = await this._httpClient.PutAsync(KintoneApiEndpoints.UpdateRecords, content);
+        var response = await this._httpClient.PutAsync(this.BuildRequestUri(KintoneApiEndpoints.UpdateRecords), content);
         var responseJson = await response.Content.ReadAsStringAsync();
 
         if (this._logger != null) { _logDebugException(this._logger, $"Received response: {responseJson}", null); }
@@ -73,7 +73,7 @@ public partial class KintoneApi : IKintoneApi {
     /// <exception cref="ArgumentException">JSONデータが空の場合にスローされます</exception>
     /// <exception cref="KintoneException">Kintone APIからのエラーが発生した場合にスローされます</exception>
     public async Task<string> DeleteAsync(string json) {
-        var request = new HttpRequestMessage(HttpMethod.Delete, KintoneApiEndpoints.DeleteRecords) {
+        var request = new HttpRequestMessage(HttpMethod.Delete, this.BuildRequestUri(KintoneApiEndpoints.DeleteRecords)) {
             Content = new StringContent(json, Encoding.UTF8, "application/json")
         };
 
