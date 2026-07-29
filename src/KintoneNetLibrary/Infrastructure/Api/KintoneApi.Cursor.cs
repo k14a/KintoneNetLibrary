@@ -23,7 +23,7 @@ public partial class KintoneApi : IKintoneApi
     /// <exception cref="KintoneException">カーソル作成に失敗した場合にスローされます</exception>
     public async Task<string> CreateCursorAsync(Dictionary<string, object> body)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Post, KintoneApiEndpoints.Cursor);
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"{this.GetBaseUri()}{KintoneApiEndpoints.Cursor}");
         request.Headers.Add("X-Cybozu-API-Token", this._access.ApiToken);
         request.Content = JsonContent.Create(body, options: this._jsonOptions);
 

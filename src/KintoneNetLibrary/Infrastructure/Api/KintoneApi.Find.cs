@@ -202,9 +202,10 @@ public partial class KintoneApi : IKintoneApi {
     /// <param name="fieldCodes">取得するフィールドコードのリスト</param>
     /// <returns>取得したレコードのJSON文字列</returns>
     private async Task<string> CursorFetchAllJsonAsync<T>(string query, IList<string>? fieldCodes = null) where T : KintoneModelBase<T>, new() {
+        var effectiveFields = fieldCodes ?? typeof(T).GetKintoneFieldCodes();
         var cursorRequest = new Dictionary<string, object> {
             ["app"] = this._appId,
-            ["fields"] = fieldCodes ?? typeof(T).GetKintoneFieldCodes(),
+            ["fields"] = KintoneRequestBuilder.EnsureMinimumFields(effectiveFields) ?? effectiveFields,
             ["size"] = this.CursorPageSize,
         };
         if (!string.IsNullOrEmpty(query)) {
