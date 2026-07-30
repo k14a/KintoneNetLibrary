@@ -22,8 +22,12 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
                 continue;
             }
 
-            // サブテーブルは必ず送信対象（部分更新不可のため丸ごと更新）
+            // サブテーブルはIsUpload == trueの場合のみ送信対象（送信する場合は部分更新不可のため丸ごと更新）
             if (attr.FieldType == KintoneFieldType.SubTable) {
+                if (!attr.IsUpload) {
+                    continue;
+                }
+
                 var value = prop.GetValue(this);
                 if (value is IEnumerable<KintoneSubTableBase> subTableItems) {
                     var subTableArray = subTableItems.Select(item => {

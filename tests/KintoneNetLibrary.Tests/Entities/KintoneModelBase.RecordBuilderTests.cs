@@ -26,6 +26,20 @@ public class KintoneModelBaseRecordBuilderTests {
 
         [KintoneItem(fieldCode: "MultiSelectClearable", fieldType: KintoneFieldType.MultiSelect, ClearIfNull = true)]
         public IEnumerable<string>? MultiSelectClearable { get; set; }
+
+        [KintoneItem(fieldCode: "SubTableUploadable", fieldType: KintoneFieldType.SubTable)]
+        public IEnumerable<DummySubTableItem>? SubTableUploadable { get; set; }
+
+        [KintoneItem(fieldCode: "SubTableNotUploadable", fieldType: KintoneFieldType.SubTable, IsUpload = false)]
+        public IEnumerable<DummySubTableItem>? SubTableNotUploadable { get; set; }
+    }
+
+    /// <summary>
+    /// サブテーブルの行を表すダミークラス。
+    /// </summary>
+    public class DummySubTableItem : KintoneSubTableBase {
+        [KintoneItem(fieldCode: "Text", fieldType: KintoneFieldType.SingleLineText)]
+        public string Text { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -104,6 +118,34 @@ public class KintoneModelBaseRecordBuilderTests {
         var model = new InvalidDummyModel();
 
         Assert.Throws<InvalidOperationException>(() => model.ToKintoneRecord());
+    }
+
+    /// <summary>
+    /// サブテーブルが IsUpload = false の場合、ToKintoneRecord() の結果へキーが含まれない。
+    /// </summary>
+    [Fact]
+    public void ToKintoneRecordWhenSubTableIsUploadFalseOmitsFieldKey() {
+        var model = new DummyModel {
+            SubTableNotUploadable = [new DummySubTableItem { Text = "dummy" }]
+        };
+
+        var record = model.ToKintoneRecord();
+
+        Assert.False(record.ContainsKey("SubTableNotUploadable"));
+    }
+
+    /// <summary>
+    /// サブテーブルが IsUpload = true（デフォルト）の場合、ToKintoneRecord() の結果へキーが含まれる（既存挙動を維持）。
+    /// </summary>
+    [Fact]
+    public void ToKintoneRecordWhenSubTableIsUploadTrueIncludesFieldKey() {
+        var model = new DummyModel {
+            SubTableUploadable = [new DummySubTableItem { Text = "dummy" }]
+        };
+
+        var json = SerializeField(model, "SubTableUploadable");
+
+        Assert.Equal("{\"value\":[{\"id\":\"\",\"value\":{\"Text\":{\"value\":\"dummy\"}}}]}", json);
     }
     #endregion
 }
