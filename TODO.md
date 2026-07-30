@@ -421,3 +421,41 @@ SRP の段階的分離として適切であり、これ以上の責任分離は�
 
 ### 9-6. ライセンスファイルの確認
 - [ ] `LICENSE` ファイルの内容と `<PackageLicenseExpression>` の値が一致していることを確認する
+
+---
+
+## 10. 数値フィールドの null 送信によるクリア不可問題（2026-07-30）
+
+利用側アプリから報告された不具合調査。数値フィールドの値を `null` にして更新しても、Kintone側の既存値（誤って書き込まれた `0` 等）がクリアされない。
+
+### 10-1. `ToKintoneRecord()` が null フィールドを `value` キーごと省略してしまう
+- [x] **対象ファイル**: [`src/KintoneNetLibrary/Domain/Entities/KintoneModelBase.RecordBuilder.cs:74`](src/KintoneNetLibrary/Domain/Entities/KintoneModelBase.RecordBuilder.cs#L74), [`src/KintoneNetLibrary/Domain/Common/DefaultJsonOptions.cs:26`](src/KintoneNetLibrary/Domain/Common/DefaultJsonOptions.cs#L26)
+- **問題**: `record[attr.FieldCode] = new { value = fieldValueFinal };` で生成した匿名オブジェクトが、`DefaultJsonOptions.Default` の `DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull` によりシリアライズ時に `value` プロパティごと省略される。送信JSONが `"数値フィールドコード": {}` となり、Kintone REST APIの仕様上「`value`キーが存在しないフィールドは更新対象外」として扱われるため、既存値（0など）が更新されずそのまま残ってしまう。`DefaultJsonOptions.Default` はKintoneApi全体（登録・更新・レスポンスパース含む）で共有されるグローバル設定であり、`KintoneItemAttribute`（`IsUpload`/`IsDownload`/`IsKey`/`IsRequired`/`FieldType`/`IsToJson`）にはフィールド単位でこの挙動を制御する仕組みが現状ない。
+- **対応方針**: `KintoneItemAttribute` にフィールド単位のオプトインフラグ（例: `ClearIfNull`、デフォルト `false`）を追加し、`ToKintoneRecord()` 内で該当フィールドが `null` かつこのフラグが `true` の場合のみ、Kintoneの数値フィールドをクリアする仕様（空文字 `""`）に沿って明示的に `value: ""` を送るよう分岐する。既存の「nullは送らず更新しない」という挙動には影響を与えない。
+  - `DefaultIgnoreCondition` のグローバル変更（`Never` 化）は全モデル・全フィールドの挙動に影響し既存動作を壊すリスクがあるため非推奨。
+  - **サブテーブルはスコープ外**: サブテーブル内フィールド（同ファイル48行目）にも理論上は同様の null 省略問題があるが、サブテーブル行は既存行の `id` を維持したまま部分フィールド更新する運用がなく、常に全行作り直し（削除→新規行として再作成）であるため、既存値クリアの問題は発生しない。よって本対応はトップレベルフィールドのみを対象とする。
+- **実装内容**（10-2 の留意事項を反映）:
+  - [`KintoneItemAttribute.cs`](src/KintoneNetLibrary/Domain/Entities/KintoneItemAttribute.cs) に `ClearIfNull { get; set; }`（デフォルト `false`）を追加。既存の `IsRequired` と同様、コンストラクタ引数ではなくプロパティのみとして追加し、位置引数呼び出しへの影響をゼロにした。
+  - [`KintoneModelBase.RecordBuilder.cs`](src/KintoneNetLibrary/Domain/Entities/KintoneModelBase.RecordBuilder.cs) の `ToKintoneRecord()` 内で、`attr.IsRequired && attr.ClearIfNull` の場合は矛盾した属性定義として `InvalidOperationException` を即座にスロー（値が null かどうかに関係なく）。
+  - 同メソッド内で `fieldValueFinal is null && attr.ClearIfNull` の場合、`GetClearValue(attr.FieldType)` によりフィールドタイプに応じたクリア値を選択（`CheckBox`/`MultiSelect`/`Category`/`UserSelect`/`OrganizationSelect`/`GroupSelect`/`File` は空配列 `[]`、それ以外は空文字列 `""`）。
+  - テスト: [`KintoneModelBase.RecordBuilderTests.cs`](tests/KintoneNetLibrary.Tests/Entities/KintoneModelBase.RecordBuilderTests.cs) に5件追加（ClearIfNull false/true、複数値フィールドのクリア、IsRequiredとの矛盾）。全344件（既存339件＋新規5件）成功を確認。
+
+### 10-2. `ClearIfNull` 実装時の留意事項
+
+- [x] **フィールドタイプごとの「クリア用の空値」表現の違いに対応する**
+  - Kintone REST APIでは、単一値フィールド（数値・文字列・日付・時刻・ドロップダウン・ラジオボタン等）は `value: ""` でクリアするが、複数値フィールド（チェックボックス・複数選択・ユーザー選択・組織選択・グループ選択等）は `value: []` が必要。単純に「nullなら空文字」という分岐だけでは不十分なため、`attr.FieldType` を見て `""` か `[]` かを出し分けるロジックにする。
+  - [`KintoneModelValidator.cs:183-192`](src/KintoneNetLibrary/Domain/Entities/KintoneModelValidator.cs#L183-L192) で `CheckBox`/`MultiSelect`/`Category` は既に null 不可・`IList<string>` 必須のバリデーションがあったが、`UserSelect`/`OrganizationSelect`/`GroupSelect` には同様の null ガードがなく、誤って `""` を送ってしまう懸念があったため対応済み。この3タイプは実際の運用上いずれも派生型（`KintoneOrganization`/`KintoneGroup`）ではなく基底の `KintoneUser` 型で統一的に扱われているため（[`BookModel.cs:108-119`](tests/KintoneNetLibrary.IntegrationTests/Models/BookModel.cs#L108-L119)参照）、3タイプ共通で `IList<KintoneUser>` の null 不可・型チェックを追加した（[`KintoneModelValidator.cs:195-201`](src/KintoneNetLibrary/Domain/Entities/KintoneModelValidator.cs#L195-L201)、サブテーブル行側は[302-311行目](src/KintoneNetLibrary/Domain/Entities/KintoneModelValidator.cs#L302-L311)）。これによりこれら3タイプでも `ClearIfNull` が誤発火することはなくなった。
+
+- [x] **`IsRequired` との組み合わせを確認する**
+  - `KintoneModelValidator` は `src/` 内のどこからも自動的には呼び出されておらず、利用者が明示的に呼んだ時だけ機能する opt-in の位置づけであることを確認した（[`KintoneModelValidator.cs:222-235`](src/KintoneNetLibrary/Domain/Entities/KintoneModelValidator.cs#L222-L235) の `ValidateRequiredFields` に依存できない）。そのため `IsRequired` と `ClearIfNull` の矛盾チェックをこのバリデーターに委ねるのはNG。
+  - **対応方針**: 全 CRUD 経路で必ず実行される `ToKintoneRecord()`（[`KintoneModelBase.RecordBuilder.cs`](src/KintoneNetLibrary/Domain/Entities/KintoneModelBase.RecordBuilder.cs)）内に直接ガードを実装する。`IsRequired=true` かつ `ClearIfNull=true` は「必須なのにクリア可能」という矛盾した属性定義であり、実行時の値が null かどうかに関係なく常に不正な組み合わせのため、該当プロパティを検出した時点（値の null 判定を待たず）で即座に例外を投げる。これにより opt-in バリデーターの呼び出し有無に依存せず、誤設定を初回実行時点で確実に検知できる。
+  - **実装済み**: 10-1 の実装時に `ToKintoneRecord()` 内へこのガードを組み込み済み。[`KintoneModelBase.RecordBuilderTests.cs`](tests/KintoneNetLibrary.Tests/Entities/KintoneModelBase.RecordBuilderTests.cs) の `ToKintoneRecordWhenIsRequiredAndClearIfNullBothTrueThrows` で例外スローを確認済み。
+
+- [x] **Lookup・自動計算系フィールドの扱い**
+  - `Lookup`/`Calc`/`Status` 等のフィールドはプログラムからセットすることを想定しておらず、通常 `IsUpload=false` で運用する。`ToKintoneRecord()` は `IsUpload=false` のフィールドを送信対象から除外する（[`KintoneModelBase.RecordBuilder.cs:63-65`](src/KintoneNetLibrary/Domain/Entities/KintoneModelBase.RecordBuilder.cs#L63-L65)）ため、`ClearIfNull` がこれらのフィールドに適用される場面自体が発生しない。よって実機検証・追加対応は不要と判断しクローズする。
+
+- [x] **`KintoneItemAttribute` コンストラクタへのパラメータ追加位置**
+  - 実装時に、既存の `IsRequired` がコンストラクタ引数ではなく `{ get; set; }` のみのプロパティ（属性適用時に `IsRequired = true` の名前付きプロパティ構文で設定）であることが判明。この前例に倣い、`ClearIfNull` もコンストラクタ引数に追加せずプロパティのみとした。コンストラクタのシグネチャ自体に変更がないため、位置引数呼び出しを壊すリスクは完全に排除された（当初案の「コンストラクタ末尾に追加」より安全）。
+
+- [x] **v1.0.0 NuGet公開（→ 項目9）との兼ね合いを整理する**
+  - `ClearIfNull` は public な属性プロパティ追加になるため、9-3「public APIの整理」より前に入れるか後にするか方針を決めておく必要があったが、セクション9自体が未着手のため、9系着手時にあわせて対応する。現時点での追加対応は不要。

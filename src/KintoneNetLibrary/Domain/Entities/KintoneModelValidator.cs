@@ -192,6 +192,18 @@ public static class KintoneModelValidator {
                     }
                     break;
 
+                case KintoneFieldType.UserSelect:
+                case KintoneFieldType.OrganizationSelect:
+                case KintoneFieldType.GroupSelect:
+                    if (value == null) {
+                        throw new InvalidOperationException($"ユーザー・組織・グループ選択型フィールド '{prop.Name}' の値が null です。空でも IList<KintoneUser> として初期化してください。");
+                    }
+
+                    if (value is not IList<KintoneUser>) {
+                        throw new InvalidOperationException($"フィールド '{prop.Name}' は IList<KintoneUser> 型として定義してください。現在の型: {value.GetType().FullName}");
+                    }
+                    break;
+
                 case KintoneFieldType.SubTable:
                     if (!IsValidSubTableType(prop.PropertyType)) {
                         throw new InvalidOperationException(
@@ -284,6 +296,27 @@ public static class KintoneModelValidator {
                     if (prop.PropertyType != typeof(IList<string>)) {
                         throw new InvalidOperationException(
                             $"サブテーブル行 '{rowType.Name}' の複数選択フィールド '{prop.Name}' は IList<string> 型である必要があります。");
+                    }
+                    break;
+
+                case KintoneFieldType.UserSelect:
+                    if (prop.PropertyType != typeof(IList<KintoneUser>)) {
+                        throw new InvalidOperationException(
+                            $"サブテーブル行 '{rowType.Name}' のユーザー選択フィールド '{prop.Name}' は IList<KintoneUser> 型である必要があります。");
+                    }
+                    break;
+
+                case KintoneFieldType.OrganizationSelect:
+                    if (prop.PropertyType != typeof(IList<KintoneOrganization>)) {
+                        throw new InvalidOperationException(
+                            $"サブテーブル行 '{rowType.Name}' の組織選択フィールド '{prop.Name}' は IList<KintoneOrganization> 型である必要があります。");
+                    }
+                    break;
+
+                case KintoneFieldType.GroupSelect:
+                    if (prop.PropertyType != typeof(IList<KintoneGroup>)) {
+                        throw new InvalidOperationException(
+                            $"サブテーブル行 '{rowType.Name}' のグループ選択フィールド '{prop.Name}' は IList<KintoneGroup> 型である必要があります。");
                     }
                     break;
 

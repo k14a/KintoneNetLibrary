@@ -49,6 +49,11 @@ public class KintoneItemAttribute(
     /// </summary>
     public bool IsRequired { get; set; }
     /// <summary>
+    /// 値が null の場合に Kintone 側の既存値をクリアするかどうか
+    /// </summary>
+    /// <value>TRUE:null の場合に空値を送信してクリアする<br/>FALSE:null の場合は送信自体を省略し、Kintone側の既存値を変更しない（デフォルト）</value>
+    public bool ClearIfNull { get; set; }
+    /// <summary>
     /// Kintone側のデータタイプ
     /// </summary>
     public KintoneFieldType FieldType { get; set; } = fieldType;

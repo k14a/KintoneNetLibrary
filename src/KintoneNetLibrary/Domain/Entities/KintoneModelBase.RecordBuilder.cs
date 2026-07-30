@@ -64,6 +64,11 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
                 continue;
             }
 
+            // 必須項目はクリア不可能なため、IsRequired と ClearIfNull の同時指定は矛盾した属性定義とみなす
+            if (attr.IsRequired && attr.ClearIfNull) {
+                throw new InvalidOperationException($"フィールド '{attr.FieldCode}' に IsRequired と ClearIfNull を同時に指定することはできません。");
+            }
+
             var fieldValueObj = prop.GetValue(this);
             object? fieldValueFinal;
             if (fieldValueObj is IKintoneFieldConverter conv) {
@@ -71,10 +76,37 @@ public abstract partial class KintoneModelBase<TSelf> : KintoneModelHookBase whe
             } else {
                 fieldValueFinal = fieldValueObj;
             }
-            record[attr.FieldCode] = new { value = fieldValueFinal };
+
+            if (fieldValueFinal is null && attr.ClearIfNull) {
+                record[attr.FieldCode] = new { value = GetClearValue(attr.FieldType) };
+            } else {
+                record[attr.FieldCode] = new { value = fieldValueFinal };
+            }
         }
 
         return record;
+    }
+
+    /// <summary>
+    /// 複数値を持つフィールドタイプの一覧（クリア時に空配列を送信する必要がある）
+    /// </summary>
+    private static readonly HashSet<KintoneFieldType> MultiValueFieldTypes = [
+        KintoneFieldType.CheckBox,
+        KintoneFieldType.MultiSelect,
+        KintoneFieldType.Category,
+        KintoneFieldType.UserSelect,
+        KintoneFieldType.OrganizationSelect,
+        KintoneFieldType.GroupSelect,
+        KintoneFieldType.File,
+    ];
+
+    /// <summary>
+    /// フィールドタイプに応じたクリア用の値を取得する
+    /// </summary>
+    /// <param name="fieldType">Kintone側のフィールドタイプ</param>
+    /// <returns>複数値フィールドの場合は空配列、それ以外は空文字列</returns>
+    private static object GetClearValue(KintoneFieldType fieldType) {
+        return MultiValueFieldTypes.Contains(fieldType) ? new List<object>() : "";
     }
 
     /// <summary>
