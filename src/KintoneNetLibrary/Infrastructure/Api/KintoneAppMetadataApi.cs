@@ -13,11 +13,13 @@ namespace KintoneNetLibrary.Infrastructure.Api;
 /// </summary>
 /// <param name="httpClientFactory">HTTPクライアントファクトリ</param>
 /// <param name="fieldParser"></param>
+/// <param name="layoutParser">レイアウトパーサー</param>
 /// <param name="logger">ロガー</param>
-public class KintoneAppMetadataApi(IHttpClientFactory httpClientFactory, IKintoneFieldParser fieldParser, ILogger<KintoneAppMetadataApi>? logger = null) : IKintoneAppMetadataApi {
+public class KintoneAppMetadataApi(IHttpClientFactory httpClientFactory, IKintoneFieldParser fieldParser, IKintoneLayoutParser layoutParser, ILogger<KintoneAppMetadataApi>? logger = null) : IKintoneAppMetadataApi {
 
     private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
     private readonly IKintoneFieldParser _fieldParser = fieldParser;
+    private readonly IKintoneLayoutParser _layoutParser = layoutParser;
     private readonly ILogger<KintoneAppMetadataApi>? _logger = logger;
 
     private static readonly Action<ILogger, string, Exception?> _logTrace =
@@ -125,10 +127,15 @@ public class KintoneAppMetadataApi(IHttpClientFactory httpClientFactory, IKinton
         var revisionString = root.GetProperty("revision").GetString();
         if (!int.TryParse(revisionString, out var revision)) { revision = 0; }
 
+        var layoutJson = await this.GetLayoutJsonAsync(domain, apiToken, appId);
+        using var layoutDoc = JsonDocument.Parse(layoutJson);
+        var layout = this._layoutParser.Parse(layoutDoc.RootElement);
+
         return new KintoneAppMetadata {
             AppId = appId,
             Revision = revision,
-            Fields = fields
+            Fields = fields,
+            Layout = layout
         };
     }
 
