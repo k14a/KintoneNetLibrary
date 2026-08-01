@@ -13,7 +13,7 @@
 ## 2. 特徴（Features） ✅
 
 - **複数アプリを 1 プログラムで扱える柔軟な設計**
-  - App 設定を app.config に固定しない。1 つの実行ファイルで複数の Kintone アプリと連携可能であり、アプリ間のデータ連携を単一プログラム内で完結できる。 
+  - App 設定を app.config に固定しない。1 つの実行ファイルで複数の Kintone アプリと連携可能であり、アプリ間のデータ連携を単一プログラム内で完結できる。
 
 - **cursor を自動運用する Find 実装**
   - Kintone が推奨する cursor を内部で自動的に運用する。開発者は cursor の存在を意識せずに大量データ取得が可能である。
@@ -231,7 +231,7 @@ var record = await CustomerModel.FindByIdAsync(crud, "123");
 主要な操作（レコードの登録・取得・更新・削除）と DI 構成例を確認できる。
 
 | ファイル | 内容 |
-|---------|------|
+| --------- | ------ |
 | [Models/TaskModel.cs](samples/ConsoleSample/Models/TaskModel.cs) | `KintoneModelBase<T>` の実装例（フィールド定義・アクセス設定） |
 | [Program.cs](samples/ConsoleSample/Program.cs) | DI 構成・CRUD 操作・型安全なクエリのサンプル |
 | [appsettings.json](samples/ConsoleSample/appsettings.json) | 接続設定の記述例 |
